@@ -453,11 +453,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Usuario\\source\\repos\\GustosApp\\GustosApp.API\\GustosApp.API.csproj",
+      "projectUniqueName": "C:\\Users\\Usuario\\source\\repos\\GustosApp\\src\\GustosApp.API\\GustosApp.API.csproj",
       "projectName": "GustosApp.API",
-      "projectPath": "C:\\Users\\Usuario\\source\\repos\\GustosApp\\GustosApp.API\\GustosApp.API.csproj",
+      "projectPath": "C:\\Users\\Usuario\\source\\repos\\GustosApp\\src\\GustosApp.API\\GustosApp.API.csproj",
       "packagesPath": "C:\\Users\\Usuario\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Usuario\\source\\repos\\GustosApp\\GustosApp.API\\obj\\",
+      "outputPath": "C:\\Users\\Usuario\\source\\repos\\GustosApp\\src\\GustosApp.API\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

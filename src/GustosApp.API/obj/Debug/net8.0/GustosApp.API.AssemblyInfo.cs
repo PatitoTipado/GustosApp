@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GustosApp.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5b866cbbc12436866aa6c1e31b68e5407912b8b3")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+eccdd74f3b1591e189c060556388223568a2ef9a")]
 [assembly: System.Reflection.AssemblyProductAttribute("GustosApp.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("GustosApp.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

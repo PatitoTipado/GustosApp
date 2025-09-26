@@ -1,2 +1,4 @@
 # Visual Studio cache/options
 .vs/
+bin/
+obj/

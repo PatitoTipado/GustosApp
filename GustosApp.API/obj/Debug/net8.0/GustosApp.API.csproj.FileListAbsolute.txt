@@ -17,6 +17,7 @@ C:\Users\Usuario\source\repos\GustosApp\GustosApp.API\obj\Debug\net8.0\GustosApp
 C:\Users\Usuario\source\repos\GustosApp\GustosApp.API\obj\Debug\net8.0\GustosApp.API.csproj.CoreCompileInputs.cache
 C:\Users\Usuario\source\repos\GustosApp\GustosApp.API\obj\Debug\net8.0\GustosApp.API.MvcApplicationPartsAssemblyInfo.cs
 C:\Users\Usuario\source\repos\GustosApp\GustosApp.API\obj\Debug\net8.0\GustosApp.API.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\Usuario\source\repos\GustosApp\GustosApp.API\obj\Debug\net8.0\GustosApp.API.sourcelink.json
 C:\Users\Usuario\source\repos\GustosApp\GustosApp.API\obj\Debug\net8.0\scopedcss\bundle\GustosApp.API.styles.css
 C:\Users\Usuario\source\repos\GustosApp\GustosApp.API\obj\Debug\net8.0\staticwebassets.build.json
 C:\Users\Usuario\source\repos\GustosApp\GustosApp.API\obj\Debug\net8.0\staticwebassets.build.json.cache

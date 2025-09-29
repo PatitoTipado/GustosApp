@@ -7,16 +7,28 @@ using GustosApp.Infraestructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using GustosApp.Infraestructure.Repositories;
 
 namespace GustosApp.API.Controllers
 {
-    public class UsuarioController : Controller
+    [Route("[controller]")]
+    [ApiController]
+    public class UsuarioController : ControllerBase
     {
         private readonly RegistrarUsuarioUseCase _registrar;
+        private readonly UsuarioRepositoryEF _repoUser;
 
-        public UsuarioController(RegistrarUsuarioUseCase context)
+
+        public UsuarioController(RegistrarUsuarioUseCase context, UsuarioRepositoryEF repoUser)
         {
+            _repoUser= repoUser;
             _registrar = context;
+        }
+
+        [HttpGet]
+        public string Hola()
+        {
+            return "Hola soy GustoApp";
         }
 
         [Authorize]
@@ -33,6 +45,18 @@ namespace GustosApp.API.Controllers
 
             var resp = await _registrar.HandleAsync(firebaseUid, request, ct);
             return Ok(resp);
+        
+        }
+        [Authorize]
+        [HttpGet("miperfil")]
+        public async Task<IActionResult> MiPerfil(CancellationToken ct)
+        {
+            var firebaseUid = User.FindFirst("user_id")?.Value;
+
+            var usuario = await _repoUser.GetByFirebaseUidAsync(firebaseUid, ct);
+            if (usuario == null) return NotFound();
+
+            return Ok(new UsuarioResponse(usuario.Id, usuario.FirebaseUid, usuario.Email, usuario.Nombre, usuario.FotoPerfilUrl));
         }
     }
 }

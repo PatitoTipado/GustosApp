@@ -56,7 +56,7 @@ namespace GustosApp.API.Controllers
             var usuario = await _repoUser.GetByFirebaseUidAsync(firebaseUid, ct);
             if (usuario == null) return NotFound();
 
-            return Ok(new UsuarioResponse(usuario.Id, usuario.FirebaseUid, usuario.Email, usuario.Nombre, usuario.FotoPerfilUrl));
+            return Ok(new UsuarioResponse(usuario.Id, usuario.FirebaseUid, usuario.Email, usuario.Nombre,usuario.Apellido,usuario.IdUsuario, usuario.FotoPerfilUrl));
         }
     }
 }

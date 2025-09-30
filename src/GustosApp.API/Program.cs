@@ -48,9 +48,17 @@ options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnectio
 
 // Repos
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepositoryEF>();
+builder.Services.AddScoped<IRestriccionRepository, RestriccionRepositoryEF>();
+builder.Services.AddScoped<ICondicionMedicaRepository, CondicionMedicaRepositoryEF>();
+builder.Services.AddScoped<IGustoRepository, GustoRepositoryEF>();
+
 
 // UseCases
 builder.Services.AddScoped<RegistrarUsuarioUseCase>();
+builder.Services.AddScoped<ObtenerCondicionesMedicasUseCase>();
+builder.Services.AddScoped<ObtenerGustosUseCase>();
+builder.Services.AddScoped<ObtenerRestriccionesUseCase>();
+
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

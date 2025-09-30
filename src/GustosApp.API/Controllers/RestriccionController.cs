@@ -7,22 +7,21 @@ namespace GustosApp.API.Controllers
 {
     [Route("[controller]")]
     [ApiController]
-    public class GustoController : ControllerBase
+    public class RestriccionController : ControllerBase
     {
 
-        private readonly ObtenerGustosUseCase _obtenerGustos;
+        private readonly ObtenerRestriccionesUseCase _obtenerRestricciones;
 
-        public GustoController(ObtenerGustosUseCase obtenerGustos)
+        public RestriccionController(ObtenerRestriccionesUseCase obtenerRestricciones)
         {
-            _obtenerGustos = obtenerGustos;
+            _obtenerRestricciones = obtenerRestricciones;
         }
 
         // GET: api/<ValuesController>
-       
         [HttpGet]
         public async Task<IActionResult> GetAll(CancellationToken ct)
         {
-            var result = await _obtenerGustos.HandleAsync(ct);
+            var result = await _obtenerRestricciones.HandleAsync(ct);
             return Ok(result);
         }
     }

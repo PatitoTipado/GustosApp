@@ -1,0 +1,13 @@
+# .github/workflows/ci-main.yml
+name: CI Main
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  call-base:
+    uses: ./.github/workflows/cicd-gustoapp.yml
+    with:
+      run-deploy: true     # acá sí queremos deploy
+    secrets: inherit

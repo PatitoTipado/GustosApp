@@ -27,10 +27,7 @@ En Visual Studio, abrí la Package Manager Console (PMC):
 Menú: Tools → NuGet Package Manager → Package Manager Console.
 Ejecutá los siguientes comandos (asegurate de seleccionar como Default Project a GustosApp.Infraestructure):
 
-Add-Migration InitialCreate -Project GustosApp.Infraestructure -StartupProject GustosApp.API
 Update-Database -Project GustosApp.Infraestructure -StartupProject GustosApp.API
-
-
  Esto va a crear automáticamente la base de datos GustosAppDb con todas las tablas necesarias.
 
 3. Configuración de Firebase

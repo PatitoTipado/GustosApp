@@ -12,6 +12,9 @@ namespace GustosApp.API.Controllers
 
         private readonly ObtenerGustosUseCase _obtenerGustos;
 
+        public GustoController() {
+        }
+
         public GustoController(ObtenerGustosUseCase obtenerGustos)
         {
             _obtenerGustos = obtenerGustos;

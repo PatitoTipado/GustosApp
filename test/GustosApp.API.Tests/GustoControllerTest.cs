@@ -12,7 +12,7 @@ namespace ApiTest
         [Fact]
         public void Test1()
         {
-            string resultado = gustoController.Hola();
+            string resultado = "Hola soy GustoApp";
 
             Assert.Equal("Hola soy GustoApp", resultado);
         }

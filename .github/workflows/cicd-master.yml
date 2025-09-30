@@ -3,7 +3,7 @@ name: CI Main
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
   call-base:

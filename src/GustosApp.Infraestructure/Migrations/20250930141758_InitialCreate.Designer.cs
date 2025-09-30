@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GustosApp.Infraestructure.Migrations
 {
     [DbContext(typeof(GustosDbContext))]
-    [Migration("20250929152112_InitialCreate")]
+    [Migration("20250930141758_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -24,6 +24,21 @@ namespace GustosApp.Infraestructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("CondicionMedicaUsuario", b =>
+                {
+                    b.Property<Guid>("CondicionesMedicasId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UsuariosId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("CondicionesMedicasId", "UsuariosId");
+
+                    b.HasIndex("UsuariosId");
+
+                    b.ToTable("UsuarioCondicionesMedicas", (string)null);
+                });
 
             modelBuilder.Entity("GustoUsuario", b =>
                 {
@@ -40,11 +55,29 @@ namespace GustosApp.Infraestructure.Migrations
                     b.ToTable("UsuarioGustos", (string)null);
                 });
 
+            modelBuilder.Entity("GustosApp.Domain.Model.CondicionMedica", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CondicionesMedicas");
+                });
+
             modelBuilder.Entity("GustosApp.Domain.Model.Gusto", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ImagenUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
@@ -53,21 +86,6 @@ namespace GustosApp.Infraestructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Gustos");
-                });
-
-            modelBuilder.Entity("GustosApp.Domain.Model.Preferencia", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Preferencias");
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.Restriccion", b =>
@@ -120,21 +138,6 @@ namespace GustosApp.Infraestructure.Migrations
                     b.ToTable("Usuarios");
                 });
 
-            modelBuilder.Entity("PreferenciaUsuario", b =>
-                {
-                    b.Property<Guid>("PreferenciasId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("UsuariosId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("PreferenciasId", "UsuariosId");
-
-                    b.HasIndex("UsuariosId");
-
-                    b.ToTable("UsuarioPreferencias", (string)null);
-                });
-
             modelBuilder.Entity("RestriccionUsuario", b =>
                 {
                     b.Property<Guid>("RestriccionesId")
@@ -150,11 +153,11 @@ namespace GustosApp.Infraestructure.Migrations
                     b.ToTable("UsuarioRestricciones", (string)null);
                 });
 
-            modelBuilder.Entity("GustoUsuario", b =>
+            modelBuilder.Entity("CondicionMedicaUsuario", b =>
                 {
-                    b.HasOne("GustosApp.Domain.Model.Gusto", null)
+                    b.HasOne("GustosApp.Domain.Model.CondicionMedica", null)
                         .WithMany()
-                        .HasForeignKey("GustosId")
+                        .HasForeignKey("CondicionesMedicasId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -165,11 +168,11 @@ namespace GustosApp.Infraestructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("PreferenciaUsuario", b =>
+            modelBuilder.Entity("GustoUsuario", b =>
                 {
-                    b.HasOne("GustosApp.Domain.Model.Preferencia", null)
+                    b.HasOne("GustosApp.Domain.Model.Gusto", null)
                         .WithMany()
-                        .HasForeignKey("PreferenciasId")
+                        .HasForeignKey("GustosId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

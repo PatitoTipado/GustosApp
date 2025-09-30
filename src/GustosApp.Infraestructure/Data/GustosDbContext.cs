@@ -11,7 +11,7 @@ public class GustosDbContext : DbContext
     public DbSet<Usuario> Usuarios { get; set; }
     public DbSet<Gusto> Gustos { get; set; }
     public DbSet<Restriccion> Restricciones { get; set; }
-    public DbSet<Preferencia> Preferencias { get; set; }
+    public DbSet<CondicionMedica> CondicionesMedicas { get; set; }
 
     public GustosDbContext(DbContextOptions<GustosDbContext> options)
     : base(options) { }
@@ -32,9 +32,9 @@ public class GustosDbContext : DbContext
             .UsingEntity(j => j.ToTable("UsuarioRestricciones"));
 
         modelBuilder.Entity<Usuario>()
-            .HasMany(u => u.Preferencias)
+            .HasMany(u => u.CondicionesMedicas)
             .WithMany(p => p.Usuarios)
-            .UsingEntity(j => j.ToTable("UsuarioPreferencias"));
+            .UsingEntity(j => j.ToTable("UsuarioCondicionesMedicas"));
 
         /* Ejemplo de constraint CHECK (solo para valores permitidos)
         modelBuilder.Entity<Restriccion>()
@@ -46,5 +46,8 @@ public class GustosDbContext : DbContext
         modelBuilder.Entity<Usuario>()
             .HasIndex(u => u.FirebaseUid)
             .IsUnique();
+
+       
+
     }
 }

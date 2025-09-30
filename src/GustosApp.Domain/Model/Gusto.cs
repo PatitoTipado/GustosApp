@@ -11,6 +11,7 @@ namespace GustosApp.Domain.Model
         public Guid Id { get; set; }
         public string Nombre { get; set; }
 
+        public string? ImagenUrl { get; set; }
         public ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();
     }
 }

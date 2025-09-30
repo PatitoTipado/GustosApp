@@ -12,27 +12,28 @@ namespace GustosApp.Infraestructure.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "CondicionesMedicas",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CondicionesMedicas", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Gustos",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ImagenUrl = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Gustos", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Preferencias",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Preferencias", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -65,6 +66,30 @@ namespace GustosApp.Infraestructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UsuarioCondicionesMedicas",
+                columns: table => new
+                {
+                    CondicionesMedicasId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UsuariosId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UsuarioCondicionesMedicas", x => new { x.CondicionesMedicasId, x.UsuariosId });
+                    table.ForeignKey(
+                        name: "FK_UsuarioCondicionesMedicas_CondicionesMedicas_CondicionesMedicasId",
+                        column: x => x.CondicionesMedicasId,
+                        principalTable: "CondicionesMedicas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UsuarioCondicionesMedicas_Usuarios_UsuariosId",
+                        column: x => x.UsuariosId,
+                        principalTable: "Usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UsuarioGustos",
                 columns: table => new
                 {
@@ -82,30 +107,6 @@ namespace GustosApp.Infraestructure.Migrations
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_UsuarioGustos_Usuarios_UsuariosId",
-                        column: x => x.UsuariosId,
-                        principalTable: "Usuarios",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "UsuarioPreferencias",
-                columns: table => new
-                {
-                    PreferenciasId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UsuariosId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UsuarioPreferencias", x => new { x.PreferenciasId, x.UsuariosId });
-                    table.ForeignKey(
-                        name: "FK_UsuarioPreferencias_Preferencias_PreferenciasId",
-                        column: x => x.PreferenciasId,
-                        principalTable: "Preferencias",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_UsuarioPreferencias_Usuarios_UsuariosId",
                         column: x => x.UsuariosId,
                         principalTable: "Usuarios",
                         principalColumn: "Id",
@@ -137,13 +138,13 @@ namespace GustosApp.Infraestructure.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_UsuarioGustos_UsuariosId",
-                table: "UsuarioGustos",
+                name: "IX_UsuarioCondicionesMedicas_UsuariosId",
+                table: "UsuarioCondicionesMedicas",
                 column: "UsuariosId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UsuarioPreferencias_UsuariosId",
-                table: "UsuarioPreferencias",
+                name: "IX_UsuarioGustos_UsuariosId",
+                table: "UsuarioGustos",
                 column: "UsuariosId");
 
             migrationBuilder.CreateIndex(
@@ -162,19 +163,19 @@ namespace GustosApp.Infraestructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "UsuarioGustos");
+                name: "UsuarioCondicionesMedicas");
 
             migrationBuilder.DropTable(
-                name: "UsuarioPreferencias");
+                name: "UsuarioGustos");
 
             migrationBuilder.DropTable(
                 name: "UsuarioRestricciones");
 
             migrationBuilder.DropTable(
-                name: "Gustos");
+                name: "CondicionesMedicas");
 
             migrationBuilder.DropTable(
-                name: "Preferencias");
+                name: "Gustos");
 
             migrationBuilder.DropTable(
                 name: "Restricciones");

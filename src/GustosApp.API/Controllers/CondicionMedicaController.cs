@@ -7,12 +7,12 @@ namespace GustosApp.API.Controllers
 {
     [Route("[controller]")]
     [ApiController]
-    public class CondicionMedicaControler : ControllerBase
+    public class CondicionMedicaController : ControllerBase
     {
 
         private readonly ObtenerCondicionesMedicasUseCase _obtenerCondicionesMed;
 
-        public CondicionMedicaControler(ObtenerCondicionesMedicasUseCase obtenerCondicionesMed)
+        public CondicionMedicaController(ObtenerCondicionesMedicasUseCase obtenerCondicionesMed)
         {
             _obtenerCondicionesMed = obtenerCondicionesMed;
         }

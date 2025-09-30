@@ -14,7 +14,7 @@ namespace ApiTest
         {
             string resultado = "Hola soy GustoApp";
 
-            Assert.Equal("Hola soy GustoApp", resultado);
+            Assert.Equal("Hola no soy GustoApp", resultado);
         }
     }
 }

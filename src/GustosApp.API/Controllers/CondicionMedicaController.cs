@@ -7,25 +7,21 @@ namespace GustosApp.API.Controllers
 {
     [Route("[controller]")]
     [ApiController]
-    public class GustoController : ControllerBase
+    public class CondicionMedicaController : ControllerBase
     {
 
-        private readonly ObtenerGustosUseCase _obtenerGustos;
+        private readonly ObtenerCondicionesMedicasUseCase _obtenerCondicionesMed;
 
-        public GustoController() {
-        }
-
-        public GustoController(ObtenerGustosUseCase obtenerGustos)
+        public CondicionMedicaController(ObtenerCondicionesMedicasUseCase obtenerCondicionesMed)
         {
-            _obtenerGustos = obtenerGustos;
+            _obtenerCondicionesMed = obtenerCondicionesMed;
         }
 
         // GET: api/<ValuesController>
-       
         [HttpGet]
         public async Task<IActionResult> GetAll(CancellationToken ct)
         {
-            var result = await _obtenerGustos.HandleAsync(ct);
+            var result = await _obtenerCondicionesMed.HandleAsync(ct);
             return Ok(result);
         }
     }

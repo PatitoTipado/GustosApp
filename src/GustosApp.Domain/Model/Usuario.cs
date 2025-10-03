@@ -24,6 +24,12 @@ namespace GustosApp.Domain.Model
         public ICollection<Gusto> Gustos { get; set; } = new List<Gusto>();
         public ICollection<Restriccion> Restricciones { get; set; } = new List<Restriccion>();
         public ICollection<CondicionMedica> CondicionesMedicas { get; set; } = new List<CondicionMedica>();
+        
+        // Relaciones con grupos
+        public ICollection<Grupo> GruposAdministrados { get; set; } = new List<Grupo>();
+        public ICollection<MiembroGrupo> MiembrosGrupos { get; set; } = new List<MiembroGrupo>();
+        public ICollection<InvitacionGrupo> InvitacionesRecibidas { get; set; } = new List<InvitacionGrupo>();
+        public ICollection<InvitacionGrupo> InvitacionesEnviadas { get; set; } = new List<InvitacionGrupo>();
 
         public Usuario(string firebaseUid, string email, string nombre,string apellido,string idUsuario, string? fotoPerfilUrl = null)
         {

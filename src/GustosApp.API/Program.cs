@@ -18,7 +18,7 @@ var firebaseKeyPath = Path.Combine(builder.Environment.ContentRootPath, "secrets
 var firebaseProjectId = "gustosapp-5c3c9";
 
 
-// Inicializar Firebase solo si no está inicializado
+// Inicializar Firebase solo si no estï¿½ inicializado
 if (FirebaseApp.DefaultInstance == null)
 {
     FirebaseApp.Create(new AppOptions()
@@ -42,6 +42,11 @@ builder.Services
         };
     });
 
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    });
 
 builder.Services.AddDbContext<GustosDbContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -51,6 +56,9 @@ builder.Services.AddScoped<IUsuarioRepository, UsuarioRepositoryEF>();
 builder.Services.AddScoped<IRestriccionRepository, RestriccionRepositoryEF>();
 builder.Services.AddScoped<ICondicionMedicaRepository, CondicionMedicaRepositoryEF>();
 builder.Services.AddScoped<IGustoRepository, GustoRepositoryEF>();
+builder.Services.AddScoped<IGrupoRepository, GrupoRepositoryEF>();
+builder.Services.AddScoped<IMiembroGrupoRepository, MiembroGrupoRepositoryEF>();
+builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepositoryEF>();
 
 
 // UseCases
@@ -58,6 +66,13 @@ builder.Services.AddScoped<RegistrarUsuarioUseCase>();
 builder.Services.AddScoped<ObtenerCondicionesMedicasUseCase>();
 builder.Services.AddScoped<ObtenerGustosUseCase>();
 builder.Services.AddScoped<ObtenerRestriccionesUseCase>();
+builder.Services.AddScoped<CrearGrupoUseCase>();
+builder.Services.AddScoped<InvitarUsuarioGrupoUseCase>();
+builder.Services.AddScoped<UnirseGrupoUseCase>();
+builder.Services.AddScoped<AbandonarGrupoUseCase>();
+builder.Services.AddScoped<ObtenerGruposUsuarioUseCase>();
+builder.Services.AddScoped<ObtenerInvitacionesUsuarioUseCase>();
+builder.Services.AddScoped<AceptarInvitacionGrupoUseCase>();
 
 
 builder.Services.AddControllers();
@@ -72,7 +87,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyAllowSpecificOrigins,
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000") 
+            policy.WithOrigins("http://localhost:3000")
+                  .AllowCredentials()
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
@@ -90,8 +106,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication();
 app.UseCors(MyAllowSpecificOrigins);
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

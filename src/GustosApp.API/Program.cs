@@ -18,7 +18,7 @@ var firebaseKeyPath = Path.Combine(builder.Environment.ContentRootPath, "secrets
 var firebaseProjectId = "gustosapp-5c3c9";
 
 
-// Inicializar Firebase solo si no está inicializado
+// Inicializar Firebase solo si no estï¿½ inicializado
 if (FirebaseApp.DefaultInstance == null)
 {
     FirebaseApp.Create(new AppOptions()
@@ -56,6 +56,9 @@ builder.Services.AddScoped<IUsuarioRepository, UsuarioRepositoryEF>();
 builder.Services.AddScoped<IRestriccionRepository, RestriccionRepositoryEF>();
 builder.Services.AddScoped<ICondicionMedicaRepository, CondicionMedicaRepositoryEF>();
 builder.Services.AddScoped<IGustoRepository, GustoRepositoryEF>();
+builder.Services.AddScoped<IGrupoRepository, GrupoRepositoryEF>();
+builder.Services.AddScoped<IMiembroGrupoRepository, MiembroGrupoRepositoryEF>();
+builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepositoryEF>();
 
 
 // UseCases
@@ -63,6 +66,13 @@ builder.Services.AddScoped<RegistrarUsuarioUseCase>();
 builder.Services.AddScoped<ObtenerCondicionesMedicasUseCase>();
 builder.Services.AddScoped<ObtenerGustosUseCase>();
 builder.Services.AddScoped<ObtenerRestriccionesUseCase>();
+builder.Services.AddScoped<CrearGrupoUseCase>();
+builder.Services.AddScoped<InvitarUsuarioGrupoUseCase>();
+builder.Services.AddScoped<UnirseGrupoUseCase>();
+builder.Services.AddScoped<AbandonarGrupoUseCase>();
+builder.Services.AddScoped<ObtenerGruposUsuarioUseCase>();
+builder.Services.AddScoped<ObtenerInvitacionesUsuarioUseCase>();
+builder.Services.AddScoped<AceptarInvitacionGrupoUseCase>();
 
 
 builder.Services.AddControllers();

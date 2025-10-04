@@ -18,6 +18,9 @@ namespace GustosApp.Infraestructure.Repositories
         public Task<Usuario?> GetByFirebaseUidAsync(string firebaseUid, CancellationToken ct = default)
             => _db.Usuarios.FirstOrDefaultAsync(u => u.FirebaseUid == firebaseUid, ct);
 
+        public Task<Usuario?> GetByEmailAsync(string email, CancellationToken ct = default)
+            => _db.Usuarios.FirstOrDefaultAsync(u => u.Email == email, ct);
+
         public async Task AddAsync(Usuario usuario, CancellationToken ct = default)
             => await _db.Usuarios.AddAsync(usuario, ct);
 

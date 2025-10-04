@@ -1,0 +1,89 @@
+### Variables
+@baseUrl = https://localhost:7000
+@authToken = YOUR_FIREBASE_TOKEN_HERE
+
+### 1. Crear un grupo
+POST {{baseUrl}}/Grupo/crear
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Grupo de Amigos",
+  "descripcion": "Grupo para compartir gustos culinarios con amigos"
+}
+
+### 2. Obtener mis grupos
+GET {{baseUrl}}/Grupo/mis-grupos
+Authorization: Bearer {{authToken}}
+
+### 3. Invitar usuario a un grupo (reemplaza {grupoId} con el ID del grupo creado)
+POST {{baseUrl}}/Grupo/{{grupoId}}/invitar
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "emailUsuario": "usuario@ejemplo.com",
+  "mensajePersonalizado": "¡Te invito a unirte a nuestro grupo de gustos culinarios!"
+}
+
+### 4. Obtener invitaciones pendientes
+GET {{baseUrl}}/Grupo/invitaciones
+Authorization: Bearer {{authToken}}
+
+### 5. Aceptar invitación (reemplaza {invitacionId} con el ID de la invitación)
+POST {{baseUrl}}/Grupo/invitaciones/{{invitacionId}}/aceptar
+Authorization: Bearer {{authToken}}
+
+### 6. Unirse a un grupo con código de invitación
+POST {{baseUrl}}/Grupo/unirse
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "codigoInvitacion": "ABC12345"
+}
+
+### 7. Abandonar un grupo (reemplaza {grupoId} con el ID del grupo)
+POST {{baseUrl}}/Grupo/{{grupoId}}/abandonar
+Authorization: Bearer {{authToken}}
+
+### Ejemplo de respuesta exitosa para crear grupo:
+# {
+#   "id": "12345678-1234-1234-1234-123456789012",
+#   "nombre": "Grupo de Amigos",
+#   "descripcion": "Grupo para compartir gustos culinarios con amigos",
+#   "administradorId": "87654321-4321-4321-4321-210987654321",
+#   "administradorNombre": "Juan Pérez",
+#   "fechaCreacion": "2024-01-01T12:00:00Z",
+#   "activo": true,
+#   "codigoInvitacion": "ABC12345",
+#   "fechaExpiracionCodigo": "2024-01-08T12:00:00Z",
+#   "cantidadMiembros": 1,
+#   "miembros": [
+#     {
+#       "id": "11111111-1111-1111-1111-111111111111",
+#       "usuarioId": "87654321-4321-4321-4321-210987654321",
+#       "usuarioNombre": "Juan Pérez",
+#       "usuarioEmail": "juan@ejemplo.com",
+#       "fechaUnion": "2024-01-01T12:00:00Z",
+#       "esAdministrador": true
+#     }
+#   ]
+# }
+
+### Ejemplo de respuesta para invitación:
+# {
+#   "id": "22222222-2222-2222-2222-222222222222",
+#   "grupoId": "12345678-1234-1234-1234-123456789012",
+#   "grupoNombre": "Grupo de Amigos",
+#   "usuarioInvitadoId": "33333333-3333-3333-3333-333333333333",
+#   "usuarioInvitadoNombre": "María García",
+#   "usuarioInvitadoEmail": "maria@ejemplo.com",
+#   "usuarioInvitadorId": "87654321-4321-4321-4321-210987654321",
+#   "usuarioInvitadorNombre": "Juan Pérez",
+#   "fechaInvitacion": "2024-01-01T12:00:00Z",
+#   "fechaRespuesta": null,
+#   "estado": "Pendiente",
+#   "mensajePersonalizado": "¡Te invito a unirte a nuestro grupo de gustos culinarios!",
+#   "fechaExpiracion": "2024-01-08T12:00:00Z"
+# }

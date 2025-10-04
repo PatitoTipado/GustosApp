@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using GustosApp.Infraestructure.Repositories;
+using GustosApp.Domain.Interfaces;
+using FirebaseAdmin.Messaging;
 
 namespace GustosApp.API.Controllers
 {
@@ -16,12 +18,12 @@ namespace GustosApp.API.Controllers
     public class UsuarioController : ControllerBase
     {
         private readonly RegistrarUsuarioUseCase _registrar;
-        private readonly UsuarioRepositoryEF _repoUser;
+        private readonly IUsuarioRepository _repoUser;
 
 
-        public UsuarioController(RegistrarUsuarioUseCase context, UsuarioRepositoryEF repoUser)
+        public UsuarioController(RegistrarUsuarioUseCase context, IUsuarioRepository repoUser)
         {
-            _repoUser= repoUser;
+            _repoUser = repoUser;
             _registrar = context;
         }
 
@@ -33,20 +35,37 @@ namespace GustosApp.API.Controllers
 
         [Authorize]
         [HttpPost("registrar")]
-        public async Task<IActionResult> Registrar([FromBody] RegistrarUsuarioRequest request,CancellationToken ct)
+        public async Task<IActionResult> Registrar([FromBody] RegistrarUsuarioRequest request, CancellationToken ct)
         {
+
+
             // Firebase suele mapear el UID en el claim "user_id" (también puede venir en "sub")
             var firebaseUid = User.FindFirst("user_id")?.Value
                             ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
                             ?? User.FindFirst("sub")?.Value;
 
             if (string.IsNullOrWhiteSpace(firebaseUid))
-                return Unauthorized("No se encontró el UID de Firebase en el token.");
+                return Unauthorized(new { message = "No se encontró el UID de Firebase en el token." });
+
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(request.Nombre) ||
+                string.IsNullOrWhiteSpace(request.Apellido) ||
+                string.IsNullOrWhiteSpace(request.Email))
+               
+            {
+                return BadRequest( new { message = "Nombre, Apellido, Email son obligatorios." });
+            }
 
             var resp = await _registrar.HandleAsync(firebaseUid, request, ct);
-            return Ok(resp);
-        
+            return Ok(new
+            {
+                message = "Usuario registrado correctamente",
+                usuario = resp
+            });
         }
+
+
+
         [Authorize]
         [HttpGet("miperfil")]
         public async Task<IActionResult> MiPerfil(CancellationToken ct)
@@ -56,7 +75,7 @@ namespace GustosApp.API.Controllers
             var usuario = await _repoUser.GetByFirebaseUidAsync(firebaseUid, ct);
             if (usuario == null) return NotFound();
 
-            return Ok(new UsuarioResponse(usuario.Id, usuario.FirebaseUid, usuario.Email, usuario.Nombre,usuario.Apellido,usuario.IdUsuario, usuario.FotoPerfilUrl));
+            return Ok(new UsuarioResponse(usuario.Id, usuario.FirebaseUid, usuario.Email, usuario.Nombre,usuario.Apellido,usuario.FotoPerfilUrl));
         }
     }
 }

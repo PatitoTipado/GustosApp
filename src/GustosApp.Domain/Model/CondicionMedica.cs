@@ -11,5 +11,10 @@ namespace GustosApp.Domain.Model
         public Guid Id { get; set; }
         public string Nombre { get; set; } = ""; // Ej: "Diabetes", "Hipertensión"
         public ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();
+
+        // tags críticos para esa condición (por ejemplo: sodio, azúcar, alcohol)
+
+        public ICollection<Tag> TagsCriticos { get; private set; } = new List<Tag>();
+
     }
 }

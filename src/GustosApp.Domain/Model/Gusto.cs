@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -13,5 +12,10 @@ namespace GustosApp.Domain.Model
 
         public string? ImagenUrl { get; set; }
         public ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();
+
+        public ICollection<Tag> Tags { get; private set; } = new List<Tag>();
+
     }
+
+   
 }

@@ -10,5 +10,7 @@ namespace GustosApp.Domain.Interfaces
     public interface IRestriccionRepository
     {
         Task<List<Restriccion>> GetAllAsync(CancellationToken ct);
+        Task<List<Restriccion>> GetRestriccionesByIdsAsync(List<Guid> ids, CancellationToken ct);
+
     }
 }

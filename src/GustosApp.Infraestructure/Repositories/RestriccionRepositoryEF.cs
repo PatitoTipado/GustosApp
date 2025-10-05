@@ -20,5 +20,12 @@ namespace GustosApp.Infraestructure.Repositories
         {
             return await _dbContext.Restricciones.ToListAsync(ct);
         }
+
+        public async Task<List<Restriccion>> GetRestriccionesByIdsAsync(List<Guid> ids, CancellationToken ct)
+        {
+            return await _dbContext.Restricciones
+                .Where(r => ids.Contains(r.Id))
+                .ToListAsync(ct);
+        }
     }
 }

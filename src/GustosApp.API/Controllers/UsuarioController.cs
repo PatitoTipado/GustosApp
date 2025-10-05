@@ -17,20 +17,28 @@ namespace GustosApp.API.Controllers
     [ApiController]
     public class UsuarioController : ControllerBase
     {
+
+        private readonly GuardarRestriccionesUseCase _saveRestr;
+        private readonly GuardarCondicionesUseCase _saveCond;
+        private readonly ObtenerGustosFiltradosUseCase _getGustos;
+        private readonly GuardarGustosUseCase _saveGustos;
+        private readonly ObtenerResumenRegistroUseCase _resumen;
+        private readonly FinalizarRegistroUseCase _finalizar;
         private readonly RegistrarUsuarioUseCase _registrar;
-        private readonly IUsuarioRepository _repoUser;
+     
 
 
-        public UsuarioController(RegistrarUsuarioUseCase context, IUsuarioRepository repoUser)
+        public UsuarioController(RegistrarUsuarioUseCase context, GuardarRestriccionesUseCase saveRestr, GuardarCondicionesUseCase saveCond,
+            ObtenerGustosFiltradosUseCase getGustos, GuardarGustosUseCase saveGustos, ObtenerResumenRegistroUseCase resumen, FinalizarRegistroUseCase finalizar)
         {
-            _repoUser = repoUser;
+    
             _registrar = context;
-        }
-
-        [HttpGet]
-        public string Hola()
-        {
-            return "Hola soy GustoApp";
+            _saveRestr = saveRestr;
+            _saveCond = saveCond;
+            _getGustos = getGustos;
+            _finalizar = finalizar;
+            _saveGustos = saveGustos;
+            _resumen = resumen;
         }
 
         [Authorize]
@@ -65,17 +73,62 @@ namespace GustosApp.API.Controllers
         }
 
 
+        [Authorize]
+        [HttpPost("restricciones")]
+        public async Task<IActionResult> GuardarRestricciones([FromBody] GuardarIdsRequest req, CancellationToken ct)
+        {
+            var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
+            await _saveRestr.HandleAsync(uid, req.Ids,req.Skip, ct);
+            return Ok(new { next = "/registro/condiciones", pasoActual = "Restricciones" });
+        }
 
         [Authorize]
-        [HttpGet("miperfil")]
-        public async Task<IActionResult> MiPerfil(CancellationToken ct)
+        [HttpPost("condiciones")]
+        public async Task<IActionResult> GuardarCondiciones([FromBody] GuardarIdsRequest req, CancellationToken ct)
         {
-            var firebaseUid = User.FindFirst("user_id")?.Value;
+            var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
+            await _saveCond.HandleAsync(uid, req.Ids, req.Skip, ct);
+            return Ok(new { next = "/registro/gustos/filtrados", pasoActual = "Condiciones" });
+        }
 
-            var usuario = await _repoUser.GetByFirebaseUidAsync(firebaseUid, ct);
-            if (usuario == null) return NotFound();
+        /*[Authorize]
+        [HttpGet("gustos/filtrados")]
+        public async Task<IActionResult> ObtenerGustosFiltrados(CancellationToken ct)
+        {
+            var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
+            var resp = await _getGustos.HandleAsync(uid, ct);
+            return Ok(resp);
+        }
+        */
 
-            return Ok(new UsuarioResponse(usuario.Id, usuario.FirebaseUid, usuario.Email, usuario.Nombre,usuario.Apellido,usuario.FotoPerfilUrl));
+        [Authorize]
+        [HttpPost("gustos")]
+        public async Task<IActionResult> GuardarGustos([FromBody] GuardarIdsRequest req, CancellationToken ct)
+        {
+            var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
+            await _saveGustos.HandleAsync(uid, req.Ids, ct);
+            return Ok(new { next = "/registro/resumen", pasoActual = "Gustos" });
+        }
+
+        [Authorize]
+        [HttpGet("resumen")]
+        public async Task<IActionResult> Resumen(CancellationToken ct)
+        {
+            var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
+            var r = await _resumen.HandleAsync(uid, ct);
+            return Ok(r);
+        }
+
+        [Authorize]
+        [HttpPost("finalizar")]
+        public async Task<IActionResult> Finalizar(CancellationToken ct)
+        {
+            var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
+            await _finalizar.HandleAsync(uid, ct);
+            return Ok(new { mensaje = "Registro finalizado", pasoActual = "Finalizado" });
         }
     }
+
+
 }
+

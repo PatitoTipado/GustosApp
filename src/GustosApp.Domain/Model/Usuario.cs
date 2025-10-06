@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace GustosApp.Domain.Model
 {
 
-    public enum RegistroPaso { Ninguno = 0, Restricciones = 1, Condiciones = 2, Gustos = 3, Finalizado = 4 }
+    public enum RegistroPaso { Ninguno = 0, Restricciones = 1, Condiciones = 2, Gustos = 3, Verificacion = 4, Finalizado = 5 }
     public class Usuario
     {
         public Guid Id { get; private set; } = Guid.NewGuid();
@@ -38,9 +38,9 @@ namespace GustosApp.Domain.Model
 
         public void AvanzarPaso(RegistroPaso paso)
         {
-            if ((int)paso >= (int) PasoActual) PasoActual = paso;
+            if ((int)paso >= (int)PasoActual) PasoActual = paso;
         }
-        public Usuario(string firebaseUid, string email, string nombre,string apellido,string idUsuario, string? fotoPerfilUrl = null)
+        public Usuario(string firebaseUid, string email, string nombre, string apellido, string idUsuario, string? fotoPerfilUrl = null)
         {
             FirebaseUid = firebaseUid ?? throw new ArgumentNullException(nameof(firebaseUid));
             Email = email ?? throw new ArgumentNullException(nameof(email));
@@ -49,6 +49,43 @@ namespace GustosApp.Domain.Model
             IdUsuario = idUsuario ?? throw new ArgumentNullException(nameof(nombre));
             FotoPerfilUrl = fotoPerfilUrl;
         }
-    }
+        public List<string> ValidarCompatibilidad()
+        {
+            var gustosIncompatibles = new List<Gusto>();
 
+            var tagsRestringidos = Restricciones
+                .SelectMany(r => r.TagsProhibidos)
+                .Select(t => t.NombreNormalizado)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+
+            var tagsCondiciones = CondicionesMedicas
+                .SelectMany(c => c.TagsCriticos)
+                .Select(t => t.NombreNormalizado)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+
+            var tagsProhibidos = tagsRestringidos
+                .Union(tagsCondiciones)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var gusto in Gustos)
+            {
+                var tagsGusto = gusto.Tags.Select(t => t.NombreNormalizado);
+                if (tagsGusto.Any(t => tagsProhibidos.Contains(t)))
+                {
+                    gustosIncompatibles.Add(gusto);
+                }
+            }
+
+            foreach (var gustoIncompatible in gustosIncompatibles)
+            {
+                Gustos.Remove(gustoIncompatible);
+            }
+
+            return gustosIncompatibles.Select(g => g.Nombre).ToList();
+        }
+
+
+    }
 }

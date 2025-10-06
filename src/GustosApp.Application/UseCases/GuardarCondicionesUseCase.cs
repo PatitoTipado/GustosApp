@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GustosApp.Application.DTO;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 
@@ -19,31 +20,28 @@ namespace GustosApp.Application.UseCases
             _user = user;
         }
 
-        public async Task HandleAsync(string uid, List<Guid> ids, bool skip, CancellationToken ct)
+        public async Task<GuardarCondicionesResponse> HandleAsync(string uid, List<Guid> ids, bool skip, CancellationToken ct)
         {
-            if (skip)
-                return;
+            if (skip) return new GuardarCondicionesResponse("Paso omitido", new List<string>());
 
-            var existente = await _user.GetByFirebaseUidAsync(uid, ct);
+            var usuario = await _user.GetByFirebaseUidAsync(uid, ct)
+                                   ?? throw new InvalidOperationException("Usuario no encontrado.");
 
-            if (existente == null)
+            usuario.CondicionesMedicas.Clear();
+
+            var nuevas = await _condiciones.GetByIdsAsync(ids, ct);
+
+            foreach (var condicion in nuevas)
             {
-                throw new Exception("Usuario no encontrado");
+               usuario.CondicionesMedicas.Add(condicion);
             }
+            var gustosRemovidos = usuario.ValidarCompatibilidad();
 
-            var condiciones = await _condiciones.GetByIdsAsync(ids, ct);
-
-            foreach (var condicion in condiciones)
-            {
-                if (!existente.CondicionesMedicas.Any(r => r.Id == condicion.Id))
-                {
-                    existente.CondicionesMedicas.Add(condicion);
-                }
-            }
-
-            existente.AvanzarPaso(RegistroPaso.Gustos);
+            usuario.AvanzarPaso(RegistroPaso.Gustos);
 
             await _user.SaveChangesAsync(ct);
+
+            return new GuardarCondicionesResponse("Condiciones médicas actualizadas correctamente.", gustosRemovidos);
         }
     }
 }

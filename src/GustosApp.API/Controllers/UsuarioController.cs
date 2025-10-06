@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using GustosApp.Infraestructure.Repositories;
 using GustosApp.Domain.Interfaces;
 using FirebaseAdmin.Messaging;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace GustosApp.API.Controllers
 {
@@ -78,8 +79,16 @@ namespace GustosApp.API.Controllers
         public async Task<IActionResult> GuardarRestricciones([FromBody] GuardarIdsRequest req, CancellationToken ct)
         {
             var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
-            await _saveRestr.HandleAsync(uid, req.Ids,req.Skip, ct);
-            return Ok(new { next = "/registro/condiciones", pasoActual = "Restricciones" });
+           var response= await _saveRestr.HandleAsync(uid, req.Ids,req.Skip, ct);
+
+
+            var resp = new PasoResponse(
+            PasoActual: "Restricciones",
+            Next: "/registro/condiciones",
+            Data: response.Mensaje,
+            Conflictos: response.GustosRemovidos
+            );
+            return Ok(resp);
         }
 
         [Authorize]
@@ -87,8 +96,16 @@ namespace GustosApp.API.Controllers
         public async Task<IActionResult> GuardarCondiciones([FromBody] GuardarIdsRequest req, CancellationToken ct)
         {
             var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
-            await _saveCond.HandleAsync(uid, req.Ids, req.Skip, ct);
-            return Ok(new { next = "/registro/gustos/filtrados", pasoActual = "Condiciones" });
+           var response= await _saveCond.HandleAsync(uid, req.Ids, req.Skip, ct);
+
+            var resp = new PasoResponse(
+           PasoActual: "Restricciones",
+           Next: "/registro/condiciones",
+           Data: response.mensaje,
+           Conflictos: response.GustosRemovidos
+           );
+            return Ok(resp);
+            
         }
 
         [Authorize]
@@ -96,11 +113,15 @@ namespace GustosApp.API.Controllers
         public async Task<IActionResult> ObtenerGustosFiltrados(CancellationToken ct)
         {
             var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
-            var resp = await _getGustos.HandleAsync(uid, ct);
-            return Ok( new {
-                gustos = resp
-            }
-            );
+            var gustosFiltrados = await _getGustos.HandleAsync(uid, ct);
+
+
+            return Ok(new
+            {
+                pasoActual = "Condiciones",
+                next = "/registro/gustos",
+                gustos = gustosFiltrados
+            });
         }
         
 
@@ -109,8 +130,15 @@ namespace GustosApp.API.Controllers
         public async Task<IActionResult> GuardarGustos([FromBody] GuardarIdsRequest req, CancellationToken ct)
         {
             var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
-            await _saveGustos.HandleAsync(uid, req.Ids, ct);
-            return Ok(new { next = "/registro/resumen", pasoActual = "Gustos" });
+            var response=await _saveGustos.HandleAsync(uid, req.Ids, ct);
+
+            var resp = new PasoResponse(
+                PasoActual: "Gustos",
+                Next: "/registro/resumen",
+                Data: "Gustos guardados correctamente",
+                Conflictos: response
+                );
+            return Ok(resp);
         }
 
         [Authorize]
@@ -119,7 +147,10 @@ namespace GustosApp.API.Controllers
         {
             var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
             var r = await _resumen.HandleAsync(uid, ct);
-            return Ok(r);
+            return Ok(new
+            {
+                resumen = r
+            });
         }
 
         [Authorize]

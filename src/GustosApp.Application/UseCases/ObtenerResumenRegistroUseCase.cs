@@ -23,14 +23,13 @@ namespace GustosApp.Application.UseCases
 
                 return new UsuarioResumenResponse
                 {
-                    Id = usuario.Id,
                     Nombre = usuario.Nombre,
                     Apellido = usuario.Apellido,
-                    Email = usuario.Email,
-                    FotoPerfilUrl = usuario.FotoPerfilUrl,
-                    Gustos = usuario.Gustos.Select(g => g.Nombre).ToList(),
                     Restricciones = usuario.Restricciones.Select(r => r.Nombre).ToList(),
-                    CondicionesMedicas = usuario.CondicionesMedicas.Select(c => c.Nombre).ToList()
+                    CondicionesMedicas = usuario.CondicionesMedicas.Select(c => c.Nombre).ToList(),
+                    Gustos = usuario.Gustos.Select(g => g.Nombre).ToList(),
+                    PasoActual = usuario.PasoActual
+
                 };
             }
         }

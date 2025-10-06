@@ -91,15 +91,18 @@ namespace GustosApp.API.Controllers
             return Ok(new { next = "/registro/gustos/filtrados", pasoActual = "Condiciones" });
         }
 
-        /*[Authorize]
+        [Authorize]
         [HttpGet("gustos/filtrados")]
         public async Task<IActionResult> ObtenerGustosFiltrados(CancellationToken ct)
         {
             var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
             var resp = await _getGustos.HandleAsync(uid, ct);
-            return Ok(resp);
+            return Ok( new {
+                gustos = resp
+            }
+            );
         }
-        */
+        
 
         [Authorize]
         [HttpPost("gustos")]

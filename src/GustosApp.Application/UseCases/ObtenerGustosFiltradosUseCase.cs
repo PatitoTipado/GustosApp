@@ -5,41 +5,42 @@ using System.Text;
 using System.Threading.Tasks;
 using GustosApp.Application.DTO;
 using GustosApp.Domain.Interfaces;
-using GustosApp.Domain.Services;
+using GustosApp.Domain.Model;
 
 namespace GustosApp.Application.UseCases
 {
     public class ObtenerGustosFiltradosUseCase
     {
-
         private readonly IUsuarioRepository _usuarios;
         private readonly IGustoRepository _gustos;
-        private readonly CompatibilidadAlimentariaService _compat;
-
-        public ObtenerGustosFiltradosUseCase(IUsuarioRepository usuarios,
-                                             IGustoRepository gustos,
-                                             CompatibilidadAlimentariaService compat)
+        public ObtenerGustosFiltradosUseCase(IUsuarioRepository usuarios, IGustoRepository gustos)
         {
             _usuarios = usuarios;
             _gustos = gustos;
-            _compat = compat;
         }
 
-    
+        public async Task<List<Gusto>> HandleAsync(string firebaseUid, CancellationToken ct)
+        {
+            var usuario = await _usuarios.GetByFirebaseUidAsync(firebaseUid, ct)
+                          ?? throw new Exception("Usuario no encontrado");
 
-        /* public async Task<GustosFiltradosResponse> HandleAsync(string firebaseUid, CancellationToken ct)
-         {
-             var usuario = await _usuarios.GetByFirebaseUidAsync(firebaseUid, ct);
-             if (usuario is null) throw new AppException("Usuario no encontrado");
 
-             var todos = await _gustos.GetAllAsync(ct);  
-             var (validos, conflictos) = _compat.FiltrarGustos(todos, usuario.Restricciones, usuario.CondicionesMedicas);
+            var todosLosGustos = await _gustos.GetAllAsync(ct);
 
-             return new GustosFiltradosResponse(
-                 validos.Select(g => new GustoDto(g.Id, g.Nombre, g.ImagenUrl)).ToList(),
-                 conflictos.Select(c => new GustoConflictoDto(c.gusto.Id, c.gusto.Nombre, c.motivo)).ToList()
-             );
-         }
-        */
+
+            var tagsProhibidos = usuario.Restricciones
+                .SelectMany(r => r.TagsProhibidos)
+                .Concat(usuario.CondicionesMedicas.SelectMany(c => c.TagsCriticos))
+                .Select(t => t.NombreNormalizado)
+                .Distinct()
+                .ToHashSet();
+
+            var gustosFiltrados = todosLosGustos
+                .Where(g => !g.Tags.Any(t => tagsProhibidos.Contains(t.NombreNormalizado)))
+                .ToList();
+
+          
+            return gustosFiltrados;
+        }
     }
-}
+    }

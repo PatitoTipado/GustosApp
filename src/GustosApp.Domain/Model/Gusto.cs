@@ -13,7 +13,7 @@ namespace GustosApp.Domain.Model
         public string? ImagenUrl { get; set; }
         public ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();
 
-        public ICollection<Tag> Tags { get; private set; } = new List<Tag>();
+        public ICollection<Tag> Tags { get;  set; } = new List<Tag>();
 
     }
 

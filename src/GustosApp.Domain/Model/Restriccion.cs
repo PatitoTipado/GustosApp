@@ -15,7 +15,7 @@ namespace GustosApp.Domain.Model
 
         // lista de tags prohibidos (por ejemplo: harina, gluten, azúcar)
 
-        public ICollection<Tag> TagsProhibidos { get; private set; } = new List<Tag>();
+        public ICollection<Tag> TagsProhibidos { get;  set; } = new List<Tag>();
 
 
     }

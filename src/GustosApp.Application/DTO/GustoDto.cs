@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace GustosApp.Application.DTO
 {
-    internal class GustoDto
-    {
-    }
+    public record GustoDto(Guid Id, string Nombre, string? ImagenUrl);
+
 }

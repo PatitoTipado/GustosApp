@@ -79,6 +79,9 @@ public class GustosDbContext : DbContext
             .Property(t => t.Tipo)
             .HasConversion<string>();
 
+        modelBuilder.Entity<Tag>()
+        .Ignore(t => t.NombreNormalizado);
+
 
         // Configuración de relaciones para grupos
         modelBuilder.Entity<Grupo>()

@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 namespace GustosApp.Application.DTO
 {
-   public record GuardarCondicionesResponse(string mensaje,List<string> CondicionesMedicas);
+   public record GuardarCondicionesResponse(string mensaje,List<string> GustosRemovidos);
 }

@@ -19,28 +19,30 @@ namespace GustosApp.Application.UseCases
             _gustos = gustos;
         }
 
-        public async Task<List<Gusto>> HandleAsync(string firebaseUid, CancellationToken ct)
+        public async Task<List<GustoDto>> HandleAsync(string firebaseUid, CancellationToken ct)
         {
             var usuario = await _usuarios.GetByFirebaseUidAsync(firebaseUid, ct)
-                          ?? throw new Exception("Usuario no encontrado");
-
+                ?? throw new Exception("Usuario no encontrado");
 
             var todosLosGustos = await _gustos.GetAllAsync(ct);
 
-
-            var tagsProhibidos = usuario.Restricciones
-                .SelectMany(r => r.TagsProhibidos)
-                .Concat(usuario.CondicionesMedicas.SelectMany(c => c.TagsCriticos))
+            var tagsProhibidos = (usuario.Restricciones ?? Enumerable.Empty<Restriccion>())
+                .SelectMany(r => r.TagsProhibidos ?? Enumerable.Empty<Tag>())
+                .Concat((usuario.CondicionesMedicas ?? Enumerable.Empty<CondicionMedica>())
+                    .SelectMany(c => c.TagsCriticos ?? Enumerable.Empty<Tag>()))
                 .Select(t => t.NombreNormalizado)
-                .Distinct()
+                .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToHashSet();
 
+          
             var gustosFiltrados = todosLosGustos
-                .Where(g => !g.Tags.Any(t => tagsProhibidos.Contains(t.NombreNormalizado)))
+                .Where(g => !(g.Tags ?? new List<Tag>())
+                    .Any(t => tagsProhibidos.Contains(t.NombreNormalizado)))
                 .ToList();
 
-          
-            return gustosFiltrados;
+            return gustosFiltrados
+                .Select(g => new GustoDto(g.Id, g.Nombre, g.ImagenUrl))
+                .ToList();
         }
     }
-    }
+}

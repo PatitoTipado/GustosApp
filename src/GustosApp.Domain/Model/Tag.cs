@@ -4,11 +4,14 @@
     {
         public Guid Id { get; set; }
 
-        public string NombreNormalizado => NombreNormalizado.Trim().ToLowerInvariant();
+        public string Nombre { get; set; } = string.Empty;
+
+        public string NombreNormalizado => Nombre.Trim().ToLowerInvariant();
 
         public TipoTag Tipo { get; set; }
 
 
+        
     }
 
     public enum TipoTag

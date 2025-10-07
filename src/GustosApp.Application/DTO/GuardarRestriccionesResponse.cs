@@ -6,7 +6,5 @@ using System.Threading.Tasks;
 
 namespace GustosApp.Application.DTO
 {
-    internal class GuardarRestriccionesResponse
-    {
-    }
+    public record GuardarRestriccionesResponse(string Mensaje, List<string> GustosRemovidos);
 }

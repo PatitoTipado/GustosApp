@@ -22,14 +22,14 @@ namespace GustosApp.Application.UseCases
             var usuario = await _usuarioRepo.GetByFirebaseUidAsync(uid, ct)
                 ?? throw new Exception("Usuario no encontrado.");
 
-            // 1️⃣ Validar pasos previos completados
+          
             if (!usuario.Restricciones.Any())
                 throw new InvalidOperationException("Debe seleccionar al menos una restricción.");
 
             if (!usuario.Gustos.Any())
                 throw new InvalidOperationException("Debe seleccionar al menos un gusto.");
 
-            // 2️⃣ Validar compatibilidad antes de finalizar
+          
             var tagsRestricciones = usuario.Restricciones
                 .SelectMany(r => r.TagsProhibidos.Select(t => t.NombreNormalizado))
                 .ToHashSet();
@@ -44,7 +44,7 @@ namespace GustosApp.Application.UseCases
                     $"No se puede finalizar: algunos gustos son incompatibles con tus restricciones: {string.Join(", ", gustosInvalidos.Select(g => g.Nombre))}");
             }
 
-            // 3️⃣ Marcar como completado
+           
             usuario.AvanzarPaso(RegistroPaso.Finalizado);
 
             await _usuarioRepo.SaveChangesAsync(ct);

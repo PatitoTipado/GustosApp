@@ -25,6 +25,7 @@ namespace GustosApp.Infraestructure.Repositories
         {
             return await _dbContext.Restricciones
                 .Where(r => ids.Contains(r.Id))
+                .Include(r => r.TagsProhibidos)
                 .ToListAsync(ct);
         }
     }

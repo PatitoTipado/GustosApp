@@ -73,6 +73,14 @@ builder.Services.AddScoped<AbandonarGrupoUseCase>();
 builder.Services.AddScoped<ObtenerGruposUsuarioUseCase>();
 builder.Services.AddScoped<ObtenerInvitacionesUsuarioUseCase>();
 builder.Services.AddScoped<AceptarInvitacionGrupoUseCase>();
+builder.Services.AddScoped<GuardarCondicionesUseCase>();
+builder.Services.AddScoped<GuardarGustosUseCase>();
+builder.Services.AddScoped<GuardarRestriccionesUseCase>();
+builder.Services.AddScoped<ObtenerGustosFiltradosUseCase>();
+builder.Services.AddScoped<ObtenerResumenRegistroUseCase>();
+builder.Services.AddScoped<FinalizarRegistroUseCase>();
+
+
 
 
 builder.Services.AddControllers();

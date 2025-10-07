@@ -25,6 +25,7 @@ namespace GustosApp.Infraestructure.Repositories
         {
             return await _dbContext.Gustos
                 .Where(r => ids.Contains(r.Id))
+                .Include(r => r.Tags)
                 .ToListAsync(ct);
         }
     }

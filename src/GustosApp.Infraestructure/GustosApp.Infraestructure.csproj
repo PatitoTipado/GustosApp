@@ -16,12 +16,24 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.17.0" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.17.0" />
+    <PackageReference Include="Tokenizers.HuggingFace" Version="2.21.4" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\GustosApp.Domain\GustosApp.Domain.csproj" />
 	  <ProjectReference Include="..\GustosApp.Application\GustosApp.Application.csproj" />
 
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="ML\model.onnx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="ML\tokenizer.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

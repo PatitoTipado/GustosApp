@@ -1,4 +1,6 @@
 using GustosApp.Infraestructure;
+using GustosApp.Infraestructure.ML;
+using GustosApp.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
@@ -7,7 +9,6 @@ using GustosApp.Domain.Interfaces;
 using GustosApp.Infraestructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +42,22 @@ builder.Services
             ValidateLifetime = true
         };
     });
+
+builder.Services.AddSingleton(sp =>
+{
+    var env = sp.GetRequiredService<IWebHostEnvironment>();
+    var modelPath = Path.Combine(env.ContentRootPath, "ML", "model.onnx");
+    return new OnnxInferenceService(modelPath);
+});
+
+builder.Services.AddSingleton(sp =>
+{
+    var env = sp.GetRequiredService<IWebHostEnvironment>();
+    var tokPath = Path.Combine(env.ContentRootPath, "ML", "tokenizer.json");
+    return new TokenizerAdapter(tokPath);
+});
+
+builder.Services.AddScoped<IEmbeddingService, OnnxEmbeddingService>();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>

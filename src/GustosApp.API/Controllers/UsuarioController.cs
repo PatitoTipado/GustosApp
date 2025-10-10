@@ -62,7 +62,7 @@ namespace GustosApp.API.Controllers
                 string.IsNullOrWhiteSpace(request.Email))
                
             {
-                return BadRequest( new { message = "Nombre, Apellido, Email son obligatorios." });
+                return BadRequest( new { message = "Nombre, Apellido, Email y Usuario son obligatorios." });
             }
 
             var resp = await _registrar.HandleAsync(firebaseUid, request, ct);

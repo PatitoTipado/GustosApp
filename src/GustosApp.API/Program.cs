@@ -74,6 +74,7 @@ builder.Services.AddScoped<IGustoRepository, GustoRepositoryEF>();
 builder.Services.AddScoped<IGrupoRepository, GrupoRepositoryEF>();
 builder.Services.AddScoped<IMiembroGrupoRepository, MiembroGrupoRepositoryEF>();
 builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepositoryEF>();
+builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
 
 // =====================
 //   UseCases existentes
@@ -95,6 +96,7 @@ builder.Services.AddScoped<GuardarRestriccionesUseCase>();
 builder.Services.AddScoped<ObtenerGustosFiltradosUseCase>();
 builder.Services.AddScoped<ObtenerResumenRegistroUseCase>();
 builder.Services.AddScoped<FinalizarRegistroUseCase>();
+builder.Services.AddScoped<BuscarRestaurantesCercanosUseCase>();
 
 // =====================
 //   Restaurantes (DI)
@@ -102,9 +104,16 @@ builder.Services.AddScoped<FinalizarRegistroUseCase>();
 // antes: builder.Services.AddAplicacionRestaurantes();
 GustosApp.Infraestructure.DependencyInjection.AddInfraRestaurantes(builder.Services);
 
+<<<<<<< HEAD
 // =====================
 //   Swagger
 // =====================
+=======
+
+builder.Services.AddHttpClient();
+builder.Services.AddControllers();
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+>>>>>>> mapascontroller
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {

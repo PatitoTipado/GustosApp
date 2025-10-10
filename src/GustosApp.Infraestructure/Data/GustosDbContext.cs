@@ -15,8 +15,17 @@ public class GustosDbContext : DbContext
     public DbSet<Grupo> Grupos { get; set; }
     public DbSet<MiembroGrupo> MiembrosGrupos { get; set; }
     public DbSet<InvitacionGrupo> InvitacionesGrupos { get; set; }
+<<<<<<< HEAD
     
     public DbSet<Restaurante> Restaurantes { get; set; }
+=======
+    public DbSet<Tag> Tags { get; set; }
+
+    public DbSet<Restaurante> Restaurantes { get; set; }
+
+
+
+>>>>>>> mapascontroller
 
     public GustosDbContext(DbContextOptions<GustosDbContext> options)
     : base(options) { }

@@ -15,6 +15,8 @@ public class GustosDbContext : DbContext
     public DbSet<Grupo> Grupos { get; set; }
     public DbSet<MiembroGrupo> MiembrosGrupos { get; set; }
     public DbSet<InvitacionGrupo> InvitacionesGrupos { get; set; }
+    
+    public DbSet<Restaurante> Restaurantes { get; set; }
 
     public GustosDbContext(DbContextOptions<GustosDbContext> options)
     : base(options) { }
@@ -185,5 +187,8 @@ public class GustosDbContext : DbContext
             new CondicionMedica { Id = Guid.Parse("33333333-3333-3333-3333-333333333337"), Nombre = "Síndrome del intestino irritable" },
             new CondicionMedica { Id = Guid.Parse("33333333-3333-3333-3333-333333333338"), Nombre = "Insuficiencia renal" },
             new CondicionMedica { Id = Guid.Parse("33333333-3333-3333-3333-333333333339"), Nombre = "Colesterol alto" });
+    
+    modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.RestauranteConfiguration());
+
     }
 }

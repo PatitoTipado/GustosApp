@@ -1,0 +1,23 @@
+
+using System;
+using System.Collections.Generic;
+
+namespace GustosApp.Domain.Model
+{
+    public class Restaurante
+    {
+        public Guid Id { get; set; }
+        public string PropietarioUid { get; set; } = string.Empty; // Firebase uid del dueño
+        public string Nombre { get; set; } = string.Empty;
+        public string NombreNormalizado { get; set; } = string.Empty;
+        public string Direccion { get; set; } = string.Empty;
+        public double Latitud { get; set; }
+        public double Longitud { get; set; }
+        /// <summary>
+        /// JSON con horarios por día y tz. Se persiste como string para simplicidad inicial.
+        /// </summary>
+        public string HorariosJson { get; set; } = "{}";
+        public DateTime CreadoUtc { get; set; }
+        public DateTime ActualizadoUtc { get; set; }
+    }
+}

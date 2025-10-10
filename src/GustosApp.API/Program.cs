@@ -96,8 +96,8 @@ builder.Services.AddScoped<GuardarRestriccionesUseCase>();
 builder.Services.AddScoped<ObtenerGustosFiltradosUseCase>();
 builder.Services.AddScoped<ObtenerResumenRegistroUseCase>();
 builder.Services.AddScoped<FinalizarRegistroUseCase>();
-
-
+builder.Services.AddScoped<SugerirGustosUseCase>();
+builder.Services.AddScoped<SugerirGustosUseCase>(); 
 
 
 builder.Services.AddControllers();

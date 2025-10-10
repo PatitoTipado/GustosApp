@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Security.Claims;
 using GustosApp.Application.DTO;
 using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Interfaces;
@@ -25,10 +26,14 @@ namespace GustosApp.Application.UseCases
             _embeddings = embeddings;
         }
 
-        public async Task<List<GustoResponse>> HandleAsync(string firebaseUid, int top = 5, CancellationToken ct = default)
+        public async Task<List<GustoResponse>> HandleAsync(ClaimsPrincipal user, int top = 5, CancellationToken ct = default)
         {
+            var firebaseUid = user.FindFirst("user_id")?.Value
+                        ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                        ?? user.FindFirst("sub")?.Value;
+
             if (string.IsNullOrWhiteSpace(firebaseUid))
-                return new List<GustoResponse>();
+                throw new UnauthorizedAccessException("No se encontró el UID de Firebase en el token.");
 
             var usuario = await _usuarios.GetByFirebaseUidWithGustosAsync(firebaseUid, ct);
             if (usuario == null)
@@ -36,14 +41,12 @@ namespace GustosApp.Application.UseCases
 
             var todos = await _usuarios.GetAllWithGustosAsync(ct) ?? new List<Domain.Model.Usuario>();
             var userGustosIds = new HashSet<Guid>(usuario.Gustos.Select(g => g.Id));
-            // Si hay servicio de embeddings, intentar ranking semántico
             if (_embeddings != null)
             {
                 try
                 {
                     var allGustos = await _gustos.GetAllAsync(ct);
 
-                    // crear embedding del usuario: concatenar nombres de sus gustos
                     var textoUsuario = string.Join(" ", usuario.Gustos.Select(g => g.Nombre));
                     var userVec = await _embeddings.GetTextEmbeddingAsync(textoUsuario, ct);
 
@@ -71,15 +74,12 @@ namespace GustosApp.Application.UseCases
                     }).ToList();
 
                     if (result.Any()) return result;
-                    // si no hay resultado, caer al fallback
                 }
                 catch
                 {
-                    // en caso de error con embeddings, seguir al fallback
                 }
             }
 
-            // Fallback: co-ocurrencia / popularidad (original)
             var scores = new Dictionary<Guid, int>();
             foreach (var other in todos)
             {

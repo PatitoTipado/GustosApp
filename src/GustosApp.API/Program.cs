@@ -104,16 +104,16 @@ builder.Services.AddScoped<BuscarRestaurantesCercanosUseCase>();
 // antes: builder.Services.AddAplicacionRestaurantes();
 GustosApp.Infraestructure.DependencyInjection.AddInfraRestaurantes(builder.Services);
 
-<<<<<<< HEAD
+
 // =====================
 //   Swagger
 // =====================
-=======
+
 
 builder.Services.AddHttpClient();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
->>>>>>> mapascontroller
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {

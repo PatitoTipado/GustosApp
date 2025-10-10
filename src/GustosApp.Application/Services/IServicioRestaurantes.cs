@@ -3,6 +3,7 @@ namespace GustosApp.Application.Services
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using GustosApp.Application.DTO;
     using GustosApp.Application.DTOs.Restaurantes;
 
     public interface IServicioRestaurantes

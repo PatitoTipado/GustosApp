@@ -46,6 +46,7 @@ namespace GustosApp.Application.UseCases
                 {
                     PlaceId = r.PlaceId,
                     Nombre = r.Name,
+                    NombreNormalizado = r.Name.Trim().ToLowerInvariant(),
                     Direccion = r.Vicinity ?? "",
                     Latitud = r.Geometry.Location.Lat,
                     Longitud = r.Geometry.Location.Lng,

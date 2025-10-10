@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace GustosApp.Infraestructure.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -39,6 +39,32 @@ namespace GustosApp.Infraestructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Restaurantes",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    PropietarioUid = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
+                    Nombre = table.Column<string>(type: "nvarchar(160)", maxLength: 160, nullable: false),
+                    NombreNormalizado = table.Column<string>(type: "nvarchar(160)", maxLength: 160, nullable: false),
+                    Direccion = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
+                    Latitud = table.Column<double>(type: "float", nullable: false),
+                    Longitud = table.Column<double>(type: "float", nullable: false),
+                    HorariosJson = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreadoUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ActualizadoUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    PlaceId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Rating = table.Column<double>(type: "float", nullable: true),
+                    CantidadResenas = table.Column<int>(type: "int", nullable: true),
+                    Categoria = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ImagenUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UltimaActualizacion = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Restaurantes", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Restricciones",
                 columns: table => new
                 {
@@ -48,6 +74,19 @@ namespace GustosApp.Infraestructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Restricciones", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Tags",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Tipo = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Tags", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -62,11 +101,84 @@ namespace GustosApp.Infraestructure.Migrations
                     IdUsuario = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     FotoPerfilUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     FechaRegistro = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Activo = table.Column<bool>(type: "bit", nullable: false)
+                    Activo = table.Column<bool>(type: "bit", nullable: false),
+                    PasoActual = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Usuarios", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CondicionMedicaTags",
+                columns: table => new
+                {
+                    CondicionMedicaId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TagsCriticosId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CondicionMedicaTags", x => new { x.CondicionMedicaId, x.TagsCriticosId });
+                    table.ForeignKey(
+                        name: "FK_CondicionMedicaTags_CondicionesMedicas_CondicionMedicaId",
+                        column: x => x.CondicionMedicaId,
+                        principalTable: "CondicionesMedicas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_CondicionMedicaTags_Tags_TagsCriticosId",
+                        column: x => x.TagsCriticosId,
+                        principalTable: "Tags",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "GustoTags",
+                columns: table => new
+                {
+                    GustoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TagsId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GustoTags", x => new { x.GustoId, x.TagsId });
+                    table.ForeignKey(
+                        name: "FK_GustoTags_Gustos_GustoId",
+                        column: x => x.GustoId,
+                        principalTable: "Gustos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_GustoTags_Tags_TagsId",
+                        column: x => x.TagsId,
+                        principalTable: "Tags",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RestriccionTags",
+                columns: table => new
+                {
+                    RestriccionId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TagsProhibidosId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RestriccionTags", x => new { x.RestriccionId, x.TagsProhibidosId });
+                    table.ForeignKey(
+                        name: "FK_RestriccionTags_Restricciones_RestriccionId",
+                        column: x => x.RestriccionId,
+                        principalTable: "Restricciones",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_RestriccionTags_Tags_TagsProhibidosId",
+                        column: x => x.TagsProhibidosId,
+                        principalTable: "Tags",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -295,6 +407,11 @@ namespace GustosApp.Infraestructure.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_CondicionMedicaTags_TagsCriticosId",
+                table: "CondicionMedicaTags",
+                column: "TagsCriticosId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Grupos_AdministradorId",
                 table: "Grupos",
                 column: "AdministradorId");
@@ -305,6 +422,11 @@ namespace GustosApp.Infraestructure.Migrations
                 column: "CodigoInvitacion",
                 unique: true,
                 filter: "[CodigoInvitacion] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GustoTags_TagsId",
+                table: "GustoTags",
+                column: "TagsId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_InvitacionesGrupos_GrupoId",
@@ -331,6 +453,30 @@ namespace GustosApp.Infraestructure.Migrations
                 name: "IX_MiembrosGrupos_UsuarioId",
                 table: "MiembrosGrupos",
                 column: "UsuarioId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Restaurantes_Latitud_Longitud",
+                table: "Restaurantes",
+                columns: new[] { "Latitud", "Longitud" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Restaurantes_NombreNormalizado",
+                table: "Restaurantes",
+                column: "NombreNormalizado",
+                unique: true,
+                filter: "[NombreNormalizado] IS NOT NULL AND [NombreNormalizado] <> ''");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Restaurantes_PropietarioUid",
+                table: "Restaurantes",
+                column: "PropietarioUid",
+                unique: true,
+                filter: "[PropietarioUid] IS NOT NULL AND [PropietarioUid] <> ''");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RestriccionTags_TagsProhibidosId",
+                table: "RestriccionTags",
+                column: "TagsProhibidosId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UsuarioCondicionesMedicas_UsuariosId",
@@ -370,10 +516,22 @@ namespace GustosApp.Infraestructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "CondicionMedicaTags");
+
+            migrationBuilder.DropTable(
+                name: "GustoTags");
+
+            migrationBuilder.DropTable(
                 name: "InvitacionesGrupos");
 
             migrationBuilder.DropTable(
                 name: "MiembrosGrupos");
+
+            migrationBuilder.DropTable(
+                name: "Restaurantes");
+
+            migrationBuilder.DropTable(
+                name: "RestriccionTags");
 
             migrationBuilder.DropTable(
                 name: "UsuarioCondicionesMedicas");
@@ -386,6 +544,9 @@ namespace GustosApp.Infraestructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Grupos");
+
+            migrationBuilder.DropTable(
+                name: "Tags");
 
             migrationBuilder.DropTable(
                 name: "CondicionesMedicas");

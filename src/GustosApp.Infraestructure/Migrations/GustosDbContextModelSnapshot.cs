@@ -396,9 +396,14 @@ namespace GustosApp.Infraestructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-<<<<<<< HEAD
                     b.Property<DateTime>("ActualizadoUtc")
                         .HasColumnType("datetime2");
+
+                    b.Property<int?>("CantidadResenas")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Categoria")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreadoUtc")
                         .HasColumnType("datetime2");
@@ -410,19 +415,9 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.Property<string>("HorariosJson")
                         .IsRequired()
-=======
-                    b.Property<int?>("CantidadResenas")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Categoria")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Direccion")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ImagenUrl")
->>>>>>> mapascontroller
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<double>("Latitud")
@@ -433,7 +428,6 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-<<<<<<< HEAD
                         .HasMaxLength(160)
                         .HasColumnType("nvarchar(160)");
 
@@ -442,28 +436,13 @@ namespace GustosApp.Infraestructure.Migrations
                         .HasMaxLength(160)
                         .HasColumnType("nvarchar(160)");
 
-                    b.Property<string>("PropietarioUid")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NombreNormalizado")
-                        .IsUnique();
-
-                    b.HasIndex("PropietarioUid")
-                        .IsUnique();
-
-                    b.HasIndex("Latitud", "Longitud");
-
-                    b.ToTable("Restaurantes", (string)null);
-=======
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("PlaceId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PropietarioUid")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<double?>("Rating")
                         .HasColumnType("float");
@@ -473,8 +452,17 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Restaurantes");
->>>>>>> mapascontroller
+                    b.HasIndex("NombreNormalizado")
+                        .IsUnique()
+                        .HasFilter("[NombreNormalizado] IS NOT NULL AND [NombreNormalizado] <> ''");
+
+                    b.HasIndex("PropietarioUid")
+                        .IsUnique()
+                        .HasFilter("[PropietarioUid] IS NOT NULL AND [PropietarioUid] <> ''");
+
+                    b.HasIndex("Latitud", "Longitud");
+
+                    b.ToTable("Restaurantes", (string)null);
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.Restriccion", b =>

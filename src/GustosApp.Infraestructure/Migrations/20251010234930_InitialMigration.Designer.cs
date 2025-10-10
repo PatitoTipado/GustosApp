@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GustosApp.Infraestructure.Migrations
 {
     [DbContext(typeof(GustosDbContext))]
-    [Migration("20251010014133_Inicial_Restaurantes")]
-    partial class Inicial_Restaurantes
+    [Migration("20251010234930_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -402,6 +402,12 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Property<DateTime>("ActualizadoUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("CantidadResenas")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Categoria")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreadoUtc")
                         .HasColumnType("datetime2");
 
@@ -412,6 +418,9 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.Property<string>("HorariosJson")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImagenUrl")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<double>("Latitud")
@@ -430,18 +439,29 @@ namespace GustosApp.Infraestructure.Migrations
                         .HasMaxLength(160)
                         .HasColumnType("nvarchar(160)");
 
-                    b.Property<string>("PropietarioUid")
+                    b.Property<string>("PlaceId")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PropietarioUid")
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
+
+                    b.Property<double?>("Rating")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime>("UltimaActualizacion")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
                     b.HasIndex("NombreNormalizado")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[NombreNormalizado] IS NOT NULL AND [NombreNormalizado] <> ''");
 
                     b.HasIndex("PropietarioUid")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[PropietarioUid] IS NOT NULL AND [PropietarioUid] <> ''");
 
                     b.HasIndex("Latitud", "Longitud");
 
@@ -536,7 +556,7 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Tag");
+                    b.ToTable("Tags");
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.Usuario", b =>

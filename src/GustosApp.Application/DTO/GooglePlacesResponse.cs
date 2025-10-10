@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace GustosApp.Application.DTO
@@ -13,13 +14,28 @@ namespace GustosApp.Application.DTO
 
     public class GooglePlaceResult
     {
+        [JsonPropertyName("place_id")]
         public string PlaceId { get; set; } = string.Empty;
+
+        [JsonPropertyName("name")]
         public string Name { get; set; } = string.Empty;
+
+        [JsonPropertyName("vicinity")]
         public string? Vicinity { get; set; }
-        public double Rating { get; set; }
-        public int UserRatingsTotal { get; set; }
+
+        [JsonPropertyName("rating")]
+        public double? Rating { get; set; }
+
+        [JsonPropertyName("user_ratings_total")]
+        public int? UserRatingsTotal { get; set; }
+
+        [JsonPropertyName("types")]
         public List<string> Types { get; set; } = new();
+
+        [JsonPropertyName("geometry")]
         public Geometry Geometry { get; set; } = new();
+
+        [JsonPropertyName("photos")]
         public List<Photo>? Photos { get; set; }
     }
 

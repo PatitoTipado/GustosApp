@@ -8,7 +8,7 @@ namespace GustosApp.Application.DTO
 {
     public class RecomendacionDTO
     {
-        public int RestaurantId { get; set; }
+        public Guid RestaurantId { get; set; }
         public string Nombre { get; set; }
         public double Score { get; set; }
 

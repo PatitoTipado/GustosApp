@@ -1,48 +1,51 @@
 using GustosApp.Application.DTO;
 using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Common;
+using GustosApp.Domain.Interfaces;
+using GustosApp.Domain.Model;
 
 namespace GustosApp.Application.UseCases
 {
     public class SugerirGustosUseCase
     {
         private readonly IEmbeddingService _embeddingService;
-        //private readonly IRestaurantRepository _restaurantRepo;
+        private readonly IRestaurantRepository _restaurantRepo;
+
 
         // Estos valores deberían ser cargados desde la configuración (API/Infra), no hardcodeados aquí.
         private const double UmbralMinimo = 0.1;
         private const double FactorPenalizacion = 0.1;
 
         // Constructor que recibe las dependencias (Inversión de Control)
-        public SugerirGustosUseCase(
-            IEmbeddingService embeddingService
-            //IRestaurantRepository restaurantRepo
-            )
+        public SugerirGustosUseCase(IEmbeddingService embeddingService, IRestaurantRepository restaurantRepo)
         {
             _embeddingService = embeddingService;
-            //_restaurantRepo = restaurantRepo;
+            _restaurantRepo = restaurantRepo;
         }
 
-        // Método que ejecuta el caso de uso
-        public List<RecomendacionDTO> Handle(int id=0, int maxResults = 10)
-            //grupos -> id y cada grupo va a tener 
-            //grupos - gustos 
+        // Método que ejecuta el caso de uso ,agrego el 3 parametro: CancellationToken ct = default
+        public async Task<List<RecomendacionDTO>> Handle(List<string> gustosUsuario, int maxResults = 10, CancellationToken ct = default)
+
+        //grupos -> id y cada grupo va a tener 
+        //grupos - gustos 
         {
             // 1. Obtención de datos (Usando repositorios) 
             // tmb deberiamos incluir en la query la exclusion de no match con restricciones y gustos
-            var restaurantes = getRestaurant();
+            //var restaurantes = getRestaurant();
+            var restaurantes = await _restaurantRepo.GetAllAsync(ct);
+            var resultados = new List<(Restaurante restaurante, double score)>();
 
             //obtenemos al usuario del cual queremos obtener su match
             //consulta por id para obtener los gustos
 
-            var gustosTexto = string.Join(" ", new List<string> { "carne a la parrilla", "asado", "parrilla" });
+            // var gustoUsuario = string.Join(" ", new List<string> { "carne a la parrilla", "asado", "parrilla" });
 
             // 2. Generar el Embedding del usuario (llamada a la interfaz IEmbeddingService)
             // El Use Case NO sabe que esto usa ONNX.
-            var userEmb = _embeddingService.GetEmbedding(gustosTexto);
-            var gustosUsuario = gustosTexto.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            // var userEmb = _embeddingService.GetEmbedding(string.Join(" ", gustoUsuario));
+            //  var gustosUsuario = gustoUsuario.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var userEmb = _embeddingService.GetEmbedding(string.Join(" ", gustosUsuario));
 
-            var resultados = new List<(Restaurant restaurant, double score)>();
 
             foreach (var rest in restaurantes)
             {
@@ -57,7 +60,7 @@ namespace GustosApp.Application.UseCases
                 {
                     // Si el restaurante no tiene ninguna especialidad que coincida con el gusto del usuario
                     //habria que plantear capaz con lo que menos gustos coincida ahora si
-                    if (!rest.Especialidad.Any(especialidad => especialidad.ToLower().Contains(gusto)))
+                    if (!rest.Especialidad.Any(e => e.Nombre != null && e.Nombre.ToLower().Contains(gusto.ToLower())))
                     {
                         penalizacion += FactorPenalizacion;
                     }
@@ -75,10 +78,17 @@ namespace GustosApp.Application.UseCases
             // 3. Mapeo y Retorno
             return resultados
                 .OrderByDescending(x => x.score)
-                .Select(x => new RecomendacionDTO { RestaurantId = x.restaurant.Id, Score = x.score })
+                .Take(maxResults)
+                .Select(x => new RecomendacionDTO { RestaurantId = x.restaurante.Id, Score = x.score })
                 .ToList();
+
         }
-        public static List<Restaurant> getRestaurant()
+    }
+}
+    
+
+    
+        /*public static List<Restaurant> getRestaurant()
         {
             return new List<Restaurant>
         {
@@ -87,7 +97,7 @@ namespace GustosApp.Application.UseCases
         new Restaurant(103, new List<string>{"vegetariano","vegano","ensaladas","smoothies","bowls veganos","opciones saludables"}),
         new Restaurant(104, new List<string>{"pizza","pizza vegetariana","masa fina","ingredientes frescos","variedad de pizzas"})
         };
-        }
+        }*/
         /*public static List<UserPreference> ObtenerUsuariosEjemplo()
         {
             return new List<UserPreference>
@@ -101,11 +111,13 @@ namespace GustosApp.Application.UseCases
         };
         }*/
 
-    }
+    
 
     /*
  * esta es una chanchada que hago que luego la tenes que reemplazar para poder pegarle a los repos de verdad
  */
+
+    /*
     public class Restaurant
     {
 
@@ -144,5 +156,5 @@ namespace GustosApp.Application.UseCases
         }
     }
 
-}
+}*/
 

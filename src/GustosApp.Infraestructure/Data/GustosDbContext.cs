@@ -15,6 +15,9 @@ public class GustosDbContext : DbContext
     public DbSet<Grupo> Grupos { get; set; }
     public DbSet<MiembroGrupo> MiembrosGrupos { get; set; }
     public DbSet<InvitacionGrupo> InvitacionesGrupos { get; set; }
+    public DbSet<Restaurante> Restaurante { get; set; }
+    public DbSet<RestauranteEspecialidad> RestauranteEspecialidades { get; set; }
+
 
     public GustosDbContext(DbContextOptions<GustosDbContext> options)
     : base(options) { }
@@ -134,6 +137,11 @@ public class GustosDbContext : DbContext
         modelBuilder.Entity<InvitacionGrupo>()
             .Property(i => i.Estado)
             .HasConversion<int>();
+
+        modelBuilder.Entity<Restaurante>()
+       .HasMany(r => r.Especialidad)
+       .WithOne(e => e.Restaurante)
+       .HasForeignKey(e => e.RestauranteId);
 
         modelBuilder.Entity<Gusto>().HasData(
             new Gusto { Id = Guid.Parse("11111111-1111-1111-1111-111111111111"), Nombre = "Pizza" },

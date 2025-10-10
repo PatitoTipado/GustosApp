@@ -8,6 +8,7 @@ namespace GustosApp.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class RecomendadorController : ControllerBase
     {
         private readonly ObtenerGustosUseCase _obtenerGustos;
@@ -19,7 +20,8 @@ namespace GustosApp.API.Controllers
             _sugerirGustos = sugerirGustos;
         }
 
-        [HttpGet("recomendaciones")]
+        
+       /* [HttpGet("recomendaciones")]
         public async Task<IActionResult> GetRecommendations([FromQuery] int top = 10, CancellationToken ct = default)
         {
             try
@@ -31,14 +33,36 @@ namespace GustosApp.API.Controllers
             {
                 return Unauthorized(new { message = "Token de autenticación inválido." });
             }
-        }
+        }*/
+        
 
+        [HttpGet("recomendaciones")]
+        public async Task<IActionResult> GetRecommendations([FromQuery] int top = 10, CancellationToken ct = default)
+        {
+            var firebaseUid = User.FindFirst("user_id")?.Value
+                           ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                           ?? User.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrWhiteSpace(firebaseUid)) { 
+                return Unauthorized(new { message = "No se encontró el UID de Firebase en el token." });
+            }
+
+            var gustos = await _obtenerGustos.Handle(firebaseUid, ct);
+            var recommendations = await _sugerirGustos.Handle(gustos, top, ct);
+            
+            return Ok(new { recommendations });
+
+        }
+    }
+        
+
+        /*
         [HttpGet("gustos/all")]
         public async Task<IActionResult> GetAllGustos(CancellationToken ct = default)
         {
             var gustos = await _obtenerGustos.HandleAsync(ct);
             return Ok(gustos);
-        }
+        }*/
 
-    }
+    
 }

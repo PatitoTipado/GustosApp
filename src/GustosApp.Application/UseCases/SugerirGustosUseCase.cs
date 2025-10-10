@@ -1,146 +1,150 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Threading;
-using System.Threading.Tasks;
 using GustosApp.Application.DTO;
 using GustosApp.Application.Interfaces;
-using GustosApp.Domain.Interfaces;
-using GustosApp.Domain.Model;
+using GustosApp.Domain.Common;
 
 namespace GustosApp.Application.UseCases
 {
-    public class SugerirGustosUseCase {
+    public class SugerirGustosUseCase
+    {
+        private readonly IEmbeddingService _embeddingService;
+        //private readonly IRestaurantRepository _restaurantRepo;
 
-        private readonly IUsuarioRepository _usuarios;
-        private readonly IGustoRepository _gustos;
-        private readonly IEmbeddingService? _embeddings;
+        // Estos valores deberían ser cargados desde la configuración (API/Infra), no hardcodeados aquí.
+        private const double UmbralMinimo = 0.1;
+        private const double FactorPenalizacion = 0.2;
 
-        public SugerirGustosUseCase(IUsuarioRepository usuario, IGustoRepository gusto, IEmbeddingService? embeddings = null)
+        // Constructor que recibe las dependencias (Inversión de Control)
+        public SugerirGustosUseCase(
+            IEmbeddingService embeddingService
+            //IRestaurantRepository restaurantRepo
+            )
         {
-            _usuarios = usuario;
-            _gustos = gusto;
-            _embeddings = embeddings;
+            _embeddingService = embeddingService;
+            //_restaurantRepo = restaurantRepo;
         }
 
-        public async Task<List<GustoResponse>> HandleAsync(string firebaseUid, int top = 5, CancellationToken ct = default)
+        // Método que ejecuta el caso de uso
+        public List<RecomendacionDTO> Handle(int id=0, int maxResults = 10)
+            //grupos -> id y cada grupo va a tener 
+            //grupos - gustos 
         {
-            if (string.IsNullOrWhiteSpace(firebaseUid))
-                return new List<GustoResponse>();
+            // 1. Obtención de datos (Usando repositorios) 
+            // tmb deberiamos incluir en la query la exclusion de no match con restricciones y gustos
+            var restaurantes = getRestaurant();
 
-            var usuario = await _usuarios.GetByFirebaseUidWithGustosAsync(firebaseUid, ct);
-            if (usuario == null)
-                return new List<GustoResponse>();
+            //obtenemos al usuario del cual queremos obtener su match
+            //consulta por id para obtener los gustos
 
-            var todos = await _usuarios.GetAllWithGustosAsync(ct) ?? new List<Domain.Model.Usuario>();
-            var userGustosIds = new HashSet<Guid>(usuario.Gustos.Select(g => g.Id));
-            // Si hay servicio de embeddings, intentar ranking semántico
-            if (_embeddings != null)
+            var gustosTexto = string.Join(" ", new List<string> { "carne a la parrilla", "asado", "parrilla" });
+
+            // 2. Generar el Embedding del usuario (llamada a la interfaz IEmbeddingService)
+            // El Use Case NO sabe que esto usa ONNX.
+            var userEmb = _embeddingService.GetEmbedding(gustosTexto);
+            var gustosUsuario = gustosTexto.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            var resultados = new List<(Restaurant restaurant, double score)>();
+
+            foreach (var rest in restaurantes)
             {
-                try
+                // A. Embeddings del restaurante (llamada al servicio de Infraestructura)
+                string especialidadesTexto = string.Join(" ", rest.Especialidad);
+                var baseEmb = _embeddingService.GetEmbedding(especialidadesTexto);
+
+                // D. Cálculo de la Penalización (Lógica de Aplicación/Negocio)
+                double penalizacion = 0;
+                // ... (Tu lógica de penalización usando rest.Especialidad y gustosUsuario) ...
+                foreach (var gusto in gustosUsuario)
                 {
-                    var allGustos = await _gustos.GetAllAsync(ct);
-
-                    // crear embedding del usuario: concatenar nombres de sus gustos
-                    var textoUsuario = string.Join(" ", usuario.Gustos.Select(g => g.Nombre));
-                    var userVec = await _embeddings.GetTextEmbeddingAsync(textoUsuario, ct);
-
-                    var candidates = new List<(Guid id, double score)>();
-
-                    foreach (var g in allGustos)
+                    // Si el restaurante no tiene ninguna especialidad que coincida con el gusto del usuario
+                    //habria que plantear capaz con lo que menos gustos coincida ahora si
+                    if (!rest.Especialidad.Any(especialidad => especialidad.ToLower().Contains(gusto)))
                     {
-                        if (userGustosIds.Contains(g.Id)) continue;
-                        var vecG = await _embeddings.GetTextEmbeddingAsync(g.Nombre, ct);
-                        var sim = CosineSimilarity(userVec, vecG);
-                        candidates.Add((g.Id, sim));
-                    }
-
-                    var gustoById = (await _gustos.GetAllAsync(ct)).ToDictionary(g => g.Id);
-
-                    var topIds = candidates.OrderByDescending(c => c.score)
-                                            .Take(top)
-                                            .Select(c => c.id)
-                                            .ToList();
-
-                    var result = topIds.Select(id =>
-                    {
-                        if (gustoById.TryGetValue(id, out var g)) return new GustoResponse(g.Id, g.Nombre, g.ImagenUrl);
-                        return new GustoResponse(id, "Gusto desconocido", null);
-                    }).ToList();
-
-                    if (result.Any()) return result;
-                    // si no hay resultado, caer al fallback
-                }
-                catch
-                {
-                    // en caso de error con embeddings, seguir al fallback
-                }
-            }
-
-            // Fallback: co-ocurrencia / popularidad (original)
-            var scores = new Dictionary<Guid, int>();
-            foreach (var other in todos)
-            {
-                if (other.Id == usuario.Id) continue;
-                var comparte = other.Gustos.Any(g => userGustosIds.Contains(g.Id));
-                if (!comparte) continue;
-                foreach (var g in other.Gustos)
-                {
-                    if (userGustosIds.Contains(g.Id)) continue;
-                    if (!scores.ContainsKey(g.Id)) scores[g.Id] = 0;
-                    scores[g.Id] += 1;
-                }
-            }
-
-            if (!scores.Any())
-            {
-                var freq = new Dictionary<Guid, int>();
-                foreach (var u in todos)
-                {
-                    foreach (var g in u.Gustos)
-                    {
-                        if (userGustosIds.Contains(g.Id)) continue;
-                        if (!freq.ContainsKey(g.Id)) freq[g.Id] = 0;
-                        freq[g.Id] += 1;
+                        penalizacion += FactorPenalizacion;
                     }
                 }
-                foreach (var kv in freq) scores[kv.Key] = kv.Value;
+
+                // E. Score final (Lógica de Aplicación/Negocio)
+                double scoreBase = CosineSimilarity.Coseno(userEmb, baseEmb);
+                double scoreFinal = ((scoreBase) / 2) * (1 - penalizacion);
+
+                if (scoreFinal >= UmbralMinimo)
+                {
+                    resultados.Add((rest, scoreFinal));
+                }
             }
 
-            var allGustos2 = await _gustos.GetAllAsync(ct);
-            var gustoById2 = allGustos2.ToDictionary(g => g.Id);
-
-            var ordered = scores
-                .OrderByDescending(kv => kv.Value)
-                .ThenBy(kv => gustoById2.ContainsKey(kv.Key) ? gustoById2[kv.Key].Nombre : string.Empty)
-                .Take(top)
-                .Select(kv =>
-                {
-                    if (gustoById2.TryGetValue(kv.Key, out var gusto))
-                        return new GustoResponse(gusto.Id, gusto.Nombre, gusto.ImagenUrl);
-                    return new GustoResponse(kv.Key, "Gusto desconocido", null);
-                })
+            // 3. Mapeo y Retorno
+            return resultados
+                .OrderByDescending(x => x.score)
+                .Select(x => new RecomendacionDTO { RestaurantId = x.restaurant.Id, Score = x.score })
                 .ToList();
-
-            return ordered;
-            }
-
-        private static double CosineSimilarity(float[] a, float[] b)
-        {
-            if (a == null || b == null) return 0;
-            var len = Math.Min(a.Length, b.Length);
-            double dot = 0, na = 0, nb = 0;
-            for (int i = 0; i < len; i++)
-            {
-                dot += a[i] * b[i];
-                na += a[i] * a[i];
-                nb += b[i] * b[i];
-            }
-            var denom = Math.Sqrt(na) * Math.Sqrt(nb);
-            if (denom < 1e-8) return 0;
-            return dot / denom;
         }
-     }
+        public static List<Restaurant> getRestaurant()
+        {
+            return new List<Restaurant>
+        {
+        new Restaurant(101, new List<string>{"carne","parrilla","asado","pizza","pasta italiana","chimichurri"}),
+        new Restaurant(102, new List<string>{"sushi","ramen","nigiri","rolls","comida japonesa","cortes de carne"}),
+        new Restaurant(103, new List<string>{"vegetariano","vegano","ensaladas","smoothies","bowls veganos","opciones saludables"}),
+        new Restaurant(104, new List<string>{"pizza","pizza vegetariana","masa fina","ingredientes frescos","variedad de pizzas"})
+        };
+        }
+
+        /*public static List<UserPreference> ObtenerUsuariosEjemplo()
+        {
+            return new List<UserPreference>
+        {
+            new UserPreference(1, new List<string>{"carne a la parrilla", "asado", "parrilla"},new List<string>{"celiaco"}),
+            new UserPreference(2, new List<string>{"sushi", "platos japoneses", "comida japonesa", "rolls"} ,new List<string>{"gluten"}),
+            new UserPreference(3,new List<string>{"vegetariano", "comida saludable", "ensaladas", "smoothies"},
+            new List<string>{"carne", "celiaco", "gluten"}),
+            new UserPreference(4, new List<string>{"pizza", "pasta italiana", "masa fina"},
+            new List<string>{"gluten", "harinas", "carne", "sushi", "vegano"})
+        };
+        }*/
+
+    }
+
+    /*
+ * esta es una chanchada que hago que luego la tenes que reemplazar para poder pegarle a los repos de verdad
+ */
+    public class Restaurant
+    {
+
+        public int Id { get; set; }
+        public List<string> Especialidad { get; set; }
+
+        public Restaurant(int id, List<string> especialidad)
+        {
+            Id = id;
+            Especialidad = especialidad ?? new List<string>();
+        }
+        public override string ToString()
+        {
+            string resultado = "";
+            for (int i = 0; i < Especialidad.Count(); i++)
+            {
+                resultado += Especialidad[i] + " ,";
+            }
+
+            return resultado;
+        }
+    }
+
+    class UserPreference
+    {
+        public int Id { get; set; }
+
+        public List<string> Gustos { get; set; } // Ej: "Me gusta la carne a la parrilla"
+        public List<string> Restricciones { get; set; } // Ej: ["vegano", "sin gluten"]
+
+        public UserPreference(int id, List<string> gustos, List<string> restricciones)
+        {
+            Id = id;
+            Gustos = gustos ?? new List<string>();
+            Restricciones = restricciones ?? new List<string>();
+        }
+    }
+
 }
+

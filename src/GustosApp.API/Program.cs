@@ -47,14 +47,8 @@ builder.Services.AddSingleton(sp =>
 {
     var env = sp.GetRequiredService<IWebHostEnvironment>();
     var modelPath = Path.Combine(env.ContentRootPath, "ML", "model.onnx");
-    return new OnnxInferenceService(modelPath);
-});
-
-builder.Services.AddSingleton(sp =>
-{
-    var env = sp.GetRequiredService<IWebHostEnvironment>();
     var tokPath = Path.Combine(env.ContentRootPath, "ML", "tokenizer.json");
-    return new TokenizerAdapter(tokPath);
+    return new OnnxEmbeddingService(modelPath, tokPath);
 });
 
 builder.Services.AddScoped<IEmbeddingService, OnnxEmbeddingService>();

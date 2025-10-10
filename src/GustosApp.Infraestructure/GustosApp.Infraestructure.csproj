@@ -18,6 +18,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.17.0" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.17.0" />
+    <PackageReference Include="System.Numerics.Tensors" Version="9.0.0" />
     <PackageReference Include="Tokenizers.HuggingFace" Version="2.21.4" />
   </ItemGroup>
 

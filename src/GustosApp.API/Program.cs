@@ -43,15 +43,13 @@ builder.Services
         };
     });
 
-builder.Services.AddSingleton(sp =>
+builder.Services.AddSingleton<IEmbeddingService>(sp =>
 {
     var env = sp.GetRequiredService<IWebHostEnvironment>();
-    var modelPath = Path.Combine(env.ContentRootPath, "ML", "model.onnx");
-    var tokPath = Path.Combine(env.ContentRootPath, "ML", "tokenizer.json");
+    var modelPath = Path.Combine(AppContext.BaseDirectory, "ML", "model.onnx");
+    var tokPath = Path.Combine(AppContext.BaseDirectory, "ML", "tokenizer.json");
     return new OnnxEmbeddingService(modelPath, tokPath);
 });
-
-builder.Services.AddScoped<IEmbeddingService, OnnxEmbeddingService>();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -71,7 +69,6 @@ builder.Services.AddScoped<IGrupoRepository, GrupoRepositoryEF>();
 builder.Services.AddScoped<IMiembroGrupoRepository, MiembroGrupoRepositoryEF>();
 builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepositoryEF>();
 
-
 // UseCases
 builder.Services.AddScoped<RegistrarUsuarioUseCase>();
 builder.Services.AddScoped<ObtenerCondicionesMedicasUseCase>();
@@ -90,8 +87,8 @@ builder.Services.AddScoped<GuardarRestriccionesUseCase>();
 builder.Services.AddScoped<ObtenerGustosFiltradosUseCase>();
 builder.Services.AddScoped<ObtenerResumenRegistroUseCase>();
 builder.Services.AddScoped<FinalizarRegistroUseCase>();
-
-
+builder.Services.AddScoped<SugerirGustosUseCase>();
+builder.Services.AddScoped<SugerirGustosUseCase>(); 
 
 
 builder.Services.AddControllers();

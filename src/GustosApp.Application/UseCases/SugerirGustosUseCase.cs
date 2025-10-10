@@ -11,7 +11,7 @@ namespace GustosApp.Application.UseCases
 
         // Estos valores deberían ser cargados desde la configuración (API/Infra), no hardcodeados aquí.
         private const double UmbralMinimo = 0.1;
-        private const double FactorPenalizacion = 0.2;
+        private const double FactorPenalizacion = 0.1;
 
         // Constructor que recibe las dependencias (Inversión de Control)
         public SugerirGustosUseCase(
@@ -72,7 +72,6 @@ namespace GustosApp.Application.UseCases
                     resultados.Add((rest, scoreFinal));
                 }
             }
-
             // 3. Mapeo y Retorno
             return resultados
                 .OrderByDescending(x => x.score)
@@ -89,7 +88,6 @@ namespace GustosApp.Application.UseCases
         new Restaurant(104, new List<string>{"pizza","pizza vegetariana","masa fina","ingredientes frescos","variedad de pizzas"})
         };
         }
-
         /*public static List<UserPreference> ObtenerUsuariosEjemplo()
         {
             return new List<UserPreference>

@@ -10,7 +10,7 @@ namespace GustosApp.Infraestructure.ML
 {
 
     // Implementa la interfaz de Dominio y IDisposable para liberar recursos
-    public class OnnxEmbeddingService : IEmbeddingService, IDisposable
+    public class OnnxEmbeddingService : IEmbeddingService
     {
         // El Tokenizer se carga una sola vez y se hace estático (alta performance)
         private Tokenizer _tokenizer;

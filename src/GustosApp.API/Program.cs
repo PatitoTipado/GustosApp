@@ -7,18 +7,21 @@ using GustosApp.Domain.Interfaces;
 using GustosApp.Infraestructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models; // 👈 necesario para SwaggerGen con seguridad
 
+using GustosApp.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// =====================
+//   Firebase / Auth
+// =====================
 
-//  Ruta del archivo firebase-key.json (en la carpeta /secrets)
+//(en la carpeta /secrets)
 var firebaseKeyPath = Path.Combine(builder.Environment.ContentRootPath, "secrets", "firebase-key.json");
 var firebaseProjectId = "gustosapp-5c3c9";
 
-
-// Inicializar Firebase solo si no est� inicializado
+// Inicializar Firebase solo si no está inicializado (Admin SDK: útil p/ scripts, NO requerido para validar JWT)
 if (FirebaseApp.DefaultInstance == null)
 {
     FirebaseApp.Create(new AppOptions()
@@ -27,6 +30,7 @@ if (FirebaseApp.DefaultInstance == null)
     });
 }
 
+// Validación de JWT emitidos por Firebase (securetoken)
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -42,16 +46,27 @@ builder.Services
         };
     });
 
+// Autorización explícita 
+builder.Services.AddAuthorization();
+
+// =====================
+//   Controllers / JSON
+// =====================
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
     });
 
+// =====================
+//   EF Core / SQL Server
+// =====================
 builder.Services.AddDbContext<GustosDbContext>(options =>
-options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Repos
+// =====================
+//   Repositorios
+// =====================
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepositoryEF>();
 builder.Services.AddScoped<IRestriccionRepository, RestriccionRepositoryEF>();
 builder.Services.AddScoped<ICondicionMedicaRepository, CondicionMedicaRepositoryEF>();
@@ -60,8 +75,9 @@ builder.Services.AddScoped<IGrupoRepository, GrupoRepositoryEF>();
 builder.Services.AddScoped<IMiembroGrupoRepository, MiembroGrupoRepositoryEF>();
 builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepositoryEF>();
 
-
-// UseCases
+// =====================
+//   UseCases existentes
+// =====================
 builder.Services.AddScoped<RegistrarUsuarioUseCase>();
 builder.Services.AddScoped<ObtenerCondicionesMedicasUseCase>();
 builder.Services.AddScoped<ObtenerGustosUseCase>();
@@ -80,32 +96,81 @@ builder.Services.AddScoped<ObtenerGustosFiltradosUseCase>();
 builder.Services.AddScoped<ObtenerResumenRegistroUseCase>();
 builder.Services.AddScoped<FinalizarRegistroUseCase>();
 
+// =====================
+//   Restaurantes (DI)
+// =====================
+// antes: builder.Services.AddAplicacionRestaurantes();
+GustosApp.Infraestructure.DependencyInjection.AddInfraRestaurantes(builder.Services);
 
-
-
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// =====================
+//   Swagger
+// =====================
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "GustosApp API",
+        Version = "v1"
+    });
 
+    // 🔐 Esquema Bearer (JWT) para botón Authorize
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Pegá tu idToken de Firebase con el prefijo 'Bearer '.\nEjemplo: Bearer eyJhbGciOi..."
+    });
+
+    // 🔒 Requisito global (aplica Bearer a todos los endpoints)
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id   = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+// =====================
+//   CORS
+// =====================
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000")
+            policy.WithOrigins("http://localhost:3000", "http://localhost:5174")
                   .AllowCredentials()
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
 });
 
+/* (Opcional) Exigir role=negocio para crear restaurantes
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("SoloNegocio", policy =>
+        policy.RequireClaim("role", "negocio").RequireAuthenticatedUser());
+});
+*/
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// =====================
+//   Pipeline HTTP
+// =====================
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

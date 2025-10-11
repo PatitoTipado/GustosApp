@@ -43,7 +43,7 @@ public class ActualizarDetallesRestauranteUseCase
 
         var data = response.Result ?? throw new Exception($"No hay resultado válido para {placeId}");
 
-        // 🧩 Actualizar campos básicos
+        //  Actualizar campos básicos
         restaurante.Nombre = data.Name ?? restaurante.Nombre;
         restaurante.Direccion = data.FormattedAddress ?? restaurante.Direccion;
         restaurante.Rating = data.Rating ?? restaurante.Rating;
@@ -51,10 +51,10 @@ public class ActualizarDetallesRestauranteUseCase
         restaurante.Categoria = string.Join(",", data.Types ?? []);
         restaurante.UltimaActualizacion = DateTime.UtcNow;
 
-        // 🧹 Eliminar reseñas viejas correctamente
+        //  Eliminar reseñas viejas correctamente
         await _reseñas.RemoveByRestauranteIdAsync(restaurante.Id, ct);
 
-        // ✍️ Agregar reseñas nuevas
+        // Agregar reseñas nuevas
         if (data.Reviews is not null && data.Reviews.Count > 0)
         {
             foreach (var review in data.Reviews)

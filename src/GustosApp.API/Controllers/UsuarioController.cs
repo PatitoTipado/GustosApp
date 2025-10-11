@@ -59,7 +59,8 @@ namespace GustosApp.API.Controllers
             // Validate required fields
             if (string.IsNullOrWhiteSpace(request.Nombre) ||
                 string.IsNullOrWhiteSpace(request.Apellido) ||
-                string.IsNullOrWhiteSpace(request.Email))
+                string.IsNullOrWhiteSpace(request.Email) ||
+                string.IsNullOrEmpty(request.Username))
                
             {
                 return BadRequest( new { message = "Nombre, Apellido, Email y Usuario son obligatorios." });

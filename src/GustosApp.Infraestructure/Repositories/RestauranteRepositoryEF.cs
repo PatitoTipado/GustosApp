@@ -19,7 +19,12 @@ namespace GustosApp.Infraestructure.Repositories
         }
 
         public async Task<Restaurante?> GetByPlaceIdAsync(string placeId, CancellationToken ct)
-            => await _context.Restaurantes.FirstOrDefaultAsync(r => r.PlaceId == placeId, ct);
+        {
+            return await _context.Restaurantes
+                .Include(r => r.Reviews) 
+                .FirstOrDefaultAsync(r => r.PlaceId == placeId, ct);
+        }
+
 
         public async Task AddAsync(Restaurante restaurante, CancellationToken ct)
             => await _context.Restaurantes.AddAsync(restaurante, ct);

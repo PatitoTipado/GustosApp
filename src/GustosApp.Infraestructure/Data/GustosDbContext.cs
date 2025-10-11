@@ -19,6 +19,8 @@ public class GustosDbContext : DbContext
     
     public DbSet<Restaurante> Restaurantes { get; set; }
 
+    public DbSet<ReviewRestaurante> ReviewsRestaurantes { get; set; }
+
     public DbSet<Tag> Tags { get; set; }
 
 
@@ -34,6 +36,11 @@ public class GustosDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.Entity<Restaurante>()
+            .HasMany(r => r.Reviews)
+                .WithOne()
+                .HasForeignKey(r => r.RestauranteId)
+                .OnDelete(DeleteBehavior.Cascade);
         // Relaciones muchos a muchos
         modelBuilder.Entity<Usuario>()
             .HasMany(u => u.Gustos)

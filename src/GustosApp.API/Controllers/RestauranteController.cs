@@ -11,10 +11,13 @@ namespace GustosApp.API.Controllers
     public class RestauranteController : ControllerBase
     {
         private readonly BuscarRestaurantesCercanosUseCase _buscarRestaurantes;
+        private readonly ActualizarDetallesRestauranteUseCase _obtenerDetalles;
 
-        public RestauranteController(BuscarRestaurantesCercanosUseCase buscarRestaurantes)
+
+        public RestauranteController(BuscarRestaurantesCercanosUseCase buscarRestaurantes, ActualizarDetallesRestauranteUseCase obtenerDetalles)
         {
             _buscarRestaurantes = buscarRestaurantes;
+            _obtenerDetalles = obtenerDetalles;
         }
 
         [HttpGet("cercanos")]
@@ -27,5 +30,18 @@ namespace GustosApp.API.Controllers
                 restaurantes = result
             });
         }
+
+
+        [HttpGet("detalles")]
+        public async Task<IActionResult> GetCercanos(string placeId, CancellationToken ct = default)
+        {
+            var result = await _obtenerDetalles.HandleAsync(placeId, ct);
+            return Ok(new
+            {
+                message= "Detalles actualizados",
+                detalles = result
+            });
+        }
+
     }
 }

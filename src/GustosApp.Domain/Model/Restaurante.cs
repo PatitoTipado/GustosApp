@@ -39,5 +39,10 @@ namespace GustosApp.Domain.Model
         public string? ImagenUrl { get; set; }
         public DateTime UltimaActualizacion { get; set; } = DateTime.UtcNow;
 
+        public string? WebUrl { get; set; }
+        public string? EmbeddingVector { get; set; }
+
+        public ICollection<ReviewRestaurante> Reviews { get; set; } = new List<ReviewRestaurante>();
+
     }
 }

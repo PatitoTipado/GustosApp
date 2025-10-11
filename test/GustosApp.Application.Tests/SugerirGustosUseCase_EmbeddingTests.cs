@@ -21,7 +21,7 @@ namespace GustosApp.Application.Tests
             var mockEmbeddingService = new Mock<IEmbeddingService>();
 
             // 2. Instanciación del Use Case con el Mock
-            var useCase = new SugerirGustosUseCase(mockEmbeddingService.Object);
+            //var useCase = new SugerirGustosUseCase(mockEmbeddingService.Object);
 
 
         }

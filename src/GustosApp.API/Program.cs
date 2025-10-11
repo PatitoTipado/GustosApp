@@ -10,12 +10,8 @@ using GustosApp.Infraestructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models; // 👈 necesario para SwaggerGen con seguridad
-
-<<<<<<< HEAD
-=======
 using GustosApp.Application;
 
->>>>>>> origin/develop
 var builder = WebApplication.CreateBuilder(args);
 
 // =====================
@@ -51,7 +47,6 @@ builder.Services
         };
     });
 
-<<<<<<< HEAD
 builder.Services.AddSingleton<IEmbeddingService>(sp =>
 {
     var env = sp.GetRequiredService<IWebHostEnvironment>();
@@ -60,14 +55,12 @@ builder.Services.AddSingleton<IEmbeddingService>(sp =>
     return new OnnxEmbeddingService(modelPath, tokPath);
 });
 
-=======
 // Autorización explícita 
 builder.Services.AddAuthorization();
 
 // =====================
 //   Controllers / JSON
 // =====================
->>>>>>> origin/develop
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -93,13 +86,9 @@ builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepository
 builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepositoryEF>();
 
-<<<<<<< HEAD
-// UseCases
-=======
 // =====================
 //   UseCases existentes
 // =====================
->>>>>>> origin/develop
 builder.Services.AddScoped<RegistrarUsuarioUseCase>();
 builder.Services.AddScoped<ObtenerCondicionesMedicasUseCase>();
 builder.Services.AddScoped<ObtenerGustosUseCase>();
@@ -117,11 +106,8 @@ builder.Services.AddScoped<GuardarRestriccionesUseCase>();
 builder.Services.AddScoped<ObtenerGustosFiltradosUseCase>();
 builder.Services.AddScoped<ObtenerResumenRegistroUseCase>();
 builder.Services.AddScoped<FinalizarRegistroUseCase>();
-<<<<<<< HEAD
 builder.Services.AddScoped<SugerirGustosUseCase>();
 builder.Services.AddScoped<SugerirGustosUseCase>();
-builder.Services.AddScoped<IRestaurantRepository, RestauranteRepositoryEF>();
-=======
 builder.Services.AddScoped<BuscarRestaurantesCercanosUseCase>();
 builder.Services.AddScoped<ActualizarDetallesRestauranteUseCase>();
 
@@ -130,12 +116,12 @@ builder.Services.AddScoped<ActualizarDetallesRestauranteUseCase>();
 // =====================
 // antes: builder.Services.AddAplicacionRestaurantes();
 GustosApp.Infraestructure.DependencyInjection.AddInfraRestaurantes(builder.Services);
+builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
 
 
 // =====================
 //   Swagger
 // =====================
->>>>>>> origin/develop
 
 
 builder.Services.AddHttpClient();

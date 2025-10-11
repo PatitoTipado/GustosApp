@@ -9,7 +9,7 @@ namespace GustosApp.Application.UseCases
     public class SugerirGustosUseCase
     {
         private readonly IEmbeddingService _embeddingService;
-        private readonly IRestaurantRepository _restaurantRepo;
+        private readonly IRestauranteRepository _restaurantRepo;
 
 
         // Estos valores deberían ser cargados desde la configuración (API/Infra), no hardcodeados aquí.
@@ -17,7 +17,7 @@ namespace GustosApp.Application.UseCases
         private const double FactorPenalizacion = 0.1;
 
         // Constructor que recibe las dependencias (Inversión de Control)
-        public SugerirGustosUseCase(IEmbeddingService embeddingService, IRestaurantRepository restaurantRepo)
+        public SugerirGustosUseCase(IEmbeddingService embeddingService, IRestauranteRepository restaurantRepo)
         {
             _embeddingService = embeddingService;
             _restaurantRepo = restaurantRepo;

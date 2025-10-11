@@ -7,6 +7,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<None Update="appsettings.Development.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+	
+	<ItemGroup>
 	  <Compile Remove="NewFolder\**" />
 	  <Content Remove="NewFolder\**" />
 	  <EmbeddedResource Remove="NewFolder\**" />

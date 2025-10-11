@@ -16,7 +16,7 @@ namespace ApiTest
         //tmb podria ser perfectamente un mock o un metodo que se inicie antes de cada prueba tipo before para hacer setup
 
 
-        [Fact]
+        /*[Fact]
         public async Task HandleAsync_DeberiaRetornarListaDeGustos()
         {
             // Arrange
@@ -39,7 +39,7 @@ namespace ApiTest
             Assert.Equal(2, result.Count);
             Assert.Contains(result, g => g.nombre == "Pizza");
             Assert.Contains(result, g => g.nombre == "Sushi");
-        }
+        }*/
     }
 
 

@@ -1,0 +1,19 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using GustosApp.Domain.Model;
+
+namespace GustosApp.Domain.Interfaces
+{
+    public interface IRestauranteRepository
+    {
+      
+            Task<Restaurante?> GetByPlaceIdAsync(string placeId, CancellationToken ct);
+            Task AddAsync(Restaurante restaurante, CancellationToken ct);
+            Task SaveChangesAsync(CancellationToken ct);
+            Task<List<Restaurante>> GetAllAsync(CancellationToken ct = default);
+
+    }
+}

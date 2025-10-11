@@ -12,6 +12,25 @@ public class GustosDbContext : DbContext
     public DbSet<Gusto> Gustos { get; set; }
     public DbSet<Restriccion> Restricciones { get; set; }
     public DbSet<CondicionMedica> CondicionesMedicas { get; set; }
+    public DbSet<Grupo> Grupos { get; set; }
+    public DbSet<MiembroGrupo> MiembrosGrupos { get; set; }
+    public DbSet<InvitacionGrupo> InvitacionesGrupos { get; set; }
+    public DbSet<Restaurante> Restaurante { get; set; }
+    public DbSet<RestauranteEspecialidad> RestauranteEspecialidades { get; set; }
+
+
+    
+    public DbSet<Restaurante> Restaurantes { get; set; }
+
+    public DbSet<ReviewRestaurante> ReviewsRestaurantes { get; set; }
+
+    public DbSet<Tag> Tags { get; set; }
+
+
+
+
+
+
 
     public GustosDbContext(DbContextOptions<GustosDbContext> options)
     : base(options) { }
@@ -20,6 +39,11 @@ public class GustosDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.Entity<Restaurante>()
+            .HasMany(r => r.Reviews)
+                .WithOne()
+                .HasForeignKey(r => r.RestauranteId)
+                .OnDelete(DeleteBehavior.Cascade);
         // Relaciones muchos a muchos
         modelBuilder.Entity<Usuario>()
             .HasMany(u => u.Gustos)
@@ -55,6 +79,87 @@ public class GustosDbContext : DbContext
         modelBuilder.Entity<Usuario>()
            .HasIndex(u => u.IdUsuario)
            .IsUnique();
+
+        modelBuilder.Entity<Gusto>()
+            .HasMany(g => g.Tags)
+            .WithMany()
+            .UsingEntity(j => j.ToTable("GustoTags"));
+
+        modelBuilder.Entity<Restriccion>()
+            .HasMany(r => r.TagsProhibidos)
+            .WithMany()
+            .UsingEntity(j => j.ToTable("RestriccionTags"));
+
+        modelBuilder.Entity<CondicionMedica>()
+            .HasMany(c => c.TagsCriticos)
+            .WithMany()
+            .UsingEntity(j => j.ToTable("CondicionMedicaTags"));
+
+       
+        modelBuilder.Entity<Tag>()
+            .Property(t => t.Tipo)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<Tag>()
+        .Ignore(t => t.NombreNormalizado);
+
+
+        // Configuración de relaciones para grupos
+        modelBuilder.Entity<Grupo>()
+            .HasOne(g => g.Administrador)
+            .WithMany(u => u.GruposAdministrados)
+            .HasForeignKey(g => g.AdministradorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<MiembroGrupo>()
+            .HasOne(m => m.Grupo)
+            .WithMany(g => g.Miembros)
+            .HasForeignKey(m => m.GrupoId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<MiembroGrupo>()
+            .HasOne(m => m.Usuario)
+            .WithMany(u => u.MiembrosGrupos)
+            .HasForeignKey(m => m.UsuarioId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<InvitacionGrupo>()
+            .HasOne(i => i.Grupo)
+            .WithMany(g => g.Invitaciones)
+            .HasForeignKey(i => i.GrupoId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<InvitacionGrupo>()
+            .HasOne(i => i.UsuarioInvitado)
+            .WithMany(u => u.InvitacionesRecibidas)
+            .HasForeignKey(i => i.UsuarioInvitadoId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<InvitacionGrupo>()
+            .HasOne(i => i.UsuarioInvitador)
+            .WithMany(u => u.InvitacionesEnviadas)
+            .HasForeignKey(i => i.UsuarioInvitadorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Índices únicos para grupos
+        modelBuilder.Entity<Grupo>()
+            .HasIndex(g => g.CodigoInvitacion)
+            .IsUnique()
+            .HasFilter("[CodigoInvitacion] IS NOT NULL");
+
+        modelBuilder.Entity<MiembroGrupo>()
+            .HasIndex(m => new { m.GrupoId, m.UsuarioId })
+            .IsUnique();
+
+        // Configurar enum para EstadoInvitacion
+        modelBuilder.Entity<InvitacionGrupo>()
+            .Property(i => i.Estado)
+            .HasConversion<int>();
+
+        modelBuilder.Entity<Restaurante>()
+       .HasMany(r => r.Especialidad)
+       .WithOne(e => e.Restaurante)
+       .HasForeignKey(e => e.RestauranteId);
 
         modelBuilder.Entity<Gusto>().HasData(
             new Gusto { Id = Guid.Parse("11111111-1111-1111-1111-111111111111"), Nombre = "Pizza" },
@@ -106,5 +211,8 @@ public class GustosDbContext : DbContext
             new CondicionMedica { Id = Guid.Parse("33333333-3333-3333-3333-333333333337"), Nombre = "Síndrome del intestino irritable" },
             new CondicionMedica { Id = Guid.Parse("33333333-3333-3333-3333-333333333338"), Nombre = "Insuficiencia renal" },
             new CondicionMedica { Id = Guid.Parse("33333333-3333-3333-3333-333333333339"), Nombre = "Colesterol alto" });
+    
+    modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.RestauranteConfiguration());
+
     }
 }

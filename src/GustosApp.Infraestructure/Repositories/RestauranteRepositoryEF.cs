@@ -21,7 +21,7 @@ namespace GustosApp.Infraestructure.Repositories
         }
                 public async Task<List<Restaurante>> GetAllAsync(CancellationToken ct= default)
         {
-            return await _context.Restaurante 
+            return await _context.Restaurantes 
                            .Include(r => r.Especialidad)
                            .ToListAsync(ct);
         }

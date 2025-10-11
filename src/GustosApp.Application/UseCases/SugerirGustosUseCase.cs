@@ -11,7 +11,6 @@ namespace GustosApp.Application.UseCases
         private readonly IEmbeddingService _embeddingService;
         private readonly IRestauranteRepository _restaurantRepo;
 
-
         // Estos valores deberían ser cargados desde la configuración (API/Infra), no hardcodeados aquí.
         private const double UmbralMinimo = 0.1;
         private const double FactorPenalizacion = 0.1;
@@ -50,8 +49,23 @@ namespace GustosApp.Application.UseCases
             foreach (var rest in restaurantes)
             {
                 // A. Embeddings del restaurante (llamada al servicio de Infraestructura)
-                string especialidadesTexto = string.Join(" ", rest.Especialidad);
-                var baseEmb = _embeddingService.GetEmbedding(especialidadesTexto);
+                //string especialidadesTexto = string.Join(" ", rest.Especialidad);
+                //var baseEmb = _embeddingService.GetEmbedding(especialidadesTexto);
+                double maxScoreBase = 0; // Inicializamos el score máximo del restaurante
+                // Iteramos sobre CADA especialidad para encontrar la MEJOR coincidencia
+                foreach (var especialidad in rest.Especialidad)
+                {
+                    // Nota: Aquí se usa solo el nombre de la especialidad, no la cadena gigante.
+                    var baseEmb = _embeddingService.GetEmbedding(especialidad.Nombre);
+                    // Calcular la Similitud con el usuario (userEmb se calculó fuera del loop)
+                    double scoreSimilitud = CosineSimilarity.Coseno(userEmb, baseEmb);
+                    // Usar el score MÁS ALTO encontrado para este restaurante
+                    if (scoreSimilitud > maxScoreBase)
+                    {
+                        maxScoreBase = scoreSimilitud;
+                    }
+                }
+                double scoreBase = maxScoreBase;
 
                 // D. Cálculo de la Penalización (Lógica de Aplicación/Negocio)
                 double penalizacion = 0;
@@ -67,8 +81,9 @@ namespace GustosApp.Application.UseCases
                 }
 
                 // E. Score final (Lógica de Aplicación/Negocio)
-                double scoreBase = CosineSimilarity.Coseno(userEmb, baseEmb);
-                double scoreFinal = ((scoreBase) / 2) * (1 - penalizacion);
+               // double scoreBase = CosineSimilarity.Coseno(userEmb, baseEmb);
+                // double scoreFinal = ((scoreBase) / 2) * (1 - penalizacion);
+                double scoreFinal = scoreBase * (1 - penalizacion);
 
                 if (scoreFinal >= UmbralMinimo)
                 {

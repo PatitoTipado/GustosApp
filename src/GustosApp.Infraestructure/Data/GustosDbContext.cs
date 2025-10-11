@@ -15,11 +15,7 @@ public class GustosDbContext : DbContext
     public DbSet<Grupo> Grupos { get; set; }
     public DbSet<MiembroGrupo> MiembrosGrupos { get; set; }
     public DbSet<InvitacionGrupo> InvitacionesGrupos { get; set; }
-    public DbSet<Restaurante> Restaurante { get; set; }
     public DbSet<RestauranteEspecialidad> RestauranteEspecialidades { get; set; }
-
-
-    
     public DbSet<Restaurante> Restaurantes { get; set; }
 
     public DbSet<ReviewRestaurante> ReviewsRestaurantes { get; set; }

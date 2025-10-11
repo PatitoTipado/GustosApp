@@ -83,8 +83,8 @@ builder.Services.AddScoped<IGustoRepository, GustoRepositoryEF>();
 builder.Services.AddScoped<IGrupoRepository, GrupoRepositoryEF>();
 builder.Services.AddScoped<IMiembroGrupoRepository, MiembroGrupoRepositoryEF>();
 builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepositoryEF>();
-builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepositoryEF>();
+builder.Services.AddScoped<IRestauranteRepository,MockRestauranteRepository>();
 
 // =====================
 //   UseCases existentes
@@ -116,7 +116,7 @@ builder.Services.AddScoped<ActualizarDetallesRestauranteUseCase>();
 // =====================
 // antes: builder.Services.AddAplicacionRestaurantes();
 GustosApp.Infraestructure.DependencyInjection.AddInfraRestaurantes(builder.Services);
-builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
+// builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>(); // Comentado para usar MockRestauranteRepository
 
 
 // =====================

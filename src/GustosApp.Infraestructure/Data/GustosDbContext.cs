@@ -2,6 +2,7 @@
 using GustosApp.Domain.Model;
 using Microsoft.EntityFrameworkCore;
 
+
 using System.Collections.Generic;
 using System.Reflection.Emit;
 
@@ -23,11 +24,7 @@ public class GustosDbContext : DbContext
 
     public DbSet<Tag> Tags { get; set; }
 
-
-
-
-
-
+    public DbSet<RestaurantePlato> RestaurantePlatos { get; set; }  
 
     public GustosDbContext(DbContextOptions<GustosDbContext> options)
     : base(options) { }
@@ -203,8 +200,24 @@ public class GustosDbContext : DbContext
             new CondicionMedica { Id = Guid.Parse("33333333-3333-3333-3333-333333333337"), Nombre = "Síndrome del intestino irritable" },
             new CondicionMedica { Id = Guid.Parse("33333333-3333-3333-3333-333333333338"), Nombre = "Insuficiencia renal" },
             new CondicionMedica { Id = Guid.Parse("33333333-3333-3333-3333-333333333339"), Nombre = "Colesterol alto" });
-    
-    modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.RestauranteConfiguration());
+
+       modelBuilder.ApplyConfigurationsFromAssembly(typeof(GustosDbContext).Assembly);
+
+    modelBuilder.Entity<RestaurantePlato>(b =>
+{
+    b.ToTable("RestaurantePlatos");
+
+    b.HasKey(x => new { x.RestauranteId, x.Plato });
+
+    b.Property(x => x.Plato)
+     .HasConversion<string>()
+     .HasMaxLength(50);
+
+    b.HasOne(x => x.Restaurante)
+     .WithMany(r => r.Platos)
+     .HasForeignKey(x => x.RestauranteId)
+     .OnDelete(DeleteBehavior.Cascade);
+});
 
     }
 }

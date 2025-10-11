@@ -24,14 +24,18 @@ namespace GustosApp.Application.UseCases
             if (string.IsNullOrEmpty(apiKey))
                 throw new InvalidOperationException("Google API key is not configured.");
 
-            string url = $"https://maps.googleapis.com/maps/api/place/nearbysearch/json?" +
-             $"location={lat.ToString(CultureInfo.InvariantCulture)}," +
-             $"{lng.ToString(CultureInfo.InvariantCulture)}" +
-             $"&radius={radio}&type=restaurant&key={apiKey}";
+            string url =
+         $"https://maps.googleapis.com/maps/api/place/nearbysearch/json?" +
+         $"location={lat.ToString(CultureInfo.InvariantCulture)}," +
+         $"{lng.ToString(CultureInfo.InvariantCulture)}" +
+         $"&radius={radio}" +
+         $"&type=restaurant" +
+         $"&language=es" +   
+         $"&key={apiKey}";
 
 
             var json = await _http.GetStringAsync(url, ct);
-            Console.WriteLine(json);
+            
             var response = await _http.GetFromJsonAsync<GooglePlacesResponse>(url, ct)
                            ?? throw new Exception("No se pudo obtener respuesta de Google Places.");
 

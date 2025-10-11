@@ -32,9 +32,11 @@ public class ActualizarDetallesRestauranteUseCase
         var restaurante = await _repo.GetByPlaceIdAsync(placeId, ct)
                           ?? throw new Exception("Restaurante no encontrado en la base de datos.");
 
-        // 🚀 Cargar detalles desde Google
+        //  Cargar detalles desde Google
         var url = $"https://maps.googleapis.com/maps/api/place/details/json?" +
-                  $"place_id={placeId}&fields=name,formatted_address,types,rating,user_ratings_total,website,review,photos&key={apiKey}";
+             $"place_id={placeId}&fields=name,formatted_address,types,rating,user_ratings_total,website,review,photos" +
+             $"&language=es&key={apiKey}";
+
 
         var response = await _http.GetFromJsonAsync<GooglePlaceDetailsResponse>(url, ct)
                        ?? throw new Exception("No se pudo obtener respuesta de Google Places.");

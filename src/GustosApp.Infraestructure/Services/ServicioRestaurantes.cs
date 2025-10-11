@@ -17,7 +17,10 @@ namespace GustosApp.Infraestructure.Services
     {
         private readonly GustosDbContext _db;
 
-        public ServicioRestaurantes(GustosDbContext db) => _db = db;
+        public ServicioRestaurantes(GustosDbContext db)
+        {
+            _db = db;
+        }
 
         private static string NormalizarNombre(string nombre)
             => (nombre ?? string.Empty).Trim().ToLowerInvariant();
@@ -39,28 +42,46 @@ namespace GustosApp.Infraestructure.Services
                 PropietarioUid = r.PropietarioUid,
                 Nombre = r.Nombre,
                 Direccion = r.Direccion,
-                Lat = r.Latitud,
-                Lng= r.Longitud,
+                Latitud = r.Latitud,
+                Longitud = r.Longitud,
                 Horarios = horarios,
                 CreadoUtc = r.CreadoUtc,
-                ActualizadoUtc = r.ActualizadoUtc
+                ActualizadoUtc = r.ActualizadoUtc,
+                // V2
+                Tipo = r.Tipo.ToString(),
+                ImagenUrl = r.ImagenUrl,
+                Valoracion = r.Valoracion,
+                Platos = r.Platos.Select(p => p.Plato.ToString()).ToList()
             };
         }
 
         public async Task<RestauranteDto> CrearAsync(string propietarioUid, CrearRestauranteDto dto)
         {
-            
-            if (await _db.Restaurantes.AsNoTracking().AnyAsync(r => r.PropietarioUid == propietarioUid))
+            var yaTiene = await _db.Restaurantes.AsNoTracking()
+                .AnyAsync(r => r.PropietarioUid == propietarioUid);
+            if (yaTiene)
                 throw new InvalidOperationException("El usuario ya registró un restaurante.");
 
             var nombreNorm = NormalizarNombre(dto.Nombre);
-
-          
-            if (await _db.Restaurantes.AsNoTracking().AnyAsync(r => r.NombreNormalizado == nombreNorm))
+            var nombreEnUso = await _db.Restaurantes.AsNoTracking()
+                .AnyAsync(r => r.NombreNormalizado == nombreNorm);
+            if (nombreEnUso)
                 throw new ArgumentException("El nombre ya está en uso.");
 
-            var ahora = DateTime.UtcNow;
+            if (!Enum.TryParse<TipoRestaurante>(dto.Tipo, true, out var tipoParsed))
+                throw new ArgumentException("Tipo inválido.");
 
+            var platosParsed = (dto.Platos ?? new())
+                .Select(s =>
+                {
+                    if (!Enum.TryParse<PlatoComida>(s, true, out var p))
+                        throw new ArgumentException($"Plato inválido: {s}");
+                    return p;
+                })
+                .Distinct()
+                .ToList();
+
+            var ahora = DateTime.UtcNow;
             var entidad = new Restaurante
             {
                 Id = Guid.NewGuid(),
@@ -72,31 +93,41 @@ namespace GustosApp.Infraestructure.Services
                 Longitud = dto.Longitud,
                 HorariosJson = dto.Horarios is null ? "{}" : JsonSerializer.Serialize(dto.Horarios),
                 CreadoUtc = ahora,
-                ActualizadoUtc = ahora
+                ActualizadoUtc = ahora,
+                // V2
+                Tipo = tipoParsed,
+                ImagenUrl = string.IsNullOrWhiteSpace(dto.ImagenUrl) ? null : dto.ImagenUrl!.Trim(),
+                Valoracion = dto.Valoracion
             };
+
+            foreach (var p in platosParsed)
+                entidad.Platos.Add(new RestaurantePlato { RestauranteId = entidad.Id, Plato = p });
 
             _db.Restaurantes.Add(entidad);
             await _db.SaveChangesAsync();
+            await _db.Entry(entidad).Collection(x => x.Platos).LoadAsync();
 
             return Map(entidad);
         }
 
         public async Task<RestauranteDto?> ObtenerAsync(Guid id)
         {
-            var r = await _db.Restaurantes.FindAsync(id);
+            var r = await _db.Restaurantes
+                .Include(x => x.Platos)
+                .FirstOrDefaultAsync(x => x.Id == id);
             return r is null ? null : Map(r);
         }
 
         public async Task<RestauranteDto?> ObtenerPorPropietarioAsync(string propietarioUid)
         {
             var r = await _db.Restaurantes.AsNoTracking()
+                .Include(x => x.Platos)
                 .FirstOrDefaultAsync(x => x.PropietarioUid == propietarioUid);
             return r is null ? null : Map(r);
         }
 
         public async Task<IReadOnlyList<RestauranteDto>> ListarCercanosAsync(double lat, double lng, int radioMetros)
         {
-            
             double degLat = radioMetros / 111_000.0;
             double degLng = radioMetros / (111_000.0 * Math.Cos(lat * Math.PI / 180.0));
 
@@ -108,6 +139,7 @@ namespace GustosApp.Infraestructure.Services
             var lista = await _db.Restaurantes.AsNoTracking()
                 .Where(r => r.Latitud >= minLat && r.Latitud <= maxLat
                          && r.Longitud >= minLng && r.Longitud <= maxLng)
+                .Include(x => x.Platos)
                 .OrderBy(r => Math.Abs(r.Latitud - lat) + Math.Abs(r.Longitud - lng))
                 .Take(200)
                 .ToListAsync();
@@ -117,15 +149,32 @@ namespace GustosApp.Infraestructure.Services
 
         public async Task<RestauranteDto?> ActualizarAsync(Guid id, string solicitanteUid, bool esAdmin, ActualizarRestauranteDto dto)
         {
-            var r = await _db.Restaurantes.FirstOrDefaultAsync(x => x.Id == id);
+            var r = await _db.Restaurantes
+                .Include(x => x.Platos)
+                .FirstOrDefaultAsync(x => x.Id == id);
             if (r is null) return null;
 
             if (!esAdmin && r.PropietarioUid != solicitanteUid)
                 throw new UnauthorizedAccessException("No tenés permisos para modificar este restaurante.");
 
             var nombreNorm = NormalizarNombre(dto.Nombre);
-            if (await _db.Restaurantes.AnyAsync(x => x.Id != id && x.NombreNormalizado == nombreNorm))
+            var conflictoNombre = await _db.Restaurantes
+                .AnyAsync(x => x.Id != id && x.NombreNormalizado == nombreNorm);
+            if (conflictoNombre)
                 throw new ArgumentException("El nombre ya está en uso.");
+
+            if (!Enum.TryParse<TipoRestaurante>(dto.Tipo, true, out var tipoParsed))
+                throw new ArgumentException("Tipo inválido.");
+
+            var platosParsed = (dto.Platos ?? new())
+                .Select(s =>
+                {
+                    if (!Enum.TryParse<PlatoComida>(s, true, out var p))
+                        throw new ArgumentException($"Plato inválido: {s}");
+                    return p;
+                })
+                .Distinct()
+                .ToList();
 
             r.Nombre = dto.Nombre.Trim();
             r.NombreNormalizado = nombreNorm;
@@ -134,6 +183,27 @@ namespace GustosApp.Infraestructure.Services
             r.Longitud = dto.Longitud;
             r.HorariosJson = dto.Horarios is null ? "{}" : JsonSerializer.Serialize(dto.Horarios);
             r.ActualizadoUtc = DateTime.UtcNow;
+
+            // V2
+            r.Tipo = tipoParsed;
+            r.ImagenUrl = string.IsNullOrWhiteSpace(dto.ImagenUrl) ? null : dto.ImagenUrl!.Trim();
+            r.Valoracion = dto.Valoracion;
+
+            var actuales = r.Platos.Select(x => x.Plato).ToHashSet();
+            var nuevos = platosParsed.ToHashSet();
+
+            var aAgregar = nuevos.Except(actuales).ToList();
+            var aQuitar = actuales.Except(nuevos).ToList();
+
+            foreach (var p in aQuitar)
+            {
+                var row = r.Platos.First(x => x.Plato == p);
+                _db.RestaurantePlatos.Remove(row);
+            }
+            foreach (var p in aAgregar)
+            {
+                r.Platos.Add(new RestaurantePlato { RestauranteId = r.Id, Plato = p });
+            }
 
             await _db.SaveChangesAsync();
             return Map(r);

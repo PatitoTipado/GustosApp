@@ -33,7 +33,7 @@ namespace GustosApp.Application.Tests
                 Nombre = "Juan",
                 Apellido = "Perez",
                 Email = "juan@test.com",
-                Usuario = "id123",
+                Username = "id123",
                 FotoPerfilUrl = "foto.jpg"
                 
             };
@@ -58,7 +58,7 @@ namespace GustosApp.Application.Tests
             Assert.Equal(request.Email, resp.Email);
             Assert.Equal(request.Nombre, resp.Nombre);
             Assert.Equal(request.Apellido, resp.Apellido);
-            Assert.Equal(request.Usuario, resp.usuario);
+            Assert.Equal(request.Username, resp.username);
             Assert.Equal(request.FotoPerfilUrl, resp.FotoPerfilUrl);
             Assert.NotNull(usuarioCreado);
             _mockRepo.Verify(r => r.AddAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()), Times.Once);

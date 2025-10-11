@@ -10,6 +10,6 @@ namespace GustosApp.Domain.Interfaces
     public interface IGustoRepository
     {
         Task<List<Gusto>> GetAllAsync(CancellationToken ct);
-
+        Task<List<Gusto>> GetByIdsAsync(List<Guid> ids, CancellationToken ct);
     }
 }

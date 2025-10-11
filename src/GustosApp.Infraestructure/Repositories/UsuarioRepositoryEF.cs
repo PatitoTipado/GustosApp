@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using GustosApp.Domain.Interfaces;
@@ -15,8 +16,17 @@ namespace GustosApp.Infraestructure.Repositories
 
         public UsuarioRepositoryEF(GustosDbContext db) => _db = db;
 
-        public Task<Usuario?> GetByFirebaseUidAsync(string firebaseUid, CancellationToken ct = default)
-            => _db.Usuarios.FirstOrDefaultAsync(u => u.FirebaseUid == firebaseUid, ct);
+        public async Task<Usuario?> GetByFirebaseUidAsync(string firebaseUid, CancellationToken ct = default)
+        {
+            return await _db.Usuarios
+             .Include(u => u.Restricciones)
+               .Include(u => u.Gustos)
+              .Include(u => u.CondicionesMedicas)
+             .FirstOrDefaultAsync(u => u.FirebaseUid == firebaseUid, ct);
+        }
+
+        public Task<Usuario?> GetByEmailAsync(string email, CancellationToken ct = default)
+            => _db.Usuarios.FirstOrDefaultAsync(u => u.Email == email, ct);
 
         public async Task AddAsync(Usuario usuario, CancellationToken ct = default)
             => await _db.Usuarios.AddAsync(usuario, ct);

@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using GustosApp.Infraestructure.Repositories;
+using GustosApp.Domain.Interfaces;
+using FirebaseAdmin.Messaging;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace GustosApp.API.Controllers
 {
@@ -15,48 +18,152 @@ namespace GustosApp.API.Controllers
     [ApiController]
     public class UsuarioController : ControllerBase
     {
+
+        private readonly GuardarRestriccionesUseCase _saveRestr;
+        private readonly GuardarCondicionesUseCase _saveCond;
+        private readonly ObtenerGustosFiltradosUseCase _getGustos;
+        private readonly GuardarGustosUseCase _saveGustos;
+        private readonly ObtenerResumenRegistroUseCase _resumen;
+        private readonly FinalizarRegistroUseCase _finalizar;
         private readonly RegistrarUsuarioUseCase _registrar;
-        private readonly UsuarioRepositoryEF _repoUser;
+     
 
 
-        public UsuarioController(RegistrarUsuarioUseCase context, UsuarioRepositoryEF repoUser)
+        public UsuarioController(RegistrarUsuarioUseCase context, GuardarRestriccionesUseCase saveRestr, GuardarCondicionesUseCase saveCond,
+            ObtenerGustosFiltradosUseCase getGustos, GuardarGustosUseCase saveGustos, ObtenerResumenRegistroUseCase resumen, FinalizarRegistroUseCase finalizar)
         {
-            _repoUser= repoUser;
+    
             _registrar = context;
-        }
-
-        [HttpGet]
-        public string Hola()
-        {
-            return "Hola soy GustoApp";
+            _saveRestr = saveRestr;
+            _saveCond = saveCond;
+            _getGustos = getGustos;
+            _finalizar = finalizar;
+            _saveGustos = saveGustos;
+            _resumen = resumen;
         }
 
         [Authorize]
         [HttpPost("registrar")]
-        public async Task<IActionResult> Registrar([FromBody] RegistrarUsuarioRequest request,CancellationToken ct)
+        public async Task<IActionResult> Registrar([FromBody] RegistrarUsuarioRequest request, CancellationToken ct)
         {
+
+
             // Firebase suele mapear el UID en el claim "user_id" (también puede venir en "sub")
             var firebaseUid = User.FindFirst("user_id")?.Value
                             ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
                             ?? User.FindFirst("sub")?.Value;
 
             if (string.IsNullOrWhiteSpace(firebaseUid))
-                return Unauthorized("No se encontró el UID de Firebase en el token.");
+                return Unauthorized(new { message = "No se encontró el UID de Firebase en el token." });
+
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(request.Nombre) ||
+                string.IsNullOrWhiteSpace(request.Apellido) ||
+                string.IsNullOrWhiteSpace(request.Email) ||
+                string.IsNullOrEmpty(request.Username))
+               
+            {
+                return BadRequest( new { message = "Nombre, Apellido, Email y Usuario son obligatorios." });
+            }
 
             var resp = await _registrar.HandleAsync(firebaseUid, request, ct);
-            return Ok(resp);
-        
+            return Ok(new
+            {
+                message = "Usuario registrado correctamente",
+                usuario = resp
+            });
         }
+
+
         [Authorize]
-        [HttpGet("miperfil")]
-        public async Task<IActionResult> MiPerfil(CancellationToken ct)
+        [HttpPost("restricciones")]
+        public async Task<IActionResult> GuardarRestricciones([FromBody] GuardarIdsRequest req, CancellationToken ct)
         {
-            var firebaseUid = User.FindFirst("user_id")?.Value;
+            var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
+           var response= await _saveRestr.HandleAsync(uid, req.Ids,req.Skip, ct);
 
-            var usuario = await _repoUser.GetByFirebaseUidAsync(firebaseUid, ct);
-            if (usuario == null) return NotFound();
 
-            return Ok(new UsuarioResponse(usuario.Id, usuario.FirebaseUid, usuario.Email, usuario.Nombre,usuario.Apellido,usuario.IdUsuario, usuario.FotoPerfilUrl));
+            var resp = new PasoResponse(
+            PasoActual: "Restricciones",
+            Next: "/registro/condiciones",
+            Data: response.Mensaje,
+            Conflictos: response.GustosRemovidos
+            );
+            return Ok(resp);
+        }
+
+        [Authorize]
+        [HttpPost("condiciones")]
+        public async Task<IActionResult> GuardarCondiciones([FromBody] GuardarIdsRequest req, CancellationToken ct)
+        {
+            var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
+           var response= await _saveCond.HandleAsync(uid, req.Ids, req.Skip, ct);
+
+            var resp = new PasoResponse(
+           PasoActual: "Restricciones",
+           Next: "/registro/condiciones",
+           Data: response.mensaje,
+           Conflictos: response.GustosRemovidos
+           );
+            return Ok(resp);
+            
+        }
+
+        [Authorize]
+        [HttpGet("gustos/filtrados")]
+        public async Task<IActionResult> ObtenerGustosFiltrados(CancellationToken ct)
+        {
+            var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
+            var gustosFiltrados = await _getGustos.HandleAsync(uid, ct);
+
+
+            return Ok(new
+            {
+                pasoActual = "Condiciones",
+                next = "/registro/gustos",
+                gustos = gustosFiltrados
+            });
+        }
+        
+
+        [Authorize]
+        [HttpPost("gustos")]
+        public async Task<IActionResult> GuardarGustos([FromBody] GuardarIdsRequest req, CancellationToken ct)
+        {
+            var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
+            var response=await _saveGustos.HandleAsync(uid, req.Ids, ct);
+
+            var resp = new PasoResponse(
+                PasoActual: "Gustos",
+                Next: "/registro/resumen",
+                Data: "Gustos guardados correctamente",
+                Conflictos: response
+                );
+            return Ok(resp);
+        }
+
+        [Authorize]
+        [HttpGet("resumen")]
+        public async Task<IActionResult> Resumen(CancellationToken ct)
+        {
+            var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
+            var r = await _resumen.HandleAsync(uid, ct);
+            return Ok(new
+            {
+                resumen = r
+            });
+        }
+
+        [Authorize]
+        [HttpPost("finalizar")]
+        public async Task<IActionResult> Finalizar(CancellationToken ct)
+        {
+            var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
+            await _finalizar.HandleAsync(uid, ct);
+            return Ok(new { mensaje = "Registro finalizado", pasoActual = "Finalizado" });
         }
     }
+
+
 }
+

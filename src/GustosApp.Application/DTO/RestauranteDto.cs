@@ -8,14 +8,6 @@ namespace GustosApp.Application.DTO
 {
     public class RestauranteDto
     {
-
-        public Guid Id { get; set; }
-        public string PropietarioUid { get; set; } = string.Empty;
-
-        public object? Horarios { get; set; }
-        public DateTime CreadoUtc { get; set; }
-        public DateTime ActualizadoUtc { get; set; }
-
         public string Nombre { get; set; }
         public string Direccion { get; set; }
         public double Lat { get; set; }

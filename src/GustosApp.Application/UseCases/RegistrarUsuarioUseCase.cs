@@ -27,17 +27,17 @@ namespace GustosApp.Application.UseCases
 
             if(existente  != null)
             {
-                return new UsuarioResponse(existente.Id, existente.FirebaseUid, existente.Email, existente.Nombre,existente.Apellido, existente.FotoPerfilUrl);
+                return new UsuarioResponse(existente.Id, existente.FirebaseUid, existente.Email, existente.Nombre,existente.Apellido,existente.IdUsuario, existente.FotoPerfilUrl);
             }
 
-            var usuario= new Usuario(firebaseUid,request.Email,request.Nombre,request.Apellido,Guid.NewGuid().ToString(),request.FotoPerfilUrl);
+            var usuario= new Usuario(firebaseUid,request.Email,request.Nombre,request.Apellido,request.Usuario,request.FotoPerfilUrl);
 
 
             await _repo.AddAsync(usuario,ct);
             await _repo.SaveChangesAsync(ct);
 
 
-            return new UsuarioResponse(usuario.Id, usuario.FirebaseUid, usuario.Email, usuario.Nombre,usuario.Apellido, usuario.FotoPerfilUrl);
+            return new UsuarioResponse(usuario.Id, usuario.FirebaseUid, usuario.Email, usuario.Nombre,usuario.Apellido, usuario.IdUsuario, usuario.FotoPerfilUrl);
         }
 
     }

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GustosApp.Infraestructure.Migrations
 {
     [DbContext(typeof(GustosDbContext))]
-    [Migration("20251004142519_Initial")]
-    partial class Initial
+    [Migration("20251011021750_AddClassReviewAddRestauranteNewColumns")]
+    partial class AddClassReviewAddRestauranteNewColumns
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,21 @@ namespace GustosApp.Infraestructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("CondicionMedicaTag", b =>
+                {
+                    b.Property<Guid>("CondicionMedicaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TagsCriticosId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("CondicionMedicaId", "TagsCriticosId");
+
+                    b.HasIndex("TagsCriticosId");
+
+                    b.ToTable("CondicionMedicaTags", (string)null);
+                });
 
             modelBuilder.Entity("CondicionMedicaUsuario", b =>
                 {
@@ -38,6 +53,21 @@ namespace GustosApp.Infraestructure.Migrations
                     b.HasIndex("UsuariosId");
 
                     b.ToTable("UsuarioCondicionesMedicas", (string)null);
+                });
+
+            modelBuilder.Entity("GustoTag", b =>
+                {
+                    b.Property<Guid>("GustoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TagsId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("GustoId", "TagsId");
+
+                    b.HasIndex("TagsId");
+
+                    b.ToTable("GustoTags", (string)null);
                 });
 
             modelBuilder.Entity("GustoUsuario", b =>
@@ -363,6 +393,87 @@ namespace GustosApp.Infraestructure.Migrations
                     b.ToTable("MiembrosGrupos");
                 });
 
+            modelBuilder.Entity("GustosApp.Domain.Model.Restaurante", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("ActualizadoUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CantidadResenas")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Categoria")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreadoUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Direccion")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("EmbeddingVector")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("HorariosJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImagenUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("Latitud")
+                        .HasColumnType("float");
+
+                    b.Property<double>("Longitud")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("nvarchar(160)");
+
+                    b.Property<string>("NombreNormalizado")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("nvarchar(160)");
+
+                    b.Property<string>("PlaceId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PropietarioUid")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<double?>("Rating")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime>("UltimaActualizacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("WebUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NombreNormalizado")
+                        .IsUnique()
+                        .HasFilter("[NombreNormalizado] IS NOT NULL AND [NombreNormalizado] <> ''");
+
+                    b.HasIndex("PropietarioUid")
+                        .IsUnique()
+                        .HasFilter("[PropietarioUid] IS NOT NULL AND [PropietarioUid] <> ''");
+
+                    b.HasIndex("Latitud", "Longitud");
+
+                    b.ToTable("Restaurantes", (string)null);
+                });
+
             modelBuilder.Entity("GustosApp.Domain.Model.Restriccion", b =>
                 {
                     b.Property<Guid>("Id")
@@ -435,6 +546,52 @@ namespace GustosApp.Infraestructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("GustosApp.Domain.Model.ReviewRestaurante", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Autor")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("Rating")
+                        .HasColumnType("float");
+
+                    b.Property<Guid>("RestauranteId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Texto")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RestauranteId");
+
+                    b.ToTable("ReviewsRestaurantes");
+                });
+
+            modelBuilder.Entity("GustosApp.Domain.Model.Tag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Tags");
+                });
+
             modelBuilder.Entity("GustosApp.Domain.Model.Usuario", b =>
                 {
                     b.Property<Guid>("Id")
@@ -470,6 +627,9 @@ namespace GustosApp.Infraestructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("PasoActual")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
@@ -482,6 +642,21 @@ namespace GustosApp.Infraestructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Usuarios");
+                });
+
+            modelBuilder.Entity("RestriccionTag", b =>
+                {
+                    b.Property<Guid>("RestriccionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TagsProhibidosId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("RestriccionId", "TagsProhibidosId");
+
+                    b.HasIndex("TagsProhibidosId");
+
+                    b.ToTable("RestriccionTags", (string)null);
                 });
 
             modelBuilder.Entity("RestriccionUsuario", b =>
@@ -499,6 +674,21 @@ namespace GustosApp.Infraestructure.Migrations
                     b.ToTable("UsuarioRestricciones", (string)null);
                 });
 
+            modelBuilder.Entity("CondicionMedicaTag", b =>
+                {
+                    b.HasOne("GustosApp.Domain.Model.CondicionMedica", null)
+                        .WithMany()
+                        .HasForeignKey("CondicionMedicaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GustosApp.Domain.Model.Tag", null)
+                        .WithMany()
+                        .HasForeignKey("TagsCriticosId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("CondicionMedicaUsuario", b =>
                 {
                     b.HasOne("GustosApp.Domain.Model.CondicionMedica", null)
@@ -510,6 +700,21 @@ namespace GustosApp.Infraestructure.Migrations
                     b.HasOne("GustosApp.Domain.Model.Usuario", null)
                         .WithMany()
                         .HasForeignKey("UsuariosId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("GustoTag", b =>
+                {
+                    b.HasOne("GustosApp.Domain.Model.Gusto", null)
+                        .WithMany()
+                        .HasForeignKey("GustoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GustosApp.Domain.Model.Tag", null)
+                        .WithMany()
+                        .HasForeignKey("TagsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -586,6 +791,30 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Navigation("Usuario");
                 });
 
+            modelBuilder.Entity("GustosApp.Domain.Model.ReviewRestaurante", b =>
+                {
+                    b.HasOne("GustosApp.Domain.Model.Restaurante", null)
+                        .WithMany("Reviews")
+                        .HasForeignKey("RestauranteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RestriccionTag", b =>
+                {
+                    b.HasOne("GustosApp.Domain.Model.Restriccion", null)
+                        .WithMany()
+                        .HasForeignKey("RestriccionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GustosApp.Domain.Model.Tag", null)
+                        .WithMany()
+                        .HasForeignKey("TagsProhibidosId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("RestriccionUsuario", b =>
                 {
                     b.HasOne("GustosApp.Domain.Model.Restriccion", null)
@@ -606,6 +835,11 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Navigation("Invitaciones");
 
                     b.Navigation("Miembros");
+                });
+
+            modelBuilder.Entity("GustosApp.Domain.Model.Restaurante", b =>
+                {
+                    b.Navigation("Reviews");
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.Usuario", b =>

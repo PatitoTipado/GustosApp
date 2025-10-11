@@ -57,5 +57,5 @@ jobs:
         with:
           app-name: 'GustosApp'
           slot-name: 'Production'
-          package: .
+          package: myapp/
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_C0BDDA535B47414FA3CBA60BE8DC2FD5 }}

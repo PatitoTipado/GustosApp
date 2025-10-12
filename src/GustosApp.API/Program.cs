@@ -1,6 +1,5 @@
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
-using GustosApp.Application;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases;
 using GustosApp.Domain.Interfaces;
@@ -30,17 +29,11 @@ var firebaseServiceAccountJson = builder.Configuration.GetValue<string>("FIREBAS
 // Validar que el Project ID esté presente para la autenticación JWT
 if (string.IsNullOrEmpty(firebaseProjectId))
 {
-    // Esto asegura que si Azure no inyecta el valor, el despliegue falle con un error claro.
     throw new InvalidOperationException("La configuración 'Firebase:ProjectId' es requerida y debe estar definida en Azure App Settings.");
 }
 
-// 2. Inicializar Firebase Admin SDK (para usar funciones avanzadas como notificaciones, o JWT Admin)
-if (FirebaseApp.DefaultInstance == null)
-{
-    // A) Intentar inicializar usando el JSON secreto de Azure
     if (!string.IsNullOrEmpty(firebaseServiceAccountJson))
     {
-        Console.WriteLine("Inicializando Firebase Admin con secreto de Azure App Setting...");
         try
         {
             var credential = GoogleCredential.FromJson(firebaseServiceAccountJson);
@@ -54,16 +47,13 @@ if (FirebaseApp.DefaultInstance == null)
         catch (Exception ex)
         {
             Console.WriteLine($"Error al inicializar Firebase Admin con JSON de Azure: {ex.Message}");
-            // Si falla, la aplicación continuará usando JWT Validation, pero sin Admin SDK.
         }
     }
-    // B) Fallback local para desarrollo (Mantiene la compatibilidad si corres local)
-    else if (builder.Environment.IsDevelopment())
+    else
     {
         var firebaseKeyPath = Path.Combine(builder.Environment.ContentRootPath, "secrets", "firebase-key.json");
         if (File.Exists(firebaseKeyPath))
         {
-            Console.WriteLine("Usando archivo local de Firebase para desarrollo.");
             FirebaseApp.Create(new AppOptions()
             {
                 Credential = GoogleCredential.FromFile(firebaseKeyPath),
@@ -71,7 +61,7 @@ if (FirebaseApp.DefaultInstance == null)
             });
         }
     }
-}
+
 
 
 // Validación de JWT emitidos por Firebase (securetoken)
@@ -117,7 +107,7 @@ builder.Services.AddControllers()
 builder.Services.AddDbContext<GustosDbContext>(options =>
     options.UseSqlServer(
         // 'DefaultConnection' se lee directamente de Azure Connection Strings
-        builder.Configuration.GetConnectionString("DefaultConnection"),
+        builder.Configuration.GetValue<string>("DefaultConnection"),
         // Añado resiliencia por si la DB está en pausa (error transitorio común)
         sqlOptions => sqlOptions.EnableRetryOnFailure()
     ));

@@ -16,14 +16,12 @@ namespace GustosApp.Application.UseCases
         private const double UmbralMinimo = 0.1;
         private const double FactorPenalizacion = 0.1;
 
-        // Constructor que recibe las dependencias (Inversión de Control)
         public SugerirGustosUseCase(IEmbeddingService embeddingService, IRestauranteRepository restaurantRepo)
         {
             _embeddingService = embeddingService;
             _restaurantRepo = restaurantRepo;
         }
 
-        // Método que ejecuta el caso de uso ,agrego el 3 parametro: CancellationToken ct = default
         public async Task<List<RecomendacionDTO>> Handle(List<string> gustosUsuario, int maxResults = 10, CancellationToken ct = default)
 
         //grupos -> id y cada grupo va a tener 

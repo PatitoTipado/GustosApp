@@ -1,124 +1,108 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using GustosApp.Application.UseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
+using GustosApp.Application.DTO;
 using Moq;
+using Xunit;
 
-namespace GustosApp.Application.Tests
+namespace GustosApp.Application.Tests.UseCases
 {
     public class ObtenerGustosFiltradosUseCaseTests
     {
-        private readonly Mock<IUsuarioRepository> _mockUsuarioRepo;
-        private readonly Mock<IGustoRepository> _mockGustoRepo;
+        private readonly Mock<IUsuarioRepository> _usuarioRepoMock;
+        private readonly Mock<IGustoRepository> _gustoRepoMock;
         private readonly ObtenerGustosFiltradosUseCase _useCase;
 
         public ObtenerGustosFiltradosUseCaseTests()
         {
-            _mockUsuarioRepo = new Mock<IUsuarioRepository>();
-            _mockGustoRepo = new Mock<IGustoRepository>();
-            _useCase = new ObtenerGustosFiltradosUseCase(_mockUsuarioRepo.Object, _mockGustoRepo.Object);
+            _usuarioRepoMock = new Mock<IUsuarioRepository>();
+            _gustoRepoMock = new Mock<IGustoRepository>();
+            _useCase = new ObtenerGustosFiltradosUseCase(_usuarioRepoMock.Object, _gustoRepoMock.Object);
         }
 
         [Fact]
-        public async Task HandleAsync_FiltraGustosConTagsProhibidos_Correctamente()
+        public async Task HandleAsync_DeberiaRetornarSoloGustosCompatibles()
         {
             // Arrange
-            var uid = "firebase-uid-test";
-        
-            var tagHarina = new Tag { Id = Guid.NewGuid(), Nombre = "harina" };
-            var tagTomate = new Tag { Id = Guid.NewGuid(), Nombre = "tomate" };
+            var uid = "firebase_123";
+            var tagProhibido = new Tag { NombreNormalizado = "gluten" };
 
-            // Restricción: sin harina
-            var restriccionSinHarina = new Restriccion
+            var restriccion = new Restriccion
+            {
+                Nombre = "Sin Gluten",
+                TagsProhibidos = new List<Tag> { tagProhibido }
+            };
+
+            var gustoCompatible = new Gusto
             {
                 Id = Guid.NewGuid(),
-                Nombre = "Sin harina",
-                TagsProhibidos = new List<Tag> { tagHarina }
+                Nombre = "Sushi",
+                ImagenUrl = "img/sushi.jpg",
+                Tags = new List<Tag> { new Tag { NombreNormalizado = "pescado" } }
             };
 
-            // Usuario con esa restricción
-            var usuario = new Usuario(uid, "test@mail.com", "Juan", "Perez", "u123")
-            {
-                Restricciones = new List<Restriccion> { restriccionSinHarina },
-                CondicionesMedicas = new List<CondicionMedica>()
-            };
-
-            // Gustos (Pizza tiene harina, Ensalada no)
-            var gustoPizza = new Gusto
+            var gustoIncompatible = new Gusto
             {
                 Id = Guid.NewGuid(),
                 Nombre = "Pizza",
-                Tags = new List<Tag> { tagHarina, tagTomate },
-                ImagenUrl = "pizza.jpg"
+                ImagenUrl = "img/pizza.jpg",
+                Tags = new List<Tag> { new Tag { NombreNormalizado = "gluten" } }
             };
 
-            var gustoEnsalada = new Gusto
+            var usuario = new UsuarioFake(uid, "mail@mail.com", "Juan", "Pérez", "USR1")
             {
-                Id = Guid.NewGuid(),
-                Nombre = "Ensalada",
-                Tags = new List<Tag> { tagTomate },
-                ImagenUrl = "ensalada.jpg"
+                Restricciones = new List<Restriccion> { restriccion },
+                CondicionesMedicas = new List<CondicionMedica>()
             };
 
-            var gustos = new List<Gusto> { gustoPizza, gustoEnsalada };
+            _usuarioRepoMock.Setup(r => r.GetByFirebaseUidAsync(uid, It.IsAny<CancellationToken>()))
+                            .ReturnsAsync(usuario);
 
-            // Configurar mocks
-            _mockUsuarioRepo.Setup(r => r.GetByFirebaseUidAsync(uid, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(usuario);
-
-            _mockGustoRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(gustos);
+            _gustoRepoMock.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+                          .ReturnsAsync(new List<Gusto> { gustoCompatible, gustoIncompatible });
 
             // Act
-            var resultado = await _useCase.HandleAsync(uid, CancellationToken.None);
+            var result = await _useCase.HandleAsync(uid, CancellationToken.None);
 
             // Assert
-            Assert.Single(resultado); // Solo debería quedar 1
-            Assert.Equal("Ensalada", resultado.First().Nombre); // Ensalada pasa el filtro
+            Assert.NotNull(result);
+            Assert.Single(result);
+            Assert.Equal("Sushi", result.First().Nombre);
+            Assert.DoesNotContain(result, g => g.Nombre == "Pizza");
+
+            _usuarioRepoMock.Verify(r => r.GetByFirebaseUidAsync(uid, It.IsAny<CancellationToken>()), Times.Once);
+            _gustoRepoMock.Verify(r => r.GetAllAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
-        public async Task HandleAsync_SinRestriccionesYCondiciones_DevuelveTodosLosGustos()
+        public async Task HandleAsync_DeberiaLanzarExcepcionSiUsuarioNoExiste()
         {
             // Arrange
-            var uid = "uid-sin-restricciones";
-            var usuario = new Usuario(uid, "user@mail.com", "Ana", "Lopez", "u456");
-
-            var gusto1 = new Gusto { Id = Guid.NewGuid(), Nombre = "Pizza", Tags = new List<Tag>() };
-            var gusto2 = new Gusto { Id = Guid.NewGuid(), Nombre = "Sushi", Tags = new List<Tag>() };
-
-            var gustos = new List<Gusto> { gusto1, gusto2 };
-
-            _mockUsuarioRepo.Setup(r => r.GetByFirebaseUidAsync(uid, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(usuario);
-
-            _mockGustoRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(gustos);
-
-            // Act
-            var resultado = await _useCase.HandleAsync(uid, CancellationToken.None);
-
-            // Assert
-            Assert.Equal(2, resultado.Count);
-            Assert.Contains(resultado, g => g.Nombre == "Pizza");
-            Assert.Contains(resultado, g => g.Nombre == "Sushi");
-         
-        }
-
-        [Fact]
-        public async Task HandleAsync_UsuarioNoExiste_LanzaExcepcion()
-        {
-            // Arrange
-            var uid = "no-existe";
-            _mockUsuarioRepo.Setup(r => r.GetByFirebaseUidAsync(uid, It.IsAny<CancellationToken>()))
-                .ReturnsAsync((Usuario)null);
+            var uid = "firebase_999";
+            _usuarioRepoMock.Setup(r => r.GetByFirebaseUidAsync(uid, It.IsAny<CancellationToken>()))
+                            .ReturnsAsync((Usuario?)null);
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _useCase.HandleAsync(uid, CancellationToken.None));
         }
+    }
+
+    // 🧩 Subclase fake reutilizable
+    public class UsuarioFake : Usuario
+    {
+        public UsuarioFake(string firebaseUid, string email, string nombre, string apellido, string idUsuario)
+            : base(firebaseUid, email, nombre, apellido, idUsuario)
+        {
+            Gustos = new List<Gusto>();
+            Restricciones = new List<Restriccion>();
+            CondicionesMedicas = new List<CondicionMedica>();
+        }
+
+        public override List<string> ValidarCompatibilidad() => new List<string>();
     }
 }

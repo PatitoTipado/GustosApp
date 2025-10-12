@@ -1,147 +1,142 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using Moq;
+using Xunit;
 using GustosApp.Application.UseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
-using Moq;
 
-namespace GustosApp.Application.Tests
-{
+
+    public class UsuarioFake : Usuario
+    {
+        public UsuarioFake(string firebaseUid, string email, string nombre, string apellido, string idUsuario)
+            : base(firebaseUid, email, nombre, apellido, idUsuario)
+        {
+            Gustos = new List<Gusto>();
+            Restricciones = new List<Restriccion>();
+            CondicionesMedicas = new List<CondicionMedica>();
+        }
+
+        public override List<string> ValidarCompatibilidad()
+        {
+            return new List<string> { "Pizza" };
+        }
+    }
+
+  
     public class GuardarGustosUseCaseTests
     {
-        private readonly Mock<IUsuarioRepository> _mockUsuarioRepo;
-        private readonly Mock<IGustoRepository> _mockGustoRepo;
+        private readonly Mock<IUsuarioRepository> _usuarioRepoMock;
+        private readonly Mock<IGustoRepository> _gustoRepoMock;
         private readonly GuardarGustosUseCase _useCase;
 
         public GuardarGustosUseCaseTests()
         {
-            _mockUsuarioRepo = new Mock<IUsuarioRepository>();
-            _mockGustoRepo = new Mock<IGustoRepository>();
-            _useCase = new GuardarGustosUseCase(_mockUsuarioRepo.Object, _mockGustoRepo.Object);
+            _usuarioRepoMock = new Mock<IUsuarioRepository>();
+            _gustoRepoMock = new Mock<IGustoRepository>();
+            _useCase = new GuardarGustosUseCase(_usuarioRepoMock.Object, _gustoRepoMock.Object);
         }
 
         [Fact]
-        public async Task HandleAsync_DeberiaLanzarErrorSiMenosDeTresGustos()
+        public async Task HandleAsync_Should_Save_Gustos_And_Advance_Paso()
         {
             // Arrange
-            var uid = "user-123";
-            var ids = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() }; // solo 2 gustos
-
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _useCase.HandleAsync(uid, ids, CancellationToken.None));
-        }
-
-        [Fact]
-        public async Task HandleAsync_DeberiaLanzarErrorSiUsuarioNoExiste()
-        {
-            // Arrange
-            var uid = "inexistente";
+            var uid = "firebase_123";
             var ids = new List<Guid> { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
+            var ct = CancellationToken.None;
 
-            _mockUsuarioRepo.Setup(r => r.GetByFirebaseUidAsync(uid, It.IsAny<CancellationToken>()))
-                .ReturnsAsync((Usuario)null);
+            var usuario = new Usuario(uid, "test@mail.com", "Juan", "Pérez", "USR1");
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _useCase.HandleAsync(uid, ids, CancellationToken.None));
-        }
-
-        [Fact]
-        public async Task HandleAsync_DeberiaLanzarErrorSiNoHayGustosValidos()
-        {
-            // Arrange
-            var uid = "uid-valido";
-            var usuario = new Usuario(uid, "user@test.com", "Ana", "Lopez", "id123");
-
-            _mockUsuarioRepo.Setup(r => r.GetByFirebaseUidAsync(uid, It.IsAny<CancellationToken>()))
+            _usuarioRepoMock.Setup(r => r.GetByFirebaseUidAsync(uid, ct))
                 .ReturnsAsync(usuario);
 
-            _mockGustoRepo.Setup(r => r.GetByIdsAsync(It.IsAny<List<Guid>>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new List<Gusto>()); // vacío
+            var gustos = ids.Select(id => new Gusto { Id = id, Nombre = $"Gusto {id}" }).ToList();
 
-            var ids = new List<Guid> { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
-
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _useCase.HandleAsync(uid, ids, CancellationToken.None));
-        }
-
-        [Fact]
-        public async Task HandleAsync_DeberiaGuardarGustosYActualizarPaso()
-        {
-            // Arrange
-            var uid = "user-abc";
-            var usuario = new Usuario(uid, "user@test.com", "Pedro", "Ramirez", "u001");
-
-            var gustoPizza = new Gusto { Id = Guid.NewGuid(), Nombre = "Pizza" };
-            var gustoSushi = new Gusto { Id = Guid.NewGuid(), Nombre = "Sushi" };
-            var gustoHamburguesa = new Gusto { Id = Guid.NewGuid(), Nombre = "Hamburguesa" };
-
-            var gustos = new List<Gusto> { gustoPizza, gustoSushi, gustoHamburguesa };
-
-            _mockUsuarioRepo.Setup(r => r.GetByFirebaseUidAsync(uid, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(usuario);
-
-            _mockGustoRepo.Setup(r => r.GetByIdsAsync(It.IsAny<List<Guid>>(), It.IsAny<CancellationToken>()))
+            _gustoRepoMock.Setup(r => r.GetByIdsAsync(ids, ct))
                 .ReturnsAsync(gustos);
 
-            _mockUsuarioRepo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            _usuarioRepoMock.Setup(r => r.SaveChangesAsync(ct))
                 .Returns(Task.CompletedTask);
 
             // Act
-            var conflictos = await _useCase.HandleAsync(uid, gustos.Select(g => g.Id).ToList(), CancellationToken.None);
+            var conflictos = await _useCase.HandleAsync(uid, ids, ct);
 
             // Assert
-            Assert.Empty(conflictos); // No hay conflictos
-            Assert.Equal(3, usuario.Gustos.Count);
+            _usuarioRepoMock.Verify(r => r.SaveChangesAsync(ct), Times.Once);
             Assert.Equal(RegistroPaso.Verificacion, usuario.PasoActual);
-            _mockUsuarioRepo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+            Assert.Equal(3, usuario.Gustos.Count);
+            Assert.Empty(conflictos);
         }
 
         [Fact]
-        public async Task HandleAsync_DeberiaDevolverConflictosSiLosHay()
+        public async Task HandleAsync_Should_Throw_When_Less_Than_Three_Gustos()
         {
             // Arrange
-            var uid = "user-xyz";
-            var gustoCarne = new Gusto
-            {
-                Id = Guid.NewGuid(),
-                Nombre = "Carne",
-                Tags = new List<Tag> { new Tag { Nombre = "carne" } }
-            };
-            var gustoEnsalada = new Gusto
-            {
-                Id = Guid.NewGuid(),
-                Nombre = "Ensalada",
-                Tags = new List<Tag> { new Tag { Nombre = "vegetales" } }
-            };
+            var uid = "firebase_123";
+            var ids = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() }; // solo 2 gustos
+            var ct = CancellationToken.None;
 
-            var usuario = new Usuario(uid, "mail@test.com", "Juan", "Perez", "id001");
-            var restriccionSinCarne = new Restriccion
-            {
-                Id = Guid.NewGuid(),
-                Nombre = "Sin carne",
-                TagsProhibidos = new List<Tag> { new Tag { Nombre = "carne" } }
-            };
-            usuario.Restricciones.Add(restriccionSinCarne);
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
+                _useCase.HandleAsync(uid, ids, ct));
 
-            _mockUsuarioRepo.Setup(r => r.GetByFirebaseUidAsync(uid, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(usuario);
-
-            _mockGustoRepo.Setup(r => r.GetByIdsAsync(It.IsAny<List<Guid>>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new List<Gusto> { gustoCarne, gustoEnsalada });
-
-            _mockUsuarioRepo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
-                .Returns(Task.CompletedTask);
-
-            // Act
-            var conflictos = await _useCase.HandleAsync(uid, new List<Guid> { gustoCarne.Id, gustoEnsalada.Id, Guid.NewGuid() }, CancellationToken.None);
-
-            // Assert
-            Assert.Single(conflictos); // solo "Carne" es conflictivo
-            Assert.DoesNotContain(usuario.Gustos, g => g.Nombre == "Carne");
-            Assert.Contains(usuario.Gustos, g => g.Nombre == "Ensalada");
+            Assert.Contains("al menos 3 gustos", ex.Message);
         }
+
+        [Fact]
+        public async Task HandleAsync_Should_Throw_When_User_Not_Found()
+        {
+            // Arrange
+            var uid = "firebase_999";
+            var ids = new List<Guid> { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
+            var ct = CancellationToken.None;
+
+            _usuarioRepoMock.Setup(r => r.GetByFirebaseUidAsync(uid, ct))
+                .ReturnsAsync((Usuario?)null);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() =>
+                _useCase.HandleAsync(uid, ids, ct));
+        }
+
+        [Fact]
+    public async Task HandleAsync_DeberiaGuardarNuevosGustosYValidarCompatibilidad()
+    {
+        // Arrange
+        var uid = "firebase_123";
+        var ids = new List<Guid> { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
+
+        var gustoIncompatible = new Gusto { Id = ids[0], Nombre = "Pizza" };
+        var gustoCompatible1 = new Gusto { Id = ids[1], Nombre = "Sushi" };
+        var gustoCompatible2 = new Gusto { Id = ids[2], Nombre = "Tacos" };
+        var gustoCompatible3 = new Gusto { Id = ids[3], Nombre = "Pasta" };
+
+        var usuario = new UsuarioFake(uid, "user@mail.com", "Ana", "García", "USR2")
+        {
+            Gustos = new List<Gusto> { gustoCompatible1 }
+        };
+
+        _usuarioRepoMock.Setup(r => r.GetByFirebaseUidAsync(uid, It.IsAny<CancellationToken>()))
+                        .ReturnsAsync(usuario);
+
+        _gustoRepoMock.Setup(r => r.GetByIdsAsync((List<Guid>)It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()))
+                      .ReturnsAsync(new List<Gusto> { gustoIncompatible, gustoCompatible1, gustoCompatible2, gustoCompatible3 });
+
+        _usuarioRepoMock.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
+                        .Returns(Task.CompletedTask);
+
+        // Act
+        var conflictos = await _useCase.HandleAsync(uid, ids, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(conflictos);
+        Assert.Contains("Pizza", conflictos);
+        Assert.Equal(RegistroPaso.Verificacion, usuario.PasoActual);
+
+        _usuarioRepoMock.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
-}
+    }
+

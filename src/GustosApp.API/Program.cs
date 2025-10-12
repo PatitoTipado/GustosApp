@@ -93,7 +93,7 @@ builder.Services.AddControllers()
 builder.Services.AddDbContext<GustosDbContext>(options =>
     options.UseSqlServer(
         // 'DefaultConnection' se lee directamente de Azure Connection Strings
-        builder.Configuration.GetValue<string>("DefaultConnection"),
+        builder.Configuration.GetConnectionString("DefaultConnection"),
         // Añado resiliencia por si la DB está en pausa (error transitorio común)
         sqlOptions => sqlOptions.EnableRetryOnFailure()
     ));

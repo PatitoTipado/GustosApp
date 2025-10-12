@@ -21,8 +21,9 @@ namespace GustosApp.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll(CancellationToken ct)
         {
-            var result = await _obtenerRestricciones.HandleAsync(ct);
-            return Ok(result);
+            var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
+            var restricciones = await _obtenerRestricciones.HandleAsync(uid, ct);
+            return Ok(new { restricciones });
         }
     }
 }

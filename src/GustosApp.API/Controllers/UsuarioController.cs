@@ -11,6 +11,7 @@ using GustosApp.Infraestructure.Repositories;
 using GustosApp.Domain.Interfaces;
 using FirebaseAdmin.Messaging;
 using Microsoft.AspNetCore.Http.HttpResults;
+using GustosApp.Domain.Model;
 
 namespace GustosApp.API.Controllers
 {
@@ -114,17 +115,29 @@ namespace GustosApp.API.Controllers
         public async Task<IActionResult> ObtenerGustosFiltrados(CancellationToken ct)
         {
             var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
-            var gustosFiltrados = await _getGustos.HandleAsync(uid, ct);
 
+            var resp = await _getGustos.HandleAsync(uid, ct);
+
+            // Unir la información
+            var gustos = resp.GustosFiltrados
+                .Select(g => new GustoDto
+                {
+                    Id = g.Id,
+                    Nombre = g.Nombre,
+                    ImagenUrl = g.ImagenUrl,
+                    Seleccionado = resp.GustosSeleccionados.Contains(g.Id)
+                })
+                .ToList();
 
             return Ok(new
             {
                 pasoActual = "Condiciones",
                 next = "/registro/gustos",
-                gustos = gustosFiltrados
+                gustos
             });
+
         }
-        
+
 
         [Authorize]
         [HttpPost("gustos")]

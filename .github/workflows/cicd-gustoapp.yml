@@ -24,6 +24,12 @@ jobs:
         with:
           dotnet-version: '8.x'
 
+      - name: Limpiar Caché de Build y Forzar Restauración
+        run: |
+          dotnet clean
+          dotnet restore
+          echo "¡Caché de NuGet y build local limpiado!"
+
       - name: Build with dotnet
         run: dotnet build --configuration Release
 

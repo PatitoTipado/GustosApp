@@ -49,20 +49,6 @@ if (string.IsNullOrEmpty(firebaseProjectId))
             Console.WriteLine($"Error al inicializar Firebase Admin con JSON de Azure: {ex.Message}");
         }
     }
-    else
-    {
-        var firebaseKeyPath = Path.Combine(builder.Environment.ContentRootPath, "secrets", "firebase-key.json");
-        if (File.Exists(firebaseKeyPath))
-        {
-            FirebaseApp.Create(new AppOptions()
-            {
-                Credential = GoogleCredential.FromFile(firebaseKeyPath),
-                ProjectId = firebaseProjectId
-            });
-        }
-    }
-
-
 
 // Validación de JWT emitidos por Firebase (securetoken)
 builder.Services

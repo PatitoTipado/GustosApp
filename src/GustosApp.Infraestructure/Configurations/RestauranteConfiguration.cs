@@ -1,4 +1,3 @@
-
 using GustosApp.Domain.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -10,36 +9,48 @@ namespace GustosApp.Infraestructure.Configurations
         public void Configure(EntityTypeBuilder<Restaurante> b)
         {
             b.ToTable("Restaurantes");
-            b.HasKey(x => x.Id);
 
-            b.Property(x => x.PropietarioUid).HasMaxLength(128).IsRequired();
-            b.Property(x => x.Nombre).HasMaxLength(160).IsRequired();
-            b.Property(x => x.NombreNormalizado).HasMaxLength(160).IsRequired();
-            b.Property(x => x.Direccion).HasMaxLength(300).IsRequired();
-            b.Property(x => x.HorariosJson).HasColumnType("nvarchar(max)").IsRequired();
+            b.HasKey(r => r.Id);
 
-            b.Property(x => x.Latitud);
-            b.Property(x => x.Longitud);
+            b.Property(r => r.PropietarioUid)
+                .HasMaxLength(128)
+                .IsRequired();
 
-            b.Property(x => x.CreadoUtc).HasColumnType("datetime2");
-            b.Property(x => x.ActualizadoUtc).HasColumnType("datetime2");
+            b.Property(r => r.Nombre)
+                .HasMaxLength(160)
+                .IsRequired();
 
-            // ====== V2 ======
-            b.Property(x => x.Tipo)
-             .HasConversion<string>() 
-             .HasMaxLength(40)
-             .IsRequired();
+            b.Property(r => r.NombreNormalizado)
+                .HasMaxLength(160);
 
-            b.Property(x => x.ImagenUrl).HasMaxLength(500);
-            b.Property(x => x.Valoracion).HasColumnType("decimal(3,2)"); 
+            b.Property(r => r.Direccion)
+                .HasMaxLength(300)
+                .IsRequired();
 
-            b.HasIndex(x => x.PropietarioUid).IsUnique().HasDatabaseName("UX_Restaurantes_PropietarioUid");
-            b.HasIndex(x => x.NombreNormalizado).IsUnique().HasDatabaseName("UX_Restaurantes_NombreNormalizado");
+            b.Property(r => r.HorariosJson)
+                .IsRequired();
 
-            b.HasMany(x => x.Platos)
-             .WithOne(x => x.Restaurante)
-             .HasForeignKey(x => x.RestauranteId)
-             .OnDelete(DeleteBehavior.Cascade);
+            b.Property(r => r.ImagenUrl)
+                .HasMaxLength(500);
+
+            b.Property(r => r.Tipo)
+                .HasConversion<string>()
+                .HasMaxLength(40)
+                .IsRequired();
+
+            b.Property(r => r.Valoracion)
+                .HasPrecision(3,2);
+
+            b.HasIndex(r => new { r.Latitud, r.Longitud })
+             .HasDatabaseName("IX_Restaurantes_Latitud_Longitud");
+
+            
+            b.HasIndex(r => r.PropietarioUid)
+             .HasDatabaseName("IX_Restaurantes_PropietarioUid");
+
+            b.HasIndex(r => r.NombreNormalizado)
+             .IsUnique()
+             .HasDatabaseName("UX_Restaurantes_NombreNormalizado");
         }
     }
 }

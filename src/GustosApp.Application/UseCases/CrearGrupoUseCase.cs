@@ -44,7 +44,8 @@ namespace GustosApp.Application.UseCases
                 grupoCompleto.Nombre,
                 grupoCompleto.Descripcion,
                 grupoCompleto.AdministradorId,
-                grupoCompleto.Administrador.Nombre + " " + grupoCompleto.Administrador.Apellido,
+                grupoCompleto.Administrador?.FirebaseUid, // Add Firebase UID
+                grupoCompleto.Administrador != null ? (grupoCompleto.Administrador.Nombre + " " + grupoCompleto.Administrador.Apellido) : string.Empty,
                 grupoCompleto.FechaCreacion,
                 grupoCompleto.Activo,
                 grupoCompleto.CodigoInvitacion,

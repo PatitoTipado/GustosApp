@@ -15,6 +15,8 @@ public class GustosDbContext : DbContext
     public DbSet<Grupo> Grupos { get; set; }
     public DbSet<MiembroGrupo> MiembrosGrupos { get; set; }
     public DbSet<InvitacionGrupo> InvitacionesGrupos { get; set; }
+    public DbSet<SolicitudAmistad> SolicitudesAmistad { get; set; }
+    public DbSet<ChatMessage> ChatMessages { get; set; }
 
     
     public DbSet<Restaurante> Restaurantes { get; set; }
@@ -152,6 +154,29 @@ public class GustosDbContext : DbContext
         modelBuilder.Entity<InvitacionGrupo>()
             .Property(i => i.Estado)
             .HasConversion<int>();
+
+        modelBuilder.Entity<SolicitudAmistad>()
+            .HasOne(s => s.Remitente)
+            .WithMany()
+            .HasForeignKey("RemitenteId")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<SolicitudAmistad>()
+            .HasOne(s => s.Destinatario)
+            .WithMany()
+            .HasForeignKey("DestinatarioId")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<SolicitudAmistad>()
+            .Property(s => s.Estado)
+            .HasConversion<int>();
+
+        // Chat messages
+        modelBuilder.Entity<ChatMessage>()
+            .HasKey(c => c.Id);
+        modelBuilder.Entity<ChatMessage>()
+            .Property(c => c.Mensaje)
+            .IsRequired();
 
         modelBuilder.Entity<Gusto>().HasData(
             new Gusto { Id = Guid.Parse("11111111-1111-1111-1111-111111111111"), Nombre = "Pizza" },

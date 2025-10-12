@@ -76,6 +76,8 @@ builder.Services.AddScoped<IMiembroGrupoRepository, MiembroGrupoRepositoryEF>();
 builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepositoryEF>();
 builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepositoryEF>();
+// Chat repository
+builder.Services.AddScoped<GustosApp.Domain.Interfaces.IChatRepository, GustosApp.Infraestructure.Repositories.ChatRepositoryEF>();
 
 // =====================
 //   UseCases existentes
@@ -92,6 +94,7 @@ builder.Services.AddScoped<ObtenerGruposUsuarioUseCase>();
 builder.Services.AddScoped<ObtenerInvitacionesUsuarioUseCase>();
 builder.Services.AddScoped<AceptarInvitacionGrupoUseCase>();
 builder.Services.AddScoped<GuardarCondicionesUseCase>();
+builder.Services.AddScoped<ObtenerGrupoDetalleUseCase>();
 builder.Services.AddScoped<GuardarGustosUseCase>();
 builder.Services.AddScoped<GuardarRestriccionesUseCase>();
 builder.Services.AddScoped<ObtenerGustosFiltradosUseCase>();
@@ -99,6 +102,18 @@ builder.Services.AddScoped<ObtenerResumenRegistroUseCase>();
 builder.Services.AddScoped<FinalizarRegistroUseCase>();
 builder.Services.AddScoped<BuscarRestaurantesCercanosUseCase>();
 builder.Services.AddScoped<ActualizarDetallesRestauranteUseCase>();
+builder.Services.AddScoped<RemoverMiembroGrupoUseCase>();
+// UseCases y repositorios de amistad
+builder.Services.AddScoped<GustosApp.Domain.Interfaces.ISolicitudAmistadRepository, GustosApp.Infraestructure.Repositories.SolicitudAmistadRepositoryEF>();
+builder.Services.AddScoped<EnviarSolicitudAmistadUseCase>();
+builder.Services.AddScoped<ObtenerSolicitudesPendientesUseCase>();
+builder.Services.AddScoped<AceptarSolicitudUseCase>();
+builder.Services.AddScoped<RechazarSolicitudUseCase>();
+builder.Services.AddScoped<ObtenerAmigosUseCase>();
+builder.Services.AddScoped<EliminarAmigoUseCase>();
+builder.Services.AddScoped<EliminarGrupoUseCase>();
+builder.Services.AddScoped<ObtenerChatGrupoUseCase>();
+builder.Services.AddScoped<EnviarMensajeGrupoUseCase>();
 
 // =====================
 //   Restaurantes (DI)

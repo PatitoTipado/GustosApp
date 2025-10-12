@@ -4,3 +4,5 @@ bin/
 obj/
 /src/GustosApp.API/appsettings.Development.json
 /src/GustosApp.API/secrets/firebase-key.json
+# Excluir el modelo grande
+ML/model.onnx

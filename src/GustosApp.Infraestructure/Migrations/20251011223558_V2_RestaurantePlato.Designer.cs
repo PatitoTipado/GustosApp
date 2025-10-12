@@ -4,6 +4,7 @@ using GustosApp.Infraestructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GustosApp.Infraestructure.Migrations
 {
     [DbContext(typeof(GustosDbContext))]
-    partial class GustosDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251011223558_V2_RestaurantePlato")]
+    partial class V2_RestaurantePlato
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -461,7 +464,6 @@ namespace GustosApp.Infraestructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<decimal?>("Valoracion")
-                        .HasPrecision(3, 2)
                         .HasColumnType("decimal(3,2)");
 
                     b.Property<string>("WebUrl")
@@ -474,10 +476,8 @@ namespace GustosApp.Infraestructure.Migrations
                         .HasDatabaseName("UX_Restaurantes_NombreNormalizado");
 
                     b.HasIndex("PropietarioUid")
-                        .HasDatabaseName("IX_Restaurantes_PropietarioUid");
-
-                    b.HasIndex("Latitud", "Longitud")
-                        .HasDatabaseName("IX_Restaurantes_Latitud_Longitud");
+                        .IsUnique()
+                        .HasDatabaseName("UX_Restaurantes_PropietarioUid");
 
                     b.ToTable("Restaurantes", (string)null);
                 });

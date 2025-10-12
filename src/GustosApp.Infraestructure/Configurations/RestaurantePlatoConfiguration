@@ -1,0 +1,25 @@
+using GustosApp.Domain.Model;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace GustosApp.Infraestructure.Configurations
+{
+    public class RestaurantePlatoConfiguration : IEntityTypeConfiguration<RestaurantePlato>
+    {
+        public void Configure(EntityTypeBuilder<RestaurantePlato> builder)
+        {
+            builder.ToTable("RestaurantePlatos");
+
+            builder.HasKey(x => new { x.RestauranteId, x.Plato });
+
+            builder.Property(x => x.Plato)
+                   .HasConversion<string>()
+                   .HasMaxLength(50);
+
+            builder.HasOne(x => x.Restaurante)
+                   .WithMany(r => r.Platos)
+                   .HasForeignKey(x => x.RestauranteId)
+                   .OnDelete(DeleteBehavior.Cascade);
+        }
+    }
+}

@@ -110,33 +110,7 @@ namespace GustosApp.API.Controllers
             
         }
 
-        [Authorize]
-        [HttpGet("gustos/filtrados")]
-        public async Task<IActionResult> ObtenerGustosFiltrados(CancellationToken ct)
-        {
-            var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
-
-            var resp = await _getGustos.HandleAsync(uid, ct);
-
-            // Unir la información
-            var gustos = resp.GustosFiltrados
-                .Select(g => new GustoDto
-                {
-                    Id = g.Id,
-                    Nombre = g.Nombre,
-                    ImagenUrl = g.ImagenUrl,
-                    Seleccionado = resp.GustosSeleccionados.Contains(g.Id)
-                })
-                .ToList();
-
-            return Ok(new
-            {
-                pasoActual = "Condiciones",
-                next = "/registro/gustos",
-                gustos
-            });
-
-        }
+       
 
 
         [Authorize]

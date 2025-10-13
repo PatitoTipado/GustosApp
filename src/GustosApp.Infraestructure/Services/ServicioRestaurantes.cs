@@ -1,14 +1,11 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using GustosApp.Application.DTO;
 using GustosApp.Application.DTOs.Restaurantes;
-using GustosApp.Application.Services;  
+using GustosApp.Application.Services;
 using GustosApp.Domain.Model;
-using GustosApp.Infraestructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace GustosApp.Infraestructure.Services
@@ -47,7 +44,6 @@ namespace GustosApp.Infraestructure.Services
                 Horarios = horarios,
                 CreadoUtc = r.CreadoUtc,
                 ActualizadoUtc = r.ActualizadoUtc,
-                // V2
                 Tipo = r.Tipo.ToString(),
                 ImagenUrl = r.ImagenUrl,
                 Valoracion = r.Valoracion,
@@ -55,13 +51,58 @@ namespace GustosApp.Infraestructure.Services
             };
         }
 
+        public async Task<IReadOnlyList<RestauranteDto>> BuscarAsync(
+    string? tipo,
+    string? plato,
+    double? lat = null,
+    double? lng = null,
+    int? radioMetros = null)
+{
+    var q = _db.Restaurantes.AsNoTracking()
+        .Include(r => r.Platos)
+        .AsQueryable();
+
+    if (!string.IsNullOrWhiteSpace(tipo))
+    {
+        if (!Enum.TryParse<TipoRestaurante>(tipo, ignoreCase: true, out var tipoEnum))
+            return Array.Empty<RestauranteDto>(); 
+        q = q.Where(r => r.Tipo == tipoEnum);
+    }
+
+    if (!string.IsNullOrWhiteSpace(plato))
+    {
+        if (!Enum.TryParse<PlatoComida>(plato, ignoreCase: true, out var platoEnum))
+            return Array.Empty<RestauranteDto>();
+        q = q.Where(r => r.Platos.Any(p => p.Plato == platoEnum));
+    }
+
+    
+    if (lat.HasValue && lng.HasValue && radioMetros.HasValue && radioMetros.Value > 0)
+    {
+        var degLat = radioMetros.Value / 111_000.0;
+        var degLng = radioMetros.Value / (111_000.0 * Math.Cos(lat.Value * Math.PI / 180.0));
+
+        var minLat = lat.Value - degLat;
+        var maxLat = lat.Value + degLat;
+        var minLng = lng.Value - degLng;
+        var maxLng = lng.Value + degLng;
+
+        q = q.Where(r => r.Latitud >= minLat && r.Latitud <= maxLat
+                      && r.Longitud >= minLng && r.Longitud <= maxLng)
+             .OrderBy(r => Math.Abs(r.Latitud - lat.Value) + Math.Abs(r.Longitud - lng.Value));
+    }
+    else
+    {
+        q = q.OrderBy(r => r.NombreNormalizado);
+    }
+
+    var lista = await q.Take(200).ToListAsync();
+    return lista.Select(Map).ToList();
+}
+
+
         public async Task<RestauranteDto> CrearAsync(string propietarioUid, CrearRestauranteDto dto)
         {
-            var yaTiene = await _db.Restaurantes.AsNoTracking()
-                .AnyAsync(r => r.PropietarioUid == propietarioUid);
-            if (yaTiene)
-                throw new InvalidOperationException("El usuario ya registró un restaurante.");
-
             var nombreNorm = NormalizarNombre(dto.Nombre);
             var nombreEnUso = await _db.Restaurantes.AsNoTracking()
                 .AnyAsync(r => r.NombreNormalizado == nombreNorm);
@@ -94,7 +135,6 @@ namespace GustosApp.Infraestructure.Services
                 HorariosJson = dto.Horarios is null ? "{}" : JsonSerializer.Serialize(dto.Horarios),
                 CreadoUtc = ahora,
                 ActualizadoUtc = ahora,
-                // V2
                 Tipo = tipoParsed,
                 ImagenUrl = string.IsNullOrWhiteSpace(dto.ImagenUrl) ? null : dto.ImagenUrl!.Trim(),
                 Valoracion = dto.Valoracion
@@ -126,7 +166,10 @@ namespace GustosApp.Infraestructure.Services
             return r is null ? null : Map(r);
         }
 
-        public async Task<IReadOnlyList<RestauranteDto>> ListarCercanosAsync(double lat, double lng, int radioMetros)
+        public async Task<IReadOnlyList<RestauranteDto>> ListarCercanosAsync(
+            double lat, double lng, int radioMetros,
+            string? tipo = null,
+            IEnumerable<string>? platos = null)
         {
             double degLat = radioMetros / 111_000.0;
             double degLng = radioMetros / (111_000.0 * Math.Cos(lat * Math.PI / 180.0));
@@ -136,10 +179,30 @@ namespace GustosApp.Infraestructure.Services
             var minLng = lng - degLng;
             var maxLng = lng + degLng;
 
-            var lista = await _db.Restaurantes.AsNoTracking()
+            var q = _db.Restaurantes.AsNoTracking()
+                .Include(r => r.Platos)
                 .Where(r => r.Latitud >= minLat && r.Latitud <= maxLat
-                         && r.Longitud >= minLng && r.Longitud <= maxLng)
-                .Include(x => x.Platos)
+                         && r.Longitud >= minLng && r.Longitud <= maxLng);
+
+            if (!string.IsNullOrWhiteSpace(tipo) &&
+                Enum.TryParse<TipoRestaurante>(tipo, true, out var tipoParsed))
+            {
+                q = q.Where(r => r.Tipo == tipoParsed);
+            }
+
+            if (platos is not null)
+            {
+                var set = new HashSet<PlatoComida>(
+                    platos.Select(p => Enum.TryParse<PlatoComida>(p, true, out var v) ? v : (PlatoComida?)null)
+                          .Where(v => v.HasValue)
+                          .Select(v => v!.Value));
+                if (set.Count > 0)
+                {
+                    q = q.Where(r => r.Platos.Any(p => set.Contains(p.Plato)));
+                }
+            }
+
+            var lista = await q
                 .OrderBy(r => Math.Abs(r.Latitud - lat) + Math.Abs(r.Longitud - lng))
                 .Take(200)
                 .ToListAsync();
@@ -184,7 +247,6 @@ namespace GustosApp.Infraestructure.Services
             r.HorariosJson = dto.Horarios is null ? "{}" : JsonSerializer.Serialize(dto.Horarios);
             r.ActualizadoUtc = DateTime.UtcNow;
 
-            // V2
             r.Tipo = tipoParsed;
             r.ImagenUrl = string.IsNullOrWhiteSpace(dto.ImagenUrl) ? null : dto.ImagenUrl!.Trim();
             r.Valoracion = dto.Valoracion;

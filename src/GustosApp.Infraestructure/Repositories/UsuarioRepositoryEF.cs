@@ -28,10 +28,31 @@ namespace GustosApp.Infraestructure.Repositories
         public Task<Usuario?> GetByEmailAsync(string email, CancellationToken ct = default)
             => _db.Usuarios.FirstOrDefaultAsync(u => u.Email == email, ct);
 
+        public Task<Usuario?> GetByUsernameAsync(string username, CancellationToken ct = default)
+            => _db.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == username, ct);
+
+        public async Task<IEnumerable<Usuario>> GetAllAsync(int limit = 100, CancellationToken ct = default)
+        {
+            return await _db.Usuarios.Take(limit).ToListAsync(ct);
+        }
+
+        public Task<Usuario?> GetByIdAsync(Guid id, CancellationToken ct = default)
+            => _db.Usuarios.FirstOrDefaultAsync(u => u.Id == id, ct);
+
         public async Task AddAsync(Usuario usuario, CancellationToken ct = default)
             => await _db.Usuarios.AddAsync(usuario, ct);
 
         public Task SaveChangesAsync(CancellationToken ct = default)
             => _db.SaveChangesAsync(ct);
+
+        public Task<Usuario?> GetByFirebaseUidWithGustosAsync(string firebaseUid, CancellationToken ct = default)
+        => _db.Usuarios
+              .Include(u => u.Gustos)
+              .FirstOrDefaultAsync(u => u.FirebaseUid == firebaseUid, ct);
+                  
+        public async Task<List<Usuario>> GetAllWithGustosAsync(CancellationToken ct = default)
+         => await _db.Usuarios
+                .Include(u => u.Gustos)
+                .ToListAsync(ct);       
     }
 }

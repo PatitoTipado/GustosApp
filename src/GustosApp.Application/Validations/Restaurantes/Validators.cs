@@ -1,4 +1,3 @@
-
 using FluentValidation;
 using GustosApp.Application.DTOs.Restaurantes;
 using GustosApp.Domain.Model;
@@ -10,8 +9,15 @@ namespace GustosApp.Application.Validations.Restaurantes
     {
         public CrearRestauranteValidator()
         {
-            RuleFor(x => x.Nombre).NotEmpty().MinimumLength(3).MaximumLength(160);
-            RuleFor(x => x.Direccion).NotEmpty().MaximumLength(300);
+            RuleFor(x => x.Nombre)
+                .NotEmpty()
+                .MinimumLength(3)
+                .MaximumLength(160);
+
+            RuleFor(x => x.Direccion)
+                .NotEmpty()
+                .MaximumLength(300);
+
             RuleFor(x => x.Latitud).InclusiveBetween(-90, 90);
             RuleFor(x => x.Longitud).InclusiveBetween(-180, 180);
 
@@ -20,9 +26,12 @@ namespace GustosApp.Application.Validations.Restaurantes
                 .Must(t => Enum.TryParse<TipoRestaurante>(t, true, out _))
                 .WithMessage("Tipo inválido.");
 
-            RuleForEach(x => x.Platos ?? new())
-                .Must(p => Enum.TryParse<PlatoComida>(p, true, out _))
-                .WithMessage("Plato inválido.");
+            When(x => x.Platos != null, () =>
+            {
+                RuleForEach(x => x.Platos!)
+                    .Must(p => Enum.TryParse<PlatoComida>(p, true, out _))
+                    .WithMessage("Plato inválido.");
+            });
 
             RuleFor(x => x.ImagenUrl)
                 .MaximumLength(500)
@@ -35,6 +44,4 @@ namespace GustosApp.Application.Validations.Restaurantes
                 .WithMessage("Valoración debe estar entre 0 y 5.");
         }
     }
-
-   
 }

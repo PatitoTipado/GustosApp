@@ -16,8 +16,11 @@ public class GustosDbContext : DbContext
     public DbSet<Grupo> Grupos { get; set; }
     public DbSet<MiembroGrupo> MiembrosGrupos { get; set; }
     public DbSet<InvitacionGrupo> InvitacionesGrupos { get; set; }
+    public DbSet<SolicitudAmistad> SolicitudesAmistad { get; set; }
+    public DbSet<ChatMessage> ChatMessages { get; set; }
 
-
+    
+    public DbSet<RestauranteEspecialidad> RestauranteEspecialidades { get; set; }
     public DbSet<Restaurante> Restaurantes { get; set; }
 
     public DbSet<ReviewRestaurante> ReviewsRestaurantes { get; set; }
@@ -176,7 +179,37 @@ public class GustosDbContext : DbContext
             .Property(i => i.Estado)
             .HasConversion<int>();
 
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(GustosDbContext).Assembly);
+        modelBuilder.Entity<SolicitudAmistad>()
+            .HasOne(s => s.Remitente)
+            .WithMany()
+            .HasForeignKey("RemitenteId")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<SolicitudAmistad>()
+            .HasOne(s => s.Destinatario)
+            .WithMany()
+            .HasForeignKey("DestinatarioId")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<SolicitudAmistad>()
+            .Property(s => s.Estado)
+            .HasConversion<int>();
+
+        // Chat messages
+        modelBuilder.Entity<ChatMessage>()
+            .HasKey(c => c.Id);
+        modelBuilder.Entity<ChatMessage>()
+            .Property(c => c.Mensaje)
+            .IsRequired();
+
+        modelBuilder.Entity<Restaurante>()
+       .HasMany(r => r.Especialidad)
+       .WithOne(e => e.Restaurante)
+       .HasForeignKey(e => e.RestauranteId);
+
+      
+
+       modelBuilder.ApplyConfigurationsFromAssembly(typeof(GustosDbContext).Assembly);
 
         modelBuilder.Entity<RestaurantePlato>(b =>
     {

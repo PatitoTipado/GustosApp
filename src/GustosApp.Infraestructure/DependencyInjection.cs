@@ -9,6 +9,8 @@ namespace GustosApp.Infraestructure
         public static IServiceCollection AddInfraRestaurantes(this IServiceCollection services)
         {
             services.AddScoped<IServicioRestaurantes, ServicioRestaurantes>();
+            // Repositorios de grupos y solicitudes
+            services.AddScoped<GustosApp.Domain.Interfaces.ISolicitudAmistadRepository, GustosApp.Infraestructure.Repositories.SolicitudAmistadRepositoryEF>();
             return services;
         }
     }

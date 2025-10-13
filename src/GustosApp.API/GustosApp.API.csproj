@@ -7,10 +7,9 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Compile Remove="NewFolder\**" />
-	  <Content Remove="NewFolder\**" />
-	  <EmbeddedResource Remove="NewFolder\**" />
-	  <None Remove="NewFolder\**" />
+		<None Update="appsettings.Development.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -20,6 +19,8 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
+		<PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.23.1" />
+		<PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.23.1" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
 	</ItemGroup>
 

@@ -1,31 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace GustosApp.Application.DTO
+namespace GustosApp.Application.DTOs.Restaurantes
 {
     public class RestauranteDto
     {
-
         public Guid Id { get; set; }
-        public string PropietarioUid { get; set; } = string.Empty;
-
+        public string PropietarioUid { get; set; } = "";
+        public string Nombre { get; set; } = "";
+        public string Direccion { get; set; } = "";
+        public double Latitud { get; set; }
+        public double Longitud { get; set; }
         public object? Horarios { get; set; }
         public DateTime CreadoUtc { get; set; }
         public DateTime ActualizadoUtc { get; set; }
 
         public string Nombre { get; set; }
         public string Direccion { get; set; }
-        public double Lat { get; set; }
-        public double Lng { get; set; }
+        public double Latitud { get; set; }      
+        public double Longitud { get; set; }  
         public double Rating { get; set; }
         public string GooglePlaceId { get; set; }
-        public string Tipo { get; set; }
+
+         // V2
+        public string Tipo { get; set; } = default!;
+       
         public string? ImagenUrl { get; set; }
         public decimal? Valoracion { get; set; }
-        public List<string> Platos { get; set; }
+        public List<string> Platos { get; set; } = new();
     }
-
 }
+

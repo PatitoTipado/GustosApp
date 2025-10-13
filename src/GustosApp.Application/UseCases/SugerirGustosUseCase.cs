@@ -20,11 +20,12 @@ namespace GustosApp.Application.UseCases
             _restaurantRepo = restaurantRepo;
         }
 
-        public async Task<List<RecomendacionDTO>> Handle(List<string> gustosUsuario, int maxResults = 10, CancellationToken ct = default)
+        public async Task<List<RecomendacionDTO>> Handle(UsuarioPreferenciasDTO usuario, int maxResults = 10, CancellationToken ct = default)
         {
+
             var restaurantes = await _restaurantRepo.GetAllAsync(ct);
             var resultados = new List<(Restaurante restaurante, double score)>();
-            var userEmb = _embeddingService.GetEmbedding(string.Join(" ", gustosUsuario));
+            var userEmb = _embeddingService.GetEmbedding(string.Join(" ", usuario.Gustos));
 
             foreach (var rest in restaurantes)
             {
@@ -42,7 +43,7 @@ namespace GustosApp.Application.UseCases
                 double scoreBase = maxScoreBase;
                 double penalizacion = 0;
 
-                foreach (var gusto in gustosUsuario)
+                foreach (var gusto in usuario.Gustos)
                 {
                     if (!rest.Especialidad.Any(e => e.Nombre != null && e.Nombre.ToLower().Contains(gusto.ToLower())))
                     {

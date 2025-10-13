@@ -17,17 +17,31 @@ namespace GustosApp.Application.UseCases
             _usuarioRepo = usuarioRepo;
         }
 
-        public async Task<List<string>> Handle(string firebaseUid, CancellationToken ct = default)
+        public async Task<UsuarioPreferenciasDTO> Handle(string firebaseUid, CancellationToken ct = default)
         {
             var usuario = await _usuarioRepo.GetByFirebaseUidAsync(firebaseUid, ct);
 
             if (usuario == null)
                 throw new UnauthorizedAccessException("Usuario no encontrado o no registrado.");
 
-            var gustos = usuario.Gustos?.Select(g => g.Nombre).ToList() ?? new List<string>();
-            return gustos;
+            var dto = new UsuarioPreferenciasDTO
+            {
+                Gustos = usuario.Gustos
+                                .Select(g => g.Nombre)
+                                .ToList(),
+
+                Restricciones = usuario.Restricciones
+                                       .Select(r => r.Nombre)
+                                       .ToList(),
+
+                CondicionesMedicas = usuario.CondicionesMedicas
+                                            .Select(c => c.Nombre)
+                                            .ToList()
+            };
+
+            return dto;
 
         }
-    
+
     }
 }

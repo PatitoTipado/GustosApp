@@ -22,6 +22,8 @@ namespace GustosApp.API.Controllers
         }
 
         [HttpGet("recomendaciones")]
+        [AllowAnonymous] // Para evitar usar el token
+
         public async Task<IActionResult> GetRecommendations([FromQuery] int top = 10, CancellationToken ct = default)
         {
             var firebaseUid = User.FindFirst("user_id")?.Value
@@ -33,14 +35,37 @@ namespace GustosApp.API.Controllers
                 return Unauthorized(new { message = "No se encontró el UID de Firebase en el token." });
             }
 
-            var gustos = await _obtenerGustos.Handle(firebaseUid, ct);
-            var recommendations = await _sugerirGustos.Handle(gustos, top, ct);
+            var preferenciasDTO = await _obtenerGustos.Handle("pjXEEySzWbPqEGkVL1puF7lPvNy2", ct);
+            var recommendations = await _sugerirGustos.Handle(preferenciasDTO, top, ct);
 
             return Ok(new { recommendations });
         }
 
-       
-        [HttpGet("recomendaciones-prueba")]
+
+        [HttpGet("test")]
+        [Authorize]
+        public async Task<IActionResult> test()
+        {
+            return Ok("autorizado");
+        }
+
+
+        [HttpGet("last")]
+        [AllowAnonymous] // Para evitar usar el token
+        public async Task<IActionResult> last([FromQuery] int top = 10, CancellationToken ct = default)
+        {
+            var preferenciasDTO = await _obtenerGustos.Handle("pjXEEySzWbPqEGkVL1puF7lPvNy2", ct);
+            var recommendations = await _sugerirGustos.Handle(preferenciasDTO, top, ct);
+
+            for (int i = 0; i < preferenciasDTO.Gustos.Count; i++)
+            {
+                Console.WriteLine(preferenciasDTO.Gustos[i]);
+            }
+
+            return Ok(new { recommendations });
+        }
+
+        /*[HttpGet("recomendaciones-prueba")]
         [AllowAnonymous] // Para evitar usar el token
         public async Task<ActionResult<List<RecomendacionDTO>>> GetRecommendationsTest([FromQuery] List<string> gustos, [FromQuery] int top = 10,CancellationToken ct = default)
         {
@@ -51,7 +76,7 @@ namespace GustosApp.API.Controllers
                 var recomendaciones = await _sugerirGustos.Handle(gustos, top, ct);
 
             return Ok(new { recomendaciones });
-        }
+        }*/
 
     }
 }

@@ -3,4 +3,4 @@
 bin/
 obj/
 /src/GustosApp.API/appsettings.Development.json
-/src/GustosApp.API/secrets/firebase-key.json
+/src/GustosApp.API/secrets/

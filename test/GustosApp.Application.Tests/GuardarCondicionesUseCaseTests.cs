@@ -23,7 +23,7 @@ public class GuardarCondicionesUseCaseTests
     }
 
     [Fact]
-    public async Task HandleAsync_Should_Save_Condiciones_And_Remove_Incompatibles_Gustos()
+    public async Task HandleAsync_DeberiaGuardarRestriccionesYValidarCompatibilidadGustos()
     {
         // Arrange
         var uid = "firebase_123";
@@ -53,7 +53,7 @@ public class GuardarCondicionesUseCaseTests
         // Act
         var result = await _useCase.HandleAsync(uid, ids, skip: false, ct);
 
-        // Assert
+        // Asserts
         _usuarioRepoMock.Verify(r => r.SaveChangesAsync(ct), Times.Once);
         Assert.Equal(RegistroPaso.Gustos, usuario.PasoActual);
         Assert.Equal(2, usuario.CondicionesMedicas.Count);
@@ -61,7 +61,156 @@ public class GuardarCondicionesUseCaseTests
     }
 
     [Fact]
-    public async Task HandleAsync_Should_Skip_When_Skip_True()
+    public async Task HandleAsync_DeberiaQuitarCondicionesDesmarcadas()
+    {
+        // Arrange
+        var uid = "firebase_123";
+        var ct = CancellationToken.None;
+
+        // Condiciones en la BD (todas las posibles)
+        var diabetes = new CondicionMedica { Id = Guid.NewGuid(), Nombre = "Diabetes" };
+        var hipertension = new CondicionMedica { Id = Guid.NewGuid(), Nombre = "Hipertensión" };
+        var obesidad = new CondicionMedica { Id = Guid.NewGuid(), Nombre = "Obesidad" };
+
+        // Usuario tenía 3 condiciones guardadas
+        var usuario = new UsuarioFake(uid, "user@mail.com", "Juan", "Pérez", "USR1")
+        {
+            CondicionesMedicas = new List<CondicionMedica> { diabetes, hipertension, obesidad }
+        };
+
+        // Pero ahora solo seleccionó 2 (quitó Obesidad)
+        var nuevosIds = new List<Guid> { diabetes.Id, hipertension.Id };
+
+        _usuarioRepoMock
+            .Setup(r => r.GetByFirebaseUidAsync(uid, ct))
+            .ReturnsAsync(usuario);
+
+        _condicionRepoMock
+            .Setup(r => r.GetByIdsAsync(It.IsAny<List<Guid>>(), ct))
+            .ReturnsAsync(new List<CondicionMedica> { diabetes, hipertension });
+
+        _usuarioRepoMock
+            .Setup(r => r.SaveChangesAsync(ct))
+            .Returns(Task.CompletedTask);
+
+        var useCase = new GuardarCondicionesUseCase(_condicionRepoMock.Object, _usuarioRepoMock.Object);
+
+        // Act
+        var result = await useCase.HandleAsync(uid, nuevosIds, skip: false, ct);
+
+        // Assert
+        Assert.Equal(2, usuario.CondicionesMedicas.Count);
+        Assert.DoesNotContain(usuario.CondicionesMedicas, c => c.Nombre == "Obesidad");
+        Assert.Equal("Condiciones médicas actualizadas correctamente.", result.mensaje);
+        Assert.Equal(RegistroPaso.Gustos, usuario.PasoActual);
+
+        _usuarioRepoMock.Verify(r => r.SaveChangesAsync(ct), Times.Once);
+    }
+    [Fact]
+    public async Task HandleAsync_DeberiaAgregarCondicionMedicaSiHayNuevoIdListGuid()
+    {
+        // Arrange
+        var uid = "firebase_123";
+        var ct = CancellationToken.None;
+
+
+        var diabetes = new CondicionMedica { Id = Guid.NewGuid(), Nombre = "Diabetes" };
+        var hipertension = new CondicionMedica { Id = Guid.NewGuid(), Nombre = "Hipertensión" };
+        var obesidad = new CondicionMedica { Id = Guid.NewGuid(), Nombre = "Obesidad" };
+
+        var sarampion = new CondicionMedica { Id = Guid.NewGuid(), Nombre = "Sarampion" };
+
+        // Usuario tenía 3 condiciones guardadas
+        var usuario = new UsuarioFake(uid, "user@mail.com", "Juan", "Pérez", "USR1")
+        {
+            CondicionesMedicas = new List<CondicionMedica> { diabetes, hipertension, obesidad }
+        };
+
+        // Pero ahora solo seleccionó 4 (Agregó sarampión)
+        var nuevosIds = new List<Guid> { diabetes.Id, hipertension.Id,obesidad.Id,sarampion.Id };
+
+        _usuarioRepoMock
+            .Setup(r => r.GetByFirebaseUidAsync(uid, ct))
+            .ReturnsAsync(usuario);
+
+
+        _condicionRepoMock
+            .Setup(r => r.GetByIdsAsync(It.IsAny<List<Guid>>(), ct))
+            .ReturnsAsync((List<Guid> ids, CancellationToken _) =>
+                new List<CondicionMedica> { diabetes, hipertension, obesidad, sarampion }
+                    .Where(c => ids.Contains(c.Id))
+                    .ToList());
+
+
+        _usuarioRepoMock
+            .Setup(r => r.SaveChangesAsync(ct))
+            .Returns(Task.CompletedTask);
+
+        var useCase = new GuardarCondicionesUseCase(_condicionRepoMock.Object, _usuarioRepoMock.Object);
+
+        // Act
+        var result = await useCase.HandleAsync(uid, nuevosIds, skip: false, ct);
+
+        // Assert
+        Assert.Equal(4, usuario.CondicionesMedicas.Count);
+        Assert.Contains(usuario.CondicionesMedicas, c => c.Nombre == "Sarampion");
+        Assert.Equal("Condiciones médicas actualizadas correctamente.", result.mensaje);
+        Assert.Equal(RegistroPaso.Gustos, usuario.PasoActual);
+
+        _usuarioRepoMock.Verify(r => r.SaveChangesAsync(ct), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleAsync_DeberiaQuitarTodasLasCondicionesSiQuedanDesmarcadasTodas()
+    {
+        // Arrange
+        var uid = "firebase_123";
+        var ct = CancellationToken.None;
+
+        // Condiciones en la BD (todas las posibles)
+        var diabetes = new CondicionMedica { Id = Guid.NewGuid(), Nombre = "Diabetes" };
+        var hipertension = new CondicionMedica { Id = Guid.NewGuid(), Nombre = "Hipertensión" };
+        var obesidad = new CondicionMedica { Id = Guid.NewGuid(), Nombre = "Obesidad" };
+
+        // Usuario tenía 3 condiciones guardadas
+        var usuario = new UsuarioFake(uid, "user@mail.com", "Juan", "Pérez", "USR1")
+        {
+            CondicionesMedicas = new List<CondicionMedica> { diabetes, hipertension, obesidad }
+        };
+
+        
+        var nuevosIds = new List<Guid> {};
+
+        _usuarioRepoMock
+            .Setup(r => r.GetByFirebaseUidAsync(uid, ct))
+            .ReturnsAsync(usuario);
+
+        _condicionRepoMock
+            .Setup(r => r.GetByIdsAsync(It.IsAny<List<Guid>>(), ct))
+            .ReturnsAsync(new List<CondicionMedica> { diabetes, hipertension ,obesidad});
+
+        _usuarioRepoMock
+            .Setup(r => r.SaveChangesAsync(ct))
+            .Returns(Task.CompletedTask);
+
+        var useCase = new GuardarCondicionesUseCase(_condicionRepoMock.Object, _usuarioRepoMock.Object);
+
+        // Act
+        var result = await useCase.HandleAsync(uid, nuevosIds, skip: false, ct);
+
+        // Assert
+
+        Assert.Empty(usuario.CondicionesMedicas);
+        Assert.DoesNotContain(usuario.CondicionesMedicas, c => c.Nombre == "Obesidad" 
+        && c.Nombre == "Hipertensión" && c.Nombre == "Diabetes");
+        Assert.Equal("Condiciones médicas actualizadas correctamente.", result.mensaje);
+        Assert.Equal(RegistroPaso.Gustos, usuario.PasoActual);
+
+        _usuarioRepoMock.Verify(r => r.SaveChangesAsync(ct), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleAsync_DeberiaSkipearCuandoSkipea()
     {
         // Arrange
         var uid = "firebase_123";
@@ -76,7 +225,7 @@ public class GuardarCondicionesUseCaseTests
     }
 
     [Fact]
-    public async Task HandleAsync_Should_Throw_When_User_Not_Found()
+    public async Task HandleAsync_DeberiaLanzarThrowCuandoNoEncuentraUsuario()
     {
         // Arrange
         var uid = "firebase_999";

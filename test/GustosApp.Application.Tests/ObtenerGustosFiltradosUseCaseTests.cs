@@ -30,7 +30,7 @@ namespace GustosApp.Application.Tests.UseCases
         {
             // Arrange
             var uid = "firebase_123";
-            var tagProhibido = new Tag { NombreNormalizado = "gluten" };
+            var tagProhibido = new Tag { Nombre = "gluten" };
 
             var restriccion = new Restriccion
             {
@@ -43,7 +43,7 @@ namespace GustosApp.Application.Tests.UseCases
                 Id = Guid.NewGuid(),
                 Nombre = "Sushi",
                 ImagenUrl = "img/sushi.jpg",
-                Tags = new List<Tag> { new Tag { NombreNormalizado = "pescado" } }
+                Tags = new List<Tag> { new Tag { Nombre = "pescado" } }
             };
 
             var gustoIncompatible = new Gusto
@@ -51,7 +51,7 @@ namespace GustosApp.Application.Tests.UseCases
                 Id = Guid.NewGuid(),
                 Nombre = "Pizza",
                 ImagenUrl = "img/pizza.jpg",
-                Tags = new List<Tag> { new Tag { NombreNormalizado = "gluten" } }
+                Tags = new List<Tag> { new Tag { Nombre = "gluten" } }
             };
 
             var usuario = new UsuarioFake(uid, "mail@mail.com", "Juan", "Pérez", "USR1")
@@ -71,9 +71,10 @@ namespace GustosApp.Application.Tests.UseCases
 
             // Assert
             Assert.NotNull(result);
-            Assert.Single(result);
-            Assert.Equal("Sushi", result.First().Nombre);
-            Assert.DoesNotContain(result, g => g.Nombre == "Pizza");
+            Assert.Single(result.GustosFiltrados);
+            Assert.Equal("Sushi", result.GustosFiltrados.First().Nombre);
+
+            Assert.DoesNotContain(result.GustosFiltrados, g => g.Nombre == "Pizza");
 
             _usuarioRepoMock.Verify(r => r.GetByFirebaseUidAsync(uid, It.IsAny<CancellationToken>()), Times.Once);
             _gustoRepoMock.Verify(r => r.GetAllAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -92,7 +93,7 @@ namespace GustosApp.Application.Tests.UseCases
         }
     }
 
-    // 🧩 Subclase fake reutilizable
+    //  Subclase fake reutilizable
     public class UsuarioFake : Usuario
     {
         public UsuarioFake(string firebaseUid, string email, string nombre, string apellido, string idUsuario)

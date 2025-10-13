@@ -19,7 +19,7 @@ namespace GustosApp.Application.Tests
         }
 
         [Fact]
-        public async Task HandleAsync_Should_Save_Restricciones_And_Remove_Incompatibles_Gustos()
+        public async Task HandleAsync_DeberiaGuardarRestriccionesYRemoverGustosIncompatibles()
         {
             // Arrange
             var uid = "firebase_123";
@@ -61,7 +61,7 @@ namespace GustosApp.Application.Tests
         }
 
         [Fact]
-        public async Task HandleAsync_Should_Skip_When_Skip_True()
+        public async Task HandleAsync_DeberiaSkipearCuandoSkipTrue()
         {
             // Arrange
             var uid = "firebase_123";
@@ -76,7 +76,7 @@ namespace GustosApp.Application.Tests
         }
 
         [Fact]
-        public async Task HandleAsync_Should_Throw_When_User_Not_Found()
+        public async Task HandleAsync_DeberiaTirarThrowCuandoNoEncuentraAlUsuario()
         {
             // Arrange
             var uid = "firebase_999";

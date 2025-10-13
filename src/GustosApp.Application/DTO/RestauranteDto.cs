@@ -22,6 +22,10 @@ namespace GustosApp.Application.DTO
         public double Lng { get; set; }
         public double Rating { get; set; }
         public string GooglePlaceId { get; set; }
+        public string Tipo { get; set; }
+        public string? ImagenUrl { get; set; }
+        public decimal? Valoracion { get; set; }
+        public List<string> Platos { get; set; }
     }
 
 }

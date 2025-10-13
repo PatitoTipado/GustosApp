@@ -14,7 +14,7 @@ namespace GustosApp.Domain.Model
 
         // tags críticos para esa condición (por ejemplo: sodio, azúcar, alcohol)
 
-        public ICollection<Tag> TagsCriticos { get; private set; } = new List<Tag>();
+        public ICollection<Tag> TagsCriticos { get;  set; } = new List<Tag>();
 
     }
 }

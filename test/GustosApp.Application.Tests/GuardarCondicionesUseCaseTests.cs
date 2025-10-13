@@ -8,6 +8,9 @@ using Xunit;
 using GustosApp.Application.UseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
+using GustosApp.Application.Tests.mocks;
+
+
 
 public class GuardarCondicionesUseCaseTests
 {
@@ -239,3 +242,4 @@ public class GuardarCondicionesUseCaseTests
             _useCase.HandleAsync(uid, new List<Guid> { Guid.NewGuid() }, false, ct));
     }
 }
+

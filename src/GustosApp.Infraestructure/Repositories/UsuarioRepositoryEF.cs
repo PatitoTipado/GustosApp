@@ -53,6 +53,13 @@ namespace GustosApp.Infraestructure.Repositories
         public async Task<List<Usuario>> GetAllWithGustosAsync(CancellationToken ct = default)
          => await _db.Usuarios
                 .Include(u => u.Gustos)
-                .ToListAsync(ct);       
+                .ToListAsync(ct);
+
+        public async Task<Usuario> GetUsuarioConRestriccionesAsync(Guid usuarioId)
+        {
+            return await _db.Usuarios
+                .Include(u => u.Restricciones) 
+                .FirstOrDefaultAsync(u => u.Id == usuarioId);
+        }
     }
 }

@@ -38,10 +38,30 @@ namespace GustosApp.Application.UseCases
             if (!await _grupoRepository.UsuarioEsAdministradorAsync(grupoId, usuarioInvitador.Id, cancellationToken))
                 throw new UnauthorizedAccessException("Solo los administradores pueden invitar usuarios");
 
-            // Buscar el usuario a invitar por email
-            var usuarioInvitado = await _usuarioRepository.GetByEmailAsync(request.EmailUsuario, cancellationToken);
-            if (usuarioInvitado == null)
-                throw new ArgumentException("Usuario no encontrado con ese email");
+            // Buscar el usuario a invitar: prefer UsuarioId, si viene vacío buscar por email
+            Domain.Model.Usuario? usuarioInvitado = null;
+            if (request.UsuarioId.HasValue && request.UsuarioId.Value != Guid.Empty)
+            {
+                usuarioInvitado = await _usuarioRepository.GetByIdAsync(request.UsuarioId.Value, cancellationToken);
+                if (usuarioInvitado == null)
+                    throw new ArgumentException("Usuario no encontrado con ese id");
+            }
+            else if (!string.IsNullOrWhiteSpace(request.UsuarioUsername))
+            {
+                usuarioInvitado = await _usuarioRepository.GetByUsernameAsync(request.UsuarioUsername, cancellationToken);
+                if (usuarioInvitado == null)
+                    throw new ArgumentException("Usuario no encontrado con ese username");
+            }
+            else if (!string.IsNullOrWhiteSpace(request.EmailUsuario))
+            {
+                usuarioInvitado = await _usuarioRepository.GetByEmailAsync(request.EmailUsuario, cancellationToken);
+                if (usuarioInvitado == null)
+                    throw new ArgumentException("Usuario no encontrado con ese email");
+            }
+            else
+            {
+                throw new ArgumentException("Se debe proporcionar UsuarioId, UsuarioUsername o EmailUsuario para invitar");
+            }
 
             // Verificar que no es el mismo usuario
             if (usuarioInvitado.Id == usuarioInvitador.Id)

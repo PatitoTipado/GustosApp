@@ -1,4 +1,3 @@
-
 using GustosApp.Domain.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -7,22 +6,52 @@ namespace GustosApp.Infraestructure.Configurations
 {
     public class RestauranteConfiguration : IEntityTypeConfiguration<Restaurante>
     {
-        public void Configure(EntityTypeBuilder<Restaurante> builder)
+        public void Configure(EntityTypeBuilder<Restaurante> b)
         {
-            builder.ToTable("Restaurantes");
-            builder.HasKey(r => r.Id);
-            builder.Property(r => r.PropietarioUid).HasMaxLength(128).IsRequired(false); 
-            builder.Property(r => r.Nombre).IsRequired().HasMaxLength(160);
-            builder.Property(r => r.NombreNormalizado).HasMaxLength(160);
-            builder.Property(r => r.Direccion).HasMaxLength(300);
-            builder.Property(r => r.HorariosJson);
-            builder.Property(r => r.CreadoUtc);
-            builder.Property(r => r.ActualizadoUtc);
+            b.ToTable("Restaurantes");
 
+            b.HasKey(r => r.Id);
 
-            builder.HasIndex(r => r.PropietarioUid).IsUnique().HasFilter("[PropietarioUid] IS NOT NULL AND [PropietarioUid] <> ''");
-            builder.HasIndex(r => r.NombreNormalizado).IsUnique().HasFilter("[NombreNormalizado] IS NOT NULL AND [NombreNormalizado] <> ''");
-            builder.HasIndex(r => new { r.Latitud, r.Longitud });
+            b.Property(r => r.PropietarioUid)
+                .HasMaxLength(128)
+                .IsRequired();
+
+            b.Property(r => r.Nombre)
+                .HasMaxLength(160)
+                .IsRequired();
+
+            b.Property(r => r.NombreNormalizado)
+                .HasMaxLength(160);
+
+            b.Property(r => r.Direccion)
+                .HasMaxLength(300)
+                .IsRequired();
+
+            b.Property(r => r.HorariosJson)
+                .IsRequired();
+
+            b.Property(r => r.ImagenUrl)
+                .HasMaxLength(500);
+
+            b.Property(r => r.Tipo)
+                .HasConversion<string>()
+                .HasMaxLength(40)
+                .IsRequired();
+
+            b.Property(r => r.Valoracion)
+                .HasPrecision(3,2);
+
+            b.HasIndex(r => new { r.Latitud, r.Longitud })
+             .HasDatabaseName("IX_Restaurantes_Latitud_Longitud");
+
+            
+            b.HasIndex(r => r.PropietarioUid)
+             .HasDatabaseName("IX_Restaurantes_PropietarioUid");
+
+            b.HasIndex(r => r.NombreNormalizado)
+             .IsUnique()
+             .HasDatabaseName("UX_Restaurantes_NombreNormalizado");
         }
     }
 }
+

@@ -16,63 +16,22 @@ using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ====================================================================
-// [MODIFICADO] 1. FIREBASE / AUTH - Leer configuraciones desde Azure
-// ====================================================================
+// =====================
+//   Firebase / Auth
+// =====================
 
-// 1. Obtener los valores de configuración
-// El Project ID se lee de Firebase:ProjectId (para JWT Validation)
-var firebaseProjectId = builder.Configuration.GetValue<string>("Firebase:ProjectId");
+//(en la carpeta /secrets)
+var firebaseKeyPath = Path.Combine(builder.Environment.ContentRootPath, "secrets", "firebase-key.json");
+var firebaseProjectId = "gustosapp-5c3c9";
 
-// El JSON secreto completo se lee de FIREBASE_SERVICE_ACCOUNT_JSON
-var firebaseServiceAccountJson = builder.Configuration.GetValue<string>("FIREBASE_SERVICE_ACCOUNT_JSON");
-
-// Validar que el Project ID esté presente para la autenticación JWT
-if (string.IsNullOrEmpty(firebaseProjectId))
-{
-    // Esto asegura que si Azure no inyecta el valor, el despliegue falle con un error claro.
-    throw new InvalidOperationException("La configuración 'Firebase:ProjectId' es requerida y debe estar definida en Azure App Settings.");
-}
-
-// 2. Inicializar Firebase Admin SDK (para usar funciones avanzadas como notificaciones, o JWT Admin)
+// Inicializar Firebase solo si no está inicializado (Admin SDK: útil p/ scripts, NO requerido para validar JWT)
 if (FirebaseApp.DefaultInstance == null)
 {
-    // A) Intentar inicializar usando el JSON secreto de Azure
-    if (!string.IsNullOrEmpty(firebaseServiceAccountJson))
+    FirebaseApp.Create(new AppOptions()
     {
-        Console.WriteLine("Inicializando Firebase Admin con secreto de Azure App Setting...");
-        try
-        {
-            var credential = GoogleCredential.FromJson(firebaseServiceAccountJson);
-
-            FirebaseApp.Create(new AppOptions()
-            {
-                Credential = credential,
-                ProjectId = firebaseProjectId
-            });
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error al inicializar Firebase Admin con JSON de Azure: {ex.Message}");
-            // Si falla, la aplicación continuará usando JWT Validation, pero sin Admin SDK.
-        }
-    }
-    // B) Fallback local para desarrollo (Mantiene la compatibilidad si corres local)
-    else if (builder.Environment.IsDevelopment())
-    {
-        var firebaseKeyPath = Path.Combine(builder.Environment.ContentRootPath, "secrets", "firebase-key.json");
-        if (File.Exists(firebaseKeyPath))
-        {
-            Console.WriteLine("Usando archivo local de Firebase para desarrollo.");
-            FirebaseApp.Create(new AppOptions()
-            {
-                Credential = GoogleCredential.FromFile(firebaseKeyPath),
-                ProjectId = firebaseProjectId
-            });
-        }
-    }
+        Credential = GoogleCredential.FromFile(firebaseKeyPath)
+    });
 }
-
 
 // Validación de JWT emitidos por Firebase (securetoken)
 builder.Services
@@ -110,20 +69,14 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
     });
 
-// ===============================================================
-// [MODIFICADO] 2. EF Core / SQL Server - Con Resiliencia de Azure
-// ===============================================================
-
+// =====================
+//   EF Core / SQL Server
+// =====================
 builder.Services.AddDbContext<GustosDbContext>(options =>
-    options.UseSqlServer(
-        // 'DefaultConnection' se lee directamente de Azure Connection Strings
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        // Añado resiliencia por si la DB está en pausa (error transitorio común)
-        sqlOptions => sqlOptions.EnableRetryOnFailure()
-    ));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // =====================
-//    Repositorios
+//   Repositorios
 // =====================
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepositoryEF>();
 builder.Services.AddScoped<IRestriccionRepository, RestriccionRepositoryEF>();
@@ -133,6 +86,8 @@ builder.Services.AddScoped<IGrupoRepository, GrupoRepositoryEF>();
 builder.Services.AddScoped<IMiembroGrupoRepository, MiembroGrupoRepositoryEF>();
 builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepositoryEF>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepositoryEF>();
+// Chat repository
+builder.Services.AddScoped<GustosApp.Domain.Interfaces.IChatRepository, GustosApp.Infraestructure.Repositories.ChatRepositoryEF>();
 builder.Services.AddScoped<IRestauranteRepository,MockRestauranteRepository>();
 
 // =====================
@@ -150,6 +105,7 @@ builder.Services.AddScoped<ObtenerGruposUsuarioUseCase>();
 builder.Services.AddScoped<ObtenerInvitacionesUsuarioUseCase>();
 builder.Services.AddScoped<AceptarInvitacionGrupoUseCase>();
 builder.Services.AddScoped<GuardarCondicionesUseCase>();
+builder.Services.AddScoped<ObtenerGrupoDetalleUseCase>();
 builder.Services.AddScoped<GuardarGustosUseCase>();
 builder.Services.AddScoped<GuardarRestriccionesUseCase>();
 builder.Services.AddScoped<ObtenerGustosFiltradosUseCase>();
@@ -159,6 +115,18 @@ builder.Services.AddScoped<SugerirGustosUseCase>();
 builder.Services.AddScoped<SugerirGustosUseCase>();
 builder.Services.AddScoped<BuscarRestaurantesCercanosUseCase>();
 builder.Services.AddScoped<ActualizarDetallesRestauranteUseCase>();
+builder.Services.AddScoped<RemoverMiembroGrupoUseCase>();
+// UseCases y repositorios de amistad
+builder.Services.AddScoped<GustosApp.Domain.Interfaces.ISolicitudAmistadRepository, GustosApp.Infraestructure.Repositories.SolicitudAmistadRepositoryEF>();
+builder.Services.AddScoped<EnviarSolicitudAmistadUseCase>();
+builder.Services.AddScoped<ObtenerSolicitudesPendientesUseCase>();
+builder.Services.AddScoped<AceptarSolicitudUseCase>();
+builder.Services.AddScoped<RechazarSolicitudUseCase>();
+builder.Services.AddScoped<ObtenerAmigosUseCase>();
+builder.Services.AddScoped<EliminarAmigoUseCase>();
+builder.Services.AddScoped<EliminarGrupoUseCase>();
+builder.Services.AddScoped<ObtenerChatGrupoUseCase>();
+builder.Services.AddScoped<EnviarMensajeGrupoUseCase>();
 
 // =====================
 //    Restaurantes (DI)
@@ -223,14 +191,10 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyAllowSpecificOrigins,
         policy =>
         {
-            // [MODIFICADO] 3. CORS: Permite que el despliegue en Azure funcione también
-            var allowedOrigins = builder.Configuration.GetValue<string>("CORS_ALLOWED_ORIGINS")?.Split(',')
-                ?? new[] { "http://localhost:3000", "http://localhost:5174" };
-
-            policy.WithOrigins(allowedOrigins)
-                    .AllowCredentials()
-                    .AllowAnyHeader()
-                    .AllowAnyMethod();
+            policy.WithOrigins("http://localhost:3000", "http://localhost:5174")
+                  .AllowCredentials()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
         });
 });
 
@@ -244,31 +208,8 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
-// =======================================================
-// [NUEVO] 4. APLICAR MIGRACIONES AL INICIAR (Code First)
-// =======================================================
-
-// Esto crea la DB (si no existe) y aplica todas las migraciones pendientes.
-// Es la forma más limpia de asegurar que el Code First funcione en Azure al hacer el despliegue.
-using (var scope = app.Services.CreateScope())
-{
-    try
-    {
-        var dbContext = scope.ServiceProvider.GetRequiredService<GustosDbContext>();
-        dbContext.Database.Migrate();
-        Console.WriteLine("Migraciones aplicadas con éxito a Azure SQL.");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error crítico al aplicar migraciones: {ex.Message}");
-        // Aquí podrías agregar lógica para asegurar que la app no inicie si falla la DB
-        // Pero por ahora, solo registramos el error.
-    }
-}
-
-
 // =====================
-//   Pipeline HTTP
+//   Pipeline HTTP
 // =====================
 if (app.Environment.IsDevelopment())
 {

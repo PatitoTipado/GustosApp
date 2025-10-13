@@ -89,8 +89,12 @@ namespace GustosApp.Infraestructure.Repositories
 
         public async Task<bool> UsuarioEsAdministradorAsync(Guid grupoId, Guid usuarioId, CancellationToken cancellationToken = default)
         {
-            return await _context.MiembrosGrupos
-                .AnyAsync(m => m.GrupoId == grupoId && m.UsuarioId == usuarioId && m.EsAdministrador, cancellationToken);
+            // Check directly in the Grupos table if the user is the administrator
+            var grupo = await _context.Grupos
+                .AsNoTracking()
+                .FirstOrDefaultAsync(g => g.Id == grupoId, cancellationToken);
+            
+            return grupo != null && grupo.AdministradorId == usuarioId;
         }
     }
 }

@@ -4,6 +4,7 @@ using GustosApp.Infraestructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GustosApp.Infraestructure.Migrations
 {
     [DbContext(typeof(GustosDbContext))]
-    partial class GustosDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251012003801_SyncModel_Ahora")]
+    partial class SyncModel_Ahora
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -80,34 +83,6 @@ namespace GustosApp.Infraestructure.Migrations
                     b.HasIndex("UsuariosId");
 
                     b.ToTable("UsuarioGustos", (string)null);
-                });
-
-            modelBuilder.Entity("GustosApp.Domain.Model.ChatMessage", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("FechaEnvio")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("GrupoId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Mensaje")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("UsuarioId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("UsuarioNombre")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ChatMessages");
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.CondicionMedica", b =>
@@ -524,26 +499,6 @@ namespace GustosApp.Infraestructure.Migrations
                     b.ToTable("RestaurantePlatos", (string)null);
                 });
 
-            modelBuilder.Entity("GustosApp.Domain.Model.RestauranteEspecialidad", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("RestauranteId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RestauranteId");
-
-                    b.ToTable("RestauranteEspecialidades");
-                });
-
             modelBuilder.Entity("GustosApp.Domain.Model.Restriccion", b =>
                 {
                     b.Property<Guid>("Id")
@@ -641,39 +596,6 @@ namespace GustosApp.Infraestructure.Migrations
                     b.HasIndex("RestauranteId");
 
                     b.ToTable("ReviewsRestaurantes");
-                });
-
-            modelBuilder.Entity("GustosApp.Domain.Model.SolicitudAmistad", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("DestinatarioId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Estado")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("FechaEnvio")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("FechaRespuesta")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Mensaje")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("RemitenteId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DestinatarioId");
-
-                    b.HasIndex("RemitenteId");
-
-                    b.ToTable("SolicitudesAmistad");
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.Tag", b =>
@@ -905,17 +827,6 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Navigation("Restaurante");
                 });
 
-            modelBuilder.Entity("GustosApp.Domain.Model.RestauranteEspecialidad", b =>
-                {
-                    b.HasOne("GustosApp.Domain.Model.Restaurante", "Restaurante")
-                        .WithMany("Especialidad")
-                        .HasForeignKey("RestauranteId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Restaurante");
-                });
-
             modelBuilder.Entity("GustosApp.Domain.Model.ReviewRestaurante", b =>
                 {
                     b.HasOne("GustosApp.Domain.Model.Restaurante", null)
@@ -923,25 +834,6 @@ namespace GustosApp.Infraestructure.Migrations
                         .HasForeignKey("RestauranteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("GustosApp.Domain.Model.SolicitudAmistad", b =>
-                {
-                    b.HasOne("GustosApp.Domain.Model.Usuario", "Destinatario")
-                        .WithMany()
-                        .HasForeignKey("DestinatarioId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("GustosApp.Domain.Model.Usuario", "Remitente")
-                        .WithMany()
-                        .HasForeignKey("RemitenteId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Destinatario");
-
-                    b.Navigation("Remitente");
                 });
 
             modelBuilder.Entity("RestriccionTag", b =>
@@ -984,8 +876,6 @@ namespace GustosApp.Infraestructure.Migrations
             modelBuilder.Entity("GustosApp.Domain.Model.Restaurante", b =>
                 {
                     b.Navigation("Platos");
-
-                    b.Navigation("Especialidad");
 
                     b.Navigation("Reviews");
                 });

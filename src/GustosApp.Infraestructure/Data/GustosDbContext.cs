@@ -2,6 +2,7 @@
 using GustosApp.Domain.Model;
 using Microsoft.EntityFrameworkCore;
 
+
 using System.Collections.Generic;
 using System.Reflection.Emit;
 
@@ -15,6 +16,10 @@ public class GustosDbContext : DbContext
     public DbSet<Grupo> Grupos { get; set; }
     public DbSet<MiembroGrupo> MiembrosGrupos { get; set; }
     public DbSet<InvitacionGrupo> InvitacionesGrupos { get; set; }
+    public DbSet<SolicitudAmistad> SolicitudesAmistad { get; set; }
+    public DbSet<ChatMessage> ChatMessages { get; set; }
+
+    
     public DbSet<RestauranteEspecialidad> RestauranteEspecialidades { get; set; }
     public DbSet<Restaurante> Restaurantes { get; set; }
 
@@ -22,11 +27,7 @@ public class GustosDbContext : DbContext
 
     public DbSet<Tag> Tags { get; set; }
 
-
-
-
-
-
+    public DbSet<RestaurantePlato> RestaurantePlatos { get; set; }  
 
     public GustosDbContext(DbContextOptions<GustosDbContext> options)
     : base(options) { }
@@ -152,6 +153,29 @@ public class GustosDbContext : DbContext
             .Property(i => i.Estado)
             .HasConversion<int>();
 
+        modelBuilder.Entity<SolicitudAmistad>()
+            .HasOne(s => s.Remitente)
+            .WithMany()
+            .HasForeignKey("RemitenteId")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<SolicitudAmistad>()
+            .HasOne(s => s.Destinatario)
+            .WithMany()
+            .HasForeignKey("DestinatarioId")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<SolicitudAmistad>()
+            .Property(s => s.Estado)
+            .HasConversion<int>();
+
+        // Chat messages
+        modelBuilder.Entity<ChatMessage>()
+            .HasKey(c => c.Id);
+        modelBuilder.Entity<ChatMessage>()
+            .Property(c => c.Mensaje)
+            .IsRequired();
+
         modelBuilder.Entity<Restaurante>()
        .HasMany(r => r.Especialidad)
        .WithOne(e => e.Restaurante)
@@ -207,8 +231,24 @@ public class GustosDbContext : DbContext
             new CondicionMedica { Id = Guid.Parse("33333333-3333-3333-3333-333333333337"), Nombre = "Síndrome del intestino irritable" },
             new CondicionMedica { Id = Guid.Parse("33333333-3333-3333-3333-333333333338"), Nombre = "Insuficiencia renal" },
             new CondicionMedica { Id = Guid.Parse("33333333-3333-3333-3333-333333333339"), Nombre = "Colesterol alto" });
-    
-    modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.RestauranteConfiguration());
+
+       modelBuilder.ApplyConfigurationsFromAssembly(typeof(GustosDbContext).Assembly);
+
+    modelBuilder.Entity<RestaurantePlato>(b =>
+{
+    b.ToTable("RestaurantePlatos");
+
+    b.HasKey(x => new { x.RestauranteId, x.Plato });
+
+    b.Property(x => x.Plato)
+     .HasConversion<string>()
+     .HasMaxLength(50);
+
+    b.HasOne(x => x.Restaurante)
+     .WithMany(r => r.Platos)
+     .HasForeignKey(x => x.RestauranteId)
+     .OnDelete(DeleteBehavior.Cascade);
+});
 
     }
 }

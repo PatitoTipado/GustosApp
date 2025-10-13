@@ -36,6 +36,7 @@ namespace GustosApp.Domain.Model
         public void Reincorporar()
         {
             Activo = true;
+            FechaUnion = DateTime.UtcNow; // Actualizar fecha de reincorporación
         }
 
         public void PromoverAAdministrador()

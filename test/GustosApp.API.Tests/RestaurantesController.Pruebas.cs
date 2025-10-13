@@ -43,8 +43,8 @@ public class RestaurantesControllerPruebas
             PropietarioUid = "uid-test",
             Nombre = "Parrilla Demo",
             Direccion = "Calle",
-            Latitud = -34.6,
-            Longitud = -58.4,
+            Lat = -34.6,
+            Lng = -58.4,
             Tipo = "Parrilla",
             Platos = new() { "Hamburguesas" }
         };

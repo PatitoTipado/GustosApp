@@ -7,6 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using System.Threading.Tasks;
+
+
 namespace GustosApp.Domain.Model
 {
     public class Restaurante
@@ -35,6 +38,7 @@ namespace GustosApp.Domain.Model
         public string? EmbeddingVector { get; set; }
 
         public ICollection<ReviewRestaurante> Reviews { get; set; } = new List<ReviewRestaurante>();
+        public ICollection <RestauranteEspecialidad> Especialidad { get; set; } = new List<RestauranteEspecialidad>();
 
         // ====== V2 ======
         public TipoRestaurante Tipo { get; set; }                 

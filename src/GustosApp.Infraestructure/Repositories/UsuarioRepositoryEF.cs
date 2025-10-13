@@ -44,5 +44,15 @@ namespace GustosApp.Infraestructure.Repositories
 
         public Task SaveChangesAsync(CancellationToken ct = default)
             => _db.SaveChangesAsync(ct);
+
+        public Task<Usuario?> GetByFirebaseUidWithGustosAsync(string firebaseUid, CancellationToken ct = default)
+        => _db.Usuarios
+              .Include(u => u.Gustos)
+              .FirstOrDefaultAsync(u => u.FirebaseUid == firebaseUid, ct);
+                  
+        public async Task<List<Usuario>> GetAllWithGustosAsync(CancellationToken ct = default)
+         => await _db.Usuarios
+                .Include(u => u.Gustos)
+                .ToListAsync(ct);       
     }
 }

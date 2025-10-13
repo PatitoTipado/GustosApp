@@ -16,6 +16,9 @@ namespace GustosApp.Domain.Interfaces
     Task<Usuario?> GetByIdAsync(Guid id, CancellationToken ct = default);
         Task AddAsync(Usuario usuario, CancellationToken ct = default);
         Task SaveChangesAsync(CancellationToken ct = default);
+        Task<Usuario?> GetByFirebaseUidWithGustosAsync(string firebaseUid, CancellationToken ct = default);
+        Task<List<Usuario>> GetAllWithGustosAsync(CancellationToken ct = default);
+
         Task<IEnumerable<Usuario>> GetAllAsync(int limit = 100, CancellationToken ct = default);
     }
 }

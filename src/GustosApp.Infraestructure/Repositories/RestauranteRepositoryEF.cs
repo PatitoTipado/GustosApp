@@ -1,8 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +18,12 @@ namespace GustosApp.Infraestructure.Repositories
             return await _context.Restaurantes
                 .Include(r => r.Reviews) 
                 .FirstOrDefaultAsync(r => r.PlaceId == placeId, ct);
+        }
+                public async Task<List<Restaurante>> GetAllAsync(CancellationToken ct= default)
+        {
+            return await _context.Restaurantes 
+                           .Include(r => r.Especialidad)
+                           .ToListAsync(ct);
         }
 
 

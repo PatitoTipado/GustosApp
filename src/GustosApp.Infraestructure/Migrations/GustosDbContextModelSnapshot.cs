@@ -524,6 +524,26 @@ namespace GustosApp.Infraestructure.Migrations
                     b.ToTable("RestaurantePlatos", (string)null);
                 });
 
+            modelBuilder.Entity("GustosApp.Domain.Model.RestauranteEspecialidad", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("RestauranteId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RestauranteId");
+
+                    b.ToTable("RestauranteEspecialidades");
+                });
+
             modelBuilder.Entity("GustosApp.Domain.Model.Restriccion", b =>
                 {
                     b.Property<Guid>("Id")
@@ -885,6 +905,17 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Navigation("Restaurante");
                 });
 
+            modelBuilder.Entity("GustosApp.Domain.Model.RestauranteEspecialidad", b =>
+                {
+                    b.HasOne("GustosApp.Domain.Model.Restaurante", "Restaurante")
+                        .WithMany("Especialidad")
+                        .HasForeignKey("RestauranteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Restaurante");
+                });
+
             modelBuilder.Entity("GustosApp.Domain.Model.ReviewRestaurante", b =>
                 {
                     b.HasOne("GustosApp.Domain.Model.Restaurante", null)
@@ -953,6 +984,8 @@ namespace GustosApp.Infraestructure.Migrations
             modelBuilder.Entity("GustosApp.Domain.Model.Restaurante", b =>
                 {
                     b.Navigation("Platos");
+
+                    b.Navigation("Especialidad");
 
                     b.Navigation("Reviews");
                 });

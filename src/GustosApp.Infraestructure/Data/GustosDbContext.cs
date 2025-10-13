@@ -20,6 +20,7 @@ public class GustosDbContext : DbContext
     public DbSet<ChatMessage> ChatMessages { get; set; }
 
     
+    public DbSet<RestauranteEspecialidad> RestauranteEspecialidades { get; set; }
     public DbSet<Restaurante> Restaurantes { get; set; }
 
     public DbSet<ReviewRestaurante> ReviewsRestaurantes { get; set; }
@@ -174,6 +175,11 @@ public class GustosDbContext : DbContext
         modelBuilder.Entity<ChatMessage>()
             .Property(c => c.Mensaje)
             .IsRequired();
+
+        modelBuilder.Entity<Restaurante>()
+       .HasMany(r => r.Especialidad)
+       .WithOne(e => e.Restaurante)
+       .HasForeignKey(e => e.RestauranteId);
 
         modelBuilder.Entity<Gusto>().HasData(
             new Gusto { Id = Guid.Parse("11111111-1111-1111-1111-111111111111"), Nombre = "Pizza" },

@@ -1,15 +1,18 @@
-using GustosApp.Infraestructure;
-using Microsoft.EntityFrameworkCore;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
+using GustosApp.Application;
+using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases;
 using GustosApp.Domain.Interfaces;
+using GustosApp.Infraestructure;
+using GustosApp.Infraestructure.ML;
 using GustosApp.Infraestructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models; // 👈 necesario para SwaggerGen con seguridad
-
-using GustosApp.Application;
+using Microsoft.OpenApi.Models;
+// Usar System.Text.Json para manejar el secreto de Firebase
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,11 +49,19 @@ builder.Services
         };
     });
 
+builder.Services.AddSingleton<IEmbeddingService>(sp =>
+{
+    var env = sp.GetRequiredService<IWebHostEnvironment>();
+    var modelPath = Path.Combine(AppContext.BaseDirectory, "ML", "model.onnx");
+    var tokPath = Path.Combine(AppContext.BaseDirectory, "ML", "tokenizer.json");
+    return new OnnxEmbeddingService(modelPath, tokPath);
+});
+
 // Autorización explícita 
 builder.Services.AddAuthorization();
 
 // =====================
-//   Controllers / JSON
+//    Controllers / JSON
 // =====================
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -74,13 +85,13 @@ builder.Services.AddScoped<IGustoRepository, GustoRepositoryEF>();
 builder.Services.AddScoped<IGrupoRepository, GrupoRepositoryEF>();
 builder.Services.AddScoped<IMiembroGrupoRepository, MiembroGrupoRepositoryEF>();
 builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepositoryEF>();
-builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepositoryEF>();
 // Chat repository
 builder.Services.AddScoped<GustosApp.Domain.Interfaces.IChatRepository, GustosApp.Infraestructure.Repositories.ChatRepositoryEF>();
+builder.Services.AddScoped<IRestauranteRepository,MockRestauranteRepository>();
 
 // =====================
-//   UseCases existentes
+//    UseCases existentes
 // =====================
 builder.Services.AddScoped<RegistrarUsuarioUseCase>();
 builder.Services.AddScoped<ObtenerCondicionesMedicasUseCase>();
@@ -100,6 +111,8 @@ builder.Services.AddScoped<GuardarRestriccionesUseCase>();
 builder.Services.AddScoped<ObtenerGustosFiltradosUseCase>();
 builder.Services.AddScoped<ObtenerResumenRegistroUseCase>();
 builder.Services.AddScoped<FinalizarRegistroUseCase>();
+builder.Services.AddScoped<SugerirGustosUseCase>();
+builder.Services.AddScoped<SugerirGustosUseCase>();
 builder.Services.AddScoped<BuscarRestaurantesCercanosUseCase>();
 builder.Services.AddScoped<ActualizarDetallesRestauranteUseCase>();
 builder.Services.AddScoped<RemoverMiembroGrupoUseCase>();
@@ -116,14 +129,15 @@ builder.Services.AddScoped<ObtenerChatGrupoUseCase>();
 builder.Services.AddScoped<EnviarMensajeGrupoUseCase>();
 
 // =====================
-//   Restaurantes (DI)
+//    Restaurantes (DI)
 // =====================
 // antes: builder.Services.AddAplicacionRestaurantes();
 GustosApp.Infraestructure.DependencyInjection.AddInfraRestaurantes(builder.Services);
+// builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>(); // Comentado para usar MockRestauranteRepository
 
 
 // =====================
-//   Swagger
+//    Swagger
 // =====================
 
 
@@ -160,7 +174,7 @@ builder.Services.AddSwaggerGen(options =>
                 Reference = new OpenApiReference
                 {
                     Type = ReferenceType.SecurityScheme,
-                    Id   = "Bearer"
+                    Id = "Bearer"
                 }
             },
             Array.Empty<string>()
@@ -169,7 +183,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // =====================
-//   CORS
+//    CORS
 // =====================
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddCors(options =>

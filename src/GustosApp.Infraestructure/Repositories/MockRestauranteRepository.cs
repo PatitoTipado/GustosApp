@@ -15,10 +15,10 @@ namespace GustosApp.Infraestructure.Repositories
             new Restaurante
             {
                 Id = Guid.Parse("A0000000-0000-0000-0000-000000000001"),
-                Nombre = "La Pizzería de Juan",
+                Nombre = "restaurante1",
                 Especialidad = new List<RestauranteEspecialidad>
                 {
-                    new RestauranteEspecialidad(Guid.NewGuid(), Guid.Empty, "Pizza"),
+                    new RestauranteEspecialidad(Guid.NewGuid(), Guid.Empty, "pizza"),
                    // new RestauranteEspecialidad(Guid.NewGuid(), Guid.Empty, "Pizza Pepperoni"),
                 }
             },
@@ -26,10 +26,10 @@ namespace GustosApp.Infraestructure.Repositories
             new Restaurante
             {
                 Id = Guid.Parse("A0000000-0000-0000-0000-000000000002"),
-                Nombre = "Sushi Go!",
+                Nombre = "restaurante2",
                 Especialidad = new List<RestauranteEspecialidad>
                 {
-                    new RestauranteEspecialidad(Guid.NewGuid(), Guid.Empty, "Sushi"),
+                    new RestauranteEspecialidad(Guid.NewGuid(), Guid.Empty, "sushi"),
                     //new RestauranteEspecialidad(Guid.NewGuid(), Guid.Empty, "Rolls California"),
                 }
             },
@@ -37,16 +37,20 @@ namespace GustosApp.Infraestructure.Repositories
             new Restaurante
             {
                 Id = Guid.Parse("A0000000-0000-0000-0000-000000000003"),
-                Nombre = "La Doña ",
+                Nombre = "restaurante3",
                 Especialidad = new List<RestauranteEspecialidad>
                 {
-                    new RestauranteEspecialidad(Guid.NewGuid(), Guid.Empty, "Milanesa con papas fritas"),
+                    new RestauranteEspecialidad(Guid.NewGuid(), Guid.Empty, "milanesa "),
                     //new RestauranteEspecialidad(Guid.NewGuid(), Guid.Empty, "Pizza"),
                    // new RestauranteEspecialidad(Guid.NewGuid(), Guid.Empty, "Sushi"),
 
                 }
             },
         };
+
+
+
+
 
         // DEVOLVER DATOS REALES PARA LA PRUEBA
         public Task<List<Restaurante>> GetAllAsync(CancellationToken ct = default)

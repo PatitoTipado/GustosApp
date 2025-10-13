@@ -21,22 +21,6 @@ namespace GustosApp.API.Controllers
             _sugerirGustos = sugerirGustos;
         }
 
-
-        /* [HttpGet("recomendaciones")]
-         public async Task<IActionResult> GetRecommendations([FromQuery] int top = 10, CancellationToken ct = default)
-         {
-             try
-             {
-                 var recommendations = _sugerirGustos.Handle();
-                 return Ok(new { recommendations });
-             }
-             catch (UnauthorizedAccessException)
-             {
-                 return Unauthorized(new { message = "Token de autenticación inválido." });
-             }
-         }*/
-
-
         [HttpGet("recomendaciones")]
         public async Task<IActionResult> GetRecommendations([FromQuery] int top = 10, CancellationToken ct = default)
         {
@@ -53,32 +37,22 @@ namespace GustosApp.API.Controllers
             var recommendations = await _sugerirGustos.Handle(gustos, top, ct);
 
             return Ok(new { recommendations });
-
         }
 
-
+       
         [HttpGet("recomendaciones-prueba")]
         [AllowAnonymous] // Para evitar usar el token
-        public async Task<ActionResult<List<RecomendacionDTO>>> GetRecommendationsTest([FromQuery] int top = 10, CancellationToken ct = default)
+        public async Task<ActionResult<List<RecomendacionDTO>>> GetRecommendationsTest([FromQuery] List<string> gustos, [FromQuery] int top = 10,CancellationToken ct = default)
         {
-            try
-            {
-                var gustosUsuario = new List<string> { "Pizza","Sushi" };
-                var recomendaciones = await _sugerirGustos.Handle(gustosUsuario, top, ct);
-                var resultadoFinal = recomendaciones.Select(r => new
+                if (gustos == null || !gustos.Any())
                 {
-                    RestaurantId = r.RestaurantId,
-                    Score = r.Score,
-                }).ToList();
+                    return BadRequest(new { message = "Se requiere al menos un gusto para obtener recomendaciones." });
+                }
+                var recomendaciones = await _sugerirGustos.Handle(gustos, top, ct);
 
-                return Ok(resultadoFinal);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = $"Ocurrió un error al procesar las recomendaciones: {ex.Message}" });
-            }
+            return Ok(new { recomendaciones });
         }
-    }
-      
 
     }
+}
+ 

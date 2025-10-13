@@ -22,10 +22,6 @@ namespace GustosApp.Application.UseCases
             var usuario = await _usuarioRepo.GetByFirebaseUidAsync(uid, ct)
                 ?? throw new Exception("Usuario no encontrado.");
 
-          
-            if (!usuario.Restricciones.Any())
-                throw new InvalidOperationException("Debe seleccionar al menos una restricción.");
-
             if (!usuario.Gustos.Any())
                 throw new InvalidOperationException("Debe seleccionar al menos un gusto.");
 

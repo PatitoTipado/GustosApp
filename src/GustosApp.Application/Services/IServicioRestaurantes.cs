@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using GustosApp.Application.DTO;
 using GustosApp.Application.DTOs.Restaurantes;
 
 namespace GustosApp.Application.Services

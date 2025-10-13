@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
 using System.Collections.Generic;
+using GustosApp.Application.DTO;
 
 namespace GustosApp.API.Tests.Api;
 

@@ -34,7 +34,7 @@ namespace GustosApp.Application.Validations.Restaurantes
             });
 
             RuleFor(x => x.ImagenUrl)
-                .MaximumLength(500)
+                .MaximumLength(2048)
                 .Must(u => string.IsNullOrWhiteSpace(u) || Uri.IsWellFormedUriString(u, UriKind.Absolute))
                 .WithMessage("ImagenUrl no es una URL válida.");
 

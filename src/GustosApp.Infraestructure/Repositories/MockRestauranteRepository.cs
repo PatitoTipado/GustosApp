@@ -76,5 +76,9 @@ namespace GustosApp.Infraestructure.Repositories
             return Task.CompletedTask;
         }
 
+        public Task<List<Restaurante>> GetNearbyAsync(double lat, double lng, int radiusMeters, TimeSpan? maxAge = null, CancellationToken ct = default)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

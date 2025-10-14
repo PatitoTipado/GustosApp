@@ -88,7 +88,6 @@ builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepository
 builder.Services.AddScoped<IReviewRepository, ReviewRepositoryEF>();
 // Chat repository
 builder.Services.AddScoped<GustosApp.Domain.Interfaces.IChatRepository, GustosApp.Infraestructure.Repositories.ChatRepositoryEF>();
-builder.Services.AddScoped<IRestauranteRepository,MockRestauranteRepository>();
 
 // =====================
 //    UseCases existentes
@@ -133,7 +132,7 @@ builder.Services.AddScoped<EnviarMensajeGrupoUseCase>();
 // =====================
 // antes: builder.Services.AddAplicacionRestaurantes();
 GustosApp.Infraestructure.DependencyInjection.AddInfraRestaurantes(builder.Services);
-// builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>(); // Comentado para usar MockRestauranteRepository
+ builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>(); 
 
 
 // =====================

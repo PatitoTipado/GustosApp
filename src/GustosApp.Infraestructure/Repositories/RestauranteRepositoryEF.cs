@@ -19,10 +19,10 @@ namespace GustosApp.Infraestructure.Repositories
                 .Include(r => r.Reviews) 
                 .FirstOrDefaultAsync(r => r.PlaceId == placeId, ct);
         }
-                public async Task<List<Restaurante>> GetAllAsync(CancellationToken ct= default)
+        public async Task<List<Restaurante>> GetAllAsync(CancellationToken ct= default)
         {
             return await _context.Restaurantes 
-                           .Include(r => r.Especialidad)
+                           .Include(r => r.GustosQueSirve)
                            .ToListAsync(ct);
         }
 
@@ -32,5 +32,36 @@ namespace GustosApp.Infraestructure.Repositories
 
         public async Task SaveChangesAsync(CancellationToken ct)
             => await _context.SaveChangesAsync(ct);
+
+        public Task<List<Restaurante>> buscarRestauranteParaUsuariosConGustosYRestricciones(
+            List<string> gustos,
+            List<string> restricciones,
+            CancellationToken ct = default)
+        {
+            var gustosNormalizados = gustos.Select(g => g.ToLower()).ToList();
+            var restriccionesNormalizadas = restricciones.Select(r => r.ToLower()).ToList();
+
+            var query = _context.Restaurantes.AsQueryable();
+
+            if (gustosNormalizados.Any())
+            {
+                query = query.Where(r => r.GustosQueSirve
+                    .Any(g => gustosNormalizados.Contains(g.Nombre.ToLower())));
+            }
+
+            if (restriccionesNormalizadas.Any())
+            {
+                query = query.Where(r => r.RestriccionesQueRespeta
+                    .Any(res => restriccionesNormalizadas.Contains(res.Nombre.ToLower())));
+            }
+            query = query
+                .Include(r => r.Reviews)
+                .Include(r => r.RestriccionesQueRespeta)
+                .Include(r => r.Platos)
+                .Include(r => r.GustosQueSirve);
+
+            return query.ToListAsync(ct);
+        }
+
     }
 }

@@ -182,9 +182,14 @@ public class GustosDbContext : DbContext
             .IsRequired();
 
         modelBuilder.Entity<Restaurante>()
-       .HasMany(r => r.Especialidad)
-       .WithOne(e => e.Restaurante)
-       .HasForeignKey(e => e.RestauranteId);
+            .HasMany(r => r.GustosQueSirve) 
+            .WithMany(g => g.restaurantes) 
+            .UsingEntity(j => j.ToTable("RestauranteGustos")); 
+
+        modelBuilder.Entity<Restaurante>()
+            .HasMany(r => r.RestriccionesQueRespeta)
+            .WithMany(p => p.Restaurantes)
+            .UsingEntity(j => j.ToTable("RestauranteRestricciones")); 
 
         modelBuilder.Entity<Gusto>().HasData(
             new Gusto { Id = Guid.Parse("11111111-1111-1111-1111-111111111111"), Nombre = "Pizza" },

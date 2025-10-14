@@ -13,38 +13,24 @@ namespace GustosApp.API.Controllers
     {
         private readonly BuscarRestaurantesCercanosUseCase _buscarRestaurantes;
         private readonly ActualizarDetallesRestauranteUseCase _obtenerDetalles;
-        private readonly ObtenerGustosUseCase _obtenerGustos;
-        private readonly SugerirGustosUseCase _sugerirGustos;
 
 
-        public RestauranteController(BuscarRestaurantesCercanosUseCase buscarRestaurantes, ActualizarDetallesRestauranteUseCase obtenerDetalles, SugerirGustosUseCase sugerirGustos, ObtenerGustosUseCase obtenerGustos)
+        public RestauranteController(BuscarRestaurantesCercanosUseCase buscarRestaurantes, ActualizarDetallesRestauranteUseCase obtenerDetalles)
         {
             _buscarRestaurantes = buscarRestaurantes;
             _obtenerDetalles = obtenerDetalles;
         }
 
         [HttpGet("cercanos")]
-        public async Task<IActionResult> GetCercanos([FromQuery] double lat, double lng, int radio = 2000, string? types = null, string? priceLevels = null, bool? openNow = null, double? minRating = null, int minUserRatings = 0, string? serves = null, CancellationToken ct = default, int top = 10)
+        public async Task<IActionResult> GetCercanos( double lat, double lng, int radio = 2000, string? types = null, string? priceLevels = null, bool? openNow = null, double? minRating = null, int minUserRatings = 0, string? serves = null)
         {
 
             var result = await _buscarRestaurantes.HandleAsync(lat, lng, radio, types, priceLevels, openNow, minRating, minUserRatings, serves, ct);
 
-            var firebaseUid = User.FindFirst("user_id")?.Value
-               ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-               ?? User.FindFirst("sub")?.Value;
-
-            if (string.IsNullOrWhiteSpace(firebaseUid))
-            {
-                return Unauthorized(new { message = "No se encontró el UID de Firebase en el token." });
-            }
-
-            var preferenciasDTO = await _obtenerGustos.Handle(firebaseUid, ct);
-            var recommendations = await _sugerirGustos.Handle(preferenciasDTO, top, ct);
-
             return Ok(new
             {
                 count = result.Count,
-                restaurantes = recommendations
+                restaurantes = result
             });
         }
 

@@ -30,9 +30,17 @@ namespace GustosApp.Application.UseCases
                 .SelectMany(r => r.TagsProhibidos.Select(t => t.NombreNormalizado))
                 .ToHashSet();
 
+            var tagsProhibidos = usuario.Restricciones
+             .SelectMany(r => r.TagsProhibidos.Select(t => t.NombreNormalizado))
+             .Concat(usuario.CondicionesMedicas.SelectMany(c => c.TagsCriticos.Select(t => t.NombreNormalizado)))
+              .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+
+
             var gustosInvalidos = usuario.Gustos
-                .Where(g => g.Tags.Any(t => tagsRestricciones.Contains(t.NombreNormalizado)))
+                .Where(g => g.Tags.Any(t => tagsProhibidos.Contains(t.NombreNormalizado)))
                 .ToList();
+
 
             if (gustosInvalidos.Any())
             {

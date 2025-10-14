@@ -18,7 +18,9 @@ namespace GustosApp.Infraestructure.Repositories
         }
         public async Task<List<CondicionMedica>> GetAllAsync(CancellationToken ct)
         {
-            return await _dbContext.CondicionesMedicas.ToListAsync(ct);
+            return await _dbContext.CondicionesMedicas
+                .Include(r => r.TagsCriticos)
+                .ToListAsync(ct);
         }
 
         public async Task<List<CondicionMedica>> GetByIdsAsync(List<Guid> ids, CancellationToken ct)

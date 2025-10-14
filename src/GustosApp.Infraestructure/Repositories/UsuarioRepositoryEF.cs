@@ -19,10 +19,13 @@ namespace GustosApp.Infraestructure.Repositories
         public async Task<Usuario?> GetByFirebaseUidAsync(string firebaseUid, CancellationToken ct = default)
         {
             return await _db.Usuarios
-             .Include(u => u.Restricciones)
-               .Include(u => u.Gustos)
-              .Include(u => u.CondicionesMedicas)
-             .FirstOrDefaultAsync(u => u.FirebaseUid == firebaseUid, ct);
+         .Include(u => u.Gustos)
+             .ThenInclude(g => g.Tags)
+         .Include(u => u.Restricciones)
+             .ThenInclude(r => r.TagsProhibidos)
+         .Include(u => u.CondicionesMedicas)
+             .ThenInclude(c => c.TagsCriticos)
+         .FirstOrDefaultAsync(u => u.FirebaseUid == firebaseUid, ct);
         }
 
         public Task<Usuario?> GetByEmailAsync(string email, CancellationToken ct = default)

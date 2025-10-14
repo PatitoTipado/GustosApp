@@ -23,11 +23,16 @@ namespace GustosApp.API.Controllers
 
 
         // GET: api/<ValuesController>
-        [Authorize]
+        
         [HttpGet]
         public async Task<IActionResult> ObtenerGustosFiltrados(CancellationToken ct)
         {
-            var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
+            var uid = User.FindFirst("user_id")?.Value
+                        ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                        ?? User.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrWhiteSpace(uid))
+                return Unauthorized(new { message = "Token no válido o sin UID" });
 
             var resp = await _obtenerGustos.HandleAsync(uid, ct);
 

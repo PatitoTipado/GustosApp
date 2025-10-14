@@ -77,6 +77,10 @@ namespace GustosApp.Application.DTO.PlacesV1
         [JsonPropertyName("location")]
         public LatLng Location { get; set; } = new();
 
+        [JsonPropertyName("formattedAddress")]    
+        public string? FormattedAddress { get; set; }
+
+
         [JsonPropertyName("photos")]
         public List<PhotoRef>? Photos { get; set; }
     }

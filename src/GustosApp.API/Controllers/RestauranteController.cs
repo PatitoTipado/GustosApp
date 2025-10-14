@@ -22,30 +22,31 @@ namespace GustosApp.API.Controllers
 
         [HttpGet("cercanos")]
         public async Task<IActionResult> GetCercanos(double lat, double lng, int radio = 2000, string? types = null, string? priceLevels = null, bool? openNow = null, double? minRating = null, int minUserRatings = 0, string? serves = null, CancellationToken ct = default)
-{
+        {
 
-         var result = await _buscarRestaurantes.HandleAsync(lat, lng, radio, types, priceLevels, openNow, minRating, minUserRatings, serves, ct);
+            var result = await _buscarRestaurantes.HandleAsync(lat, lng, radio, types, priceLevels, openNow, minRating, minUserRatings, serves, ct);
 
 
-        return Ok(new
-    {
-        count = result.Count,
-        restaurantes = result
-    });
-}
+            return Ok(new
+            {
+                count = result.Count,
+                restaurantes = result
+            });
+        }
 
 
 
         [HttpGet("detalles")]
-        public async Task<IActionResult> GetCercanos(string placeId, CancellationToken ct = default)
+        public async Task<IActionResult> GetDetalles([FromQuery] string placeId, CancellationToken ct = default)
         {
             var result = await _obtenerDetalles.HandleAsync(placeId, ct);
             return Ok(new
             {
-                message= "Detalles actualizados",
+                message = "Detalles actualizados",
                 detalles = result
             });
         }
+
 
     }
 }

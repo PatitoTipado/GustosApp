@@ -8,6 +8,18 @@ namespace GustosApp.Application.DTO.PlacesV1
         [JsonPropertyName("id")]
         public string Id { get; set; } = string.Empty;
 
+        [JsonPropertyName("displayName")]
+        public DisplayName? DisplayName { get; set; }
+
+        [JsonPropertyName("formattedAddress")]
+        public string? FormattedAddress { get; set; }
+
+        [JsonPropertyName("location")]
+        public LatLng? Location { get; set; }
+
+        [JsonPropertyName("photos")]
+        public List<PlacePhoto>? Photos { get; set; }   // <-- tipo específico para evitar choques
+
         [JsonPropertyName("priceLevel")]
         public string? PriceLevel { get; set; }
 
@@ -32,7 +44,6 @@ namespace GustosApp.Application.DTO.PlacesV1
         [JsonPropertyName("dineIn")] public bool? DineIn { get; set; }
         [JsonPropertyName("curbsidePickup")] public bool? CurbsidePickup { get; set; }
         [JsonPropertyName("reservable")] public bool? Reservable { get; set; }
-
         [JsonPropertyName("servesBreakfast")] public bool? ServesBreakfast { get; set; }
         [JsonPropertyName("servesBrunch")] public bool? ServesBrunch { get; set; }
         [JsonPropertyName("servesLunch")] public bool? ServesLunch { get; set; }
@@ -43,4 +54,7 @@ namespace GustosApp.Application.DTO.PlacesV1
         [JsonPropertyName("servesCoffee")] public bool? ServesCoffee { get; set; }
         [JsonPropertyName("servesVegetarianFood")] public bool? ServesVegetarianFood { get; set; }
     }
+
+    public class PlacePhoto { [JsonPropertyName("name")] public string? Name { get; set; } }
 }
+

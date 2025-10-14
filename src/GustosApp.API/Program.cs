@@ -88,7 +88,7 @@ builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepository
 builder.Services.AddScoped<IReviewRepository, ReviewRepositoryEF>();
 // Chat repository
 builder.Services.AddScoped<GustosApp.Domain.Interfaces.IChatRepository, GustosApp.Infraestructure.Repositories.ChatRepositoryEF>();
-builder.Services.AddScoped<IRestauranteRepository,MockRestauranteRepository>();
+builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
 
 // =====================
 //    UseCases existentes

@@ -3,6 +3,7 @@ namespace GustosApp.Application.DTOs.Restaurantes
     public class RestauranteListadoDto
     {
         public Guid Id { get; set; }
+        public string PlaceId { get; set; } = string.Empty; // Google Places ID
         public string Nombre { get; set; } = string.Empty;
         public string? Direccion { get; set; }
         public double Latitud { get; set; }

@@ -35,11 +35,11 @@ namespace GustosApp.Application.UseCases
             string? servesCsv = null,
             CancellationToken ct = default)
         {
-            // cache-first, aca cacheo 1h 
+            // cache-first
             var cached = await _repo.GetNearbyAsync(lat, lng, radioMetros, maxAge: TimeSpan.FromHours(24), ct);
             var cachedMapped = cached.Select(MapToListado).ToList();
 
-            
+
             if (cachedMapped.Count > 0 && !RequiresLiveDetails(servesCsv, openNow, priceLevelsCsv))
             {
                 var filteredCached = ApplyInMemoryFilters(cachedMapped, typesCsv, priceLevelsCsv, openNow, minRating, minUserRatings, servesCsv);
@@ -49,7 +49,7 @@ namespace GustosApp.Application.UseCases
 
             //Nearby Search v1 (restaurants only)
             var apiKey = _config["GooglePlaces:ApiKey"] ?? throw new InvalidOperationException("Falta GooglePlaces:ApiKey");
-            var fieldMask = "places.id,places.displayName,places.primaryType,places.types,places.priceLevel,places.rating,places.userRatingCount,places.currentOpeningHours.openNow,places.location,places.photos.name";
+            var fieldMask = "places.id,places.displayName,places.primaryType,places.types,places.priceLevel,places.rating,places.userRatingCount,places.currentOpeningHours.openNow,places.location,places.photos.name,places.formattedAddress";
 
             var req = new NearbyRequest
             {
@@ -83,12 +83,14 @@ namespace GustosApp.Application.UseCases
                 string? photoUrl = null;
                 if (!string.IsNullOrWhiteSpace(fotoName))
                 {
-                    
+
                     photoUrl = $"https://places.googleapis.com/v1/{Uri.EscapeDataString(fotoName)}/media?maxWidthPx=800&key={apiKey}";
                 }
 
-                // upsert mínimo en DB si no existe
+
                 var existente = await _repo.GetByPlaceIdAsync(placeId, ct);
+                Guid idParaDto;
+
                 if (existente is null)
                 {
                     var nuevo = new Restaurante
@@ -97,7 +99,7 @@ namespace GustosApp.Application.UseCases
                         PropietarioUid = string.Empty,
                         Nombre = p.DisplayName?.Text ?? "(sin nombre)",
                         NombreNormalizado = (p.DisplayName?.Text ?? string.Empty).Trim().ToLowerInvariant(),
-                        Direccion = p.DisplayName?.Text ?? string.Empty,
+                        Direccion = p.FormattedAddress ?? string.Empty,   // <-- cambio aquí
                         Latitud = p.Location?.Latitude ?? 0,
                         Longitud = p.Location?.Longitude ?? 0,
                         HorariosJson = "{}",
@@ -111,13 +113,19 @@ namespace GustosApp.Application.UseCases
                         UltimaActualizacion = DateTime.UtcNow
                     };
                     await _repo.AddAsync(nuevo, ct);
+                    idParaDto = nuevo.Id;                // <-- usa el Id real insertado
                 }
-                // map para respuesta
+                else
+                {
+                    idParaDto = existente.Id;
+                }
+
                 items.Add(new RestauranteListadoDto
                 {
-                    Id = existente?.Id ?? Guid.NewGuid(), // si no estaba persistido aún, se reemplazará tras SaveChanges
+                    Id = idParaDto,
+                    PlaceId = placeId,
                     Nombre = p.DisplayName?.Text ?? "",
-                    Direccion = p.DisplayName?.Text ?? string.Empty,
+                    Direccion = p.FormattedAddress ?? string.Empty,       // <-- cambio aquí
                     Latitud = p.Location?.Latitude ?? 0,
                     Longitud = p.Location?.Longitude ?? 0,
                     ImagenUrl = photoUrl,
@@ -128,19 +136,20 @@ namespace GustosApp.Application.UseCases
                     PriceLevel = p.PriceLevel,
                     OpenNow = p.CurrentOpeningHours?.OpenNow
                 });
+
             }
 
-            // guardar inserciones (si hubo)
+
             await _repo.SaveChangesAsync(ct);
 
-            
+
             if (RequiresLiveDetails(servesCsv, openNow: null, priceLevelsCsv: null))
             {
                 items = await EnrichWithDetailsAndFilterAsync(items, servesCsv, minRating, minUserRatings, apiKey, ct);
             }
             else
             {
-                
+
                 items = ApplyInMemoryFilters(items, typesCsv, priceLevelsCsv, openNow, minRating, minUserRatings, servesCsv);
             }
 
@@ -154,7 +163,7 @@ namespace GustosApp.Application.UseCases
 
         private static bool RequiresLiveDetails(string? servesCsv, bool? openNow, string? priceLevelsCsv)
         {
-            
+
             return !string.IsNullOrWhiteSpace(servesCsv);
         }
 
@@ -171,13 +180,11 @@ namespace GustosApp.Application.UseCases
             var list = new List<RestauranteListadoDto>();
             foreach (var it in items)
             {
-                // Details for serves
                 var details = await GetPlaceDetailsAsync(it, apiKey, ct);
                 if (details is null) continue;
 
                 ApplyDetailsToDto(it, details);
 
-                // post-filter
                 if (minRating.HasValue && (it.Rating ?? 0) < minRating.Value) continue;
                 if (minUserRatings > 0 && (it.CantidadResenas ?? 0) < minUserRatings) continue;
 
@@ -207,13 +214,37 @@ namespace GustosApp.Application.UseCases
             return list;
         }
 
-        private async Task<PlaceDetails?> GetPlaceDetailsAsync(RestauranteListadoDto it, string apiKey, CancellationToken ct)
+        private async Task<PlaceDetails?> GetPlaceDetailsAsync(
+    RestauranteListadoDto it,
+    string apiKey,
+    CancellationToken ct)
         {
-            var fieldMask = "id,priceLevel,rating,userRatingCount,currentOpeningHours.openNow,primaryType,types,delivery,takeout,dineIn,curbsidePickup,reservable,servesBreakfast,servesBrunch,servesLunch,servesDinner,servesBeer,servesWine,servesCocktails,servesCoffee,servesVegetarianFood";
-            var url = $"https://places.googleapis.com/v1/places/{Uri.EscapeDataString(it.Id.ToString())}";
-        
-            return null;
+
+            if (string.IsNullOrWhiteSpace(it.PlaceId))
+                return null;
+
+            var fieldMask =
+                "id,displayName,primaryType,types,priceLevel,rating,userRatingCount," +
+                "currentOpeningHours.openNow," +
+                "delivery,takeout,dineIn,curbsidePickup,reservable," +
+                "servesBreakfast,servesBrunch,servesLunch,servesDinner," +
+                "servesBeer,servesWine,servesCocktails,servesCoffee,servesVegetarianFood";
+
+            var url = $"https://places.googleapis.com/v1/places/{Uri.EscapeDataString(it.PlaceId)}";
+
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            req.Headers.TryAddWithoutValidation("X-Goog-Api-Key", apiKey);
+            req.Headers.TryAddWithoutValidation("X-Goog-FieldMask", fieldMask);
+
+            var resp = await _http.SendAsync(req, ct);
+            if (!resp.IsSuccessStatusCode)
+                return null;
+
+            // Si tu tipo PlaceDetails está en DTO/PlacesV1, usa ese
+            var details = await resp.Content.ReadFromJsonAsync<PlaceDetails>(cancellationToken: ct);
+            return details;
         }
+
 
         private static void ApplyDetailsToDto(RestauranteListadoDto it, PlaceDetails d)
         {
@@ -235,6 +266,7 @@ namespace GustosApp.Application.UseCases
         private static RestauranteListadoDto MapToListado(Restaurante e) => new RestauranteListadoDto
         {
             Id = e.Id,
+            PlaceId = e.PlaceId,
             Nombre = e.Nombre,
             Direccion = e.Direccion,
             Latitud = e.Latitud,

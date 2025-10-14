@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
-using GustosApp.Domain.Interfaces;
+﻿using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 using Microsoft.EntityFrameworkCore;
 
@@ -52,10 +46,17 @@ namespace GustosApp.Infraestructure.Repositories
         => _db.Usuarios
               .Include(u => u.Gustos)
               .FirstOrDefaultAsync(u => u.FirebaseUid == firebaseUid, ct);
-                  
+
         public async Task<List<Usuario>> GetAllWithGustosAsync(CancellationToken ct = default)
          => await _db.Usuarios
                 .Include(u => u.Gustos)
-                .ToListAsync(ct);       
+                .ToListAsync(ct);
+
+        public async Task<Usuario> GetUsuarioConRestriccionesAsync(Guid usuarioId)
+        {
+            return await _db.Usuarios
+                .Include(u => u.Restricciones) 
+                .FirstOrDefaultAsync(u => u.Id == usuarioId);
+        }
     }
 }

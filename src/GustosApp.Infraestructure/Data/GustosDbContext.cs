@@ -77,6 +77,11 @@ public class GustosDbContext : DbContext
            .HasIndex(u => u.IdUsuario)
            .IsUnique();
 
+        modelBuilder.Entity<Usuario>()
+            .HasMany(u => u.Restricciones)
+            .WithMany(r => r.Usuarios)
+            .UsingEntity(j => j.ToTable("UsuarioRestricciones"));
+
         // Gusto ↔ Tag
         modelBuilder.Entity<Gusto>()
             .HasMany(g => g.Tags)
@@ -203,9 +208,14 @@ public class GustosDbContext : DbContext
             .IsRequired();
 
         modelBuilder.Entity<Restaurante>()
-       .HasMany(r => r.Especialidad)
-       .WithOne(e => e.Restaurante)
-       .HasForeignKey(e => e.RestauranteId);
+            .HasMany(r => r.GustosQueSirve) 
+            .WithMany(g => g.restaurantes) 
+            .UsingEntity(j => j.ToTable("RestauranteGustos")); 
+
+        modelBuilder.Entity<Restaurante>()
+            .HasMany(r => r.RestriccionesQueRespeta)
+            .WithMany(p => p.Restaurantes)
+            .UsingEntity(j => j.ToTable("RestauranteRestricciones")); 
 
       
 

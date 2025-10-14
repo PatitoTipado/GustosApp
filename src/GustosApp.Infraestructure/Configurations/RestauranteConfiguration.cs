@@ -31,7 +31,7 @@ namespace GustosApp.Infraestructure.Configurations
                 .IsRequired();
 
             b.Property(r => r.ImagenUrl)
-                .HasMaxLength(500);
+                .HasMaxLength(2048);
 
             b.Property(r => r.Tipo)
                 .HasConversion<string>()

@@ -2,7 +2,7 @@
 using GustosApp.Application.UseCases;
 using Microsoft.AspNetCore.Mvc;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+// Controlador para restaurantes que vienen de la API
 
 namespace GustosApp.API.Controllers
 {
@@ -21,9 +21,12 @@ namespace GustosApp.API.Controllers
         }
 
         [HttpGet("cercanos")]
-        public async Task<IActionResult> GetCercanos(double lat, double lng, int radio = 2000, CancellationToken ct = default)
+        public async Task<IActionResult> GetCercanos(double lat, double lng, int radio = 2000, string? types = null, string? priceLevels = null, bool? openNow = null, double? minRating = null, int minUserRatings = 0, string? serves = null, CancellationToken ct = default)
         {
-            var result = await _buscarRestaurantes.HandleAsync(lat, lng, radio, ct);
+
+            var result = await _buscarRestaurantes.HandleAsync(lat, lng, radio, types, priceLevels, openNow, minRating, minUserRatings, serves, ct);
+
+
             return Ok(new
             {
                 count = result.Count,
@@ -32,16 +35,18 @@ namespace GustosApp.API.Controllers
         }
 
 
+
         [HttpGet("detalles")]
-        public async Task<IActionResult> GetCercanos(string placeId, CancellationToken ct = default)
+        public async Task<IActionResult> GetDetalles([FromQuery] string placeId, CancellationToken ct = default)
         {
             var result = await _obtenerDetalles.HandleAsync(placeId, ct);
             return Ok(new
             {
-                message= "Detalles actualizados",
+                message = "Detalles actualizados",
                 detalles = result
             });
         }
+
 
     }
 }

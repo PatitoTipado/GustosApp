@@ -15,6 +15,14 @@ namespace GustosApp.Application.DTO
         public string? ImagenUrl { get; set; }
         public bool Seleccionado { get; set; } = false;
 
+        public GustoDto() { }
+
+        public GustoDto(Guid id, string nombre, string imagenUrl)
+        {
+            Id = id;
+            Nombre = nombre;
+            ImagenUrl = imagenUrl??"";
+        }
 
     }
 }

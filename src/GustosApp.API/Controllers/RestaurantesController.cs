@@ -1,11 +1,13 @@
+using GustosApp.Application.DTOs.Restaurantes;
+using GustosApp.Application.Services;
+using GustosApp.Application.UseCases;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
-using GustosApp.Application.DTOs.Restaurantes;
-using GustosApp.Application.Services;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 
 // Controlador para restaurantes que se registran en la app por un usuario
 
@@ -16,20 +18,28 @@ namespace GustosApp.API.Controllers
     public class RestaurantesController : ControllerBase
     {
         private readonly IServicioRestaurantes _servicio;
+        private readonly ObtenerGustosUseCase _obtenerGustos;
+        private readonly SugerirGustosSobreUnRadioUseCase _sugerirGustos;
 
-        public RestaurantesController(IServicioRestaurantes servicio)
+
+        public RestaurantesController(IServicioRestaurantes servicio, SugerirGustosSobreUnRadioUseCase sugerirGustos, ObtenerGustosUseCase obtenerGustos)
         {
             _servicio = servicio;
+            _obtenerGustos = obtenerGustos;
+            _sugerirGustos = sugerirGustos;
+
         }
 
         [HttpGet]
         public async Task<IActionResult> Get(
-    [FromQuery(Name = "near.lat")] double? lat,
-    [FromQuery(Name = "near.lng")] double? lng,
-    [FromQuery(Name = "radiusMeters")] int? radius,
-    [FromQuery] string? tipo,
-    [FromQuery] string? plato
-)
+        [FromQuery(Name = "near.lat")] double? lat,
+        [FromQuery(Name = "near.lng")] double? lng,
+        [FromQuery(Name = "radiusMeters")] int? radius,
+        [FromQuery] string? tipo,
+        [FromQuery] string? plato,
+        CancellationToken ct,
+        [FromQuery] int top = 10
+                            )
         {
             var res = await _servicio.BuscarAsync(
                 tipo: tipo,
@@ -38,7 +48,21 @@ namespace GustosApp.API.Controllers
                 lng: lng,
                 radioMetros: radius
             );
-            return Ok(res);
+
+            var firebaseUid = User.FindFirst("user_id")?.Value
+            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? User.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrWhiteSpace(firebaseUid))
+            {
+                return Unauthorized(new { message = "No se encontró el UID de Firebase en el token." });
+            }
+
+            var preferenciasDTO = await _obtenerGustos.Handle(firebaseUid, ct);
+            var recommendations = _sugerirGustos.Handle(preferenciasDTO, res.ToList(), top, ct);
+
+
+            return Ok(recommendations);
         }
 
 

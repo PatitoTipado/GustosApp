@@ -52,10 +52,11 @@ namespace GustosApp.API.Controllers
 
         [HttpGet("last")]
         [AllowAnonymous] // Para evitar usar el token
-        public async Task<IActionResult> last([FromQuery] int top = 10, CancellationToken ct = default)
+        public async Task<IActionResult> last([FromQuery] string uid, CancellationToken ct = default)
         {
-            var preferenciasDTO = await _obtenerGustos.Handle("pjXEEySzWbPqEGkVL1puF7lPvNy2", ct);
-            var recommendations = await _sugerirGustos.Handle(preferenciasDTO, top, ct);
+            //"pjXEEySzWbPqEGkVL1puF7lPvNy2"
+            var preferenciasDTO = await _obtenerGustos.Handle(uid, ct);
+            var recommendations = await _sugerirGustos.Handle(preferenciasDTO, 10, ct);
 
             for (int i = 0; i < preferenciasDTO.Gustos.Count; i++)
             {

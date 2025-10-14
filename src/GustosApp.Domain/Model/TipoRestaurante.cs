@@ -9,7 +9,8 @@ namespace GustosApp.Domain.Model
         China,
         Vegana,
         Vegetariana,
-        Rapida,          
+        Rapida,
+        Restaurante,
         Mediterranea     
     }
 }

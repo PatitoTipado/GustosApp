@@ -13,6 +13,7 @@ namespace GustosApp.Domain.Interfaces
             Task AddAsync(Restaurante restaurante, CancellationToken ct);
             Task SaveChangesAsync(CancellationToken ct);
             Task<List<Restaurante>> GetAllAsync(CancellationToken ct = default);
+            Task<List<Restaurante>> buscarRestauranteParaUsuariosConGustosYRestricciones(List <string> gustos, List<string>restricciones, CancellationToken ct = default);
 
 
         Task<List<Restaurante>> GetNearbyAsync(

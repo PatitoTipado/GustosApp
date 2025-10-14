@@ -114,7 +114,6 @@ namespace GustosApp.Infraestructure.Migrations
                     b.ToTable("UsuarioCondicionesMedicas", (string)null);
                 });
 
-<<<<<<< HEAD
             modelBuilder.Entity("GustoRestaurante", b =>
                 {
                     b.Property<Guid>("GustosQueSirveId")
@@ -130,10 +129,7 @@ namespace GustosApp.Infraestructure.Migrations
                     b.ToTable("RestauranteGustos", (string)null);
                 });
 
-            modelBuilder.Entity("GustoTag", b =>
-=======
             modelBuilder.Entity("GustoTags", b =>
->>>>>>> develop
                 {
                     b.Property<Guid>("GustosId")
                         .HasColumnType("uniqueidentifier");
@@ -1383,7 +1379,6 @@ namespace GustosApp.Infraestructure.Migrations
                     b.ToTable("Usuarios");
                 });
 
-<<<<<<< HEAD
             modelBuilder.Entity("RestauranteRestriccion", b =>
                 {
                     b.Property<Guid>("RestaurantesId")
@@ -1399,10 +1394,7 @@ namespace GustosApp.Infraestructure.Migrations
                     b.ToTable("RestauranteRestricciones", (string)null);
                 });
 
-            modelBuilder.Entity("RestriccionTag", b =>
-=======
             modelBuilder.Entity("RestriccionTags", b =>
->>>>>>> develop
                 {
                     b.Property<Guid>("RestriccionesId")
                         .HasColumnType("uniqueidentifier");
@@ -1524,7 +1516,6 @@ namespace GustosApp.Infraestructure.Migrations
                         .IsRequired();
                 });
 
-<<<<<<< HEAD
             modelBuilder.Entity("GustoRestaurante", b =>
                 {
                     b.HasOne("GustosApp.Domain.Model.Gusto", null)
@@ -1540,10 +1531,7 @@ namespace GustosApp.Infraestructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("GustoTag", b =>
-=======
             modelBuilder.Entity("GustoTags", b =>
->>>>>>> develop
                 {
                     b.HasOne("GustosApp.Domain.Model.Gusto", null)
                         .WithMany()
@@ -1680,7 +1668,6 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Navigation("Remitente");
                 });
 
-<<<<<<< HEAD
             modelBuilder.Entity("RestauranteRestriccion", b =>
                 {
                     b.HasOne("GustosApp.Domain.Model.Restaurante", null)
@@ -1696,10 +1683,7 @@ namespace GustosApp.Infraestructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("RestriccionTag", b =>
-=======
             modelBuilder.Entity("RestriccionTags", b =>
->>>>>>> develop
                 {
                     b.HasOne("GustosApp.Domain.Model.Restriccion", null)
                         .WithMany()

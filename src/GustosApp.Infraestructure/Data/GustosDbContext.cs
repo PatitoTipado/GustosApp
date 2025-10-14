@@ -77,15 +77,12 @@ public class GustosDbContext : DbContext
            .HasIndex(u => u.IdUsuario)
            .IsUnique();
 
-<<<<<<< HEAD
         modelBuilder.Entity<Usuario>()
             .HasMany(u => u.Restricciones)
             .WithMany(r => r.Usuarios)
             .UsingEntity(j => j.ToTable("UsuarioRestricciones"));
 
-=======
         // Gusto ↔ Tag
->>>>>>> develop
         modelBuilder.Entity<Gusto>()
             .HasMany(g => g.Tags)
             .WithMany()

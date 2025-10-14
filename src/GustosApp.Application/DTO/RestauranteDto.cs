@@ -1,8 +1,7 @@
-<<<<<<< HEAD
 using GustosApp.Application.DTO;
 using GustosApp.Domain.Model;
 
-namespace GustosApp.Application.DTOs.Restaurantes
+namespace GustosApp.Application.DTO
 {
     public class RestauranteDto
     {
@@ -11,43 +10,17 @@ namespace GustosApp.Application.DTOs.Restaurantes
         public string PropietarioUid { get; set; }
         public string Nombre { get; set; }
         public string Direccion { get; set; }
-        public double Latitud { get; set; }
-        public double Longitud { get; set; }
-=======
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace GustosApp.Application.DTO
-{
-    public class RestauranteDto
-    {
-
-        public Guid Id { get; set; }
-        public string PropietarioUid { get; set; } = string.Empty;
-
->>>>>>> develop
         public object? Horarios { get; set; }
         public DateTime CreadoUtc { get; set; }
         public DateTime ActualizadoUtc { get; set; }
-
-<<<<<<< HEAD
-        // V2
-=======
-        public string Nombre { get; set; }
-        public string Direccion { get; set; }
         public double Lat { get; set; }
         public double Lng { get; set; }
         public double Rating { get; set; }
         public string GooglePlaceId { get; set; }
->>>>>>> develop
         public string Tipo { get; set; }
         public string? ImagenUrl { get; set; }
         public decimal? Valoracion { get; set; }
         public List<string> Platos { get; set; }
-<<<<<<< HEAD
         public ICollection<GustoDto> GustosQueSirve { get; set; }
         public ICollection<RestriccionResponse> RestriccionesQueRespeta { get; set; }
         public double Score { get; set; }
@@ -77,8 +50,8 @@ namespace GustosApp.Application.DTO
             PropietarioUid = propietarioUid ?? string.Empty;
             Nombre = nombre ?? string.Empty;
             Direccion = direccion ?? string.Empty;
-            Latitud = latitud;
-            Longitud = longitud;
+            Lat = latitud;
+            Lng = longitud;
             Horarios = horarios;
             CreadoUtc = creadoUtc;
             ActualizadoUtc = actualizadoUtc;
@@ -90,8 +63,6 @@ namespace GustosApp.Application.DTO
             RestriccionesQueRespeta = restriccionesQueRespeta ?? new List<RestriccionResponse>();
             Score = score;
         }
-=======
->>>>>>> develop
     }
 
 }

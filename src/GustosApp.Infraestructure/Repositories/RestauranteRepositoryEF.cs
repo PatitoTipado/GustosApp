@@ -51,28 +51,12 @@ namespace GustosApp.Infraestructure.Repositories
 
             return await q.ToListAsync(ct);
         }
-
-<<<<<<< HEAD
-        public async Task<Restaurante?> GetByPlaceIdAsync(string placeId, CancellationToken ct)
-        {
-            return await _context.Restaurantes
-                .Include(r => r.Reviews) 
-                .FirstOrDefaultAsync(r => r.PlaceId == placeId, ct);
-        }
         public async Task<List<Restaurante>> GetAllAsync(CancellationToken ct= default)
         {
-            return await _context.Restaurantes 
+            return await _db.Restaurantes 
                            .Include(r => r.GustosQueSirve)
                            .ToListAsync(ct);
         }
-
-
-        public async Task AddAsync(Restaurante restaurante, CancellationToken ct)
-            => await _context.Restaurantes.AddAsync(restaurante, ct);
-
-        public async Task SaveChangesAsync(CancellationToken ct)
-            => await _context.SaveChangesAsync(ct);
-
         public async Task<List<Restaurante>> buscarRestauranteParaUsuariosConGustosYRestricciones(
             List<string> gustos,
             List<string> restricciones,
@@ -83,7 +67,7 @@ namespace GustosApp.Infraestructure.Repositories
 
             // 1. CARGA COMPLETA Y MATERIALIZACI�N TEMPRANA (�Aqu� forzamos el ToList!)
             // Esto trae TODOS los restaurantes y sus colecciones a la memoria del servidor.
-            var todosLosRestaurantes = await _context.Restaurantes
+            var todosLosRestaurantes = await _db.Restaurantes
                 .Include(r => r.Reviews)
                 .Include(r => r.RestriccionesQueRespeta)
                 .Include(r => r.Platos)
@@ -114,15 +98,5 @@ namespace GustosApp.Infraestructure.Repositories
             return query.ToList();
         }
 
-=======
-        
-                public async Task<List<Restaurante>> GetAllAsync(CancellationToken ct= default)
-        {
-            return await _db.Restaurantes 
-                           .Include(r => r.Especialidad)
-                           .ToListAsync(ct);
-        }
-
->>>>>>> develop
     }
 }

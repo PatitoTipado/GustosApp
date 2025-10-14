@@ -1,3 +1,8 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using GustosApp.Application.DTO;
 using GustosApp.Domain.Model;
 
@@ -5,14 +10,15 @@ namespace GustosApp.Application.DTO
 {
     public class RestauranteDto
     {
-        // Propiedades
         public Guid Id { get; set; }
-        public string PropietarioUid { get; set; }
-        public string Nombre { get; set; }
-        public string Direccion { get; set; }
+        public string PropietarioUid { get; set; } = string.Empty;
+
         public object? Horarios { get; set; }
         public DateTime CreadoUtc { get; set; }
         public DateTime ActualizadoUtc { get; set; }
+
+        public string Nombre { get; set; }
+        public string Direccion { get; set; }
         public double Lat { get; set; }
         public double Lng { get; set; }
         public double Rating { get; set; }
@@ -25,7 +31,7 @@ namespace GustosApp.Application.DTO
         public ICollection<RestriccionResponse> RestriccionesQueRespeta { get; set; }
         public double Score { get; set; }
 
-        // --- CONSTRUCTOR 1: Vac�o (Requerido por serializadores/mapeadores) ---
+        // --- CONSTRUCTOR 1: Vacío (Requerido por serializadores/mapeadores) ---
         public RestauranteDto()
         {
             // Inicializar colecciones para evitar NullReferenceException
@@ -64,5 +70,5 @@ namespace GustosApp.Application.DTO
             Score = score;
         }
     }
-
 }
+

@@ -23,7 +23,6 @@ namespace GustosApp.API.Controllers
 
         [HttpGet("recomendaciones")]
         [AllowAnonymous] // Para evitar usar el token
-
         public async Task<IActionResult> GetRecommendations([FromQuery] int top = 10, CancellationToken ct = default)
         {
             var firebaseUid = User.FindFirst("user_id")?.Value

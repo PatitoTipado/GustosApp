@@ -49,7 +49,7 @@ namespace GustosApp.Domain.Model
             IdUsuario = idUsuario ?? throw new ArgumentNullException(nameof(nombre));
             FotoPerfilUrl = fotoPerfilUrl;
         }
-        public List<string> ValidarCompatibilidad()
+        public virtual  List<string> ValidarCompatibilidad()
         {
             var gustosIncompatibles = new List<Gusto>();
 

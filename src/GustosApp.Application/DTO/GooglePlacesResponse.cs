@@ -5,10 +5,12 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
+
 namespace GustosApp.Application.DTO
 {
     public class GooglePlacesResponse
     {
+       [JsonPropertyName("results")]
         public List<GooglePlaceResult> Results { get; set; } = new();
     }
 
@@ -52,7 +54,7 @@ namespace GustosApp.Application.DTO
 
     public class Photo
     {
+       [JsonPropertyName("photo_reference")]
         public string PhotoReference { get; set; } = string.Empty;
     }
-
 }

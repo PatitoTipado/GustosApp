@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using GustosApp.Application.DTO;
 using GustosApp.Application.DTOs.Restaurantes;
 using GustosApp.Application.Services;
 using GustosApp.Domain.Model;
@@ -39,8 +40,8 @@ namespace GustosApp.Infraestructure.Services
                 PropietarioUid = r.PropietarioUid,
                 Nombre = r.Nombre,
                 Direccion = r.Direccion,
-                Latitud = r.Latitud,
-                Longitud = r.Longitud,
+                Lat = r.Latitud,
+                Lng = r.Longitud,
                 Horarios = horarios,
                 CreadoUtc = r.CreadoUtc,
                 ActualizadoUtc = r.ActualizadoUtc,

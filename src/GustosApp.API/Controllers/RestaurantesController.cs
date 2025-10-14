@@ -7,6 +7,8 @@ using GustosApp.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+// Controlador para restaurantes que se registran en la app por un usuario
+
 namespace GustosApp.API.Controllers
 {
     [ApiController]
@@ -21,23 +23,23 @@ namespace GustosApp.API.Controllers
         }
 
         [HttpGet]
-public async Task<IActionResult> Get(
+        public async Task<IActionResult> Get(
     [FromQuery(Name = "near.lat")] double? lat,
     [FromQuery(Name = "near.lng")] double? lng,
     [FromQuery(Name = "radiusMeters")] int? radius,
     [FromQuery] string? tipo,
-    [FromQuery] string? plato 
+    [FromQuery] string? plato
 )
-{
-    var res = await _servicio.BuscarAsync(
-        tipo: tipo,
-        plato: plato,
-        lat: lat,
-        lng: lng,
-        radioMetros: radius
-    );
-    return Ok(res);
-}
+        {
+            var res = await _servicio.BuscarAsync(
+                tipo: tipo,
+                plato: plato,
+                lat: lat,
+                lng: lng,
+                radioMetros: radius
+            );
+            return Ok(res);
+        }
 
 
         [HttpGet("{id:guid}")]

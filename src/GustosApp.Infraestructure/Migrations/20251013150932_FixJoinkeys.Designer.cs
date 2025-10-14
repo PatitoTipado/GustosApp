@@ -4,6 +4,7 @@ using GustosApp.Infraestructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GustosApp.Infraestructure.Migrations
 {
     [DbContext(typeof(GustosDbContext))]
-    partial class GustosDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251013150932_FixJoinkeys")]
+    partial class FixJoinkeys
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -39,63 +42,63 @@ namespace GustosApp.Infraestructure.Migrations
                     b.HasData(
                         new
                         {
-                            CondicionesMedicasId = new Guid("44444444-0001-0001-0001-000000000001"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111113")
+                            CondicionesMedicasId = new Guid("df0fd0d9-ccbd-4ee0-85ef-cef99221394e"),
+                            TagsId = new Guid("57fc04c5-81f4-44c8-8f55-5a833b1e2a3b")
                         },
                         new
                         {
-                            CondicionesMedicasId = new Guid("44444444-0001-0001-0001-000000000002"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111114")
+                            CondicionesMedicasId = new Guid("a90feec1-4e14-4730-ab1a-c8b97e0515f4"),
+                            TagsId = new Guid("fb386e3b-675c-4086-9fd4-d431c754da96")
                         },
                         new
                         {
-                            CondicionesMedicasId = new Guid("44444444-0001-0001-0001-000000000003"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111124")
+                            CondicionesMedicasId = new Guid("0fba5975-a2d3-40e7-aad5-f68f4697812a"),
+                            TagsId = new Guid("b1ccc4a5-d618-4032-8855-9fdcd4444d94")
                         },
                         new
                         {
-                            CondicionesMedicasId = new Guid("44444444-0001-0001-0001-000000000004"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111121")
+                            CondicionesMedicasId = new Guid("800c6326-7351-4132-8807-d6313cb586c4"),
+                            TagsId = new Guid("e4de5bca-1945-42ea-8f4f-737665b37adf")
                         },
                         new
                         {
-                            CondicionesMedicasId = new Guid("44444444-0001-0001-0001-000000000005"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111111")
+                            CondicionesMedicasId = new Guid("0a1b5b30-3940-46f6-8b06-d094f5da9a18"),
+                            TagsId = new Guid("93696e0e-6226-47df-9af1-4dee58470fda")
                         },
                         new
                         {
-                            CondicionesMedicasId = new Guid("44444444-0001-0001-0001-000000000006"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111112")
+                            CondicionesMedicasId = new Guid("7cb101c0-3467-4671-9673-ca4f485cd5cf"),
+                            TagsId = new Guid("b78455c1-23de-4429-b7e3-f0e902fc735c")
                         },
                         new
                         {
-                            CondicionesMedicasId = new Guid("44444444-0001-0001-0001-000000000007"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111115")
+                            CondicionesMedicasId = new Guid("94c58ba4-fedb-42bc-a121-9b6d65a1af59"),
+                            TagsId = new Guid("c45e4daa-4a52-439c-aff7-8075f993cef4")
                         },
                         new
                         {
-                            CondicionesMedicasId = new Guid("44444444-0001-0001-0001-000000000008"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111128")
+                            CondicionesMedicasId = new Guid("c1fbf544-c48b-4f2f-b4a8-476e6193240d"),
+                            TagsId = new Guid("fcebd133-af80-4b53-9af3-1e1013a187df")
                         },
                         new
                         {
-                            CondicionesMedicasId = new Guid("44444444-0001-0001-0001-000000000009"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111127")
+                            CondicionesMedicasId = new Guid("1f192bb2-99ac-4725-9f90-0a83fecf0802"),
+                            TagsId = new Guid("d25dee01-f656-4e95-901c-adcf5afb9854")
                         },
                         new
                         {
-                            CondicionesMedicasId = new Guid("44444444-0001-0001-0001-000000000010"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111120")
+                            CondicionesMedicasId = new Guid("d9a326ab-f139-4548-bc33-e7a2dfce5fe8"),
+                            TagsId = new Guid("4b610fb2-f412-4e94-b145-635e2d942b65")
                         },
                         new
                         {
-                            CondicionesMedicasId = new Guid("44444444-0001-0001-0001-000000000011"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111116")
+                            CondicionesMedicasId = new Guid("b9ce1123-4673-420d-bbcc-e979e9b5a3bf"),
+                            TagsId = new Guid("11637566-47f1-4d18-9bd7-573fdda77e13")
                         },
                         new
                         {
-                            CondicionesMedicasId = new Guid("44444444-0001-0001-0001-000000000012"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111125")
+                            CondicionesMedicasId = new Guid("ea28f81d-8dfe-4558-93b6-19537a0d47af"),
+                            TagsId = new Guid("35f41fd6-267d-4f75-8268-e9f21424796b")
                         });
                 });
 
@@ -114,26 +117,7 @@ namespace GustosApp.Infraestructure.Migrations
                     b.ToTable("UsuarioCondicionesMedicas", (string)null);
                 });
 
-<<<<<<< HEAD
-            modelBuilder.Entity("GustoRestaurante", b =>
-                {
-                    b.Property<Guid>("GustosQueSirveId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("restaurantesId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("GustosQueSirveId", "restaurantesId");
-
-                    b.HasIndex("restaurantesId");
-
-                    b.ToTable("RestauranteGustos", (string)null);
-                });
-
-            modelBuilder.Entity("GustoTag", b =>
-=======
             modelBuilder.Entity("GustoTags", b =>
->>>>>>> develop
                 {
                     b.Property<Guid>("GustosId")
                         .HasColumnType("uniqueidentifier");
@@ -150,343 +134,343 @@ namespace GustosApp.Infraestructure.Migrations
                     b.HasData(
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000001"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111111")
+                            GustosId = new Guid("254fe076-1791-43bb-940d-b72fc61f0aac"),
+                            TagsId = new Guid("93696e0e-6226-47df-9af1-4dee58470fda")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000001"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111112")
+                            GustosId = new Guid("254fe076-1791-43bb-940d-b72fc61f0aac"),
+                            TagsId = new Guid("b78455c1-23de-4429-b7e3-f0e902fc735c")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000001"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111114")
+                            GustosId = new Guid("254fe076-1791-43bb-940d-b72fc61f0aac"),
+                            TagsId = new Guid("fb386e3b-675c-4086-9fd4-d431c754da96")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000002"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111123")
+                            GustosId = new Guid("3bd6bc23-b7ad-4f5e-bbbb-4dbcf28f4d97"),
+                            TagsId = new Guid("3eb25592-620d-4a4c-842b-7b3067bf2275")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000002"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111114")
+                            GustosId = new Guid("3bd6bc23-b7ad-4f5e-bbbb-4dbcf28f4d97"),
+                            TagsId = new Guid("fb386e3b-675c-4086-9fd4-d431c754da96")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000003"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111115")
+                            GustosId = new Guid("57494608-d0e8-48a5-ac5e-7c07afbb1831"),
+                            TagsId = new Guid("c45e4daa-4a52-439c-aff7-8075f993cef4")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000003"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111114")
+                            GustosId = new Guid("57494608-d0e8-48a5-ac5e-7c07afbb1831"),
+                            TagsId = new Guid("fb386e3b-675c-4086-9fd4-d431c754da96")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000004"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111116")
+                            GustosId = new Guid("80426c4e-c519-4c8f-baf8-3ba207032d78"),
+                            TagsId = new Guid("11637566-47f1-4d18-9bd7-573fdda77e13")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000004"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111120")
+                            GustosId = new Guid("80426c4e-c519-4c8f-baf8-3ba207032d78"),
+                            TagsId = new Guid("4b610fb2-f412-4e94-b145-635e2d942b65")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000004"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111126")
+                            GustosId = new Guid("80426c4e-c519-4c8f-baf8-3ba207032d78"),
+                            TagsId = new Guid("c8f41e3d-a411-4b6c-ad16-a93f9c6847a7")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000005"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111116")
+                            GustosId = new Guid("a7044fcb-2311-4cc8-a273-4fbdb112c626"),
+                            TagsId = new Guid("11637566-47f1-4d18-9bd7-573fdda77e13")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000005"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111121")
+                            GustosId = new Guid("a7044fcb-2311-4cc8-a273-4fbdb112c626"),
+                            TagsId = new Guid("e4de5bca-1945-42ea-8f4f-737665b37adf")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000006"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                            GustosId = new Guid("758c61bf-cce5-402d-95b3-8c24926cdf7e"),
+                            TagsId = new Guid("31e31211-5d09-4782-9b5e-c523e7207bfb")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000006"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111112")
+                            GustosId = new Guid("758c61bf-cce5-402d-95b3-8c24926cdf7e"),
+                            TagsId = new Guid("b78455c1-23de-4429-b7e3-f0e902fc735c")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000006"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111114")
+                            GustosId = new Guid("758c61bf-cce5-402d-95b3-8c24926cdf7e"),
+                            TagsId = new Guid("fb386e3b-675c-4086-9fd4-d431c754da96")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000007"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111111")
+                            GustosId = new Guid("b5b74a56-4cd8-4bab-ac12-a1f15b62f8be"),
+                            TagsId = new Guid("93696e0e-6226-47df-9af1-4dee58470fda")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000007"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111114")
+                            GustosId = new Guid("b5b74a56-4cd8-4bab-ac12-a1f15b62f8be"),
+                            TagsId = new Guid("fb386e3b-675c-4086-9fd4-d431c754da96")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000007"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111121")
+                            GustosId = new Guid("b5b74a56-4cd8-4bab-ac12-a1f15b62f8be"),
+                            TagsId = new Guid("e4de5bca-1945-42ea-8f4f-737665b37adf")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000008"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111111")
+                            GustosId = new Guid("7ec6923b-71db-42da-87f0-9916e491ef44"),
+                            TagsId = new Guid("93696e0e-6226-47df-9af1-4dee58470fda")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000008"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111116")
+                            GustosId = new Guid("7ec6923b-71db-42da-87f0-9916e491ef44"),
+                            TagsId = new Guid("11637566-47f1-4d18-9bd7-573fdda77e13")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000008"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111120")
+                            GustosId = new Guid("7ec6923b-71db-42da-87f0-9916e491ef44"),
+                            TagsId = new Guid("4b610fb2-f412-4e94-b145-635e2d942b65")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000009"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111123")
+                            GustosId = new Guid("f6b2c395-c742-46a6-a586-821bbe22a0d8"),
+                            TagsId = new Guid("3eb25592-620d-4a4c-842b-7b3067bf2275")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000009"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111115")
+                            GustosId = new Guid("f6b2c395-c742-46a6-a586-821bbe22a0d8"),
+                            TagsId = new Guid("c45e4daa-4a52-439c-aff7-8075f993cef4")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000009"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                            GustosId = new Guid("f6b2c395-c742-46a6-a586-821bbe22a0d8"),
+                            TagsId = new Guid("31e31211-5d09-4782-9b5e-c523e7207bfb")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000010"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111112")
+                            GustosId = new Guid("1f31e2d9-0d7f-4a0e-818e-9f7951d67f79"),
+                            TagsId = new Guid("b78455c1-23de-4429-b7e3-f0e902fc735c")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000010"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111113")
+                            GustosId = new Guid("1f31e2d9-0d7f-4a0e-818e-9f7951d67f79"),
+                            TagsId = new Guid("57fc04c5-81f4-44c8-8f55-5a833b1e2a3b")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000011"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111116")
+                            GustosId = new Guid("aae43d0c-5915-40d0-b407-690ee84a25e6"),
+                            TagsId = new Guid("11637566-47f1-4d18-9bd7-573fdda77e13")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000011"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111111")
+                            GustosId = new Guid("aae43d0c-5915-40d0-b407-690ee84a25e6"),
+                            TagsId = new Guid("93696e0e-6226-47df-9af1-4dee58470fda")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000011"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111120")
+                            GustosId = new Guid("aae43d0c-5915-40d0-b407-690ee84a25e6"),
+                            TagsId = new Guid("4b610fb2-f412-4e94-b145-635e2d942b65")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000012"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111120")
+                            GustosId = new Guid("5fdc549f-8311-4f3c-a4c6-9e047e5698ca"),
+                            TagsId = new Guid("4b610fb2-f412-4e94-b145-635e2d942b65")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000012"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111114")
+                            GustosId = new Guid("5fdc549f-8311-4f3c-a4c6-9e047e5698ca"),
+                            TagsId = new Guid("fb386e3b-675c-4086-9fd4-d431c754da96")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000013"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111117")
+                            GustosId = new Guid("e2c9ae68-0846-4211-8a19-7456dea0033f"),
+                            TagsId = new Guid("b9e5fd0f-e917-456e-b7fd-4ee80db5998f")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000013"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                            GustosId = new Guid("e2c9ae68-0846-4211-8a19-7456dea0033f"),
+                            TagsId = new Guid("31e31211-5d09-4782-9b5e-c523e7207bfb")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000014"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111116")
+                            GustosId = new Guid("c5e5e944-810f-44ab-a665-5c5ea434a544"),
+                            TagsId = new Guid("11637566-47f1-4d18-9bd7-573fdda77e13")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000014"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111121")
+                            GustosId = new Guid("c5e5e944-810f-44ab-a665-5c5ea434a544"),
+                            TagsId = new Guid("e4de5bca-1945-42ea-8f4f-737665b37adf")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000014"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111124")
+                            GustosId = new Guid("c5e5e944-810f-44ab-a665-5c5ea434a544"),
+                            TagsId = new Guid("b1ccc4a5-d618-4032-8855-9fdcd4444d94")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000015"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                            GustosId = new Guid("3f081178-d8e0-4399-8598-b02ff9a9c489"),
+                            TagsId = new Guid("31e31211-5d09-4782-9b5e-c523e7207bfb")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000016"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111116")
+                            GustosId = new Guid("1c1c46d0-0d31-4107-b309-b4129f6c60d4"),
+                            TagsId = new Guid("11637566-47f1-4d18-9bd7-573fdda77e13")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000016"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111114")
+                            GustosId = new Guid("1c1c46d0-0d31-4107-b309-b4129f6c60d4"),
+                            TagsId = new Guid("fb386e3b-675c-4086-9fd4-d431c754da96")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000016"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111124")
+                            GustosId = new Guid("1c1c46d0-0d31-4107-b309-b4129f6c60d4"),
+                            TagsId = new Guid("b1ccc4a5-d618-4032-8855-9fdcd4444d94")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000017"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                            GustosId = new Guid("1d6363af-9a2b-4110-a58b-cfa444479ae3"),
+                            TagsId = new Guid("31e31211-5d09-4782-9b5e-c523e7207bfb")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000017"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111114")
+                            GustosId = new Guid("1d6363af-9a2b-4110-a58b-cfa444479ae3"),
+                            TagsId = new Guid("fb386e3b-675c-4086-9fd4-d431c754da96")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000018"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111126")
+                            GustosId = new Guid("505fa8cf-d1bd-4799-804d-2735d691f0db"),
+                            TagsId = new Guid("c8f41e3d-a411-4b6c-ad16-a93f9c6847a7")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000018"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111127")
+                            GustosId = new Guid("505fa8cf-d1bd-4799-804d-2735d691f0db"),
+                            TagsId = new Guid("d25dee01-f656-4e95-901c-adcf5afb9854")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000018"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111113")
+                            GustosId = new Guid("505fa8cf-d1bd-4799-804d-2735d691f0db"),
+                            TagsId = new Guid("57fc04c5-81f4-44c8-8f55-5a833b1e2a3b")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000019"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111125")
+                            GustosId = new Guid("0832bd35-f5db-43c0-8b65-17f372cb2378"),
+                            TagsId = new Guid("35f41fd6-267d-4f75-8268-e9f21424796b")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000019"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111112")
+                            GustosId = new Guid("0832bd35-f5db-43c0-8b65-17f372cb2378"),
+                            TagsId = new Guid("b78455c1-23de-4429-b7e3-f0e902fc735c")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000020"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111119")
+                            GustosId = new Guid("b96d06d9-7c3a-454c-a167-dab3f1e3ac13"),
+                            TagsId = new Guid("bbe9d4dd-2890-4725-860e-2affab9eef19")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000021"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111119")
+                            GustosId = new Guid("9bc3b600-23a5-46e5-8b97-271960b5d18d"),
+                            TagsId = new Guid("bbe9d4dd-2890-4725-860e-2affab9eef19")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000021"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111113")
+                            GustosId = new Guid("9bc3b600-23a5-46e5-8b97-271960b5d18d"),
+                            TagsId = new Guid("57fc04c5-81f4-44c8-8f55-5a833b1e2a3b")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000022"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111113")
+                            GustosId = new Guid("d24d4abd-7090-46e2-8b2f-2e343c829113"),
+                            TagsId = new Guid("57fc04c5-81f4-44c8-8f55-5a833b1e2a3b")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000022"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111124")
+                            GustosId = new Guid("d24d4abd-7090-46e2-8b2f-2e343c829113"),
+                            TagsId = new Guid("b1ccc4a5-d618-4032-8855-9fdcd4444d94")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000023"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111119")
+                            GustosId = new Guid("58806a47-bd1b-4925-beec-658cff1a2b05"),
+                            TagsId = new Guid("bbe9d4dd-2890-4725-860e-2affab9eef19")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000023"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111126")
+                            GustosId = new Guid("58806a47-bd1b-4925-beec-658cff1a2b05"),
+                            TagsId = new Guid("c8f41e3d-a411-4b6c-ad16-a93f9c6847a7")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000023"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111113")
+                            GustosId = new Guid("58806a47-bd1b-4925-beec-658cff1a2b05"),
+                            TagsId = new Guid("57fc04c5-81f4-44c8-8f55-5a833b1e2a3b")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000024"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111123")
+                            GustosId = new Guid("f485cf12-4fd7-4cee-a58b-78d5e3fdf5bf"),
+                            TagsId = new Guid("3eb25592-620d-4a4c-842b-7b3067bf2275")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000024"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                            GustosId = new Guid("f485cf12-4fd7-4cee-a58b-78d5e3fdf5bf"),
+                            TagsId = new Guid("31e31211-5d09-4782-9b5e-c523e7207bfb")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000025"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111111")
+                            GustosId = new Guid("56b6d595-a1b7-48fc-9ae0-4cf291e1eb21"),
+                            TagsId = new Guid("93696e0e-6226-47df-9af1-4dee58470fda")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000025"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111116")
+                            GustosId = new Guid("56b6d595-a1b7-48fc-9ae0-4cf291e1eb21"),
+                            TagsId = new Guid("11637566-47f1-4d18-9bd7-573fdda77e13")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000026"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111116")
+                            GustosId = new Guid("03427ae8-a042-4868-9373-8ca80f97c9a4"),
+                            TagsId = new Guid("11637566-47f1-4d18-9bd7-573fdda77e13")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000026"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111114")
+                            GustosId = new Guid("03427ae8-a042-4868-9373-8ca80f97c9a4"),
+                            TagsId = new Guid("fb386e3b-675c-4086-9fd4-d431c754da96")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000027"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111119")
+                            GustosId = new Guid("0dee7103-d13b-47cf-886c-b3f0d4cb2e60"),
+                            TagsId = new Guid("bbe9d4dd-2890-4725-860e-2affab9eef19")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000028"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111111")
+                            GustosId = new Guid("679c82e9-f149-441a-8f6d-e790fb171323"),
+                            TagsId = new Guid("93696e0e-6226-47df-9af1-4dee58470fda")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000028"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111112")
+                            GustosId = new Guid("679c82e9-f149-441a-8f6d-e790fb171323"),
+                            TagsId = new Guid("b78455c1-23de-4429-b7e3-f0e902fc735c")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000028"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111122")
+                            GustosId = new Guid("679c82e9-f149-441a-8f6d-e790fb171323"),
+                            TagsId = new Guid("c1f31540-1462-422c-b4d1-15a8ac24b6d7")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000029"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111127")
+                            GustosId = new Guid("7102923e-ef0d-4a24-af3c-a18cc0b394eb"),
+                            TagsId = new Guid("d25dee01-f656-4e95-901c-adcf5afb9854")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000030"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111130")
+                            GustosId = new Guid("d74ff1ba-437f-458d-94ba-2b28482ad6fd"),
+                            TagsId = new Guid("b6027ef8-788c-47e1-85e1-85cebd901747")
                         },
                         new
                         {
-                            GustosId = new Guid("22222222-0001-0001-0001-000000000031"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111130")
+                            GustosId = new Guid("0571ba30-490d-4ef4-ae9a-f935da97b3b0"),
+                            TagsId = new Guid("b6027ef8-788c-47e1-85e1-85cebd901747")
                         });
                 });
 
@@ -503,34 +487,6 @@ namespace GustosApp.Infraestructure.Migrations
                     b.HasIndex("UsuariosId");
 
                     b.ToTable("UsuarioGustos", (string)null);
-                });
-
-            modelBuilder.Entity("GustosApp.Domain.Model.ChatMessage", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("FechaEnvio")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("GrupoId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Mensaje")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("UsuarioId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("UsuarioNombre")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ChatMessages");
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.CondicionMedica", b =>
@@ -550,62 +506,62 @@ namespace GustosApp.Infraestructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("44444444-0001-0001-0001-000000000001"),
+                            Id = new Guid("df0fd0d9-ccbd-4ee0-85ef-cef99221394e"),
                             Nombre = "Diabetes"
                         },
                         new
                         {
-                            Id = new Guid("44444444-0001-0001-0001-000000000002"),
+                            Id = new Guid("a90feec1-4e14-4730-ab1a-c8b97e0515f4"),
                             Nombre = "Hipertensión"
                         },
                         new
                         {
-                            Id = new Guid("44444444-0001-0001-0001-000000000003"),
+                            Id = new Guid("0fba5975-a2d3-40e7-aad5-f68f4697812a"),
                             Nombre = "Colesterol alto"
                         },
                         new
                         {
-                            Id = new Guid("44444444-0001-0001-0001-000000000004"),
+                            Id = new Guid("800c6326-7351-4132-8807-d6313cb586c4"),
                             Nombre = "Gastritis"
                         },
                         new
                         {
-                            Id = new Guid("44444444-0001-0001-0001-000000000005"),
+                            Id = new Guid("0a1b5b30-3940-46f6-8b06-d094f5da9a18"),
                             Nombre = "Enfermedad celíaca"
                         },
                         new
                         {
-                            Id = new Guid("44444444-0001-0001-0001-000000000006"),
+                            Id = new Guid("7cb101c0-3467-4671-9673-ca4f485cd5cf"),
                             Nombre = "Intolerancia a la lactosa"
                         },
                         new
                         {
-                            Id = new Guid("44444444-0001-0001-0001-000000000007"),
+                            Id = new Guid("94c58ba4-fedb-42bc-a121-9b6d65a1af59"),
                             Nombre = "Alergia a mariscos"
                         },
                         new
                         {
-                            Id = new Guid("44444444-0001-0001-0001-000000000008"),
+                            Id = new Guid("c1fbf544-c48b-4f2f-b4a8-476e6193240d"),
                             Nombre = "Alergia a frutos secos"
                         },
                         new
                         {
-                            Id = new Guid("44444444-0001-0001-0001-000000000009"),
+                            Id = new Guid("1f192bb2-99ac-4725-9f90-0a83fecf0802"),
                             Nombre = "Alergia al huevo"
                         },
                         new
                         {
-                            Id = new Guid("44444444-0001-0001-0001-000000000010"),
+                            Id = new Guid("d9a326ab-f139-4548-bc33-e7a2dfce5fe8"),
                             Nombre = "Síndrome del intestino irritable"
                         },
                         new
                         {
-                            Id = new Guid("44444444-0001-0001-0001-000000000011"),
+                            Id = new Guid("b9ce1123-4673-420d-bbcc-e979e9b5a3bf"),
                             Nombre = "Gota"
                         },
                         new
                         {
-                            Id = new Guid("44444444-0001-0001-0001-000000000012"),
+                            Id = new Guid("ea28f81d-8dfe-4558-93b6-19537a0d47af"),
                             Nombre = "Ansiedad (sensibilidad a cafeína)"
                         });
                 });
@@ -669,188 +625,157 @@ namespace GustosApp.Infraestructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000001"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/pizza.jpg?alt=media&token=1e4e7fea-31d3-4e04-ae50-1ebe29fd16f2",
+                            Id = new Guid("254fe076-1791-43bb-940d-b72fc61f0aac"),
                             Nombre = "Pizza"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000002"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/sushi.jpg?alt=media&token=9dfd9b64-8455-4206-a5ec-090c935e86e7",
+                            Id = new Guid("3bd6bc23-b7ad-4f5e-bbbb-4dbcf28f4d97"),
                             Nombre = "Sushi"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000003"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/paella.jpg?alt=media&token=5cfd79d4-7e92-452e-a7c4-899b374d3ea8",
+                            Id = new Guid("57494608-d0e8-48a5-ac5e-7c07afbb1831"),
                             Nombre = "Paella"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000004"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/milanesa-con-papas-fritas.jpg?alt=media&token=d2ca59bc-6360-4378-919a-886b0c0e93e0",
+                            Id = new Guid("80426c4e-c519-4c8f-baf8-3ba207032d78"),
                             Nombre = "Milanesa con papas"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000005"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/tacos.jpg?alt=media&token=431ae163-15e9-41d0-8fa6-6f79e9862150",
+                            Id = new Guid("a7044fcb-2311-4cc8-a273-4fbdb112c626"),
                             Nombre = "Tacos"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000006"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/ensalada-cesar.jpg?alt=media&token=a6b5eaf0-be77-4716-8b11-18f3774f004f",
+                            Id = new Guid("758c61bf-cce5-402d-95b3-8c24926cdf7e"),
                             Nombre = "Ensalada César"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000007"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/ramen.jpg?alt=media&token=886fdc48-3d43-46fd-9911-48b1966da347",
+                            Id = new Guid("b5b74a56-4cd8-4bab-ac12-a1f15b62f8be"),
                             Nombre = "Ramen japonés"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000008"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/empanadas.png?alt=media&token=7438d05a-c0be-4da0-aea6-b6ab26f7f621",
+                            Id = new Guid("7ec6923b-71db-42da-87f0-9916e491ef44"),
                             Nombre = "Empanadas"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000009"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/ceviche.jpg?alt=media&token=ad28a0df-4bc0-4aa8-ae02-610526ac1152",
+                            Id = new Guid("f6b2c395-c742-46a6-a586-821bbe22a0d8"),
                             Nombre = "Ceviche"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000010"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/helado.jpg?alt=media&token=01be542d-9cc4-47f3-a27f-ae3a1b80d306",
+                            Id = new Guid("1f31e2d9-0d7f-4a0e-818e-9f7951d67f79"),
                             Nombre = "Helado"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000011"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/Hamburguesa.jpg?alt=media&token=a0fd669b-ade3-427c-b428-c743338885c8",
+                            Id = new Guid("aae43d0c-5915-40d0-b407-690ee84a25e6"),
                             Nombre = "Hamburguesa"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000012"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/papas-fritas.jpg?alt=media&token=5b18bf54-256e-4b36-adc3-e438fa3d374c",
+                            Id = new Guid("5fdc549f-8311-4f3c-a4c6-9e047e5698ca"),
                             Nombre = "Papas fritas"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000013"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/pollo-grill.jpg?alt=media&token=d60229b3-5e8a-4de6-9ed7-4a9622a2f3e1",
+                            Id = new Guid("e2c9ae68-0846-4211-8a19-7456dea0033f"),
                             Nombre = "Pollo grillado"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000014"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/kebab.jpg?alt=media&token=0acd13ee-654c-4748-bbe4-695a06053f75",
+                            Id = new Guid("c5e5e944-810f-44ab-a665-5c5ea434a544"),
                             Nombre = "Kebab"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000015"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/ensalada-verde.jpg?alt=media&token=0bb027c8-de8d-4ac4-99db-ee80fc7d0f1c",
+                            Id = new Guid("3f081178-d8e0-4399-8598-b02ff9a9c489"),
                             Nombre = "Ensalada verde"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000016"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/asado.jpg?alt=media&token=254fbe63-39ba-4529-87bb-556381370c9a",
+                            Id = new Guid("1c1c46d0-0d31-4107-b309-b4129f6c60d4"),
                             Nombre = "Asado"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000017"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/sopa-verduras.jpg?alt=media&token=9858f540-0cb8-4759-a7d5-a6743144863e",
+                            Id = new Guid("1d6363af-9a2b-4110-a58b-cfa444479ae3"),
                             Nombre = "Sopa de verduras"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000018"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/panquques.jpg?alt=media&token=2b203013-cbcf-40f3-b266-d629466cd0b2",
+                            Id = new Guid("505fa8cf-d1bd-4799-804d-2735d691f0db"),
                             Nombre = "Panqueques"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000019"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/cafe-con-leche.jpg?alt=media&token=1f3cde3c-e3b9-4ed0-a690-d7e4d6875447",
+                            Id = new Guid("0832bd35-f5db-43c0-8b65-17f372cb2378"),
                             Nombre = "Café con leche"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000020"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/jugos-naturales.jpg?alt=media&token=b8afeb02-882e-4a3f-8445-14949e5871dd",
+                            Id = new Guid("b96d06d9-7c3a-454c-a167-dab3f1e3ac13"),
                             Nombre = "Jugo natural"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000021"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/Smoothie-frutas.jpg?alt=media&token=17ddc1f6-d60c-40d4-8368-f1f003ddd62b",
+                            Id = new Guid("9bc3b600-23a5-46e5-8b97-271960b5d18d"),
                             Nombre = "Smoothie de frutas"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000022"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/chocolates.jpg?alt=media&token=5f33a2af-cee7-4768-8b47-dda973dd9c4e",
+                            Id = new Guid("d24d4abd-7090-46e2-8b2f-2e343c829113"),
                             Nombre = "Chocolate"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000023"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/tarta-manzana.jpg?alt=media&token=c34fa589-0c37-44cb-891e-2e8aaebdb215",
+                            Id = new Guid("58806a47-bd1b-4925-beec-658cff1a2b05"),
                             Nombre = "Tarta de manzana"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000024"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/Pescado-al-horn.png?alt=media&token=953296de-c3be-47a4-826e-31ad29cbae22",
+                            Id = new Guid("f485cf12-4fd7-4cee-a58b-78d5e3fdf5bf"),
                             Nombre = "Pescado al horno"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000025"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/pasta-bolognesa.jpg?alt=media&token=7893a48f-f693-4a2f-a574-81336f91e62c",
+                            Id = new Guid("56b6d595-a1b7-48fc-9ae0-4cf291e1eb21"),
                             Nombre = "Pasta boloñesa"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000026"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/lomo_a_la_pimienta.png?alt=media&token=4d8495a4-181b-4d50-a9c8-e95010bfb100",
+                            Id = new Guid("03427ae8-a042-4868-9373-8ca80f97c9a4"),
                             Nombre = "Lomo a la pimienta"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000027"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/ensalada_frutas.jpg?alt=media&token=a13662fa-2ac4-40cd-b1f0-347634a991e9",
+                            Id = new Guid("0dee7103-d13b-47cf-886c-b3f0d4cb2e60"),
                             Nombre = "Ensalada de frutas"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000028"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/sandwich-de-huevo-con-jamon-y-queso.jpg?alt=media&token=8ac9b05d-c316-4a84-a099-9bca4f2d6a9a",
+                            Id = new Guid("679c82e9-f149-441a-8f6d-e790fb171323"),
                             Nombre = "Sándwich de jamón y queso"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000029"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/huevos-revueltos-desayuno.jpeg?alt=media&token=0f21b637-b499-427c-bdb0-f0a841a76a9b",
+                            Id = new Guid("7102923e-ef0d-4a24-af3c-a18cc0b394eb"),
                             Nombre = "Huevos revueltos"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000030"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/tipos-de-cerveza.jpg?alt=media&token=1cfa9e77-b663-421a-b649-d52a1ba751d2",
+                            Id = new Guid("d74ff1ba-437f-458d-94ba-2b28482ad6fd"),
                             Nombre = "Cerveza artesanal"
                         },
                         new
                         {
-                            Id = new Guid("22222222-0001-0001-0001-000000000031"),
-                            ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/vino_artesanal.jpg?alt=media&token=fd22ec00-7739-4776-b488-63e46c2937c5",
+                            Id = new Guid("0571ba30-490d-4ef4-ae9a-f935da97b3b0"),
                             Nombre = "Vino tinto"
                         });
                 });
@@ -958,8 +883,8 @@ namespace GustosApp.Infraestructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ImagenUrl")
-                        .HasMaxLength(2048)
-                        .HasColumnType("nvarchar(2048)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<double>("Latitud")
                         .HasColumnType("float");
@@ -998,7 +923,6 @@ namespace GustosApp.Infraestructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<decimal?>("Valoracion")
-                        .HasPrecision(3, 2)
                         .HasColumnType("decimal(3,2)");
 
                     b.Property<string>("WebUrl")
@@ -1011,32 +935,10 @@ namespace GustosApp.Infraestructure.Migrations
                         .HasDatabaseName("UX_Restaurantes_NombreNormalizado");
 
                     b.HasIndex("PropietarioUid")
-                        .HasDatabaseName("IX_Restaurantes_PropietarioUid");
-
-                    b.HasIndex("Latitud", "Longitud")
-                        .HasDatabaseName("IX_Restaurantes_Latitud_Longitud");
+                        .IsUnique()
+                        .HasDatabaseName("UX_Restaurantes_PropietarioUid");
 
                     b.ToTable("Restaurantes", (string)null);
-                });
-
-            modelBuilder.Entity("GustosApp.Domain.Model.RestauranteEspecialidad", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("RestauranteId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RestauranteId");
-
-                    b.ToTable("RestauranteEspecialidades");
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.RestaurantePlato", b =>
@@ -1070,62 +972,62 @@ namespace GustosApp.Infraestructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("33333333-0001-0001-0001-000000000001"),
+                            Id = new Guid("88ad6a6d-2fce-4713-8e22-b56041c57be1"),
                             Nombre = "Sin gluten"
                         },
                         new
                         {
-                            Id = new Guid("33333333-0001-0001-0001-000000000002"),
+                            Id = new Guid("d2507a73-8d64-45bc-bed5-3e1981613b70"),
                             Nombre = "Sin lactosa"
                         },
                         new
                         {
-                            Id = new Guid("33333333-0001-0001-0001-000000000003"),
+                            Id = new Guid("903d1554-2bbc-4e1c-8ba3-dc88f2d60b82"),
                             Nombre = "Sin azúcar"
                         },
                         new
                         {
-                            Id = new Guid("33333333-0001-0001-0001-000000000004"),
+                            Id = new Guid("63a5147a-84a7-4193-9bcb-40ad10025b6c"),
                             Nombre = "Sin sal"
                         },
                         new
                         {
-                            Id = new Guid("33333333-0001-0001-0001-000000000005"),
+                            Id = new Guid("9dc4cee3-db39-4af1-980d-dc6c2811b989"),
                             Nombre = "Sin mariscos"
                         },
                         new
                         {
-                            Id = new Guid("33333333-0001-0001-0001-000000000006"),
+                            Id = new Guid("2ab8ac74-4cc3-476f-9e90-d7c63e012e08"),
                             Nombre = "Sin carne roja"
                         },
                         new
                         {
-                            Id = new Guid("33333333-0001-0001-0001-000000000007"),
+                            Id = new Guid("abed4fde-7bb6-420c-935f-bc018a81f6a4"),
                             Nombre = "Sin frito"
                         },
                         new
                         {
-                            Id = new Guid("33333333-0001-0001-0001-000000000008"),
+                            Id = new Guid("e1cd3b11-8559-4364-ab35-513c48a9196e"),
                             Nombre = "Sin picante"
                         },
                         new
                         {
-                            Id = new Guid("33333333-0001-0001-0001-000000000009"),
+                            Id = new Guid("f24a155c-408f-470f-8064-a8043de937ed"),
                             Nombre = "Sin cafeína"
                         },
                         new
                         {
-                            Id = new Guid("33333333-0001-0001-0001-000000000010"),
+                            Id = new Guid("731b89a2-8898-4557-94dc-b7ee5f1bcbec"),
                             Nombre = "Sin alcohol"
                         },
                         new
                         {
-                            Id = new Guid("33333333-0001-0001-0001-000000000011"),
+                            Id = new Guid("5723b940-a18d-4f0f-97f6-480ea7d05b32"),
                             Nombre = "Sin soja"
                         },
                         new
                         {
-                            Id = new Guid("33333333-0001-0001-0001-000000000012"),
+                            Id = new Guid("cb0209bc-2675-4515-ad0b-5889a660de17"),
                             Nombre = "Sin frutos secos"
                         });
                 });
@@ -1157,39 +1059,6 @@ namespace GustosApp.Infraestructure.Migrations
                     b.ToTable("ReviewsRestaurantes");
                 });
 
-            modelBuilder.Entity("GustosApp.Domain.Model.SolicitudAmistad", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("DestinatarioId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Estado")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("FechaEnvio")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("FechaRespuesta")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Mensaje")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("RemitenteId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DestinatarioId");
-
-                    b.HasIndex("RemitenteId");
-
-                    b.ToTable("SolicitudesAmistad");
-                });
-
             modelBuilder.Entity("GustosApp.Domain.Model.Tag", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1211,121 +1080,121 @@ namespace GustosApp.Infraestructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("11111111-1111-1111-1111-111111111111"),
+                            Id = new Guid("93696e0e-6226-47df-9af1-4dee58470fda"),
                             Nombre = "Gluten",
                             Tipo = "Ingrediente"
                         },
                         new
                         {
-                            Id = new Guid("11111111-1111-1111-1111-111111111112"),
+                            Id = new Guid("b78455c1-23de-4429-b7e3-f0e902fc735c"),
                             Nombre = "Lácteo",
                             Tipo = "Ingrediente"
                         },
                         new
                         {
-                            Id = new Guid("11111111-1111-1111-1111-111111111113"),
+                            Id = new Guid("57fc04c5-81f4-44c8-8f55-5a833b1e2a3b"),
                             Nombre = "Azúcar",
                             Tipo = "Nutriente"
                         },
                         new
                         {
-                            Id = new Guid("11111111-1111-1111-1111-111111111114"),
+                            Id = new Guid("fb386e3b-675c-4086-9fd4-d431c754da96"),
                             Nombre = "Sal",
                             Tipo = "Nutriente"
                         },
                         new
                         {
-                            Id = new Guid("11111111-1111-1111-1111-111111111115"),
+                            Id = new Guid("c45e4daa-4a52-439c-aff7-8075f993cef4"),
                             Nombre = "Mariscos",
                             Tipo = "Ingrediente"
                         },
                         new
                         {
-                            Id = new Guid("11111111-1111-1111-1111-111111111116"),
+                            Id = new Guid("11637566-47f1-4d18-9bd7-573fdda77e13"),
                             Nombre = "Carne roja",
                             Tipo = "Ingrediente"
                         },
                         new
                         {
-                            Id = new Guid("11111111-1111-1111-1111-111111111117"),
+                            Id = new Guid("b9e5fd0f-e917-456e-b7fd-4ee80db5998f"),
                             Nombre = "Carne blanca",
                             Tipo = "Ingrediente"
                         },
                         new
                         {
-                            Id = new Guid("11111111-1111-1111-1111-111111111118"),
+                            Id = new Guid("31e31211-5d09-4782-9b5e-c523e7207bfb"),
                             Nombre = "Vegetal",
                             Tipo = "Categoria"
                         },
                         new
                         {
-                            Id = new Guid("11111111-1111-1111-1111-111111111119"),
+                            Id = new Guid("bbe9d4dd-2890-4725-860e-2affab9eef19"),
                             Nombre = "Fruta",
                             Tipo = "Categoria"
                         },
                         new
                         {
-                            Id = new Guid("11111111-1111-1111-1111-111111111120"),
+                            Id = new Guid("4b610fb2-f412-4e94-b145-635e2d942b65"),
                             Nombre = "Frito",
                             Tipo = "Categoria"
                         },
                         new
                         {
-                            Id = new Guid("11111111-1111-1111-1111-111111111121"),
+                            Id = new Guid("e4de5bca-1945-42ea-8f4f-737665b37adf"),
                             Nombre = "Picante",
                             Tipo = "Categoria"
                         },
                         new
                         {
-                            Id = new Guid("11111111-1111-1111-1111-111111111122"),
+                            Id = new Guid("c1f31540-1462-422c-b4d1-15a8ac24b6d7"),
                             Nombre = "Procesado",
                             Tipo = "Categoria"
                         },
                         new
                         {
-                            Id = new Guid("11111111-1111-1111-1111-111111111123"),
+                            Id = new Guid("3eb25592-620d-4a4c-842b-7b3067bf2275"),
                             Nombre = "Pescado",
                             Tipo = "Ingrediente"
                         },
                         new
                         {
-                            Id = new Guid("11111111-1111-1111-1111-111111111124"),
+                            Id = new Guid("b1ccc4a5-d618-4032-8855-9fdcd4444d94"),
                             Nombre = "Grasa",
                             Tipo = "Nutriente"
                         },
                         new
                         {
-                            Id = new Guid("11111111-1111-1111-1111-111111111125"),
+                            Id = new Guid("35f41fd6-267d-4f75-8268-e9f21424796b"),
                             Nombre = "Cafeína",
                             Tipo = "Nutriente"
                         },
                         new
                         {
-                            Id = new Guid("11111111-1111-1111-1111-111111111126"),
+                            Id = new Guid("c8f41e3d-a411-4b6c-ad16-a93f9c6847a7"),
                             Nombre = "Harina",
                             Tipo = "Ingrediente"
                         },
                         new
                         {
-                            Id = new Guid("11111111-1111-1111-1111-111111111127"),
+                            Id = new Guid("d25dee01-f656-4e95-901c-adcf5afb9854"),
                             Nombre = "Huevos",
                             Tipo = "Ingrediente"
                         },
                         new
                         {
-                            Id = new Guid("11111111-1111-1111-1111-111111111128"),
+                            Id = new Guid("fcebd133-af80-4b53-9af3-1e1013a187df"),
                             Nombre = "Frutos secos",
                             Tipo = "Ingrediente"
                         },
                         new
                         {
-                            Id = new Guid("11111111-1111-1111-1111-111111111129"),
+                            Id = new Guid("3d21eb50-be8b-4d1b-a88b-65bb2c564499"),
                             Nombre = "Soja",
                             Tipo = "Ingrediente"
                         },
                         new
                         {
-                            Id = new Guid("11111111-1111-1111-1111-111111111130"),
+                            Id = new Guid("b6027ef8-788c-47e1-85e1-85cebd901747"),
                             Nombre = "Alcohol",
                             Tipo = "Nutriente"
                         });
@@ -1383,26 +1252,7 @@ namespace GustosApp.Infraestructure.Migrations
                     b.ToTable("Usuarios");
                 });
 
-<<<<<<< HEAD
-            modelBuilder.Entity("RestauranteRestriccion", b =>
-                {
-                    b.Property<Guid>("RestaurantesId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("RestriccionesQueRespetaId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("RestaurantesId", "RestriccionesQueRespetaId");
-
-                    b.HasIndex("RestriccionesQueRespetaId");
-
-                    b.ToTable("RestauranteRestricciones", (string)null);
-                });
-
-            modelBuilder.Entity("RestriccionTag", b =>
-=======
             modelBuilder.Entity("RestriccionTags", b =>
->>>>>>> develop
                 {
                     b.Property<Guid>("RestriccionesId")
                         .HasColumnType("uniqueidentifier");
@@ -1419,63 +1269,63 @@ namespace GustosApp.Infraestructure.Migrations
                     b.HasData(
                         new
                         {
-                            RestriccionesId = new Guid("33333333-0001-0001-0001-000000000001"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111111")
+                            RestriccionesId = new Guid("88ad6a6d-2fce-4713-8e22-b56041c57be1"),
+                            TagsId = new Guid("93696e0e-6226-47df-9af1-4dee58470fda")
                         },
                         new
                         {
-                            RestriccionesId = new Guid("33333333-0001-0001-0001-000000000002"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111112")
+                            RestriccionesId = new Guid("d2507a73-8d64-45bc-bed5-3e1981613b70"),
+                            TagsId = new Guid("b78455c1-23de-4429-b7e3-f0e902fc735c")
                         },
                         new
                         {
-                            RestriccionesId = new Guid("33333333-0001-0001-0001-000000000003"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111113")
+                            RestriccionesId = new Guid("903d1554-2bbc-4e1c-8ba3-dc88f2d60b82"),
+                            TagsId = new Guid("57fc04c5-81f4-44c8-8f55-5a833b1e2a3b")
                         },
                         new
                         {
-                            RestriccionesId = new Guid("33333333-0001-0001-0001-000000000004"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111114")
+                            RestriccionesId = new Guid("63a5147a-84a7-4193-9bcb-40ad10025b6c"),
+                            TagsId = new Guid("fb386e3b-675c-4086-9fd4-d431c754da96")
                         },
                         new
                         {
-                            RestriccionesId = new Guid("33333333-0001-0001-0001-000000000005"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111115")
+                            RestriccionesId = new Guid("9dc4cee3-db39-4af1-980d-dc6c2811b989"),
+                            TagsId = new Guid("c45e4daa-4a52-439c-aff7-8075f993cef4")
                         },
                         new
                         {
-                            RestriccionesId = new Guid("33333333-0001-0001-0001-000000000006"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111116")
+                            RestriccionesId = new Guid("2ab8ac74-4cc3-476f-9e90-d7c63e012e08"),
+                            TagsId = new Guid("11637566-47f1-4d18-9bd7-573fdda77e13")
                         },
                         new
                         {
-                            RestriccionesId = new Guid("33333333-0001-0001-0001-000000000007"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111120")
+                            RestriccionesId = new Guid("abed4fde-7bb6-420c-935f-bc018a81f6a4"),
+                            TagsId = new Guid("4b610fb2-f412-4e94-b145-635e2d942b65")
                         },
                         new
                         {
-                            RestriccionesId = new Guid("33333333-0001-0001-0001-000000000008"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111121")
+                            RestriccionesId = new Guid("e1cd3b11-8559-4364-ab35-513c48a9196e"),
+                            TagsId = new Guid("e4de5bca-1945-42ea-8f4f-737665b37adf")
                         },
                         new
                         {
-                            RestriccionesId = new Guid("33333333-0001-0001-0001-000000000009"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111125")
+                            RestriccionesId = new Guid("f24a155c-408f-470f-8064-a8043de937ed"),
+                            TagsId = new Guid("35f41fd6-267d-4f75-8268-e9f21424796b")
                         },
                         new
                         {
-                            RestriccionesId = new Guid("33333333-0001-0001-0001-000000000010"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111130")
+                            RestriccionesId = new Guid("731b89a2-8898-4557-94dc-b7ee5f1bcbec"),
+                            TagsId = new Guid("b6027ef8-788c-47e1-85e1-85cebd901747")
                         },
                         new
                         {
-                            RestriccionesId = new Guid("33333333-0001-0001-0001-000000000011"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111129")
+                            RestriccionesId = new Guid("5723b940-a18d-4f0f-97f6-480ea7d05b32"),
+                            TagsId = new Guid("3d21eb50-be8b-4d1b-a88b-65bb2c564499")
                         },
                         new
                         {
-                            RestriccionesId = new Guid("33333333-0001-0001-0001-000000000012"),
-                            TagsId = new Guid("11111111-1111-1111-1111-111111111128")
+                            RestriccionesId = new Guid("cb0209bc-2675-4515-ad0b-5889a660de17"),
+                            TagsId = new Guid("fcebd133-af80-4b53-9af3-1e1013a187df")
                         });
                 });
 
@@ -1524,26 +1374,7 @@ namespace GustosApp.Infraestructure.Migrations
                         .IsRequired();
                 });
 
-<<<<<<< HEAD
-            modelBuilder.Entity("GustoRestaurante", b =>
-                {
-                    b.HasOne("GustosApp.Domain.Model.Gusto", null)
-                        .WithMany()
-                        .HasForeignKey("GustosQueSirveId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("GustosApp.Domain.Model.Restaurante", null)
-                        .WithMany()
-                        .HasForeignKey("restaurantesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("GustoTag", b =>
-=======
             modelBuilder.Entity("GustoTags", b =>
->>>>>>> develop
                 {
                     b.HasOne("GustosApp.Domain.Model.Gusto", null)
                         .WithMany()
@@ -1630,17 +1461,6 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Navigation("Usuario");
                 });
 
-            modelBuilder.Entity("GustosApp.Domain.Model.RestauranteEspecialidad", b =>
-                {
-                    b.HasOne("GustosApp.Domain.Model.Restaurante", "Restaurante")
-                        .WithMany()
-                        .HasForeignKey("RestauranteId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Restaurante");
-                });
-
             modelBuilder.Entity("GustosApp.Domain.Model.RestaurantePlato", b =>
                 {
                     b.HasOne("GustosApp.Domain.Model.Restaurante", "Restaurante")
@@ -1661,45 +1481,7 @@ namespace GustosApp.Infraestructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("GustosApp.Domain.Model.SolicitudAmistad", b =>
-                {
-                    b.HasOne("GustosApp.Domain.Model.Usuario", "Destinatario")
-                        .WithMany()
-                        .HasForeignKey("DestinatarioId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("GustosApp.Domain.Model.Usuario", "Remitente")
-                        .WithMany()
-                        .HasForeignKey("RemitenteId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Destinatario");
-
-                    b.Navigation("Remitente");
-                });
-
-<<<<<<< HEAD
-            modelBuilder.Entity("RestauranteRestriccion", b =>
-                {
-                    b.HasOne("GustosApp.Domain.Model.Restaurante", null)
-                        .WithMany()
-                        .HasForeignKey("RestaurantesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("GustosApp.Domain.Model.Restriccion", null)
-                        .WithMany()
-                        .HasForeignKey("RestriccionesQueRespetaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("RestriccionTag", b =>
-=======
             modelBuilder.Entity("RestriccionTags", b =>
->>>>>>> develop
                 {
                     b.HasOne("GustosApp.Domain.Model.Restriccion", null)
                         .WithMany()

@@ -6,15 +6,10 @@ using System.Threading.Tasks;
 
 namespace GustosApp.Application.DTO
 {
-    public class GustoDto
+    public class RestriccionDto
     {
-        
-      
         public Guid Id { get; set; }
-        public string Nombre { get; set; }
-        public string? ImagenUrl { get; set; }
-        public bool Seleccionado { get; set; } = false;
-
-
+        public string Nombre { get; set; } = string.Empty;
+        public bool Seleccionado { get; set; }
     }
 }

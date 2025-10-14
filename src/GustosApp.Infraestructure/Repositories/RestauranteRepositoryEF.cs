@@ -1,18 +1,58 @@
+ï»¿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
+using GustosApp.Infraestructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace GustosApp.Infraestructure.Repositories
 {
     public class RestauranteRepositoryEF : IRestauranteRepository
     {
-        private readonly GustosDbContext _context;
+        private readonly GustosDbContext _db;
+        public RestauranteRepositoryEF(GustosDbContext db) => _db = db;
 
-        public RestauranteRepositoryEF(GustosDbContext context)
+        public async Task<Restaurante?> GetByPlaceIdAsync(string placeId, CancellationToken ct = default)
+            => await _db.Restaurantes.AsNoTracking().FirstOrDefaultAsync(r => r.PlaceId == placeId, ct);
+
+        public async Task AddAsync(Restaurante r, CancellationToken ct = default)
+            => await _db.Restaurantes.AddAsync(r, ct);
+
+        public Task SaveChangesAsync(CancellationToken ct = default)
+            => _db.SaveChangesAsync(ct);
+
+        public async Task<List<Restaurante>> GetNearbyAsync(double lat, double lng, int radiusMeters, TimeSpan? maxAge = null, CancellationToken ct = default)
         {
-            _context = context;
+            // AproximaciÃ³n por bounding box
+            double degLat = radiusMeters / 111_000.0;
+            double degLng = radiusMeters / (111_000.0 * Math.Cos(lat * Math.PI / 180.0));
+
+            var minLat = lat - degLat;
+            var maxLat = lat + degLat;
+            var minLng = lng - degLng;
+            var maxLng = lng + degLng;
+
+            var q = _db.Restaurantes.AsNoTracking()
+                .Where(r => r.Latitud >= minLat && r.Latitud <= maxLat
+                         && r.Longitud >= minLng && r.Longitud <= maxLng);
+
+            if (maxAge.HasValue)
+            {
+                var threshold = DateTime.UtcNow - maxAge.Value;
+                q = q.Where(r => r.UltimaActualizacion >= threshold);
+            }
+
+            // Orden simple por distancia Manhattan aproximada
+            q = q.OrderBy(r => Math.Abs(r.Latitud - lat) + Math.Abs(r.Longitud - lng))
+                 .Take(200);
+
+            return await q.ToListAsync(ct);
         }
 
+<<<<<<< HEAD
         public async Task<Restaurante?> GetByPlaceIdAsync(string placeId, CancellationToken ct)
         {
             return await _context.Restaurantes
@@ -41,20 +81,20 @@ namespace GustosApp.Infraestructure.Repositories
             var gustosNormalizados = gustos.Select(g => g.ToLower()).ToList();
             var restriccionesNormalizadas = restricciones.Select(r => r.ToLower()).ToList();
 
-            // 1. CARGA COMPLETA Y MATERIALIZACIÓN TEMPRANA (¡Aquí forzamos el ToList!)
+            // 1. CARGA COMPLETA Y MATERIALIZACIï¿½N TEMPRANA (ï¿½Aquï¿½ forzamos el ToList!)
             // Esto trae TODOS los restaurantes y sus colecciones a la memoria del servidor.
             var todosLosRestaurantes = await _context.Restaurantes
                 .Include(r => r.Reviews)
                 .Include(r => r.RestriccionesQueRespeta)
                 .Include(r => r.Platos)
                 .Include(r => r.GustosQueSirve)
-                .ToListAsync(ct); // <-- El ToList() se ejecuta aquí.
+                .ToListAsync(ct); // <-- El ToList() se ejecuta aquï¿½.
 
-            // A partir de aquí, el filtrado se realiza en la memoria de .NET (LINQ to Objects).
+            // A partir de aquï¿½, el filtrado se realiza en la memoria de .NET (LINQ to Objects).
 
             var query = todosLosRestaurantes.AsEnumerable(); // Usa AsEnumerable para claridad en el filtro de memoria
 
-            // 2. FILTRADO POR GUSTOS (INCLUSIÓN)
+            // 2. FILTRADO POR GUSTOS (INCLUSIï¿½N)
             if (gustosNormalizados.Any())
             {
                 // El restaurante debe servir AL MENOS UN gusto que el usuario quiere.
@@ -62,7 +102,7 @@ namespace GustosApp.Infraestructure.Repositories
                     .Any(g => g.Nombre != null && gustosNormalizados.Contains(g.Nombre.ToLower())));
             }
 
-            // 3. FILTRADO POR RESTRICCIONES (EXCLUSIÓN - Lógica Corregida en Memoria)
+            // 3. FILTRADO POR RESTRICCIONES (EXCLUSIï¿½N - Lï¿½gica Corregida en Memoria)
             if (restriccionesNormalizadas.Any())
             {
                 // El restaurante NO debe respetar NINGUNA de las restricciones que tiene el usuario.
@@ -74,5 +114,15 @@ namespace GustosApp.Infraestructure.Repositories
             return query.ToList();
         }
 
+=======
+        
+                public async Task<List<Restaurante>> GetAllAsync(CancellationToken ct= default)
+        {
+            return await _db.Restaurantes 
+                           .Include(r => r.Especialidad)
+                           .ToListAsync(ct);
+        }
+
+>>>>>>> develop
     }
 }

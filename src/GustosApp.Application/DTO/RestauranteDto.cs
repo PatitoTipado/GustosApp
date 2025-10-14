@@ -27,8 +27,6 @@ namespace GustosApp.Application.DTO
         public string? ImagenUrl { get; set; }
         public decimal? Valoracion { get; set; }
         public List<string> Platos { get; set; }
-    }
-        public List<string> Platos { get; set; }
         public ICollection<GustoDto> GustosQueSirve { get; set; }
         public ICollection<RestriccionResponse> RestriccionesQueRespeta { get; set; }
         public double Score { get; set; }
@@ -58,8 +56,8 @@ namespace GustosApp.Application.DTO
             PropietarioUid = propietarioUid ?? string.Empty;
             Nombre = nombre ?? string.Empty;
             Direccion = direccion ?? string.Empty;
-            Latitud = latitud;
-            Longitud = longitud;
+            Lat = latitud;
+            Lng = longitud;
             Horarios = horarios;
             CreadoUtc = creadoUtc;
             ActualizadoUtc = actualizadoUtc;
@@ -74,4 +72,3 @@ namespace GustosApp.Application.DTO
     }
 }
 
-}

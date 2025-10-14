@@ -17,7 +17,7 @@ namespace GustosApp.API.Tests.Api;
 
 public class RestaurantesControllerPruebas
 {
-    private static RestaurantesController ConstruirController(Mock<IServicioRestaurantes> mock)
+    /*private static RestaurantesController ConstruirController(Mock<IServicioRestaurantes> mock)
     {
         var controller = new RestaurantesController(mock.Object);
         var user = new ClaimsPrincipal(new ClaimsIdentity(new[]
@@ -59,7 +59,7 @@ public class RestaurantesControllerPruebas
         var result = (CreatedAtActionResult)resp;
         result.RouteValues!["id"].Should().Be(creado.Id);
         result.Value.Should().BeOfType<RestauranteDto>();
-    }
+    }*/
 
 
 

@@ -11,7 +11,6 @@ namespace GustosApp.Infraestructure.Repositories
     {
         private readonly List<Restaurante> _restaurantesHardcoded = new List<Restaurante>
         {
-            // Restaurante 1: Pizza 
             new Restaurante
             {
                 Id = Guid.Parse("A0000000-0000-0000-0000-000000000001"),
@@ -19,10 +18,8 @@ namespace GustosApp.Infraestructure.Repositories
                 Especialidad = new List<RestauranteEspecialidad>
                 {
                     new RestauranteEspecialidad(Guid.NewGuid(), Guid.Empty, "pizza"),
-                   // new RestauranteEspecialidad(Guid.NewGuid(), Guid.Empty, "Pizza Pepperoni"),
                 }
             },
-            // Restaurante 2: Sushi 
             new Restaurante
             {
                 Id = Guid.Parse("A0000000-0000-0000-0000-000000000002"),
@@ -30,10 +27,8 @@ namespace GustosApp.Infraestructure.Repositories
                 Especialidad = new List<RestauranteEspecialidad>
                 {
                     new RestauranteEspecialidad(Guid.NewGuid(), Guid.Empty, "sushi"),
-                    //new RestauranteEspecialidad(Guid.NewGuid(), Guid.Empty, "Rolls California"),
                 }
             },
-            // Restaurante 3: Milanesa
             new Restaurante
             {
                 Id = Guid.Parse("A0000000-0000-0000-0000-000000000003"),
@@ -41,9 +36,6 @@ namespace GustosApp.Infraestructure.Repositories
                 Especialidad = new List<RestauranteEspecialidad>
                 {
                     new RestauranteEspecialidad(Guid.NewGuid(), Guid.Empty, "milanesa "),
-                    //new RestauranteEspecialidad(Guid.NewGuid(), Guid.Empty, "Pizza"),
-                   // new RestauranteEspecialidad(Guid.NewGuid(), Guid.Empty, "Sushi"),
-
                 }
             },
         };

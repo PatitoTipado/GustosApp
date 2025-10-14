@@ -44,7 +44,7 @@ namespace GustosApp.API.Controllers
             return Ok(new
             {
                 count = result.Count,
-                restaurantes = result
+                restaurantes = recommendations
             });
         }
 

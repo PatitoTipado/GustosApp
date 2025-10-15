@@ -26,7 +26,7 @@ namespace GustosApp.Domain.Model
         public DateTime CreadoUtc { get; set; }
         public DateTime ActualizadoUtc { get; set; }
 
-        public string PlaceId { get; set; } = string.Empty;
+        public string PlaceId { get; set; } 
         
         public double? Rating { get; set; }
         public int? CantidadResenas { get; set; }

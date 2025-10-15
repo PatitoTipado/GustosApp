@@ -8,6 +8,7 @@ using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 using Microsoft.Extensions.Configuration;
 
+
 namespace GustosApp.Application.UseCases
 {
     public class BuscarRestaurantesCercanosUseCase
@@ -113,7 +114,7 @@ namespace GustosApp.Application.UseCases
                         UltimaActualizacion = DateTime.UtcNow
                     };
                     await _repo.AddAsync(nuevo, ct);
-                    idParaDto = nuevo.Id;                // <-- usa el Id real insertado
+                    idParaDto = nuevo.Id;                
                 }
                 else
                 {
@@ -125,7 +126,7 @@ namespace GustosApp.Application.UseCases
                     Id = idParaDto,
                     PlaceId = placeId,
                     Nombre = p.DisplayName?.Text ?? "",
-                    Direccion = p.FormattedAddress ?? string.Empty,       // <-- cambio aquí
+                    Direccion = p.FormattedAddress ?? string.Empty,       
                     Latitud = p.Location?.Latitude ?? 0,
                     Longitud = p.Location?.Longitude ?? 0,
                     ImagenUrl = photoUrl,
@@ -140,7 +141,7 @@ namespace GustosApp.Application.UseCases
             }
 
 
-            await _repo.SaveChangesAsync(ct);
+            var saved = await TrySaveIgnoringNombreNormalizadoAsync(ct);
 
 
             if (RequiresLiveDetails(servesCsv, openNow: null, priceLevelsCsv: null))
@@ -240,7 +241,6 @@ namespace GustosApp.Application.UseCases
             if (!resp.IsSuccessStatusCode)
                 return null;
 
-            // Si tu tipo PlaceDetails está en DTO/PlacesV1, usa ese
             var details = await resp.Content.ReadFromJsonAsync<PlaceDetails>(cancellationToken: ct);
             return details;
         }
@@ -323,6 +323,30 @@ namespace GustosApp.Application.UseCases
 
             return filtered.ToList();
         }
+
+        private static bool IsNombreNormalizadoUniqueViolation(Exception ex)
+        {
+            var msg = ex.InnerException?.Message ?? ex.Message;
+            return msg.Contains("UX_Restaurantes_NombreNormalizado", StringComparison.OrdinalIgnoreCase)
+                   || msg.Contains("Cannot insert duplicate key", StringComparison.OrdinalIgnoreCase)
+                   || msg.Contains("2601");
+        }
+
+
+        private async Task<bool> TrySaveIgnoringNombreNormalizadoAsync(CancellationToken ct)
+        {
+            try
+            {
+                await _repo.SaveChangesAsync(ct);
+                return true;
+            }
+            catch (Exception ex) when (IsNombreNormalizadoUniqueViolation(ex))
+            {
+                return false;
+            }
+        }
+
+
     }
 }
 

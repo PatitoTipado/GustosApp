@@ -21,7 +21,7 @@ namespace GustosApp.Infraestructure.Configurations
                 .IsRequired();
 
             b.Property(r => r.NombreNormalizado)
-                .HasMaxLength(160);
+                .HasMaxLength(160); 
 
             b.Property(r => r.Direccion)
                 .HasMaxLength(300)
@@ -30,7 +30,17 @@ namespace GustosApp.Infraestructure.Configurations
             b.Property(r => r.HorariosJson)
                 .IsRequired();
 
+            b.Property(r => r.PlaceId)
+                .HasMaxLength(450)
+                .IsRequired(false);
+
+            b.Property(r => r.Categoria)
+                .HasMaxLength(80);
+
             b.Property(r => r.ImagenUrl)
+                .HasMaxLength(2048);
+
+            b.Property(r => r.WebUrl)
                 .HasMaxLength(2048);
 
             b.Property(r => r.Tipo)
@@ -39,19 +49,18 @@ namespace GustosApp.Infraestructure.Configurations
                 .IsRequired();
 
             b.Property(r => r.Valoracion)
-                .HasPrecision(3,2);
-
-            b.HasIndex(r => new { r.Latitud, r.Longitud })
-             .HasDatabaseName("IX_Restaurantes_Latitud_Longitud");
-
-            
-            b.HasIndex(r => r.PropietarioUid)
-             .HasDatabaseName("IX_Restaurantes_PropietarioUid");
+                .HasPrecision(3, 2);
 
             b.HasIndex(r => r.NombreNormalizado)
-             .IsUnique()
-             .HasDatabaseName("UX_Restaurantes_NombreNormalizado");
+                .HasDatabaseName("IX_Restaurantes_NombreNormalizado")
+                .IsUnique(false); 
+
+            b.HasIndex(r => r.PlaceId)
+                .HasDatabaseName("UX_Restaurantes_PlaceId")
+                .IsUnique()
+                .HasFilter("[PlaceId] IS NOT NULL AND [PlaceId] <> ''"); 
+            b.HasIndex(r => new { r.Latitud, r.Longitud })
+                .HasDatabaseName("IX_Restaurantes_Latitud_Longitud");
         }
     }
 }
-

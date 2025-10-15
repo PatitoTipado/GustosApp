@@ -116,6 +116,7 @@ builder.Services.AddScoped<SugerirGustosUseCase>();
 builder.Services.AddScoped<BuscarRestaurantesCercanosUseCase>();
 builder.Services.AddScoped<ActualizarDetallesRestauranteUseCase>();
 builder.Services.AddScoped<RemoverMiembroGrupoUseCase>();
+builder.Services.AddScoped<SugerirGustosSobreUnRadioUseCase>();
 // UseCases y repositorios de amistad
 builder.Services.AddScoped<GustosApp.Domain.Interfaces.ISolicitudAmistadRepository, GustosApp.Infraestructure.Repositories.SolicitudAmistadRepositoryEF>();
 builder.Services.AddScoped<EnviarSolicitudAmistadUseCase>();

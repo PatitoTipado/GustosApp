@@ -1,6 +1,7 @@
 using GustosApp.Application.DTOs.Restaurantes;
 using GustosApp.Application.Services;
 using GustosApp.Application.UseCases;
+using GustosApp.Domain.Model;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -32,14 +33,14 @@ namespace GustosApp.API.Controllers
 
         [HttpGet]
         public async Task<IActionResult> Get(
-        [FromQuery(Name = "near.lat")] double? lat,
-        [FromQuery(Name = "near.lng")] double? lng,
-        [FromQuery(Name = "radiusMeters")] int? radius,
-        [FromQuery] string? tipo,
-        [FromQuery] string? plato,
-        CancellationToken ct,
-        [FromQuery] int top = 10
-                            )
+            CancellationToken ct,
+            [FromQuery(Name = "near.lat")] double? lat = -34.641812775271,
+            [FromQuery(Name = "near.lng")] double? lng = -58.56990230458638,
+            [FromQuery(Name = "radiusMeters")] int? radius = 1000,
+            [FromQuery] string? tipo = "",
+            [FromQuery] string? plato = "",
+            [FromQuery] int top = 10
+        )
         {
             var res = await _servicio.BuscarAsync(
                 tipo: tipo,
@@ -48,6 +49,11 @@ namespace GustosApp.API.Controllers
                 lng: lng,
                 radioMetros: radius
             );
+
+            Console.WriteLine(res.ToList().Count());
+            Console.WriteLine(res.ToList().Count());
+            Console.WriteLine(res.ToList().Count());
+
 
             var firebaseUid = User.FindFirst("user_id")?.Value
             ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
@@ -59,8 +65,24 @@ namespace GustosApp.API.Controllers
             }
 
             var preferenciasDTO = await _obtenerGustos.Handle(firebaseUid, ct);
+
+            Console.WriteLine(preferenciasDTO.ToString());
+            Console.WriteLine(preferenciasDTO.ToString());
+            Console.WriteLine(preferenciasDTO.ToString());
+
             var recommendations = _sugerirGustos.Handle(preferenciasDTO, res.ToList(), top, ct);
 
+            Console.WriteLine(recommendations.ToList().Count());
+            Console.WriteLine(recommendations.ToList().Count());
+            Console.WriteLine(recommendations.ToList().Count());
+
+            foreach (var item in recommendations)
+            {
+                foreach (var gusto in item.GustosQueSirve)
+                {
+                    Console.WriteLine(gusto.Nombre);
+                }
+            }
 
             return Ok(recommendations);
         }

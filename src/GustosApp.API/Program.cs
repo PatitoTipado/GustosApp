@@ -29,7 +29,7 @@ if (FirebaseApp.DefaultInstance == null)
 {
     FirebaseApp.Create(new AppOptions()
     {
-        Credential = GoogleCredential.FromFile(firebaseKeyPath)
+        Credential = GoogleCredential.FromJson(firebaseKeyPath)
     });
 }
 

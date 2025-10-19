@@ -1,6 +1,5 @@
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
-using GustosApp.Application;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases;
 using GustosApp.Domain.Interfaces;

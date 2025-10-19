@@ -29,7 +29,9 @@ Ejecutá los siguientes comandos (asegurate de seleccionar como Default Project 
 
 Update-Database -Project GustosApp.Infraestructure -StartupProject GustosApp.API
  Esto va a crear automáticamente la base de datos GustosAppDb con todas las tablas necesarias.
+ 
 
+//Ignorar, ya configurado.Solamente hay que crear una carpeta secrets en el proyecto GustosApp.API y meter el firebase-key.json(está en el discord/fijado en #backend) denntro de secrets
 3. Configuración de Firebase
 En Firebase Console, creá un proyecto (o usá el existente).
 Copiá el Project ID (ej: gustosapp-5c3c9).

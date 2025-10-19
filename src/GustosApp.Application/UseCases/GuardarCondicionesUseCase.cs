@@ -22,26 +22,41 @@ namespace GustosApp.Application.UseCases
 
         public async Task<GuardarCondicionesResponse> HandleAsync(string uid, List<Guid> ids, bool skip, CancellationToken ct)
         {
-            if (skip) return new GuardarCondicionesResponse("Paso omitido", new List<string>());
+            if (skip)
+                return new GuardarCondicionesResponse("Paso omitido", new List<string>());
 
             var usuario = await _user.GetByFirebaseUidAsync(uid, ct)
-                                   ?? throw new InvalidOperationException("Usuario no encontrado.");
+                          ?? throw new InvalidOperationException("Usuario no encontrado.");
 
-            usuario.CondicionesMedicas.Clear();
+            // Obtener actuales y nuevas
+            var actuales = usuario.CondicionesMedicas.Select(c => c.Id).ToHashSet();
+            var nuevas = ids.ToHashSet();
 
-            var nuevas = await _condiciones.GetByIdsAsync(ids, ct);
+            var paraAgregar = nuevas.Except(actuales).ToList();
+            var paraQuitar = actuales.Except(nuevas).ToList();
 
-            foreach (var condicion in nuevas)
+            //  Quitar condiciones desmarcadas
+            var paraEliminar = usuario.CondicionesMedicas
+                .Where(c => paraQuitar.Contains(c.Id))
+                .ToList();
+            foreach (var condicion in paraEliminar)
+                usuario.CondicionesMedicas.Remove(condicion);
+
+            //  Agregar nuevas condiciones
+            if (paraAgregar.Any())
             {
-               usuario.CondicionesMedicas.Add(condicion);
+                var nuevasEntidades = await _condiciones.GetByIdsAsync(paraAgregar, ct);
+                foreach (var condicion in nuevasEntidades)
+                    usuario.CondicionesMedicas.Add(condicion);
             }
+
+            //  Revalidar compatibilidad
             var gustosRemovidos = usuario.ValidarCompatibilidad();
 
             usuario.AvanzarPaso(RegistroPaso.Gustos);
-
             await _user.SaveChangesAsync(ct);
 
             return new GuardarCondicionesResponse("Condiciones médicas actualizadas correctamente.", gustosRemovidos);
         }
     }
-}
+    }

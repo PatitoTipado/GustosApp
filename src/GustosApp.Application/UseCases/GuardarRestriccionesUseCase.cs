@@ -22,25 +22,39 @@ namespace GustosApp.Application.UseCases
 
         public async Task<GuardarRestriccionesResponse> HandleAsync(string uid, List<Guid> ids, bool skip, CancellationToken ct)
         {
-           
             if (skip)
                 return new GuardarRestriccionesResponse("Paso omitido", new List<string>());
-
 
             var usuario = await _user.GetByFirebaseUidAsync(uid, ct)
                           ?? throw new InvalidOperationException("Usuario no encontrado.");
 
-         
-            usuario.Restricciones.Clear();
+            var actuales = usuario.Restricciones.Select(r => r.Id).ToHashSet();
+            var nuevas = ids.ToHashSet();
 
-            var nuevas = await _restricciones.GetRestriccionesByIdsAsync(ids, ct);
+            //qué agrega y qué quita
+            var paraAgregar = nuevas.Except(actuales).ToList();
+            var paraQuitar = actuales.Except(nuevas).ToList();
 
-            foreach (var restriccion in nuevas)
-                usuario.Restricciones.Add(restriccion);
+            // Quitar restricciones desmarcadas
+            var paraEliminar = usuario.Restricciones
+                .Where(r => paraQuitar.Contains(r.Id))
+                .ToList();
 
+            foreach (var restriccion in paraEliminar)
+                usuario.Restricciones.Remove(restriccion);
 
+            //  Agregar nuevas restricciones seleccionadas
+            if (paraAgregar.Any())
+            {
+                var nuevasEntidades = await _restricciones.GetRestriccionesByIdsAsync(paraAgregar, ct);
+                foreach (var restriccion in nuevasEntidades)
+                    usuario.Restricciones.Add(restriccion);
+            }
+
+            //  Revalidar compatibilidad de gustos (por si cambian)
             var gustosRemovidos = usuario.ValidarCompatibilidad();
 
+            //  Avanzar paso solo si aún no estaba completo
             usuario.AvanzarPaso(RegistroPaso.Condiciones);
 
             await _user.SaveChangesAsync(ct);
@@ -50,5 +64,6 @@ namespace GustosApp.Application.UseCases
                 gustosRemovidos
             );
         }
+
     }
-}
+    }

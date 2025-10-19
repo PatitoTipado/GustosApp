@@ -18,8 +18,11 @@ namespace GustosApp.Infraestructure.Repositories
         }
         public async Task<List<Gusto>> GetAllAsync(CancellationToken ct)
         {
-            return await _dbContext.Gustos.ToListAsync(ct);
+            return await _dbContext.Gustos
+                .Include(g => g.Tags)
+                .ToListAsync(ct);
         }
+
 
         public async Task<List<Gusto>> GetByIdsAsync(List<Guid> ids, CancellationToken ct)
         {

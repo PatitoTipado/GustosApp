@@ -22,10 +22,6 @@ namespace GustosApp.Application.UseCases
             var usuario = await _usuarioRepo.GetByFirebaseUidAsync(uid, ct)
                 ?? throw new Exception("Usuario no encontrado.");
 
-          
-            if (!usuario.Restricciones.Any())
-                throw new InvalidOperationException("Debe seleccionar al menos una restricción.");
-
             if (!usuario.Gustos.Any())
                 throw new InvalidOperationException("Debe seleccionar al menos un gusto.");
 
@@ -34,9 +30,17 @@ namespace GustosApp.Application.UseCases
                 .SelectMany(r => r.TagsProhibidos.Select(t => t.NombreNormalizado))
                 .ToHashSet();
 
+            var tagsProhibidos = usuario.Restricciones
+             .SelectMany(r => r.TagsProhibidos.Select(t => t.NombreNormalizado))
+             .Concat(usuario.CondicionesMedicas.SelectMany(c => c.TagsCriticos.Select(t => t.NombreNormalizado)))
+              .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+
+
             var gustosInvalidos = usuario.Gustos
-                .Where(g => g.Tags.Any(t => tagsRestricciones.Contains(t.NombreNormalizado)))
+                .Where(g => g.Tags.Any(t => tagsProhibidos.Contains(t.NombreNormalizado)))
                 .ToList();
+
 
             if (gustosInvalidos.Any())
             {

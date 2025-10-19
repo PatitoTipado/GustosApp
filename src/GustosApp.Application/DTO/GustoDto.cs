@@ -6,6 +6,23 @@ using System.Threading.Tasks;
 
 namespace GustosApp.Application.DTO
 {
-    public record GustoDto(Guid Id, string Nombre, string? ImagenUrl);
+    public class GustoDto
+    {
+        
+      
+        public Guid Id { get; set; }
+        public string Nombre { get; set; }
+        public string? ImagenUrl { get; set; }
+        public bool Seleccionado { get; set; } = false;
 
+        public GustoDto() { }
+
+        public GustoDto(Guid id, string nombre, string imagenUrl)
+        {
+            Id = id;
+            Nombre = nombre;
+            ImagenUrl = imagenUrl??"";
+        }
+
+    }
 }

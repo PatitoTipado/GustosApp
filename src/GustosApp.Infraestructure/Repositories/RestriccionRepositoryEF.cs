@@ -18,7 +18,9 @@ namespace GustosApp.Infraestructure.Repositories
         }
         public async Task<List<Restriccion>> GetAllAsync(CancellationToken ct)
         {
-            return await _dbContext.Restricciones.ToListAsync(ct);
+            return await _dbContext.Restricciones.
+                Include(r => r.TagsProhibidos)
+                .ToListAsync(ct);
         }
 
         public async Task<List<Restriccion>> GetRestriccionesByIdsAsync(List<Guid> ids, CancellationToken ct)

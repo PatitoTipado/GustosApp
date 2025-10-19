@@ -1,4 +1,5 @@
 using GustosApp.Application.DTO;
+using GustosApp.Application.DTOs.Restaurantes;
 using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Common;
 using GustosApp.Domain.Interfaces;
@@ -11,8 +12,6 @@ namespace GustosApp.Application.UseCases
         private readonly IEmbeddingService _embeddingService;
         private readonly IRestauranteRepository _restaurantRepo;
 
-
-        // Estos valores deberían ser cargados desde la configuración (API/Infra), no hardcodeados aquí.
         private const double UmbralMinimo = 0.1;
         private const double FactorPenalizacion = 0.1;
 
@@ -22,137 +21,89 @@ namespace GustosApp.Application.UseCases
             _restaurantRepo = restaurantRepo;
         }
 
-        public async Task<List<RecomendacionDTO>> Handle(List<string> gustosUsuario, int maxResults = 10, CancellationToken ct = default)
-
-        //grupos -> id y cada grupo va a tener 
-        //grupos - gustos 
+        public async Task<List<RestauranteDto>> Handle(UsuarioPreferenciasDTO usuario, int maxResults = 10, CancellationToken ct = default)
         {
-            // 1. Obtención de datos (Usando repositorios) 
-            // tmb deberiamos incluir en la query la exclusion de no match con restricciones y gustos
-            //var restaurantes = getRestaurant();
-            var restaurantes = await _restaurantRepo.GetAllAsync(ct);
+            //mediante el usuario conseguir los restaurantes que tengan al menos un gusto del usuario y respete por lo menos una restriccion
+            var restaurantes = await _restaurantRepo.buscarRestauranteParaUsuariosConGustosYRestricciones(usuario.Gustos,usuario.Restricciones, ct);
+            //var restaurantes = await _restaurantRepo.GetAllAsync(ct);
             var resultados = new List<(Restaurante restaurante, double score)>();
-
-            //obtenemos al usuario del cual queremos obtener su match
-            //consulta por id para obtener los gustos
-
-            // var gustoUsuario = string.Join(" ", new List<string> { "carne a la parrilla", "asado", "parrilla" });
-
-            // 2. Generar el Embedding del usuario (llamada a la interfaz IEmbeddingService)
-            // El Use Case NO sabe que esto usa ONNX.
-            // var userEmb = _embeddingService.GetEmbedding(string.Join(" ", gustoUsuario));
-            //  var gustosUsuario = gustoUsuario.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            var userEmb = _embeddingService.GetEmbedding(string.Join(" ", gustosUsuario));
-
+            var userEmb = _embeddingService.GetEmbedding(string.Join(" ", usuario.Gustos));
 
             foreach (var rest in restaurantes)
             {
-                // A. Embeddings del restaurante (llamada al servicio de Infraestructura)
-                string especialidadesTexto = string.Join(" ", rest.Especialidad);
-                var baseEmb = _embeddingService.GetEmbedding(especialidadesTexto);
-
-                // D. Cálculo de la Penalización (Lógica de Aplicación/Negocio)
-                double penalizacion = 0;
-                // ... (Tu lógica de penalización usando rest.Especialidad y gustosUsuario) ...
-                foreach (var gusto in gustosUsuario)
+                double maxScoreBase = 0;
+                foreach (var especialidad in rest.GustosQueSirve)
                 {
-                    // Si el restaurante no tiene ninguna especialidad que coincida con el gusto del usuario
-                    //habria que plantear capaz con lo que menos gustos coincida ahora si
-                    if (!rest.Especialidad.Any(e => e.Nombre != null && e.Nombre.ToLower().Contains(gusto.ToLower())))
+                    var baseEmb = _embeddingService.GetEmbedding(especialidad.Nombre);
+                    double scoreSimilitud = CosineSimilarity.Coseno(userEmb, baseEmb);
+
+                    if (scoreSimilitud > maxScoreBase)
+                    {
+                        maxScoreBase = scoreSimilitud;
+                    }
+                }
+                double scoreBase = maxScoreBase;
+                double penalizacion = 0;
+
+                foreach (var gusto in usuario.Gustos)
+                {
+                    if (!rest.GustosQueSirve.Any(e => e.Nombre != null && e.Nombre.ToLower().Contains(gusto.ToLower())))
                     {
                         penalizacion += FactorPenalizacion;
                     }
                 }
 
-                // E. Score final (Lógica de Aplicación/Negocio)
-                double scoreBase = CosineSimilarity.Coseno(userEmb, baseEmb);
-                double scoreFinal = ((scoreBase) / 2) * (1 - penalizacion);
+                double scoreFinal = scoreBase * (1 - penalizacion);
 
                 if (scoreFinal >= UmbralMinimo)
                 {
                     resultados.Add((rest, scoreFinal));
                 }
             }
-            // 3. Mapeo y Retorno
-            return resultados
+            // 4. Ordenar, limitar y mapear al DTO de respuesta (Corregido)
+            var recomendacionesOrdenadas = resultados
+                // 4.1. Ordena del Score m�s alto al m�s bajo (�Aplica al listado 'resultados'!)
                 .OrderByDescending(x => x.score)
+
+                // 4.2. Toma el n�mero m�ximo de resultados
                 .Take(maxResults)
-                .Select(x => new RecomendacionDTO { RestaurantId = x.restaurante.Id, Score = x.score })
+
+                // 4.3. Mapea al RestauranteResponse
+                .Select(x => new RestauranteDto(
+                    // Mapeo de propiedades simples
+                    id: x.restaurante.Id,
+                    propietarioUid: x.restaurante.PropietarioUid,
+                    nombre: x.restaurante.Nombre,
+                    direccion: x.restaurante.Direccion,
+                    latitud: x.restaurante.Latitud,
+                    longitud: x.restaurante.Longitud,
+                    horarios: x.restaurante.HorariosJson,
+                    creadoUtc: x.restaurante.CreadoUtc,
+                    actualizadoUtc: x.restaurante.ActualizadoUtc,
+                    tipo: null,
+                    imagenUrl: x.restaurante.ImagenUrl,
+                    valoracion: x.restaurante.Valoracion,
+
+                    // Mapeo de colecciones
+                    platos: new List<string>(),
+                    
+                    gustosQueSirve: x.restaurante.GustosQueSirve
+                        .Select(g => new GustoDto(g.Id, g.Nombre, g.ImagenUrl))
+                        .ToList(),
+
+                    restriccionesQueRespeta: x.restaurante.RestriccionesQueRespeta
+                        .Select(r => new RestriccionResponse(r.Id, r.Nombre))
+                        .ToList(),
+
+                    // El Score final para mostrar
+                    score: x.score
+                ))
                 .ToList();
 
+            return recomendacionesOrdenadas;
         }
     }
 }
     
 
     
-        /*public static List<Restaurant> getRestaurant()
-        {
-            return new List<Restaurant>
-        {
-        new Restaurant(101, new List<string>{"carne","parrilla","asado","pizza","pasta italiana","chimichurri"}),
-        new Restaurant(102, new List<string>{"sushi","ramen","nigiri","rolls","comida japonesa","cortes de carne"}),
-        new Restaurant(103, new List<string>{"vegetariano","vegano","ensaladas","smoothies","bowls veganos","opciones saludables"}),
-        new Restaurant(104, new List<string>{"pizza","pizza vegetariana","masa fina","ingredientes frescos","variedad de pizzas"})
-        };
-        }*/
-        /*public static List<UserPreference> ObtenerUsuariosEjemplo()
-        {
-            return new List<UserPreference>
-        {
-            new UserPreference(1, new List<string>{"carne a la parrilla", "asado", "parrilla"},new List<string>{"celiaco"}),
-            new UserPreference(2, new List<string>{"sushi", "platos japoneses", "comida japonesa", "rolls"} ,new List<string>{"gluten"}),
-            new UserPreference(3,new List<string>{"vegetariano", "comida saludable", "ensaladas", "smoothies"},
-            new List<string>{"carne", "celiaco", "gluten"}),
-            new UserPreference(4, new List<string>{"pizza", "pasta italiana", "masa fina"},
-            new List<string>{"gluten", "harinas", "carne", "sushi", "vegano"})
-        };
-        }*/
-
-    
-
-    /*
- * esta es una chanchada que hago que luego la tenes que reemplazar para poder pegarle a los repos de verdad
- */
-
-    /*
-    public class Restaurant
-    {
-
-        public int Id { get; set; }
-        public List<string> Especialidad { get; set; }
-
-        public Restaurant(int id, List<string> especialidad)
-        {
-            Id = id;
-            Especialidad = especialidad ?? new List<string>();
-        }
-        public override string ToString()
-        {
-            string resultado = "";
-            for (int i = 0; i < Especialidad.Count(); i++)
-            {
-                resultado += Especialidad[i] + " ,";
-            }
-
-            return resultado;
-        }
-    }
-
-    class UserPreference
-    {
-        public int Id { get; set; }
-
-        public List<string> Gustos { get; set; } // Ej: "Me gusta la carne a la parrilla"
-        public List<string> Restricciones { get; set; } // Ej: ["vegano", "sin gluten"]
-
-        public UserPreference(int id, List<string> gustos, List<string> restricciones)
-        {
-            Id = id;
-            Gustos = gustos ?? new List<string>();
-            Restricciones = restricciones ?? new List<string>();
-        }
-    }
-
-}*/
-

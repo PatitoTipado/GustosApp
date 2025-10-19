@@ -19,10 +19,10 @@ namespace GustosApp.Application.UseCases
             _gustos = gustos;
         }
 
-        public async Task<List<GustoDto>> HandleAsync(string firebaseUid, CancellationToken ct)
+        public async Task<ObtenerGustosFiltradosResponse> HandleAsync(string firebaseUid, CancellationToken ct)
         {
             var usuario = await _usuarios.GetByFirebaseUidAsync(firebaseUid, ct)
-                ?? throw new Exception("Usuario no encontrado");
+                          ?? throw new Exception("Usuario no encontrado");
 
             var todosLosGustos = await _gustos.GetAllAsync(ct);
 
@@ -34,15 +34,21 @@ namespace GustosApp.Application.UseCases
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToHashSet();
 
-          
             var gustosFiltrados = todosLosGustos
                 .Where(g => !(g.Tags ?? new List<Tag>())
                     .Any(t => tagsProhibidos.Contains(t.NombreNormalizado)))
                 .ToList();
 
-            return gustosFiltrados
-                .Select(g => new GustoDto(g.Id, g.Nombre, g.ImagenUrl))
-                .ToList();
+            return new ObtenerGustosFiltradosResponse
+            {
+                GustosFiltrados = gustosFiltrados.Select(g => new GustoDto
+                {
+                    Id = g.Id,
+                    Nombre = g.Nombre,
+                    ImagenUrl = g.ImagenUrl
+                }).ToList(),
+                GustosSeleccionados = usuario.Gustos.Select(g => g.Id).ToList()
+            };
         }
     }
-}
+    }

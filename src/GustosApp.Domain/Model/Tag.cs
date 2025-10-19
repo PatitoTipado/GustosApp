@@ -16,8 +16,8 @@
 
     public enum TipoTag
     {
-        Gusto=1,
-        Restriccion=2 ,
-        CondicionMedica=3
+        Ingrediente = 1,
+        Nutriente = 2,
+        Categoria = 3
     }
 }

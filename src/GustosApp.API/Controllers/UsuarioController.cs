@@ -11,6 +11,7 @@ using GustosApp.Infraestructure.Repositories;
 using GustosApp.Domain.Interfaces;
 using FirebaseAdmin.Messaging;
 using Microsoft.AspNetCore.Http.HttpResults;
+using GustosApp.Domain.Model;
 
 namespace GustosApp.API.Controllers
 {
@@ -79,8 +80,14 @@ namespace GustosApp.API.Controllers
         [HttpPost("restricciones")]
         public async Task<IActionResult> GuardarRestricciones([FromBody] GuardarIdsRequest req, CancellationToken ct)
         {
-            var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
-           var response= await _saveRestr.HandleAsync(uid, req.Ids,req.Skip, ct);
+            var uid = User.FindFirst("user_id")?.Value
+                      ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                      ?? User.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrWhiteSpace(uid))
+                return Unauthorized(new { message = "Token no válido o sin UID" });
+
+            var response= await _saveRestr.HandleAsync(uid, req.Ids,req.Skip, ct);
 
 
             var resp = new PasoResponse(
@@ -96,8 +103,14 @@ namespace GustosApp.API.Controllers
         [HttpPost("condiciones")]
         public async Task<IActionResult> GuardarCondiciones([FromBody] GuardarIdsRequest req, CancellationToken ct)
         {
-            var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
-           var response= await _saveCond.HandleAsync(uid, req.Ids, req.Skip, ct);
+            var uid = User.FindFirst("user_id")?.Value
+                       ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                       ?? User.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrWhiteSpace(uid))
+                return Unauthorized(new { message = "Token no válido o sin UID" });
+
+            var response= await _saveCond.HandleAsync(uid, req.Ids, req.Skip, ct);
 
             var resp = new PasoResponse(
            PasoActual: "Restricciones",
@@ -109,28 +122,20 @@ namespace GustosApp.API.Controllers
             
         }
 
-        [Authorize]
-        [HttpGet("gustos/filtrados")]
-        public async Task<IActionResult> ObtenerGustosFiltrados(CancellationToken ct)
-        {
-            var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
-            var gustosFiltrados = await _getGustos.HandleAsync(uid, ct);
+       
 
-
-            return Ok(new
-            {
-                pasoActual = "Condiciones",
-                next = "/registro/gustos",
-                gustos = gustosFiltrados
-            });
-        }
-        
 
         [Authorize]
         [HttpPost("gustos")]
         public async Task<IActionResult> GuardarGustos([FromBody] GuardarIdsRequest req, CancellationToken ct)
         {
-            var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
+            var uid = User.FindFirst("user_id")?.Value
+                      ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                      ?? User.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrWhiteSpace(uid))
+                return Unauthorized(new { message = "Token no válido o sin UID" });
+
             var response=await _saveGustos.HandleAsync(uid, req.Ids, ct);
 
             var resp = new PasoResponse(
@@ -146,7 +151,14 @@ namespace GustosApp.API.Controllers
         [HttpGet("resumen")]
         public async Task<IActionResult> Resumen(CancellationToken ct)
         {
-            var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
+            var uid = User.FindFirst("user_id")?.Value
+                      ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                      ?? User.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrWhiteSpace(uid))
+                return Unauthorized(new { message = "Token no válido o sin UID" });
+
+
             var r = await _resumen.HandleAsync(uid, ct);
             return Ok(new
             {
@@ -158,7 +170,14 @@ namespace GustosApp.API.Controllers
         [HttpPost("finalizar")]
         public async Task<IActionResult> Finalizar(CancellationToken ct)
         {
-            var uid = User.FindFirst("user_id")?.Value ?? throw new UnauthorizedAccessException();
+            var uid = User.FindFirst("user_id")?.Value
+                     ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                     ?? User.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrWhiteSpace(uid))
+                return Unauthorized(new { message = "Token no válido o sin UID" });
+
+
             await _finalizar.HandleAsync(uid, ct);
             return Ok(new { mensaje = "Registro finalizado", pasoActual = "Finalizado" });
         }

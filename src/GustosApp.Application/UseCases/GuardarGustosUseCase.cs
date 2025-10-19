@@ -26,17 +26,29 @@ namespace GustosApp.Application.UseCases
             var usuario = await _userRepository.GetByFirebaseUidAsync(uid, ct)
                           ?? throw new Exception("Usuario no encontrado.");
 
-            usuario.Gustos.Clear();
+            var actuales = usuario.Gustos.Select(g => g.Id).ToHashSet();
+            var nuevas = ids.ToHashSet();
 
-            var gustosSeleccionados = await _gustoRepository.GetByIdsAsync(ids, ct);
-            if (!gustosSeleccionados.Any())
-                throw new Exception("No se encontraron gustos válidos con los IDs proporcionados.");
+            var paraAgregar = nuevas.Except(actuales).ToList();
+            var paraQuitar = actuales.Except(nuevas).ToList();
 
-            foreach (var gusto in gustosSeleccionados)
-                usuario.Gustos.Add(gusto);
+            // Quitar gustos desmarcados
+            var paraEliminar = usuario.Gustos
+                .Where(g => paraQuitar.Contains(g.Id))
+                .ToList();
+            foreach (var gusto in paraEliminar)
+                usuario.Gustos.Remove(gusto);
 
+            // Agregar nuevos gustos
+            if (paraAgregar.Any())
+            {
+                var nuevos = await _gustoRepository.GetByIdsAsync(paraAgregar, ct);
+                foreach (var gusto in nuevos)
+                    usuario.Gustos.Add(gusto);
+            }
+
+            // Validar compatibilidad y avanzar
             var conflictos = usuario.ValidarCompatibilidad();
-
             usuario.AvanzarPaso(RegistroPaso.Verificacion);
 
             await _userRepository.SaveChangesAsync(ct);

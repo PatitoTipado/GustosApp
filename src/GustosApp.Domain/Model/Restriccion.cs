@@ -17,7 +17,7 @@ namespace GustosApp.Domain.Model
 
         public ICollection<Tag> TagsProhibidos { get;  set; } = new List<Tag>();
 
-
+        public ICollection<Restaurante> Restaurantes { get; set; } = new List<Restaurante>();
     }
 
 }

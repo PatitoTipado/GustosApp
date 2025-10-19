@@ -43,7 +43,7 @@ namespace GustosApp.Application.UseCases
             if (invitacion.EstaExpirada())
                 throw new ArgumentException("La invitación ha expirado");
 
-            // Verificar que el usuario no es ya miembro del grupo
+            // Verificar que el usuario no es ya miembro activo del grupo
             if (await _miembroGrupoRepository.UsuarioEsMiembroActivoAsync(invitacion.GrupoId, usuario.Id, cancellationToken))
                 throw new ArgumentException("Ya eres miembro de este grupo");
 
@@ -51,9 +51,21 @@ namespace GustosApp.Application.UseCases
             invitacion.Aceptar();
             await _invitacionRepository.UpdateAsync(invitacion, cancellationToken);
 
-            // Agregar al usuario como miembro del grupo
-            var miembro = new MiembroGrupo(invitacion.GrupoId, usuario.Id, false);
-            await _miembroGrupoRepository.CreateAsync(miembro, cancellationToken);
+            // Verificar si ya existe un registro de miembro (podría estar inactivo)
+            var miembroExistente = await _miembroGrupoRepository.GetByGrupoYUsuarioAsync(invitacion.GrupoId, usuario.Id, cancellationToken);
+            
+            if (miembroExistente != null)
+            {
+                // Reactivar el miembro existente
+                miembroExistente.Reincorporar();
+                await _miembroGrupoRepository.UpdateAsync(miembroExistente, cancellationToken);
+            }
+            else
+            {
+                // Agregar al usuario como miembro del grupo
+                var miembro = new MiembroGrupo(invitacion.GrupoId, usuario.Id, false);
+                await _miembroGrupoRepository.CreateAsync(miembro, cancellationToken);
+            }
 
             // Obtener el grupo completo con relaciones
             var grupo = await _invitacionRepository.GetByIdAsync(invitacionId, cancellationToken);
@@ -65,7 +77,8 @@ namespace GustosApp.Application.UseCases
                 grupo.Grupo.Nombre,
                 grupo.Grupo.Descripcion,
                 grupo.Grupo.AdministradorId,
-                grupo.Grupo.Administrador.Nombre + " " + grupo.Grupo.Administrador.Apellido,
+                grupo.Grupo.Administrador?.FirebaseUid, // Add Firebase UID
+                grupo.Grupo.Administrador != null ? (grupo.Grupo.Administrador.Nombre + " " + grupo.Grupo.Administrador.Apellido) : string.Empty,
                 grupo.Grupo.FechaCreacion,
                 grupo.Grupo.Activo,
                 grupo.Grupo.CodigoInvitacion,

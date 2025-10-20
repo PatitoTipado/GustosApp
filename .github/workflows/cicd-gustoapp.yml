@@ -30,8 +30,8 @@ jobs:
 
       - name: Limpiar Caché de Build y Forzar Restauración
         run: |
-          dotnet clean
-          dotnet restore GustosApp.sln --runtime win-x86
+          dotnet clean src/GustosApp.API/GustosApp.API.csproj
+          dotnet restore src/GustosApp.API/GustosApp.API.csproj --runtime win-x86
           echo "¡Caché de NuGet y build local limpiado!"
 
       - name: Build API only (Deployment Target)

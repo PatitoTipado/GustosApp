@@ -24,19 +24,27 @@ jobs:
         with:
           dotnet-version: '8.x'
 
-
       - name: Limpiar Caché de Build y Forzar Restauración
         run: |
           dotnet clean
-          
-      - name: dotnet publish (FIX ONNX MSB3030)
-        run: dotnet publish src/GustosApp.API/GustosApp.API.csproj -c Release --self-contained true -o "${{env.DOTNET_ROOT}}/myapp"
+          dotnet restore
+          echo "¡Caché de NuGet y build local limpiado!"
+
+      - name: Build with dotnet
+        run: dotnet build --configuration Release
+
+      - name: Run tests
+        run: dotnet test --configuration Release --no-build
+
+      - name: dotnet publish
+        run: dotnet publish -c Release -r win-x86 --self-contained true -o "${{env.DOTNET_ROOT}}/myapp"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: .net-app
           path: ${{env.DOTNET_ROOT}}/myapp
+
 
 
   deploy:

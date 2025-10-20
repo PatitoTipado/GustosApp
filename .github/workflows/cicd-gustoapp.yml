@@ -26,7 +26,7 @@ jobs:
       - name: Run tests
         run: |
             dotnet clean
-            dotnet test --no-build
+            dotnet test
 
       - name: Limpiar Caché de Build y Forzar Restauración
         run: |

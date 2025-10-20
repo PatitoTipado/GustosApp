@@ -27,17 +27,17 @@ jobs:
       - name: Limpiar Caché de Build y Forzar Restauración
         run: |
           dotnet clean
-          dotnet restore --runtime win-x86
+          dotnet restore GustosApp.sln --runtime win-x86
           echo "¡Caché de NuGet y build local limpiado!"
 
-      - name: Build with dotnet
-        run: dotnet build --configuration Release --no-restore
+      - name: Build API only (Deployment Target)
+        run: dotnet build src/GustosApp.API/GustosApp.API.csproj --configuration Release --no-restore
 
       - name: Run tests
-        run: dotnet test --configuration Release --no-build
+        run: dotnet test --no-build
 
-      - name: dotnet publish
-        run: dotnet publish -c Release -r win-x86 --self-contained false -o "${{env.DOTNET_ROOT}}/myapp"
+      - name: dotnet publish (Deploy target win x86)
+        run: dotnet publish src/GustosApp.API/GustosApp.API.csproj -c Release -r win-x86 --self-contained false -o "${{env.DOTNET_ROOT}}/myapp"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4

@@ -62,10 +62,10 @@ namespace GustosApp.Application.UseCases
             }
             // 4. Ordenar, limitar y mapear al DTO de respuesta (Corregido)
             var recomendacionesOrdenadas = resultados
-                // 4.1. Ordena del Score más alto al más bajo (¡Aplica al listado 'resultados'!)
+                // 4.1. Ordena del Score mï¿½s alto al mï¿½s bajo (ï¿½Aplica al listado 'resultados'!)
                 .OrderByDescending(x => x.score)
 
-                // 4.2. Toma el número máximo de resultados
+                // 4.2. Toma el nï¿½mero mï¿½ximo de resultados
                 .Take(maxResults)
 
                 // 4.3. Mapea al RestauranteResponse

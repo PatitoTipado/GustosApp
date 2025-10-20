@@ -24,6 +24,12 @@ jobs:
         with:
           dotnet-version: '8.x'
 
+      - name: Limpiar Caché de Build y Forzar Restauración
+        run: |
+          dotnet clean
+          dotnet restore
+          echo "¡Caché de NuGet y build local limpiado!"
+
       - name: Build with dotnet
         run: dotnet build --configuration Release
 
@@ -31,7 +37,7 @@ jobs:
         run: dotnet test --configuration Release --no-build
 
       - name: dotnet publish
-        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+        run: dotnet publish -c Release -r win-x64 --self-contained false -o "${{env.DOTNET_ROOT}}/myapp"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4

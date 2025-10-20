@@ -24,8 +24,20 @@ namespace GustosApp.Infraestructure.Repositories
         public Task SaveChangesAsync(CancellationToken ct = default)
             => _db.SaveChangesAsync(ct);
 
-        public async Task<List<Restaurante>> GetNearbyAsync(double lat, double lng, int radiusMeters, TimeSpan? maxAge = null, CancellationToken ct = default)
+        public async Task<List<Restaurante>> GetNearbyAsync(
+    double lat,
+    double lng,
+    int radiusMeters,
+    TimeSpan? maxAge = null,
+    CancellationToken ct = default)
         {
+            // Traer todos los restaurantes con gustos y restricciones
+            var restaurantes = await _db.Restaurantes
+                .AsNoTracking()
+                .Include(r => r.GustosQueSirve)
+                .Include(r => r.RestriccionesQueRespeta)
+                .ToListAsync(ct);
+
             // Aproximación por bounding box
             double degLat = radiusMeters / 111_000.0;
             double degLng = radiusMeters / (111_000.0 * Math.Cos(lat * Math.PI / 180.0));
@@ -35,22 +47,25 @@ namespace GustosApp.Infraestructure.Repositories
             var minLng = lng - degLng;
             var maxLng = lng + degLng;
 
-            var q = _db.Restaurantes.AsNoTracking()
+            // Filtrar en memoria
+            var filtered = restaurantes
                 .Where(r => r.Latitud >= minLat && r.Latitud <= maxLat
                          && r.Longitud >= minLng && r.Longitud <= maxLng);
 
             if (maxAge.HasValue)
             {
                 var threshold = DateTime.UtcNow - maxAge.Value;
-                q = q.Where(r => r.UltimaActualizacion >= threshold);
+                filtered = filtered.Where(r => r.UltimaActualizacion >= threshold);
             }
 
-            // Orden simple por distancia Manhattan aproximada
-            q = q.OrderBy(r => Math.Abs(r.Latitud - lat) + Math.Abs(r.Longitud - lng))
-                 .Take(200);
+            // Ordenar por distancia Manhattan aproximada y tomar 200
+            filtered = filtered
+                .OrderBy(r => Math.Abs(r.Latitud - lat) + Math.Abs(r.Longitud - lng))
+                .Take(200);
 
-            return await q.ToListAsync(ct);
+            return filtered.ToList();
         }
+
         public async Task<List<Restaurante>> GetAllAsync(CancellationToken ct= default)
         {
             return await _db.Restaurantes 

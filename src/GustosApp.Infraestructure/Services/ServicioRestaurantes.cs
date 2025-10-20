@@ -48,7 +48,21 @@ namespace GustosApp.Infraestructure.Services
                 Tipo = r.Tipo.ToString(),
                 ImagenUrl = r.ImagenUrl,
                 Valoracion = r.Valoracion,
-                Platos = r.Platos.Select(p => p.Plato.ToString()).ToList()
+                Platos = r.Platos.Select(p => p.Plato.ToString()).ToList(),
+
+                //
+                GustosQueSirve = r.GustosQueSirve
+                    .Select(g => new GustoDto
+                    {
+                        Id = g.Id,
+                        Nombre = g.Nombre
+                    })
+                    .ToList(),
+
+                //
+                RestriccionesQueRespeta = r.RestriccionesQueRespeta
+                    .Select(g => new RestriccionResponse(g.Id, g.Nombre))
+                    .ToList()
             };
         }
 
@@ -58,48 +72,119 @@ namespace GustosApp.Infraestructure.Services
     double? lat = null,
     double? lng = null,
     int? radioMetros = null)
-{
-    var q = _db.Restaurantes.AsNoTracking()
-        .Include(r => r.Platos)
-        .AsQueryable();
+        {
+            // 1. CARGA INICIAL y DEFINICIÓN DE INCLUDES (Ejecución en la BD)
 
-    if (!string.IsNullOrWhiteSpace(tipo))
-    {
-        if (!Enum.TryParse<TipoRestaurante>(tipo, ignoreCase: true, out var tipoEnum))
-            return Array.Empty<RestauranteDto>(); 
-        q = q.Where(r => r.Tipo == tipoEnum);
-    }
+            var q = _db.Restaurantes.AsNoTracking()
 
-    if (!string.IsNullOrWhiteSpace(plato))
-    {
-        if (!Enum.TryParse<PlatoComida>(plato, ignoreCase: true, out var platoEnum))
-            return Array.Empty<RestauranteDto>();
-        q = q.Where(r => r.Platos.Any(p => p.Plato == platoEnum));
-    }
+                // Incluye Platos (Se asume 1:N o una entidad de unión simple)
+                .Include(r => r.Platos)
 
-    
-    if (lat.HasValue && lng.HasValue && radioMetros.HasValue && radioMetros.Value > 0)
-    {
-        var degLat = radioMetros.Value / 111_000.0;
-        var degLng = radioMetros.Value / (111_000.0 * Math.Cos(lat.Value * Math.PI / 180.0));
+                // Carga de Gustos N:N: Cargar la tabla de unión y la entidad final
+                .Include(r => r.GustosQueSirve)
 
-        var minLat = lat.Value - degLat;
-        var maxLat = lat.Value + degLat;
-        var minLng = lng.Value - degLng;
-        var maxLng = lng.Value + degLng;
+                // Carga de Restricciones N:N: Cargar la tabla de unión y la entidad final
+                .Include(r => r.RestriccionesQueRespeta)
 
-        q = q.Where(r => r.Latitud >= minLat && r.Latitud <= maxLat
-                      && r.Longitud >= minLng && r.Longitud <= maxLng)
-             .OrderBy(r => Math.Abs(r.Latitud - lat.Value) + Math.Abs(r.Longitud - lng.Value));
-    }
-    else
-    {
-        q = q.OrderBy(r => r.NombreNormalizado);
-    }
+                .AsSplitQuery();
 
-    var lista = await q.Take(200).ToListAsync();
-    return lista.Select(Map).ToList();
-}
+            foreach (var r in q)
+            {
+                Console.WriteLine(r.Id);
+                Console.WriteLine(r.Nombre);
+
+                Console.WriteLine(r.GustosQueSirve.Count);
+                Console.WriteLine(r.GustosQueSirve.Count);
+                Console.WriteLine(r.GustosQueSirve.Count);
+
+                foreach (var rr in r.GustosQueSirve)
+                {
+                    Console.WriteLine($"- {rr.Nombre}");
+                }
+            }
+
+            // 1.1. Filtro por Tipo (SQL)
+            if (!string.IsNullOrWhiteSpace(tipo))
+            {
+                if (!Enum.TryParse<TipoRestaurante>(tipo, ignoreCase: true, out var tipoEnum))
+                    return Array.Empty<RestauranteDto>();
+                q = q.Where(r => r.Tipo == tipoEnum);
+            }
+
+            // 1.2. Filtro por Plato (SQL)
+            if (!string.IsNullOrWhiteSpace(plato))
+            {
+                if (!Enum.TryParse<PlatoComida>(plato, ignoreCase: true, out var platoEnum))
+                    return Array.Empty<RestauranteDto>();
+                q = q.Where(r => r.Platos.Any(p => p.Plato == platoEnum));
+            }
+
+            // Si no hay coordenadas, ordenar por Nombre antes de traer la lista.
+            if (!lat.HasValue || !lng.HasValue || !radioMetros.HasValue || radioMetros.Value <= 0)
+            {
+                q = q.OrderBy(r => r.NombreNormalizado);
+            }
+
+            // MATERIALIZACIÓN TEMPRANA: Ejecutar la consulta SQL y traer los primeros resultados.
+            // Esto es el "Tráete primero la entidad". Traeremos hasta 1000 para luego filtrar.
+            var lista = await q.Take(1000).ToListAsync();
+
+            // --------------------------------------------------------------------------------
+            // 2. FILTRADO Y ORDENACIÓN EN MEMORIA (LINQ to Objects)
+            // --------------------------------------------------------------------------------
+
+            // 2.1. Aplicar Filtro de Proximidad (Bounding Box) y Ordenación en memoria
+            if (lat.HasValue && lng.HasValue && radioMetros.HasValue && radioMetros.Value > 0)
+            {
+                var latVal = lat.Value;
+                var lngVal = lng.Value;
+                var radioMetrosVal = radioMetros.Value;
+
+                // Cálculos de Bounding Box
+                var degLat = radioMetrosVal / 111_000.0;
+                var degLng = radioMetrosVal / (111_000.0 * Math.Cos(latVal * Math.PI / 180.0));
+
+                var minLat = latVal - degLat;
+                var maxLat = latVal + degLat;
+                var minLng = lngVal - degLng;
+                var maxLng = lngVal + degLng;
+
+                // 2.1.1. Filtrar en memoria por Bounding Box
+                lista = lista.Where(r => r.Latitud >= minLat && r.Latitud <= maxLat
+                                      && r.Longitud >= minLng && r.Longitud <= maxLng)
+                             .ToList();
+
+                // 2.1.2. Aplicar Ordenación por Distancia (Manhattan) en memoria
+                lista = lista
+                    .OrderBy(r => Math.Abs(r.Latitud - latVal) + Math.Abs(r.Longitud - lngVal))
+                    .Take(200) // Limitar a los 200 más cercanos después de la ordenación
+                    .ToList();
+            }
+
+            Console.WriteLine("Lista");
+            Console.WriteLine("Lista");
+            Console.WriteLine("Lista");
+
+
+            foreach (var r in lista)
+            {
+                Console.WriteLine(r.Id);
+                Console.WriteLine(r.Nombre);
+
+                Console.WriteLine(r.GustosQueSirve.Count);
+                Console.WriteLine(r.GustosQueSirve.Count);
+                Console.WriteLine(r.GustosQueSirve.Count);
+
+                foreach (var rr in r.GustosQueSirve)
+                {
+                    Console.WriteLine($"- {rr.Nombre}");
+                }
+            }
+
+            // 3. MAPEAR Y DEVOLVER
+            // Los datos necesarios para Map (GustosQueSirve, RestriccionesQueRespeta, etc.) ya están cargados.
+            return lista.Select(Map).ToList();
+        }
 
 
         public async Task<RestauranteDto> CrearAsync(string propietarioUid, CrearRestauranteDto dto)

@@ -5,9 +5,7 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
-	<PropertyGroup>
-		<RuntimeIdentifier>win-x86</RuntimeIdentifier>
-	</PropertyGroup>
+
 	<ItemGroup>
 		<None Update="appsettings.Development.json">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

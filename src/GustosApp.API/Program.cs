@@ -96,6 +96,7 @@ builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
 // =====================
 //    UseCases existentes
 // =====================
+builder.Services.AddScoped<ObtenerUsuarioUseCase>();
 builder.Services.AddScoped<RegistrarUsuarioUseCase>();
 builder.Services.AddScoped<ObtenerCondicionesMedicasUseCase>();
 builder.Services.AddScoped<ObtenerGustosUseCase>();
@@ -131,6 +132,7 @@ builder.Services.AddScoped<EliminarAmigoUseCase>();
 builder.Services.AddScoped<EliminarGrupoUseCase>();
 builder.Services.AddScoped<ObtenerChatGrupoUseCase>();
 builder.Services.AddScoped<EnviarMensajeGrupoUseCase>();
+
 
 // =====================
 //    Restaurantes (DI)

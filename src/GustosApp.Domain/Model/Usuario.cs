@@ -10,18 +10,18 @@ namespace GustosApp.Domain.Model
     public enum RegistroPaso { Ninguno = 0, Restricciones = 1, Condiciones = 2, Gustos = 3, Verificacion = 4, Finalizado = 5 }
     public class Usuario
     {
-        public Guid Id { get; private set; } = Guid.NewGuid();
+        public Guid Id { get;  set; } = Guid.NewGuid();
 
         // Identidad externa
-        public string FirebaseUid { get; private set; }
-        public string Email { get; private set; }
-        public string Nombre { get; private set; }
-        public string Apellido { get; private set; }
+        public string FirebaseUid { get;  set; }
+        public string Email { get;  set; }
+        public string Nombre { get;  set; }
+        public string Apellido { get;  set; }
 
-        public string IdUsuario { get; private set; }
-        public string? FotoPerfilUrl { get; private set; }
-        public DateTime FechaRegistro { get; private set; } = DateTime.UtcNow;
-        public bool Activo { get; private set; } = true;
+        public string IdUsuario { get;  set; }
+        public string? FotoPerfilUrl { get;  set; }
+        public DateTime FechaRegistro { get;  set; } = DateTime.UtcNow;
+        public bool Activo { get;  set; } = true;
 
         public ICollection<Gusto> Gustos { get; set; } = new List<Gusto>();
         public ICollection<Restriccion> Restricciones { get; set; } = new List<Restriccion>();

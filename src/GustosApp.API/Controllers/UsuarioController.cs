@@ -80,6 +80,9 @@ namespace GustosApp.API.Controllers
 
         [Authorize]
         [HttpPost("restricciones")]
+        [ProducesResponseType(typeof(GuardarRestriccionesResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GuardarRestricciones([FromBody] GuardarIdsRequest req, CancellationToken ct)
         {
             var uid = User.FindFirst("user_id")?.Value
@@ -89,16 +92,14 @@ namespace GustosApp.API.Controllers
             if (string.IsNullOrWhiteSpace(uid))
                 return Unauthorized(new { message = "Token no válido o sin UID" });
 
-            var response= await _saveRestr.HandleAsync(uid, req.Ids,req.Skip, ct);
+            var restriccionesGuardadas= await _saveRestr.HandleAsync(uid, req.Ids,req.Skip, ct);
 
-
-            var resp = new PasoResponse(
-            PasoActual: "Restricciones",
-            Next: "/registro/condiciones",
-            Data: response.Mensaje,
-            Conflictos: response.GustosRemovidos
-            );
-            return Ok(resp);
+            var response = new GuardarRestriccionesResponse
+            {
+                Mensaje = "Restricciones guardadas correctamente",
+                GustosRemovidos = restriccionesGuardadas
+            };
+            return Ok(response);
         }
 
         [Authorize]

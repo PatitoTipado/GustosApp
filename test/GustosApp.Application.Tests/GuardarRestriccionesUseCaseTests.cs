@@ -57,7 +57,6 @@ namespace GustosApp.Application.Tests
             _usuarioRepoMock.Verify(r => r.SaveChangesAsync(ct), Times.Once);
             Assert.NotEmpty(usuario.Restricciones);
             Assert.Equal(2, usuario.Restricciones.Count);
-            Assert.Contains("Restricciones actualizadas correctamente.", result.Mensaje);
         }
 
         [Fact]
@@ -71,7 +70,7 @@ namespace GustosApp.Application.Tests
             var result = await _useCase.HandleAsync(uid, new List<Guid>(), skip: true, ct);
 
             // Assert
-            Assert.Equal("Paso omitido", result.Mensaje);
+            Assert.Empty(result);
             _usuarioRepoMock.Verify(r => r.SaveChangesAsync(ct), Times.Never);
         }
 

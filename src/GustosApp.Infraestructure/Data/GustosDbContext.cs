@@ -270,7 +270,7 @@ public class GustosDbContext : DbContext
         modelBuilder.Entity<Tag>().HasData(tags);
 
         // --- GUSTOS / PLATOS (31) ---
-        var gustos = Enumerable.Range(1, 31)
+        var gustos = Enumerable.Range(1, 64)
             .Select(i => new Gusto
             {
                 Id = Guid.Parse($"22222222-0001-0001-0001-{i:D12}"),
@@ -374,7 +374,8 @@ public class GustosDbContext : DbContext
                     28 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/sandwich-de-huevo-con-jamon-y-queso.jpg?alt=media&token=8ac9b05d-c316-4a84-a099-9bca4f2d6a9a",
                     29 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/huevos-revueltos-desayuno.jpeg?alt=media&token=0f21b637-b499-427c-bdb0-f0a841a76a9b",
                     30 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/tipos-de-cerveza.jpg?alt=media&token=1cfa9e77-b663-421a-b649-d52a1ba751d2",
-                    31 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/vino_artesanal.jpg?alt=media&token=fd22ec00-7739-4776-b488-63e46c2937c5"
+                    31 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/vino_artesanal.jpg?alt=media&token=fd22ec00-7739-4776-b488-63e46c2937c5",
+                     _ => null
                 }
             }).ToArray();
 
@@ -493,7 +494,7 @@ public class GustosDbContext : DbContext
         modelBuilder.Entity("RestriccionTags").HasData(rt);
 
         // --- CONDICIONES MÉDICAS ---
-        var condiciones = Enumerable.Range(1, 12)
+        var condiciones = Enumerable.Range(1, 14)
             .Select(i => new CondicionMedica
             {
                 Id = Guid.Parse($"44444444-0001-0001-0001-{i:D12}"),

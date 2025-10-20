@@ -40,6 +40,10 @@ namespace GustosApp.Domain.Model
         {
             if ((int)paso >= (int)PasoActual) PasoActual = paso;
         }
+        public Usuario()
+        {
+            
+        }
         public Usuario(string firebaseUid, string email, string nombre, string apellido, string idUsuario, string? fotoPerfilUrl = null)
         {
             FirebaseUid = firebaseUid ?? throw new ArgumentNullException(nameof(firebaseUid));

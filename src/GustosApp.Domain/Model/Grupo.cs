@@ -22,6 +22,7 @@ namespace GustosApp.Domain.Model
         public ICollection<MiembroGrupo> Miembros { get; set; } = new List<MiembroGrupo>();
         public ICollection<InvitacionGrupo> Invitaciones { get; set; } = new List<InvitacionGrupo>();
 
+        public ICollection<GrupoGusto> Gustos { get; set; } = new List<GrupoGusto>();
         private Grupo() { } // Para EF Core
 
         public Grupo(string nombre, Guid administradorId, string? descripcion = null)

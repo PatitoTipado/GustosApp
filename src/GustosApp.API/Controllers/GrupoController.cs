@@ -20,10 +20,11 @@ namespace GustosApp.API.Controllers
         private readonly ObtenerInvitacionesUsuarioUseCase _obtenerInvitacionesUseCase;
         private readonly AceptarInvitacionGrupoUseCase _aceptarInvitacionUseCase;
         private readonly EliminarGrupoUseCase _eliminarGrupoUseCase;
-    private readonly ObtenerChatGrupoUseCase _obtenerChatGrupoUseCase;
-    private readonly EnviarMensajeGrupoUseCase _enviarMensajeGrupoUseCase;
-    private readonly ObtenerGrupoDetalleUseCase _obtenerGrupoDetalleUseCase;
-    private readonly RemoverMiembroGrupoUseCase _removerMiembroUseCase;
+        private readonly ObtenerChatGrupoUseCase _obtenerChatGrupoUseCase;
+        private readonly EnviarMensajeGrupoUseCase _enviarMensajeGrupoUseCase;
+        private readonly ObtenerGrupoDetalleUseCase _obtenerGrupoDetalleUseCase;
+        private readonly RemoverMiembroGrupoUseCase _removerMiembroUseCase;
+        private AgregarGustosAGrupoUseCase _agregarGustosAGrupoUseCase;
 
         public GrupoController(
             CrearGrupoUseCase crearGrupoUseCase,
@@ -37,7 +38,9 @@ namespace GustosApp.API.Controllers
             ObtenerGrupoDetalleUseCase obtenerGrupoDetalleUseCase,
             RemoverMiembroGrupoUseCase removerMiembroUseCase,
             ObtenerChatGrupoUseCase obtenerChatGrupoUseCase,
-            EnviarMensajeGrupoUseCase enviarMensajeGrupoUseCase)
+            EnviarMensajeGrupoUseCase enviarMensajeGrupoUseCase,
+            AgregarGustosAGrupoUseCase agregarGustosAGrupoUseCase
+            )
         {
             _crearGrupoUseCase = crearGrupoUseCase;
             _invitarUsuarioUseCase = invitarUsuarioUseCase;
@@ -51,6 +54,7 @@ namespace GustosApp.API.Controllers
             _removerMiembroUseCase = removerMiembroUseCase;
             _obtenerChatGrupoUseCase = obtenerChatGrupoUseCase;
             _enviarMensajeGrupoUseCase = enviarMensajeGrupoUseCase;
+            _agregarGustosAGrupoUseCase = agregarGustosAGrupoUseCase;
         }
 
         [HttpPost("crear-prueba")]
@@ -392,6 +396,26 @@ namespace GustosApp.API.Controllers
                 throw new UnauthorizedAccessException("No se encontró el UID de Firebase en el token.");
 
             return firebaseUid;
+        }
+
+        [HttpPost("grupo/agregarGusto")]
+        public async Task<IActionResult> agregarGustoDeGrupo(Guid grupoId,[FromBody] UsuarioPreferenciasDTO preferencias)
+        {
+            try
+            {
+                var firebaseUid = GetFirebaseUid();
+                var invitado = await _agregarGustosAGrupoUseCase.Handle(preferencias,grupoId);
+                return Ok(invitado);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
         }
     }
 }

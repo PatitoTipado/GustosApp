@@ -200,6 +200,24 @@ public class GustosDbContext : DbContext
             .Property(s => s.Estado)
             .HasConversion<int>();
 
+        // 1. Configuración de la clave compuesta para la tabla GrupoGustos
+        modelBuilder.Entity<GrupoGusto>()
+            .HasKey(gg => gg.Id); 
+
+        // 2. Relación de GrupoGustos con Grupo
+        modelBuilder.Entity<GrupoGusto>()
+            .HasOne(gg => gg.Grupo)
+            .WithMany(g => g.Gustos) // Asegúrate de añadir la colección 'Gustos' a la clase Grupo
+            .HasForeignKey(gg => gg.GrupoId)
+            .OnDelete(DeleteBehavior.Cascade); // Si el grupo se elimina, se eliminan sus gustos asociados
+
+        // 3. Relación de GrupoGustos con Gusto
+        modelBuilder.Entity<GrupoGusto>()
+            .HasOne(gg => gg.Gusto)
+            .WithMany(g => g.GruposRelacionados) // Asegúrate de añadir la colección 'GruposRelacionados' a la clase Gusto
+            .HasForeignKey(gg => gg.GustoId)
+            .OnDelete(DeleteBehavior.Restrict); // No eliminar un Gusto si está siendo usado por grupos
+
         // Chat messages
         modelBuilder.Entity<ChatMessage>()
             .HasKey(c => c.Id);

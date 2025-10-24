@@ -24,7 +24,7 @@ namespace GustosApp.API.Controllers
         private readonly EnviarMensajeGrupoUseCase _enviarMensajeGrupoUseCase;
         private readonly ObtenerGrupoDetalleUseCase _obtenerGrupoDetalleUseCase;
         private readonly RemoverMiembroGrupoUseCase _removerMiembroUseCase;
-        private AgregarGustosAGrupoUseCase _agregarGustosAGrupoUseCase;
+        private ActualizarGustosAGrupoUseCase _actualizarGustosGrupoUseCase;
 
         public GrupoController(
             CrearGrupoUseCase crearGrupoUseCase,
@@ -39,7 +39,7 @@ namespace GustosApp.API.Controllers
             RemoverMiembroGrupoUseCase removerMiembroUseCase,
             ObtenerChatGrupoUseCase obtenerChatGrupoUseCase,
             EnviarMensajeGrupoUseCase enviarMensajeGrupoUseCase,
-            AgregarGustosAGrupoUseCase agregarGustosAGrupoUseCase
+            ActualizarGustosAGrupoUseCase actualizarGustosAGrupoUseCase
             )
         {
             _crearGrupoUseCase = crearGrupoUseCase;
@@ -54,7 +54,7 @@ namespace GustosApp.API.Controllers
             _removerMiembroUseCase = removerMiembroUseCase;
             _obtenerChatGrupoUseCase = obtenerChatGrupoUseCase;
             _enviarMensajeGrupoUseCase = enviarMensajeGrupoUseCase;
-            _agregarGustosAGrupoUseCase = agregarGustosAGrupoUseCase;
+            _actualizarGustosGrupoUseCase = actualizarGustosAGrupoUseCase;
         }
 
         [HttpPost("crear-prueba")]
@@ -398,14 +398,14 @@ namespace GustosApp.API.Controllers
             return firebaseUid;
         }
 
-        [HttpPost("grupo/agregarGusto")]
-        public async Task<IActionResult> agregarGustoDeGrupo(Guid grupoId,[FromBody] UsuarioPreferenciasDTO preferencias)
+        [HttpPut("actaulizarGustos")]
+        public async Task<IActionResult> agregarGustoDeGrupo(Guid grupoId,[FromBody] List<string> gustos)
         {
             try
             {
                 var firebaseUid = GetFirebaseUid();
-                var invitado = await _agregarGustosAGrupoUseCase.Handle(preferencias,grupoId);
-                return Ok(invitado);
+                var resultado = await _actualizarGustosGrupoUseCase.Handle(gustos,grupoId);
+                return Ok(resultado);
             }
             catch (UnauthorizedAccessException ex)
             {

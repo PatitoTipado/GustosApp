@@ -29,6 +29,8 @@ public class GustosDbContext : DbContext
 
     public DbSet<RestaurantePlato> RestaurantePlatos { get; set; }
 
+    public DbSet<GrupoGusto> GrupoGustos { get; set; }
+
     public GustosDbContext(DbContextOptions<GustosDbContext> options)
     : base(options) { }
 

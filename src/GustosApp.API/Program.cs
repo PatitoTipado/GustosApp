@@ -86,6 +86,7 @@ builder.Services.AddScoped<IGrupoRepository, GrupoRepositoryEF>();
 builder.Services.AddScoped<IMiembroGrupoRepository, MiembroGrupoRepositoryEF>();
 builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepositoryEF>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepositoryEF>();
+builder.Services.AddScoped<IGustosGrupoRepository, GustosGrupoRepositoryEF>();
 // Chat repository
 builder.Services.AddScoped<GustosApp.Domain.Interfaces.IChatRepository, GustosApp.Infraestructure.Repositories.ChatRepositoryEF>();
 builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();

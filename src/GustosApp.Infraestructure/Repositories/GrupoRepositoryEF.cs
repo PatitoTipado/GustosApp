@@ -97,14 +97,5 @@ namespace GustosApp.Infraestructure.Repositories
             return grupo != null && grupo.AdministradorId == usuarioId;
         }
 
-        public async Task<bool> agregarGustoAGrupo(Guid grupoId, List<string> gustos)
-        {
-            if (ExistsAsync(grupoId).Result)
-            {
-                return true;
-            }
-
-            return false;
-        }
     }
 }

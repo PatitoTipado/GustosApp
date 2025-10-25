@@ -20,10 +20,10 @@ namespace GustosApp.Application.UseCases
             _user = user;
         }
 
-        public async Task<GuardarCondicionesResponse> HandleAsync(string uid, List<Guid> ids, bool skip, CancellationToken ct)
+        public async Task<List<string>> HandleAsync(string uid, List<Guid> ids, bool skip, CancellationToken ct)
         {
             if (skip)
-                return new GuardarCondicionesResponse("Paso omitido", new List<string>());
+                return new List<string>();
 
             var usuario = await _user.GetByFirebaseUidAsync(uid, ct)
                           ?? throw new InvalidOperationException("Usuario no encontrado.");
@@ -56,7 +56,7 @@ namespace GustosApp.Application.UseCases
             usuario.AvanzarPaso(RegistroPaso.Gustos);
             await _user.SaveChangesAsync(ct);
 
-            return new GuardarCondicionesResponse("Condiciones médicas actualizadas correctamente.", gustosRemovidos);
+            return gustosRemovidos;
         }
     }
     }

@@ -22,40 +22,71 @@ namespace GustosApp.Application.UseCases
 
         public async Task<IEnumerable<ChatMessage>> HandleAsync(string firebaseUid, Guid grupoId, CancellationToken cancellationToken = default)
         {
-            // TODO: verify user is member of grupoId if desired
-            var messages = await _chatRepository.GetMessagesByGrupoIdAsync(grupoId, cancellationToken);
-            return messages;
+            var grupo = await _grupoRepository.GetByIdAsync(grupoId, cancellationToken);
+            if (grupo == null)
+                throw new ArgumentException("Grupo no encontrado");
+
+            bool esMiembro = grupo.Miembros.Any(m => m.Usuario.FirebaseUid == firebaseUid);
+            if (!esMiembro)
+                throw new UnauthorizedAccessException("No pertenece a este grupo");
+
+            return await _chatRepository.GetMessagesByGrupoIdAsync(grupoId, cancellationToken);
+
         }
     }
 
-    public class EnviarMensajeGrupoUseCase
-    {
-        private readonly IChatRepository _chatRepository;
-        private readonly IUsuarioRepository _usuarioRepository;
-
-        public EnviarMensajeGrupoUseCase(IChatRepository chatRepository, IUsuarioRepository usuarioRepository)
+       
+        
+        public class EnviarMensajeGrupoUseCase
         {
-            _chatRepository = chatRepository;
-            _usuarioRepository = usuarioRepository;
-        }
+            private readonly IChatRepository _chatRepository;
+            private readonly IUsuarioRepository _usuarioRepository;
+            private readonly IGrupoRepository _grupoRepository;
 
-        public async Task<ChatMessage> HandleAsync(string firebaseUid, Guid grupoId, string mensaje, CancellationToken cancellationToken = default)
-        {
-            var usuario = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid, cancellationToken);
-            if (usuario == null) throw new UnauthorizedAccessException("Usuario no encontrado");
 
-            var chat = new ChatMessage
+            public EnviarMensajeGrupoUseCase(IChatRepository chatRepository, IUsuarioRepository usuarioRepository, 
+                IGrupoRepository grupoRepository)
             {
-                Id = Guid.NewGuid(),
-                GrupoId = grupoId,
-                UsuarioId = usuario.Id,
-                UsuarioNombre = usuario.Nombre + " " + usuario.Apellido,
-                Mensaje = mensaje,
-                FechaEnvio = DateTime.UtcNow
-            };
+                _chatRepository = chatRepository;
+                _usuarioRepository = usuarioRepository;
+                _grupoRepository = grupoRepository;
+            }
 
-            var saved = await _chatRepository.AddMessageAsync(chat, cancellationToken);
-            return saved;
+            public async Task<ChatMessage> HandleAsync( string firebaseUid,Guid grupoId,string mensaje
+                ,CancellationToken cancellationToken = default)
+            {
+               
+                var usuario = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid, cancellationToken);
+                if (usuario == null)
+                    throw new UnauthorizedAccessException("Usuario no encontrado");
+
+                
+                var grupo = await _grupoRepository.GetByIdAsync(grupoId, cancellationToken);
+                if (grupo == null)
+                    throw new ArgumentException("El grupo no existe.");
+
+                
+                var esMiembro = grupo.Miembros?.Any(m => m.UsuarioId == usuario.Id) ?? false;
+                if (!esMiembro)
+                    throw new UnauthorizedAccessException("No pertenecés a este grupo.");
+
+               
+                if (string.IsNullOrWhiteSpace(mensaje))
+                    throw new ArgumentException("El mensaje no puede estar vacío.");
+
+                var chat = new ChatMessage
+                {
+                    Id = Guid.NewGuid(),
+                    GrupoId = grupoId,
+                    UsuarioId = usuario.Id,
+                    UsuarioNombre = $"{usuario.Nombre} {usuario.Apellido}",
+                    Mensaje = mensaje.Trim(),
+                    FechaEnvio = DateTime.UtcNow
+                };
+
+                var saved = await _chatRepository.AddMessageAsync(chat, cancellationToken);
+                return saved;
+            }
         }
     }
-}
+   

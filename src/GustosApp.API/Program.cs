@@ -1,8 +1,8 @@
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
+using GustosApp.API.Hubs.GustosApp.API.Hubs;
 using GustosApp.API.Mapping;
 using GustosApp.API.Middleware;
-using GustosApp.Application;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases;
 using GustosApp.Domain.Interfaces;
@@ -35,6 +35,7 @@ if (FirebaseApp.DefaultInstance == null)
     });
 }
 
+builder.Services.AddSignalR();
 builder.Services.AddAutoMapper(typeof(ApiMapeoPerfil));
 // Validación de JWT emitidos por Firebase (securetoken)
 builder.Services
@@ -49,6 +50,18 @@ builder.Services
             ValidateAudience = true,
             ValidAudience = firebaseProjectId,
             ValidateLifetime = true
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                // Si hay cookie "token", úsala como fuente del JWT
+                if (context.Request.Cookies.ContainsKey("token"))
+                {
+                    context.Token = context.Request.Cookies["token"];
+                }
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -70,6 +83,7 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
 // =====================
@@ -231,5 +245,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHub<ChatHub>("/chatHub");
 
 app.Run();

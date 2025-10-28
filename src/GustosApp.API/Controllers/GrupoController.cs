@@ -172,28 +172,15 @@ namespace GustosApp.API.Controllers
                 return StatusCode(500, "Error interno del servidor");
             }
         }
-
+        [Authorize]
         [HttpPost("unirse")]
         public async Task<IActionResult> UnirseGrupo([FromBody] UnirseGrupoRequest request, CancellationToken ct)
         {
-            try
-            {
+           
                 var firebaseUid = GetFirebaseUid();
                 var resultado = await _unirseGrupoUseCase.HandleAsync(firebaseUid, request, ct);
                 return Ok(resultado);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Error interno del servidor");
-            }
+         
         }
 
         [HttpPost("{grupoId}/abandonar")]
@@ -222,24 +209,16 @@ namespace GustosApp.API.Controllers
                 return StatusCode(500, "Error interno del servidor");
             }
         }
-
+        [Authorize]
         [HttpGet("mis-grupos")]
         public async Task<IActionResult> ObtenerMisGrupos(CancellationToken ct)
         {
-            try
-            {
                 var firebaseUid = GetFirebaseUid();
+
                 var resultado = await _obtenerGruposUseCase.HandleAsync(firebaseUid, ct);
+
                 return Ok(resultado);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Error interno del servidor");
-            }
+          
         }
 
         [HttpGet("invitaciones")]

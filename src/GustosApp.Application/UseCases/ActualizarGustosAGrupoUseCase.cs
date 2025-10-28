@@ -40,7 +40,7 @@ namespace GustosApp.Application.UseCases
                 return Task.FromResult(false);
             }
 
-            return _gustosGrupoRepository.actualizarPreferenciasGrupo(grupoId,gustos);
+            return _gustosGrupoRepository.AgregarGustosAlGrupo(grupoId,gustos);
         }
     }
 }

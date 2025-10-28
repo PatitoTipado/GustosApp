@@ -145,7 +145,7 @@ namespace GustosApp.API.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Error interno del servidor");
+                return StatusCode(500, "Error interno del servidor"  + ex.Message);
             }
         }
 

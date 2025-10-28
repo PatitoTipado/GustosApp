@@ -19,7 +19,7 @@ namespace GustosApp.Infraestructure.Repositories
             _context = context;
         }
 
-        public async Task<bool> actualizarPreferenciasGrupo(Guid grupoId, List<Gusto> gustos)
+        public async Task<bool> AgregarGustosAlGrupo(Guid grupoId, List<Gusto> gustos)
         {
             var gustosExistentes = await _context.GrupoGustos
                 .Where(gg => gg.GrupoId == grupoId)

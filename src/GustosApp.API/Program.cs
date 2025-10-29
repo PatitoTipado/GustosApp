@@ -1,5 +1,7 @@
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
+using GustosApp.API.Mapping;
+using GustosApp.API.Middleware;
 using GustosApp.Application;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases;
@@ -33,6 +35,7 @@ if (FirebaseApp.DefaultInstance == null)
     });
 }
 
+builder.Services.AddAutoMapper(typeof(ApiMapeoPerfil));
 // Validación de JWT emitidos por Firebase (securetoken)
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -94,6 +97,7 @@ builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
 // =====================
 //    UseCases existentes
 // =====================
+builder.Services.AddScoped<ObtenerUsuarioUseCase>();
 builder.Services.AddScoped<RegistrarUsuarioUseCase>();
 builder.Services.AddScoped<ObtenerCondicionesMedicasUseCase>();
 builder.Services.AddScoped<ObtenerGustosUseCase>();
@@ -131,6 +135,7 @@ builder.Services.AddScoped<ObtenerChatGrupoUseCase>();
 builder.Services.AddScoped<EnviarMensajeGrupoUseCase>();
 builder.Services.AddScoped<ActualizarGustosAGrupoUseCase>();
 builder.Services.AddScoped<ObtenerPreferenciasGruposUseCase>();
+
 
 // =====================
 //    Restaurantes (DI)
@@ -224,6 +229,7 @@ app.UseHttpsRedirection();
 
 app.UseCors(MyAllowSpecificOrigins);
 
+app.UseMiddleware<ManejadorErrorMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 

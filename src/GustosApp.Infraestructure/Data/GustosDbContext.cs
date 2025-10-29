@@ -1,10 +1,15 @@
 ﻿namespace GustosApp.Infraestructure;
+
+using GustosApp.Application.DTO;
 using GustosApp.Domain.Model;
 using Microsoft.EntityFrameworkCore;
 
 
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection.Emit;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using Tokenizers.HuggingFace.Decoders;
 
 
 public class GustosDbContext : DbContext
@@ -285,7 +290,7 @@ public class GustosDbContext : DbContext
         modelBuilder.Entity<Tag>().HasData(tags);
 
         // --- GUSTOS / PLATOS (31) ---
-        var gustos = Enumerable.Range(1, 31)
+        var gustos = Enumerable.Range(1, 64)
             .Select(i => new Gusto
             {
                 Id = Guid.Parse($"22222222-0001-0001-0001-{i:D12}"),
@@ -322,6 +327,39 @@ public class GustosDbContext : DbContext
                     29 => "Huevos revueltos",
                     30 => "Cerveza artesanal",
                     31 => "Vino tinto",
+                    32 => "Ensalada Caprese",
+                    33 => "Tarta de Verduras",
+                    34 => "Omelette de vegetales",
+                    35 => "Pizza Margarita",
+                    36 => "Milanesa de berenjena",
+                    37 => "Ñoquis con salsa de tomate",
+                    38 => "Ravioles de ricota y espinaca",
+                    39 => "Fideos con pesto",
+                    40 => "Panqueques de avena con frutas",
+                    41 => "Empanadas de humita",
+                    42 => "Lasaña vegetariana",
+                    43 => "Arroz primavera",
+                    44 => "Polenta con salsa de tomate",
+                    45 => "Sopa de calabaza",
+                    46 => "Tortilla de papas",
+                    47 => "Quesadillas de vegetales",
+                    48 => "Bruschettas con tomate y albahaca",
+                    49 => "Pastel de papas vegetariano",
+                    50 => "Pizza cuatro quesos",
+                    51 => "Ensalada de quinoa con vegetales",
+                    52 => "Curry de vegetales con arroz",
+                    53 => "Hamburguesa de lentejas",
+                    54 => "Sopa crema de zapallo con leche vegetal",
+                    55 => "Arroz frito con tofu",
+                    56 => "Guiso de lentejas vegano",
+                    57 => "Pan integral con palta y tomate",
+                    58 => "Panqueques de banana sin huevo",
+                    59 => "Wrap de falafel con hummus",
+                    60 => "Brownie vegano(con harina integral y aceite de coco",
+                    61 => "Tarta vegana de calabaza",
+                    62 => "Empanadas veganas",
+                    63 => "Tacos veganos",
+                    64 => "Fideos de arroz con verduras salteadas",
                     _ => "Desconocido"
                 },
                 ImagenUrl = i switch
@@ -356,7 +394,8 @@ public class GustosDbContext : DbContext
                     28 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/sandwich-de-huevo-con-jamon-y-queso.jpg?alt=media&token=8ac9b05d-c316-4a84-a099-9bca4f2d6a9a",
                     29 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/huevos-revueltos-desayuno.jpeg?alt=media&token=0f21b637-b499-427c-bdb0-f0a841a76a9b",
                     30 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/tipos-de-cerveza.jpg?alt=media&token=1cfa9e77-b663-421a-b649-d52a1ba751d2",
-                    31 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/vino_artesanal.jpg?alt=media&token=fd22ec00-7739-4776-b488-63e46c2937c5"
+                    31 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/vino_artesanal.jpg?alt=media&token=fd22ec00-7739-4776-b488-63e46c2937c5",
+                     _ => null
                 }
             }).ToArray();
 
@@ -401,6 +440,39 @@ public class GustosDbContext : DbContext
         GT(29, "Huevos");
         GT(30, "Alcohol");
         GT(31, "Alcohol");
+        GT(32, "Lácteo"); GT(32, "Vegetal");
+        GT(33, "Vegetal"); GT(33, "Harina");
+        GT(34, "Huevos"); GT(34, "Vegetal");
+        GT(35, "Gluten"); GT(35, "Lácteo"); GT(35, "Harina");
+        GT(36, "Harina"); GT(36, "Vegetal"); GT(36, "Lácteo");
+        GT(37, "Harina"); GT(37, "Sal");
+        GT(38, "Gluten"); GT(38, "Lácteo"); GT(38, "Harina");
+        GT(39, "Gluten"); GT(39, "Harina"); GT(39, "Grasa");
+        GT(40, "Harina"); GT(40, "Fruta"); GT(40, "Huevos");
+        GT(41, "Harina"); GT(41, "Vegetal"); GT(41, "Lácteo");
+        GT(42, "Harina"); GT(42, "Lácteo"); GT(42, "Vegetal");
+        GT(43, "Vegetal");
+        GT(44, "Sal"); GT(44, "Vegetal");
+        GT(45, "Vegetal");
+        GT(46, "Huevos"); GT(46, "Frito"); GT(46, "Vegetal");
+        GT(47, "Harina"); GT(47, "Lácteo"); GT(47, "Vegetal");
+        GT(48, "Harina"); GT(48, "Vegetal");
+        GT(49, "Vegetal"); GT(49, "Lácteo");
+        GT(50, "Gluten"); GT(50, "Lácteo"); GT(50, "Harina"); GT(50, "Grasa");
+        GT(51, "Vegetal");
+        GT(52, "Vegetal"); GT(52, "Picante");
+        GT(53, "Harina"); GT(53, "Vegetal");
+        GT(54, "Vegetal");
+        GT(55, "Vegetal"); GT(55, "Frito"); GT(55, "Soja");
+        GT(56, "Vegetal"); 
+        GT(57, "Harina"); GT(57, "Vegetal");
+        GT(58, "Harina"); GT(58, "Fruta");
+        GT(59, "Harina"); GT(59, "Vegetal"); GT(59, "Soja");
+        GT(60, "Harina"); GT(60, "Grasa"); GT(60, "Azúcar");
+        GT(61, "Vegetal"); GT(61, "Harina");
+        GT(62, "Harina"); GT(62, "Vegetal");
+        GT(63, "Harina"); GT(63, "Vegetal");
+        GT(64, "Vegetal");
 
         modelBuilder.Entity("GustoTags").HasData(gt);
 
@@ -442,7 +514,7 @@ public class GustosDbContext : DbContext
         modelBuilder.Entity("RestriccionTags").HasData(rt);
 
         // --- CONDICIONES MÉDICAS ---
-        var condiciones = Enumerable.Range(1, 12)
+        var condiciones = Enumerable.Range(1, 14)
             .Select(i => new CondicionMedica
             {
                 Id = Guid.Parse($"44444444-0001-0001-0001-{i:D12}"),
@@ -460,6 +532,8 @@ public class GustosDbContext : DbContext
                     10 => "Síndrome del intestino irritable",
                     11 => "Gota",
                     12 => "Ansiedad (sensibilidad a cafeína)",
+                    13 => "Vegetariano",
+                    14 => "Vegano",
                     _ => "Condición desconocida"
                 }
             }).ToArray();
@@ -472,9 +546,13 @@ public class GustosDbContext : DbContext
             ct.Add(new { CondicionesMedicasId = condiciones[i - 1].Id, TagsId = tag.Id });
         }
 
+
+
         CT(1, "Azúcar"); CT(2, "Sal"); CT(3, "Grasa"); CT(4, "Picante");
         CT(5, "Gluten"); CT(6, "Lácteo"); CT(7, "Mariscos"); CT(8, "Frutos secos");
         CT(9, "Huevos"); CT(10, "Frito"); CT(11, "Carne roja"); CT(12, "Cafeína");
+        CT(13, "Carne roja"); CT(13, "Carne blanca"); CT(13, "Pescado");
+        CT(14, "Carne roja"); CT(14, "Carne blanca"); CT(14, "Pescado"); CT(14, "Huevos"); CT(14, "Lácteo");
         modelBuilder.Entity("CondicionMedicaTags").HasData(ct);
     }
 }

@@ -28,12 +28,12 @@ namespace GustosApp.Application.Tests
         {
             // Arrange
             var firebaseUid = "uid-test";
-            var request = new RegistrarUsuarioRequest
+            var usuario = new Usuario
             {
                 Nombre = "Juan",
                 Apellido = "Perez",
                 Email = "juan@test.com",
-                Username = "id123",
+                IdUsuario = "id123",
                 FotoPerfilUrl = "foto.jpg"
                 
             };
@@ -50,16 +50,16 @@ namespace GustosApp.Application.Tests
                 .Returns(Task.CompletedTask);
 
             // Act
-            var resp = await _useCase.HandleAsync(firebaseUid, request, CancellationToken.None);
+            var resp = await _useCase.HandleAsync(firebaseUid, usuario, CancellationToken.None);
 
             // Assert
             Assert.NotNull(resp);
             Assert.Equal(firebaseUid, resp.FirebaseUid);
-            Assert.Equal(request.Email, resp.Email);
-            Assert.Equal(request.Nombre, resp.Nombre);
-            Assert.Equal(request.Apellido, resp.Apellido);
-            Assert.Equal(request.Username, resp.username);
-            Assert.Equal(request.FotoPerfilUrl, resp.FotoPerfilUrl);
+            Assert.Equal(usuario.Email, resp.Email);
+            Assert.Equal(usuario.Nombre, resp.Nombre);
+            Assert.Equal(usuario.Apellido, resp.Apellido);
+            Assert.Equal(usuario.IdUsuario, resp.IdUsuario);
+            Assert.Equal(usuario.FotoPerfilUrl, resp.FotoPerfilUrl);
             Assert.NotNull(usuarioCreado);
             _mockRepo.Verify(r => r.AddAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()), Times.Once);
             _mockRepo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -72,7 +72,7 @@ namespace GustosApp.Application.Tests
             var firebaseUid = "uid-existente";
             var usuarioExistente = new Usuario(firebaseUid, "existente@test.com", "Ana", "Lopez", "id123", "foto2.jpg");
 
-            var request = new RegistrarUsuarioRequest
+            var usuario = new Usuario
             {
                 Nombre = "Ana",
                 Apellido = "Lopez",
@@ -84,7 +84,7 @@ namespace GustosApp.Application.Tests
                 .ReturnsAsync(usuarioExistente);
 
             // Act
-            var resp = await _useCase.HandleAsync(firebaseUid, request, CancellationToken.None);
+            var resp = await _useCase.HandleAsync(firebaseUid, usuario, CancellationToken.None);
 
             // Assert
             Assert.NotNull(resp);

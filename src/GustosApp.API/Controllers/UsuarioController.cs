@@ -12,6 +12,8 @@ using GustosApp.Domain.Interfaces;
 using FirebaseAdmin.Messaging;
 using Microsoft.AspNetCore.Http.HttpResults;
 using GustosApp.Domain.Model;
+using GustosApp.API.DTO;
+using AutoMapper;
 
 namespace GustosApp.API.Controllers
 {
@@ -27,11 +29,14 @@ namespace GustosApp.API.Controllers
         private readonly ObtenerResumenRegistroUseCase _resumen;
         private readonly FinalizarRegistroUseCase _finalizar;
         private readonly RegistrarUsuarioUseCase _registrar;
-     
+        private readonly IMapper _mapper;
+
+
 
 
         public UsuarioController(RegistrarUsuarioUseCase context, GuardarRestriccionesUseCase saveRestr, GuardarCondicionesUseCase saveCond,
-            ObtenerGustosFiltradosUseCase getGustos, GuardarGustosUseCase saveGustos, ObtenerResumenRegistroUseCase resumen, FinalizarRegistroUseCase finalizar)
+            ObtenerGustosFiltradosUseCase getGustos, GuardarGustosUseCase saveGustos, ObtenerResumenRegistroUseCase resumen, FinalizarRegistroUseCase finalizar,
+            IMapper mapper)
         {
     
             _registrar = context;
@@ -41,14 +46,18 @@ namespace GustosApp.API.Controllers
             _finalizar = finalizar;
             _saveGustos = saveGustos;
             _resumen = resumen;
+            _mapper = mapper;
         }
 
         [Authorize]
         [HttpPost("registrar")]
+        [ProducesResponseType(typeof(RegistrarUsuarioResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Registrar([FromBody] RegistrarUsuarioRequest request, CancellationToken ct)
         {
-
-
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
             // Firebase suele mapear el UID en el claim "user_id" (también puede venir en "sub")
             var firebaseUid = User.FindFirst("user_id")?.Value
                             ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
@@ -57,27 +66,23 @@ namespace GustosApp.API.Controllers
             if (string.IsNullOrWhiteSpace(firebaseUid))
                 return Unauthorized(new { message = "No se encontró el UID de Firebase en el token." });
 
-            // Validate required fields
-            if (string.IsNullOrWhiteSpace(request.Nombre) ||
-                string.IsNullOrWhiteSpace(request.Apellido) ||
-                string.IsNullOrWhiteSpace(request.Email) ||
-                string.IsNullOrEmpty(request.Username))
-               
-            {
-                return BadRequest( new { message = "Nombre, Apellido, Email y Usuario son obligatorios." });
-            }
+            var user = _mapper.Map<Usuario>(request);
+            var usuarioGuardado = await _registrar.HandleAsync(firebaseUid, user, ct);
 
-            var resp = await _registrar.HandleAsync(firebaseUid, request, ct);
-            return Ok(new
+            var response = new RegistrarUsuarioResponse
             {
-                message = "Usuario registrado correctamente",
-                usuario = resp
-            });
+                Message = "Usuario registrado exitosamente.",
+                Usuario = _mapper.Map<UsuarioResponse>(usuarioGuardado)
+            };
+            return Ok(response);
         }
 
 
         [Authorize]
         [HttpPost("restricciones")]
+        [ProducesResponseType(typeof(GuardarRestriccionesResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GuardarRestricciones([FromBody] GuardarIdsRequest req, CancellationToken ct)
         {
             var uid = User.FindFirst("user_id")?.Value
@@ -87,16 +92,14 @@ namespace GustosApp.API.Controllers
             if (string.IsNullOrWhiteSpace(uid))
                 return Unauthorized(new { message = "Token no válido o sin UID" });
 
-            var response= await _saveRestr.HandleAsync(uid, req.Ids,req.Skip, ct);
+            var restriccionesGuardadas= await _saveRestr.HandleAsync(uid, req.Ids,req.Skip, ct);
 
-
-            var resp = new PasoResponse(
-            PasoActual: "Restricciones",
-            Next: "/registro/condiciones",
-            Data: response.Mensaje,
-            Conflictos: response.GustosRemovidos
-            );
-            return Ok(resp);
+            var response = new GuardarRestriccionesResponse
+            {
+                Mensaje = "Restricciones guardadas correctamente",
+                GustosRemovidos = restriccionesGuardadas
+            };
+            return Ok(response);
         }
 
         [Authorize]

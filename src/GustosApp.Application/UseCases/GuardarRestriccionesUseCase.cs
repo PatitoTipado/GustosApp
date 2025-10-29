@@ -20,10 +20,10 @@ namespace GustosApp.Application.UseCases
             _restricciones = restricciones;
         }
 
-        public async Task<GuardarRestriccionesResponse> HandleAsync(string uid, List<Guid> ids, bool skip, CancellationToken ct)
+        public async Task<List<string>> HandleAsync(string uid, List<Guid> ids, bool skip, CancellationToken ct)
         {
             if (skip)
-                return new GuardarRestriccionesResponse("Paso omitido", new List<string>());
+                return new List<string>();
 
             var usuario = await _user.GetByFirebaseUidAsync(uid, ct)
                           ?? throw new InvalidOperationException("Usuario no encontrado.");
@@ -59,10 +59,8 @@ namespace GustosApp.Application.UseCases
 
             await _user.SaveChangesAsync(ct);
 
-            return new GuardarRestriccionesResponse(
-                "Restricciones actualizadas correctamente.",
-                gustosRemovidos
-            );
+            return gustosRemovidos;
+            
         }
 
     }

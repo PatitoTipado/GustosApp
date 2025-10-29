@@ -51,6 +51,8 @@ namespace GustosApp.API.Controllers
 
         [Authorize]
         [HttpPost("registrar")]
+
+        //Documentacion swagger statuscodes
         [ProducesResponseType(typeof(RegistrarUsuarioResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -66,13 +68,17 @@ namespace GustosApp.API.Controllers
             if (string.IsNullOrWhiteSpace(firebaseUid))
                 return Unauthorized(new { message = "No se encontró el UID de Firebase en el token." });
 
+            //automapper para mapear request a usuario para el caso de uso
             var user = _mapper.Map<Usuario>(request);
+
             var usuarioGuardado = await _registrar.HandleAsync(firebaseUid, user, ct);
 
             var response = new RegistrarUsuarioResponse
             {
                 Message = "Usuario registrado exitosamente.",
+                //mapeo el usuario que devuelve el usecase a un DTO para el front
                 Usuario = _mapper.Map<UsuarioResponse>(usuarioGuardado)
+               
             };
             return Ok(response);
         }

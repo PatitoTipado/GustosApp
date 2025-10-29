@@ -35,7 +35,7 @@ if (FirebaseApp.DefaultInstance == null)
     });
 }
 
-builder.Services.AddSignalR();
+
 builder.Services.AddAutoMapper(typeof(ApiMapeoPerfil));
 // Validación de JWT emitidos por Firebase (securetoken)
 builder.Services
@@ -201,6 +201,9 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+
+     builder.Services.AddSignalR();
+
 // =====================
 //    CORS
 // =====================
@@ -240,12 +243,13 @@ app.UseHttpsRedirection();
 
 app.UseCors(MyAllowSpecificOrigins);
 
+
 app.UseMiddleware<ManejadorErrorMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
 app.MapHub<ChatHub>("/chatHub");
+
 
 app.Run();

@@ -14,9 +14,12 @@ namespace GustosApp.Infraestructure.Repositories
         public async Task<IEnumerable<ChatMessage>> GetMessagesByGrupoIdAsync(Guid grupoId, CancellationToken cancellationToken = default)
         {
             return await _context.ChatMessages
-                .Where(m => m.GrupoId == grupoId)
-                .OrderBy(m => m.FechaEnvio)
-                .ToListAsync(cancellationToken);
+            .Where(m => m.GrupoId == grupoId)
+                .OrderByDescending(m => m.FechaEnvio)
+                 .Take(50)
+                 .OrderBy(m => m.FechaEnvio)
+                 .ToListAsync(cancellationToken);
+
         }
 
         public async Task<ChatMessage> AddMessageAsync(ChatMessage message, CancellationToken cancellationToken = default)

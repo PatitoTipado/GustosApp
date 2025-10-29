@@ -36,6 +36,8 @@ public class GustosDbContext : DbContext
 
     public DbSet<GrupoGusto> GrupoGustos { get; set; }
 
+    public DbSet<Notificacion> Notificaciones { get; set; }
+
     public GustosDbContext(DbContextOptions<GustosDbContext> options)
     : base(options) { }
 
@@ -240,11 +242,30 @@ public class GustosDbContext : DbContext
         modelBuilder.Entity<Restaurante>()
             .HasMany(r => r.RestriccionesQueRespeta)
             .WithMany(p => p.Restaurantes)
-            .UsingEntity(j => j.ToTable("RestauranteRestricciones")); 
+            .UsingEntity(j => j.ToTable("RestauranteRestricciones"));
 
-      
+        modelBuilder.Entity<Notificacion>(entity =>
+        {
+            entity.ToTable("Notificaciones");
 
-       modelBuilder.ApplyConfigurationsFromAssembly(typeof(GustosDbContext).Assembly);
+            entity.HasKey(n => n.Id);
+
+            entity.Property(n => n.Titulo)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entity.Property(n => n.Mensaje)
+                .HasMaxLength(500)
+                .IsRequired();
+
+            entity.Property(n => n.Tipo)
+                .IsRequired();
+
+            entity.Property(n => n.UsuarioDestinoId)
+                .IsRequired();
+        });
+
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(GustosDbContext).Assembly);
 
         modelBuilder.Entity<RestaurantePlato>(b =>
     {

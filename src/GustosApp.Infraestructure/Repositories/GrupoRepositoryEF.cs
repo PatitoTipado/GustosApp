@@ -96,5 +96,6 @@ namespace GustosApp.Infraestructure.Repositories
             
             return grupo != null && grupo.AdministradorId == usuarioId;
         }
+
     }
 }

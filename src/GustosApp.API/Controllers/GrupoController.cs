@@ -1,8 +1,9 @@
-using System.Security.Claims;
 using GustosApp.Application.DTO;
+using GustosApp.Application.Services;
 using GustosApp.Application.UseCases;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace GustosApp.API.Controllers
@@ -25,6 +26,9 @@ namespace GustosApp.API.Controllers
         private readonly ObtenerGrupoDetalleUseCase _obtenerGrupoDetalleUseCase;
         private readonly RemoverMiembroGrupoUseCase _removerMiembroUseCase;
         private ActualizarGustosAGrupoUseCase _actualizarGustosGrupoUseCase;
+        private readonly IServicioRestaurantes _servicio;
+        private readonly ObtenerPreferenciasGruposUseCase _obtenerPreferenciasGrupos;
+        private readonly SugerirGustosSobreUnRadioUseCase _sugerirGustos;
 
         public GrupoController(
             CrearGrupoUseCase crearGrupoUseCase,
@@ -39,9 +43,13 @@ namespace GustosApp.API.Controllers
             RemoverMiembroGrupoUseCase removerMiembroUseCase,
             ObtenerChatGrupoUseCase obtenerChatGrupoUseCase,
             EnviarMensajeGrupoUseCase enviarMensajeGrupoUseCase,
-            ActualizarGustosAGrupoUseCase actualizarGustosAGrupoUseCase
+            ActualizarGustosAGrupoUseCase actualizarGustosAGrupoUseCase,
+            IServicioRestaurantes servicio,
+            SugerirGustosSobreUnRadioUseCase sugerirGustos,
+            ObtenerPreferenciasGruposUseCase obtenerGustos
             )
         {
+            _servicio = servicio;
             _crearGrupoUseCase = crearGrupoUseCase;
             _invitarUsuarioUseCase = invitarUsuarioUseCase;
             _unirseGrupoUseCase = unirseGrupoUseCase;
@@ -55,6 +63,9 @@ namespace GustosApp.API.Controllers
             _obtenerChatGrupoUseCase = obtenerChatGrupoUseCase;
             _enviarMensajeGrupoUseCase = enviarMensajeGrupoUseCase;
             _actualizarGustosGrupoUseCase = actualizarGustosAGrupoUseCase;
+            _obtenerPreferenciasGrupos = obtenerGustos;
+            _sugerirGustos = sugerirGustos;
+
         }
 
         [HttpPost("crear-prueba")]
@@ -416,6 +427,61 @@ namespace GustosApp.API.Controllers
                 return BadRequest(ex.Message);
             }
 
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> recomendarRestauranteGrupo(CancellationToken ct,
+        [FromBody]Guid grupoId,
+        [FromQuery(Name = "near.lat")] double? lat = -34.641812775271,
+        [FromQuery(Name = "near.lng")] double? lng = -58.56990230458638,
+        [FromQuery(Name = "radiusMeters")] int? radius = 1000,
+        [FromQuery] string? tipo = "",
+        [FromQuery] string? plato = "",
+        [FromQuery] int top = 10
+ )
+        {
+            var res = await _servicio.BuscarAsync(
+                tipo: tipo,
+                plato: plato,
+                lat: lat,
+                lng: lng,
+                radioMetros: radius
+            );
+
+            Console.WriteLine(res.ToList().Count());
+            Console.WriteLine(res.ToList().Count());
+            Console.WriteLine(res.ToList().Count());
+
+            var firebaseUid = User.FindFirst("user_id")?.Value
+            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? User.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrWhiteSpace(firebaseUid))
+            {
+                return Unauthorized(new { message = "No se encontró el UID de Firebase en el token." });
+            }
+
+            var preferenciasDTO = await _obtenerPreferenciasGrupos.Handle(grupoId,ct);
+
+            Console.WriteLine(preferenciasDTO.ToString());
+            Console.WriteLine(preferenciasDTO.ToString());
+            Console.WriteLine(preferenciasDTO.ToString());
+
+            var recommendations = _sugerirGustos.Handle(preferenciasDTO, res.ToList(), top, ct);
+
+            Console.WriteLine(recommendations.ToList().Count());
+            Console.WriteLine(recommendations.ToList().Count());
+            Console.WriteLine(recommendations.ToList().Count());
+
+            foreach (var item in recommendations)
+            {
+                foreach (var gusto in item.GustosQueSirve)
+                {
+                    Console.WriteLine(gusto.Nombre);
+                }
+            }
+
+            return Ok(recommendations);
         }
     }
 }

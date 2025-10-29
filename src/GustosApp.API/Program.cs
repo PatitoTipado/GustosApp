@@ -130,6 +130,7 @@ builder.Services.AddScoped<EliminarGrupoUseCase>();
 builder.Services.AddScoped<ObtenerChatGrupoUseCase>();
 builder.Services.AddScoped<EnviarMensajeGrupoUseCase>();
 builder.Services.AddScoped<ActualizarGustosAGrupoUseCase>();
+builder.Services.AddScoped<ObtenerPreferenciasGruposUseCase>();
 
 // =====================
 //    Restaurantes (DI)

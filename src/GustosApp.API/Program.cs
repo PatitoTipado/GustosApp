@@ -242,11 +242,6 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 app.UseRouting();
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapControllers();
-    endpoints.MapHub<NotificacionesHub>("/notificacionesHub"); // 🔹 registro del Hub
-});
 
 // =====================
 //   Pipeline HTTP

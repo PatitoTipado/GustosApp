@@ -206,16 +206,11 @@ namespace GustosApp.API.Controllers
         }
 
         [HttpPut("actualizarGustos")]
-        public async Task<IActionResult> agregarGustoDeGrupo(Guid grupoId,[FromBody] List<string> gustos)
+        public async Task<IActionResult> agregarGustoDeGrupo(Guid grupoId,List<string> gustos)
         {
-           
-                var firebaseUid = GetFirebaseUid();
-                var resultado = await _actualizarGustosGrupoUseCase.Handle(gustos,grupoId);
-                return Ok(resultado);
-            
-               
-         
-
+            var firebaseUid = GetFirebaseUid();
+            var resultado = await _actualizarGustosGrupoUseCase.Handle(gustos,grupoId);
+            return Ok(resultado);
         }
 
         [HttpGet]

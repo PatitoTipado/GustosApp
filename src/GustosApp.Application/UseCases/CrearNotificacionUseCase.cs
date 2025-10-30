@@ -16,20 +16,26 @@ namespace GustosApp.Application.UseCases
         {
             _repository = repository;
         }
+                public async Task HandleAsync(Guid usuarioDestinoId, TipoNotificacion tipo, string nombreUsuario, string nombreGrupo,  CancellationToken cancellationToken)
+                {
+                    var mensaje = tipo switch
+                    {
+                        TipoNotificacion.SolicitudAmistad => $"{nombreUsuario} te ha enviado una solicitud de amistad.",
+                        TipoNotificacion.InvitacionGrupo => $"{nombreUsuario} te ha invitado a unirte al grupo {nombreGrupo}.",
+                        TipoNotificacion.RecordatorioEvento => $"Recordatorio: Tienes un evento pendiente.",
+                        TipoNotificacion.MensajeNuevo => $"Nuevo mensaje de {nombreUsuario}.",_=> "Tienes una nueva notificación."
+                    };
 
-        public async Task HandleAsync(Guid usuarioDestinoId,string titulo,string mensaje,TipoNotificacion tipo,CancellationToken cancellationToken)
-        {
-            var notificacion = new Notificacion
-            {
-                UsuarioDestinoId = usuarioDestinoId,
-                Titulo = titulo,
-                Mensaje = mensaje,
-                Tipo = tipo,
-                Leida = false,
-                FechaCreacion = DateTime.UtcNow
-            };
-            await _repository.crearAsync(notificacion, cancellationToken);
-        }
-    
-         }
+                    var notificacion = new Notificacion
+                    {
+                        UsuarioDestinoId = usuarioDestinoId,
+                        Titulo = tipo.ToString(),
+                        Tipo = tipo,
+                        Leida = false,
+                        Mensaje = mensaje,
+                        FechaCreacion = DateTime.UtcNow
+                    };
+                    await _repository.crearAsync(notificacion, cancellationToken);
+                }
+    }
 }

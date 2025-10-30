@@ -19,16 +19,28 @@ namespace GustosApp.Application.Tests
             var useCase = new CrearNotificacionUseCase(repoMock.Object);
 
             var usuarioDestino = Guid.NewGuid();
-            var titulo = "Test";
-            var mensaje = "Mensaje de prueba";
+            var nombreUsuario = "Gaston";
+            var nombreGrupo = "GrupoTest";
 
-            await useCase.HandleAsync(usuarioDestino, titulo, mensaje, TipoNotificacion.InvitacionGrupo, CancellationToken.None);
+            await useCase.HandleAsync(
+                usuarioDestino,
+                TipoNotificacion.InvitacionGrupo,
+                nombreUsuario,
+                nombreGrupo,
+                CancellationToken.None
+                );
 
-            repoMock.Verify(r => r.crearAsync(It.IsAny<Notificacion>(),default),Times.Once);
+            repoMock.Verify(r => r.crearAsync(
+                It.Is<Notificacion>(n =>
+                n.UsuarioDestinoId == usuarioDestino &&
+                n.Tipo == TipoNotificacion.InvitacionGrupo),It.IsAny<CancellationToken>()), Times.Once);
+
+             repoMock.Verify(r => r.crearAsync(It.IsAny<Notificacion>(),default),Times.Once);
         }
 
-       
+
     }
 
     
+
 }

@@ -1,5 +1,6 @@
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
+using GustosApp.API.Hubs;
 using GustosApp.API.Hubs.GustosApp.API.Hubs;
 using GustosApp.API.Mapping;
 using GustosApp.API.Middleware;
@@ -156,6 +157,8 @@ builder.Services.AddScoped<EnviarMensajeGrupoUseCase>();
 builder.Services.AddScoped<ActualizarGustosAGrupoUseCase>();
 builder.Services.AddScoped<ObtenerPreferenciasGruposUseCase>();
 
+// Para notificaciones en tiempo real
+builder.Services.AddSignalR();
 
 // =====================
 //    Restaurantes (DI)
@@ -238,6 +241,12 @@ builder.Services.AddAuthorization(options =>
 */
 
 var app = builder.Build();
+app.UseRouting();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();
+    endpoints.MapHub<NotificacionesHub>("/notificacionesHub"); // 🔹 registro del Hub
+});
 
 // =====================
 //   Pipeline HTTP

@@ -24,6 +24,9 @@ namespace GustosApp.Application.Tests
 
             var useCaseLeida = new MarcarNotificacionLeidaUseCase(repoMock.Object);
             await useCaseLeida.HandleAsync(notificacionId,CancellationToken.None);
+           
+            repoMock.Verify(r => r.MarcarComoLeidaAsync(notificacionId, It.IsAny<CancellationToken>()), Times.Once);
+
         }
     }
 }

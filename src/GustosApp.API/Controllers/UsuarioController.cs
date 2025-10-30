@@ -12,6 +12,8 @@ using GustosApp.Domain.Interfaces;
 using FirebaseAdmin.Messaging;
 using Microsoft.AspNetCore.Http.HttpResults;
 using GustosApp.Domain.Model;
+using GustosApp.API.DTO;
+using AutoMapper;
 
 namespace GustosApp.API.Controllers
 {
@@ -27,11 +29,14 @@ namespace GustosApp.API.Controllers
         private readonly ObtenerResumenRegistroUseCase _resumen;
         private readonly FinalizarRegistroUseCase _finalizar;
         private readonly RegistrarUsuarioUseCase _registrar;
-     
+        private readonly IMapper _mapper;
+
+
 
 
         public UsuarioController(RegistrarUsuarioUseCase context, GuardarRestriccionesUseCase saveRestr, GuardarCondicionesUseCase saveCond,
-            ObtenerGustosFiltradosUseCase getGustos, GuardarGustosUseCase saveGustos, ObtenerResumenRegistroUseCase resumen, FinalizarRegistroUseCase finalizar)
+            ObtenerGustosFiltradosUseCase getGustos, GuardarGustosUseCase saveGustos, ObtenerResumenRegistroUseCase resumen, FinalizarRegistroUseCase finalizar,
+            IMapper mapper)
         {
     
             _registrar = context;
@@ -41,14 +46,20 @@ namespace GustosApp.API.Controllers
             _finalizar = finalizar;
             _saveGustos = saveGustos;
             _resumen = resumen;
+            _mapper = mapper;
         }
 
         [Authorize]
         [HttpPost("registrar")]
+
+        //Documentacion swagger statuscodes
+        [ProducesResponseType(typeof(RegistrarUsuarioResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Registrar([FromBody] RegistrarUsuarioRequest request, CancellationToken ct)
         {
-
-
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
             // Firebase suele mapear el UID en el claim "user_id" (también puede venir en "sub")
             var firebaseUid = User.FindFirst("user_id")?.Value
                             ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
@@ -57,27 +68,27 @@ namespace GustosApp.API.Controllers
             if (string.IsNullOrWhiteSpace(firebaseUid))
                 return Unauthorized(new { message = "No se encontró el UID de Firebase en el token." });
 
-            // Validate required fields
-            if (string.IsNullOrWhiteSpace(request.Nombre) ||
-                string.IsNullOrWhiteSpace(request.Apellido) ||
-                string.IsNullOrWhiteSpace(request.Email) ||
-                string.IsNullOrEmpty(request.Username))
-               
-            {
-                return BadRequest( new { message = "Nombre, Apellido, Email y Usuario son obligatorios." });
-            }
+            //automapper para mapear request a usuario para el caso de uso
+            var user = _mapper.Map<Usuario>(request);
 
-            var resp = await _registrar.HandleAsync(firebaseUid, request, ct);
-            return Ok(new
+            var usuarioGuardado = await _registrar.HandleAsync(firebaseUid, user, ct);
+
+            var response = new RegistrarUsuarioResponse
             {
-                message = "Usuario registrado correctamente",
-                usuario = resp
-            });
+                Message = "Usuario registrado exitosamente.",
+                //mapeo el usuario que devuelve el usecase a un DTO para el front
+                Usuario = _mapper.Map<UsuarioResponse>(usuarioGuardado)
+               
+            };
+            return Ok(response);
         }
 
 
         [Authorize]
         [HttpPost("restricciones")]
+        [ProducesResponseType(typeof(GuardarRestriccionesResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GuardarRestricciones([FromBody] GuardarIdsRequest req, CancellationToken ct)
         {
             var uid = User.FindFirst("user_id")?.Value
@@ -87,20 +98,21 @@ namespace GustosApp.API.Controllers
             if (string.IsNullOrWhiteSpace(uid))
                 return Unauthorized(new { message = "Token no válido o sin UID" });
 
-            var response= await _saveRestr.HandleAsync(uid, req.Ids,req.Skip, ct);
+            var restriccionesGuardadas= await _saveRestr.HandleAsync(uid, req.Ids,req.Skip, ct);
 
-
-            var resp = new PasoResponse(
-            PasoActual: "Restricciones",
-            Next: "/registro/condiciones",
-            Data: response.Mensaje,
-            Conflictos: response.GustosRemovidos
-            );
-            return Ok(resp);
+            var response = new GuardarRestriccionesResponse
+            {
+                Mensaje = "Restricciones guardadas correctamente",
+                GustosRemovidos = restriccionesGuardadas
+            };
+            return Ok(response);
         }
 
         [Authorize]
         [HttpPost("condiciones")]
+        [ProducesResponseType(typeof(GuardarCondicionesResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GuardarCondiciones([FromBody] GuardarIdsRequest req, CancellationToken ct)
         {
             var uid = User.FindFirst("user_id")?.Value
@@ -110,15 +122,16 @@ namespace GustosApp.API.Controllers
             if (string.IsNullOrWhiteSpace(uid))
                 return Unauthorized(new { message = "Token no válido o sin UID" });
 
-            var response= await _saveCond.HandleAsync(uid, req.Ids, req.Skip, ct);
+            var condiciones= await _saveCond.HandleAsync(uid, req.Ids, req.Skip, ct);
 
-            var resp = new PasoResponse(
-           PasoActual: "Restricciones",
-           Next: "/registro/condiciones",
-           Data: response.mensaje,
-           Conflictos: response.GustosRemovidos
-           );
-            return Ok(resp);
+            var response = new GuardarCondicionesResponse
+            {
+                Mensaje = "Condiciones médicas guardadas correctamente",
+                GustosRemovidos = condiciones
+            };
+
+            
+            return Ok(response);
             
         }
 
@@ -127,6 +140,9 @@ namespace GustosApp.API.Controllers
 
         [Authorize]
         [HttpPost("gustos")]
+        [ProducesResponseType(typeof(GuardarGustosResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GuardarGustos([FromBody] GuardarIdsRequest req, CancellationToken ct)
         {
             var uid = User.FindFirst("user_id")?.Value
@@ -136,19 +152,21 @@ namespace GustosApp.API.Controllers
             if (string.IsNullOrWhiteSpace(uid))
                 return Unauthorized(new { message = "Token no válido o sin UID" });
 
-            var response=await _saveGustos.HandleAsync(uid, req.Ids, ct);
-
-            var resp = new PasoResponse(
-                PasoActual: "Gustos",
-                Next: "/registro/resumen",
-                Data: "Gustos guardados correctamente",
-                Conflictos: response
-                );
-            return Ok(resp);
+            var gustos=await _saveGustos.HandleAsync(uid, req.Ids, ct);
+            
+            var response= new GuardarGustosResponse
+            {
+                Mensaje = "Gustos guardados correctamente",
+                GustosIncompatibles = gustos
+            };
+            return Ok(response);
         }
 
         [Authorize]
         [HttpGet("resumen")]
+        [ProducesResponseType(typeof(UsuarioResumenResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Resumen(CancellationToken ct)
         {
             var uid = User.FindFirst("user_id")?.Value
@@ -159,11 +177,11 @@ namespace GustosApp.API.Controllers
                 return Unauthorized(new { message = "Token no válido o sin UID" });
 
 
-            var r = await _resumen.HandleAsync(uid, ct);
-            return Ok(new
-            {
-                resumen = r
-            });
+            var resumenUsuario = await _resumen.HandleAsync(uid, ct);
+
+             var response = _mapper.Map<UsuarioResumenResponse>(resumenUsuario);
+            return Ok(response);
+       
         }
 
         [Authorize]

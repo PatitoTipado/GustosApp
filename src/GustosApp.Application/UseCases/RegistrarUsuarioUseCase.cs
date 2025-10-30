@@ -19,7 +19,7 @@ namespace GustosApp.Application.UseCases
             _repo = repo;
         }
 
-        public async Task<UsuarioResponse> HandleAsync (string firebaseUid,RegistrarUsuarioRequest request,
+        public async Task<Usuario> HandleAsync (string firebaseUid,Usuario request,
             CancellationToken ct = default)
         {
 
@@ -27,17 +27,17 @@ namespace GustosApp.Application.UseCases
 
             if(existente  != null)
             {
-                return new UsuarioResponse(existente.Id, existente.FirebaseUid, existente.Email, existente.Nombre,existente.Apellido,existente.IdUsuario, existente.FotoPerfilUrl);
+                return new Usuario(existente.FirebaseUid, existente.Email, existente.Nombre,existente.Apellido,existente.IdUsuario, existente.FotoPerfilUrl);
             }
 
-            var usuario= new Usuario(firebaseUid,request.Email,request.Nombre,request.Apellido,request.Username,request.FotoPerfilUrl);
+            var usuario= new Usuario(firebaseUid,request.Email,request.Nombre,request.Apellido,request.IdUsuario,request.FotoPerfilUrl);
 
 
             await _repo.AddAsync(usuario,ct);
             await _repo.SaveChangesAsync(ct);
 
 
-            return new UsuarioResponse(usuario.Id, usuario.FirebaseUid, usuario.Email, usuario.Nombre,usuario.Apellido, usuario.IdUsuario, usuario.FotoPerfilUrl);
+            return new Usuario(usuario.FirebaseUid, usuario.Email, usuario.Nombre,usuario.Apellido, usuario.IdUsuario, usuario.FotoPerfilUrl);
         }
 
     }

@@ -4,6 +4,7 @@ using GustosApp.Infraestructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GustosApp.Infraestructure.Migrations
 {
     [DbContext(typeof(GustosDbContext))]
-    partial class GustosDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251020172137_Migracion")]
+    partial class Migracion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -936,10 +939,6 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("GrupoId");
-
-                    b.HasIndex("UsuarioId");
-
                     b.ToTable("ChatMessages");
                 });
 
@@ -1067,27 +1066,6 @@ namespace GustosApp.Infraestructure.Migrations
                         .HasFilter("[CodigoInvitacion] IS NOT NULL");
 
                     b.ToTable("Grupos");
-                });
-
-            modelBuilder.Entity("GustosApp.Domain.Model.GrupoGusto", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("GrupoId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("GustoId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GrupoId");
-
-                    b.HasIndex("GustoId");
-
-                    b.ToTable("GrupoGustos");
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.Gusto", b =>
@@ -2174,25 +2152,6 @@ namespace GustosApp.Infraestructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("GustosApp.Domain.Model.ChatMessage", b =>
-                {
-                    b.HasOne("GustosApp.Domain.Model.Grupo", "Grupo")
-                        .WithMany()
-                        .HasForeignKey("GrupoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("GustosApp.Domain.Model.Usuario", "Usuario")
-                        .WithMany()
-                        .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Grupo");
-
-                    b.Navigation("Usuario");
-                });
-
             modelBuilder.Entity("GustosApp.Domain.Model.Grupo", b =>
                 {
                     b.HasOne("GustosApp.Domain.Model.Usuario", "Administrador")
@@ -2202,25 +2161,6 @@ namespace GustosApp.Infraestructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Administrador");
-                });
-
-            modelBuilder.Entity("GustosApp.Domain.Model.GrupoGusto", b =>
-                {
-                    b.HasOne("GustosApp.Domain.Model.Grupo", "Grupo")
-                        .WithMany("Gustos")
-                        .HasForeignKey("GrupoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("GustosApp.Domain.Model.Gusto", "Gusto")
-                        .WithMany("GruposRelacionados")
-                        .HasForeignKey("GustoId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Grupo");
-
-                    b.Navigation("Gusto");
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.InvitacionGrupo", b =>
@@ -2366,16 +2306,9 @@ namespace GustosApp.Infraestructure.Migrations
 
             modelBuilder.Entity("GustosApp.Domain.Model.Grupo", b =>
                 {
-                    b.Navigation("Gustos");
-
                     b.Navigation("Invitaciones");
 
                     b.Navigation("Miembros");
-                });
-
-            modelBuilder.Entity("GustosApp.Domain.Model.Gusto", b =>
-                {
-                    b.Navigation("GruposRelacionados");
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.Restaurante", b =>

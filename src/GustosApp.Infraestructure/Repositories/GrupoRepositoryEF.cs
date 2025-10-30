@@ -35,11 +35,13 @@ namespace GustosApp.Infraestructure.Repositories
         public async Task<IEnumerable<Grupo>> GetGruposByUsuarioIdAsync(Guid usuarioId, CancellationToken cancellationToken = default)
         {
             return await _context.Grupos
-                .Include(g => g.Administrador)
-                .Include(g => g.Miembros)
-                    .ThenInclude(m => m.Usuario)
-                .Where(g => g.Miembros.Any(m => m.UsuarioId == usuarioId && m.Activo))
-                .ToListAsync(cancellationToken);
+                 .Include(g => g.Administrador)
+                 .Include(g => g.Miembros).ThenInclude(m => m.Usuario)
+                 .Where(g =>
+                        g.AdministradorId == usuarioId ||
+                        g.Miembros.Any(m => m.UsuarioId == usuarioId && m.Activo)
+                        )
+                        .ToListAsync(cancellationToken);
         }
 
         public async Task<IEnumerable<Grupo>> GetGruposAdministradosByUsuarioIdAsync(Guid usuarioId, CancellationToken cancellationToken = default)
@@ -96,5 +98,6 @@ namespace GustosApp.Infraestructure.Repositories
             
             return grupo != null && grupo.AdministradorId == usuarioId;
         }
+
     }
 }

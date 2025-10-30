@@ -9,14 +9,18 @@ namespace GustosApp.Application.UseCases
         private readonly IGrupoRepository _grupoRepository;
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IMiembroGrupoRepository _miembroGrupoRepository;
+        private IGustosGrupoRepository _gustosGrupoRepository;
+
 
         public UnirseGrupoUseCase(IGrupoRepository grupoRepository,
             IUsuarioRepository usuarioRepository,
-            IMiembroGrupoRepository miembroGrupoRepository)
+            IMiembroGrupoRepository miembroGrupoRepository,
+            IGustosGrupoRepository gustosGrupoRepository)
         {
             _grupoRepository = grupoRepository;
             _usuarioRepository = usuarioRepository;
             _miembroGrupoRepository = miembroGrupoRepository;
+            _gustosGrupoRepository = gustosGrupoRepository;
         }
 
         public async Task<GrupoResponse> HandleAsync(string firebaseUid, UnirseGrupoRequest request, CancellationToken cancellationToken = default)
@@ -42,6 +46,7 @@ namespace GustosApp.Application.UseCases
             // Agregar al usuario como miembro del grupo
             var miembro = new MiembroGrupo(grupo.Id, usuario.Id, false);
             await _miembroGrupoRepository.CreateAsync(miembro, cancellationToken);
+            await _gustosGrupoRepository.AgregarGustosAlGrupo(grupo.Id, usuario.Gustos.ToList());
 
             // Obtener el grupo completo con relaciones
             var grupoCompleto = await _grupoRepository.GetByIdAsync(grupo.Id, cancellationToken);

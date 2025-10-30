@@ -16,6 +16,8 @@ namespace GustosApp.Domain.Model
         public ICollection<Tag> Tags { get;  set; } = new List<Tag>();
 
         public ICollection <Restaurante> restaurantes { get; set; } = new List<Restaurante>();
+
+        public ICollection<GrupoGusto> GruposRelacionados { get; set; } = new List<GrupoGusto>();
     }
 
    

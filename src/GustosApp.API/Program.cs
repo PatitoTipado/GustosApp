@@ -1,5 +1,8 @@
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
+using GustosApp.API.Hubs.GustosApp.API.Hubs;
+using GustosApp.API.Mapping;
+using GustosApp.API.Middleware;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases;
 using GustosApp.Domain.Interfaces;
@@ -33,6 +36,8 @@ if (FirebaseApp.DefaultInstance == null)
     });
 }
 
+
+builder.Services.AddAutoMapper(typeof(ApiMapeoPerfil));
 // Validación de JWT emitidos por Firebase (securetoken)
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -46,6 +51,18 @@ builder.Services
             ValidateAudience = true,
             ValidAudience = firebaseProjectId,
             ValidateLifetime = true
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                // Si hay cookie "token", úsala como fuente del JWT
+                if (context.Request.Cookies.ContainsKey("token"))
+                {
+                    context.Token = context.Request.Cookies["token"];
+                }
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -67,6 +84,7 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
 // =====================
@@ -86,6 +104,7 @@ builder.Services.AddScoped<IGrupoRepository, GrupoRepositoryEF>();
 builder.Services.AddScoped<IMiembroGrupoRepository, MiembroGrupoRepositoryEF>();
 builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepositoryEF>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepositoryEF>();
+builder.Services.AddScoped<IGustosGrupoRepository, GustosGrupoRepositoryEF>();
 // Chat repository
 builder.Services.AddScoped<GustosApp.Domain.Interfaces.IChatRepository, GustosApp.Infraestructure.Repositories.ChatRepositoryEF>();
 builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
@@ -93,6 +112,7 @@ builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
 // =====================
 //    UseCases existentes
 // =====================
+builder.Services.AddScoped<ObtenerUsuarioUseCase>();
 builder.Services.AddScoped<RegistrarUsuarioUseCase>();
 builder.Services.AddScoped<ObtenerCondicionesMedicasUseCase>();
 builder.Services.AddScoped<ObtenerGustosUseCase>();
@@ -128,6 +148,9 @@ builder.Services.AddScoped<EliminarAmigoUseCase>();
 builder.Services.AddScoped<EliminarGrupoUseCase>();
 builder.Services.AddScoped<ObtenerChatGrupoUseCase>();
 builder.Services.AddScoped<EnviarMensajeGrupoUseCase>();
+builder.Services.AddScoped<ActualizarGustosAGrupoUseCase>();
+builder.Services.AddScoped<ObtenerPreferenciasGruposUseCase>();
+
 
 // =====================
 //    Restaurantes (DI)
@@ -182,6 +205,9 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+
+     builder.Services.AddSignalR();
+
 // =====================
 //    CORS
 // =====================
@@ -229,9 +255,13 @@ app.UseHttpsRedirection();
 
 app.UseCors(MyAllowSpecificOrigins);
 
+
+app.UseMiddleware<ManejadorErrorMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<ChatHub>("/chatHub");
+
 
 app.Run();

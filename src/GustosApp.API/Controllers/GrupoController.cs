@@ -1,8 +1,9 @@
-using System.Security.Claims;
 using GustosApp.Application.DTO;
+using GustosApp.Application.Services;
 using GustosApp.Application.UseCases;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace GustosApp.API.Controllers
@@ -20,10 +21,14 @@ namespace GustosApp.API.Controllers
         private readonly ObtenerInvitacionesUsuarioUseCase _obtenerInvitacionesUseCase;
         private readonly AceptarInvitacionGrupoUseCase _aceptarInvitacionUseCase;
         private readonly EliminarGrupoUseCase _eliminarGrupoUseCase;
-    private readonly ObtenerChatGrupoUseCase _obtenerChatGrupoUseCase;
-    private readonly EnviarMensajeGrupoUseCase _enviarMensajeGrupoUseCase;
-    private readonly ObtenerGrupoDetalleUseCase _obtenerGrupoDetalleUseCase;
-    private readonly RemoverMiembroGrupoUseCase _removerMiembroUseCase;
+        private readonly ObtenerChatGrupoUseCase _obtenerChatGrupoUseCase;
+        private readonly EnviarMensajeGrupoUseCase _enviarMensajeGrupoUseCase;
+        private readonly ObtenerGrupoDetalleUseCase _obtenerGrupoDetalleUseCase;
+        private readonly RemoverMiembroGrupoUseCase _removerMiembroUseCase;
+        private ActualizarGustosAGrupoUseCase _actualizarGustosGrupoUseCase;
+        private readonly IServicioRestaurantes _servicio;
+        private readonly ObtenerPreferenciasGruposUseCase _obtenerPreferenciasGrupos;
+        private readonly SugerirGustosSobreUnRadioUseCase _sugerirGustos;
 
         public GrupoController(
             CrearGrupoUseCase crearGrupoUseCase,
@@ -37,8 +42,14 @@ namespace GustosApp.API.Controllers
             ObtenerGrupoDetalleUseCase obtenerGrupoDetalleUseCase,
             RemoverMiembroGrupoUseCase removerMiembroUseCase,
             ObtenerChatGrupoUseCase obtenerChatGrupoUseCase,
-            EnviarMensajeGrupoUseCase enviarMensajeGrupoUseCase)
+            EnviarMensajeGrupoUseCase enviarMensajeGrupoUseCase,
+            ActualizarGustosAGrupoUseCase actualizarGustosAGrupoUseCase,
+            IServicioRestaurantes servicio,
+            SugerirGustosSobreUnRadioUseCase sugerirGustos,
+            ObtenerPreferenciasGruposUseCase obtenerGustos
+            )
         {
+            _servicio = servicio;
             _crearGrupoUseCase = crearGrupoUseCase;
             _invitarUsuarioUseCase = invitarUsuarioUseCase;
             _unirseGrupoUseCase = unirseGrupoUseCase;
@@ -51,106 +62,26 @@ namespace GustosApp.API.Controllers
             _removerMiembroUseCase = removerMiembroUseCase;
             _obtenerChatGrupoUseCase = obtenerChatGrupoUseCase;
             _enviarMensajeGrupoUseCase = enviarMensajeGrupoUseCase;
-        }
+            _actualizarGustosGrupoUseCase = actualizarGustosAGrupoUseCase;
+            _obtenerPreferenciasGrupos = obtenerGustos;
+            _sugerirGustos = sugerirGustos;
 
-        [HttpPost("crear-prueba")]
-        [AllowAnonymous]
-        public async Task<IActionResult> CrearGrupoPrueba([FromBody] CrearGrupoRequest request, CancellationToken ct)
-        {
-            try
-            {
-                // Para pruebas, usar un Firebase UID fijo
-                var firebaseUid = "test-user-123";
-                var resultado = await _crearGrupoUseCase.HandleAsync(firebaseUid, request, ct);
-                return Ok(resultado);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
-            }
-        }
-
-        [HttpPost("test-simple")]
-        [AllowAnonymous]
-        public IActionResult TestSimple([FromBody] CrearGrupoRequest request)
-        {
-            return Ok(new { 
-                message = "Endpoint funcionando correctamente", 
-                data = request,
-                timestamp = DateTime.UtcNow
-            });
-        }
-
-        [HttpPost("simular-grupo")]
-        [AllowAnonymous]
-        public IActionResult SimularGrupo([FromBody] CrearGrupoRequest request)
-        {
-            var grupoSimulado = new
-            {
-                id = Guid.NewGuid(),
-                nombre = request.Nombre,
-                descripcion = request.Descripcion,
-                administradorId = Guid.NewGuid(),
-                administradorNombre = "Usuario de Prueba",
-                fechaCreacion = DateTime.UtcNow,
-                activo = true,
-                codigoInvitacion = "ABC12345",
-                fechaExpiracionCodigo = DateTime.UtcNow.AddDays(7),
-                cantidadMiembros = 1,
-                miembros = new[]
-                {
-                    new
-                    {
-                        id = Guid.NewGuid(),
-                        usuarioId = Guid.NewGuid(),
-                        usuarioNombre = "Usuario de Prueba",
-                        usuarioEmail = "test@ejemplo.com",
-                        fechaUnion = DateTime.UtcNow,
-                        esAdministrador = true
-                    }
-                }
-            };
-
-            return Ok(grupoSimulado);
         }
 
         [HttpPost("crear")]
         public async Task<IActionResult> CrearGrupo([FromBody] CrearGrupoRequest request, CancellationToken ct)
         {
-            try
-            {
+            
                 var firebaseUid = GetFirebaseUid();
                 var resultado = await _crearGrupoUseCase.HandleAsync(firebaseUid, request, ct);
                 return Ok(resultado);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Error interno del servidor");
-            }
+           
         }
 
         [HttpPost("{grupoId}/invitar")]
         public async Task<IActionResult> InvitarUsuario(Guid grupoId, [FromBody] InvitacionGrupoRequest request, CancellationToken ct)
         {
-            try
-            {
-                // Validate request contains either UsuarioId or EmailUsuario
+           
                 if ((request.EmailUsuario == null || string.IsNullOrWhiteSpace(request.EmailUsuario)) && (!request.UsuarioId.HasValue || request.UsuarioId == Guid.Empty) && (request.UsuarioUsername == null || string.IsNullOrWhiteSpace(request.UsuarioUsername)))
                 {
                     return BadRequest("Se debe proporcionar UsuarioId, UsuarioUsername o EmailUsuario para invitar");
@@ -158,228 +89,108 @@ namespace GustosApp.API.Controllers
                 var firebaseUid = GetFirebaseUid();
                 var resultado = await _invitarUsuarioUseCase.HandleAsync(firebaseUid, grupoId, request, ct);
                 return Ok(resultado);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Error interno del servidor");
-            }
+           
         }
-
+        [Authorize]
         [HttpPost("unirse")]
         public async Task<IActionResult> UnirseGrupo([FromBody] UnirseGrupoRequest request, CancellationToken ct)
         {
-            try
-            {
+           
                 var firebaseUid = GetFirebaseUid();
                 var resultado = await _unirseGrupoUseCase.HandleAsync(firebaseUid, request, ct);
                 return Ok(resultado);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Error interno del servidor");
-            }
+         
         }
 
         [HttpPost("{grupoId}/abandonar")]
         public async Task<IActionResult> AbandonarGrupo(Guid grupoId, CancellationToken ct)
         {
-            try
-            {
+           
                 var firebaseUid = GetFirebaseUid();
                 var resultado = await _abandonarGrupoUseCase.HandleAsync(firebaseUid, grupoId, ct);
                 return Ok(new { success = resultado, message = "Has abandonado el grupo exitosamente" });
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Error interno del servidor");
-            }
+         
         }
-
+        [Authorize]
         [HttpGet("mis-grupos")]
         public async Task<IActionResult> ObtenerMisGrupos(CancellationToken ct)
         {
-            try
-            {
                 var firebaseUid = GetFirebaseUid();
+
                 var resultado = await _obtenerGruposUseCase.HandleAsync(firebaseUid, ct);
+
                 return Ok(resultado);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Error interno del servidor");
-            }
+          
         }
 
         [HttpGet("invitaciones")]
         public async Task<IActionResult> ObtenerInvitaciones(CancellationToken ct)
         {
-            try
-            {
+           
                 var firebaseUid = GetFirebaseUid();
                 var resultado = await _obtenerInvitacionesUseCase.HandleAsync(firebaseUid, ct);
                 return Ok(resultado);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Error interno del servidor");
-            }
+           
         }
 
         [HttpDelete("{grupoId}")]
         public async Task<IActionResult> EliminarGrupo(string grupoId, CancellationToken ct)
         {
-            try
-            {
+           
                 var firebaseUid = GetFirebaseUid();
-                if (!Guid.TryParse(grupoId, out var gid)) return BadRequest("El id de grupo no es un GUID válido");
+
+                if (!Guid.TryParse(grupoId, out var gid))
+                return BadRequest("El id de grupo no es un GUID válido");
+
                 var ok = await _eliminarGrupoUseCase.HandleAsync(firebaseUid, gid, ct);
                 return Ok(new { success = ok });
-            }
-            catch (UnauthorizedAccessException ex) { return Unauthorized(ex.Message); }
-            catch (ArgumentException ex) { return BadRequest(ex.Message); }
-            catch (Exception ex) { return StatusCode(500, "Error interno del servidor"); }
+          
         }
 
         [HttpDelete("{grupoId}/miembros/{usuarioId}")]
         public async Task<IActionResult> RemoverMiembro(string grupoId, string usuarioId, CancellationToken ct)
         {
-            try
-            {
+           
                 var firebaseUid = GetFirebaseUid();
                 if (!Guid.TryParse(grupoId, out var gid)) return BadRequest("El id de grupo no es un GUID válido");
                 if (!Guid.TryParse(usuarioId, out var uid)) return BadRequest("El id de usuario no es un GUID válido");
                 var ok = await _removerMiembroUseCase.HandleAsync(firebaseUid, gid, uid, ct);
                 return Ok(new { success = ok });
-            }
-            catch (UnauthorizedAccessException ex) { return Unauthorized(ex.Message); }
-            catch (ArgumentException ex) { return BadRequest(ex.Message); }
-            catch (InvalidOperationException ex) { return BadRequest(ex.Message); }
-            catch (Exception ex) { return StatusCode(500, "Error interno del servidor"); }
+          
         }
 
         [HttpGet("{grupoId}/chat")]
         public async Task<IActionResult> ObtenerChat(string grupoId, CancellationToken ct)
         {
-            try
-            {
+           
                 var firebaseUid = GetFirebaseUid();
                 if (!Guid.TryParse(grupoId, out var gid)) return BadRequest("El id de grupo no es un GUID válido");
                 var msgs = await _obtenerChatGrupoUseCase.HandleAsync(firebaseUid, gid, ct);
                 return Ok(msgs);
-            }
-            catch (UnauthorizedAccessException ex) { return Unauthorized(ex.Message); }
-            catch (ArgumentException ex) { return BadRequest(ex.Message); }
-            catch (Exception ex) {
-                // Dev: return full exception to help debugging local issues (e.g., missing DB table)
-                return StatusCode(500, ex.ToString());
-            }
+          
         }
 
         [HttpGet("{grupoId}")]
         public async Task<IActionResult> ObtenerGrupo(string grupoId, CancellationToken ct)
         {
-            try
-            {
+          
                 var firebaseUid = GetFirebaseUid();
                 if (!Guid.TryParse(grupoId, out var gid)) return BadRequest("El id de grupo no es un GUID válido");
                 var detalle = await _obtenerGrupoDetalleUseCase.HandleAsync(firebaseUid, gid, ct);
                 return Ok(detalle);
-            }
-            catch (UnauthorizedAccessException ex) { return Unauthorized(ex.Message); }
-            catch (ArgumentException ex) { return BadRequest(ex.Message); }
-            catch (Exception ex) { return StatusCode(500, "Error interno del servidor"); }
+  
         }
 
-        [HttpPost("{grupoId}/chat")]
-        public async Task<IActionResult> EnviarMensaje(string grupoId, [FromBody] JsonElement body, CancellationToken ct)
-        {
-            try
-            {
-                var firebaseUid = GetFirebaseUid();
-                if (!Guid.TryParse(grupoId, out var gid)) return BadRequest("El id de grupo no es un GUID válido");
-                // Parse body safely whether it's an object like { "mensaje": "..." } or a raw string
-                string mensaje = string.Empty;
-                try
-                {
-                    if (body.ValueKind == JsonValueKind.Object)
-                    {
-                        if (body.TryGetProperty("mensaje", out var p) && p.ValueKind == JsonValueKind.String) mensaje = p.GetString();
-                        else if (body.TryGetProperty("Mensaje", out var p2) && p2.ValueKind == JsonValueKind.String) mensaje = p2.GetString();
-                        else if (body.TryGetProperty("text", out var p3) && p3.ValueKind == JsonValueKind.String) mensaje = p3.GetString();
-                    }
-                    else if (body.ValueKind == JsonValueKind.String)
-                    {
-                        mensaje = body.GetString();
-                    }
-                }
-                catch { /* ignore malformed body */ }
-
-                if (string.IsNullOrWhiteSpace(mensaje)) return BadRequest("Mensaje vacío");
-                var saved = await _enviarMensajeGrupoUseCase.HandleAsync(firebaseUid, gid, mensaje, ct);
-                return Ok(saved);
-            }
-            catch (UnauthorizedAccessException ex) { return Unauthorized(ex.Message); }
-            catch (ArgumentException ex) { return BadRequest(ex.Message); }
-            catch (Exception ex) { return StatusCode(500, ex.ToString()); }
-        }
+     
 
         [HttpPost("invitaciones/{invitacionId}/aceptar")]
         public async Task<IActionResult> AceptarInvitacion(Guid invitacionId, CancellationToken ct)
         {
-            try
-            {
+          
                 var firebaseUid = GetFirebaseUid();
                 var resultado = await _aceptarInvitacionUseCase.HandleAsync(firebaseUid, invitacionId, ct);
                 return Ok(resultado);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Error interno del servidor");
-            }
+           
         }
 
         private string GetFirebaseUid()
@@ -392,6 +203,74 @@ namespace GustosApp.API.Controllers
                 throw new UnauthorizedAccessException("No se encontró el UID de Firebase en el token.");
 
             return firebaseUid;
+        }
+
+        [HttpPut("actualizarGustos")]
+        public async Task<IActionResult> agregarGustoDeGrupo(Guid grupoId,[FromBody] List<string> gustos)
+        {
+           
+                var firebaseUid = GetFirebaseUid();
+                var resultado = await _actualizarGustosGrupoUseCase.Handle(gustos,grupoId);
+                return Ok(resultado);
+            
+               
+         
+
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> recomendarRestauranteGrupo(CancellationToken ct,
+        [FromBody]Guid grupoId,
+        [FromQuery(Name = "near.lat")] double? lat = -34.641812775271,
+        [FromQuery(Name = "near.lng")] double? lng = -58.56990230458638,
+        [FromQuery(Name = "radiusMeters")] int? radius = 1000,
+        [FromQuery] string? tipo = "",
+        [FromQuery] string? plato = "",
+        [FromQuery] int top = 10
+ )
+        {
+            var res = await _servicio.BuscarAsync(
+                tipo: tipo,
+                plato: plato,
+                lat: lat,
+                lng: lng,
+                radioMetros: radius
+            );
+
+            Console.WriteLine(res.ToList().Count());
+            Console.WriteLine(res.ToList().Count());
+            Console.WriteLine(res.ToList().Count());
+
+            var firebaseUid = User.FindFirst("user_id")?.Value
+            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? User.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrWhiteSpace(firebaseUid))
+            {
+                return Unauthorized(new { message = "No se encontró el UID de Firebase en el token." });
+            }
+
+            var preferenciasDTO = await _obtenerPreferenciasGrupos.Handle(grupoId,ct);
+
+            Console.WriteLine(preferenciasDTO.ToString());
+            Console.WriteLine(preferenciasDTO.ToString());
+            Console.WriteLine(preferenciasDTO.ToString());
+
+            var recommendations = _sugerirGustos.Handle(preferenciasDTO, res.ToList(), top, ct);
+
+            Console.WriteLine(recommendations.ToList().Count());
+            Console.WriteLine(recommendations.ToList().Count());
+            Console.WriteLine(recommendations.ToList().Count());
+
+            foreach (var item in recommendations)
+            {
+                foreach (var gusto in item.GustosQueSirve)
+                {
+                    Console.WriteLine(gusto.Nombre);
+                }
+            }
+
+            return Ok(recommendations);
         }
     }
 }

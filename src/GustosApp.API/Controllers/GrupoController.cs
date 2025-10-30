@@ -215,7 +215,7 @@ namespace GustosApp.API.Controllers
             return Ok(resultado);
         }
 
-        [HttpPut("eliminarGustos")]
+        [HttpDelete("eliminarGustos")]
         public async Task<IActionResult> eliminarGustosGrupo(Guid grupoId, [FromBody] List<string> gustos)
         {
             var firebaseUid = GetFirebaseUid();

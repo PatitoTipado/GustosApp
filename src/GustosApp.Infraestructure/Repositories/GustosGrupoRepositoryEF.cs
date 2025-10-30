@@ -48,33 +48,27 @@ namespace GustosApp.Infraestructure.Repositories
 
         public async Task<bool> EliminarGustosAlGrupo(Guid grupoId, List<Gusto> gustos)
         {
-            //buscamos que existan los gustos de la tabla 
-            var gustosExistentes = await _context.GrupoGustos
-                .Where(gg => gg.GrupoId == grupoId)
-                .Select(gg => gg.GustoId)
-                .ToListAsync();
+            int eliminados = 0;
 
-            var grupoGustosAEliminar = gustos
-                .Where(g => !gustosExistentes.Contains(g.Id))
-                .Select(g => new GrupoGusto
-                {
-                    Id = Guid.NewGuid(),
-                    GrupoId = grupoId,
-                    GustoId = g.Id
-                })
-                .ToList();
-
-            if (!grupoGustosAEliminar.Any())
+            foreach (var gusto in gustos)
             {
-                throw new Exception("Los gustos que trata de eliminar no existen");
+                var entidad = await _context.GrupoGustos
+                    .FirstOrDefaultAsync(gg => gg.GrupoId == grupoId && gg.GustoId == gusto.Id);
+
+                if (entidad != null)
+                {
+                    _context.GrupoGustos.Remove(entidad);
+                    eliminados++;
+                }
             }
 
-            _context.GrupoGustos.RemoveRange(grupoGustosAEliminar);
+            if (eliminados == 0)
+                throw new Exception("Ninguno de los gustos que intenta eliminar existe en el grupo.");
 
-            var cambiosGuardados = await _context.SaveChangesAsync();
-
-            return cambiosGuardados > 0;
+            await _context.SaveChangesAsync();
+            return eliminados > 0;
         }
+
 
         public async Task<List<string>> ObtenerGustosDelGrupo(Guid grupoId)
         {

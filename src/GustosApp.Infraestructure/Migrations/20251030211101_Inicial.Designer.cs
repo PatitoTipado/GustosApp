@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GustosApp.Infraestructure.Migrations
 {
     [DbContext(typeof(GustosDbContext))]
-    [Migration("20251028224335_GrupoGustoRelacion")]
-    partial class GrupoGustoRelacion
+    [Migration("20251030211101_Inicial")]
+    partial class Inicial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -99,6 +99,46 @@ namespace GustosApp.Infraestructure.Migrations
                         {
                             CondicionesMedicasId = new Guid("44444444-0001-0001-0001-000000000012"),
                             TagsId = new Guid("11111111-1111-1111-1111-111111111125")
+                        },
+                        new
+                        {
+                            CondicionesMedicasId = new Guid("44444444-0001-0001-0001-000000000013"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111116")
+                        },
+                        new
+                        {
+                            CondicionesMedicasId = new Guid("44444444-0001-0001-0001-000000000013"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111117")
+                        },
+                        new
+                        {
+                            CondicionesMedicasId = new Guid("44444444-0001-0001-0001-000000000013"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111123")
+                        },
+                        new
+                        {
+                            CondicionesMedicasId = new Guid("44444444-0001-0001-0001-000000000014"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111116")
+                        },
+                        new
+                        {
+                            CondicionesMedicasId = new Guid("44444444-0001-0001-0001-000000000014"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111117")
+                        },
+                        new
+                        {
+                            CondicionesMedicasId = new Guid("44444444-0001-0001-0001-000000000014"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111123")
+                        },
+                        new
+                        {
+                            CondicionesMedicasId = new Guid("44444444-0001-0001-0001-000000000014"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111127")
+                        },
+                        new
+                        {
+                            CondicionesMedicasId = new Guid("44444444-0001-0001-0001-000000000014"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111112")
                         });
                 });
 
@@ -486,6 +526,376 @@ namespace GustosApp.Infraestructure.Migrations
                         {
                             GustosId = new Guid("22222222-0001-0001-0001-000000000031"),
                             TagsId = new Guid("11111111-1111-1111-1111-111111111130")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000032"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111112")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000032"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000033"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000033"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111126")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000034"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111127")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000034"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000035"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111111")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000035"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111112")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000035"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111126")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000036"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111126")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000036"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000036"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111112")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000037"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111126")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000037"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111114")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000038"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111111")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000038"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111112")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000038"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111126")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000039"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111111")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000039"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111126")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000039"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111124")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000040"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111126")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000040"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111119")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000040"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111127")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000041"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111126")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000041"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000041"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111112")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000042"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111126")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000042"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111112")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000042"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000043"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000044"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111114")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000044"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000045"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000046"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111127")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000046"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111120")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000046"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000047"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111126")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000047"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111112")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000047"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000048"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111126")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000048"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000049"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000049"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111112")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000050"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111111")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000050"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111112")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000050"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111126")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000050"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111124")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000051"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000052"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000052"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111121")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000053"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111126")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000053"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000054"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000055"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000055"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111120")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000055"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111129")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000056"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000057"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111126")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000057"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000058"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111126")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000058"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111119")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000059"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111126")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000059"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000059"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111129")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000060"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111126")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000060"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111124")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000060"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111113")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000061"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000061"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111126")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000062"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111126")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000062"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000063"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111126")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000063"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
+                        },
+                        new
+                        {
+                            GustosId = new Guid("22222222-0001-0001-0001-000000000064"),
+                            TagsId = new Guid("11111111-1111-1111-1111-111111111118")
                         });
                 });
 
@@ -528,6 +938,10 @@ namespace GustosApp.Infraestructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("GrupoId");
+
+                    b.HasIndex("UsuarioId");
 
                     b.ToTable("ChatMessages");
                 });
@@ -606,6 +1020,16 @@ namespace GustosApp.Infraestructure.Migrations
                         {
                             Id = new Guid("44444444-0001-0001-0001-000000000012"),
                             Nombre = "Ansiedad (sensibilidad a cafeína)"
+                        },
+                        new
+                        {
+                            Id = new Guid("44444444-0001-0001-0001-000000000013"),
+                            Nombre = "Vegetariano"
+                        },
+                        new
+                        {
+                            Id = new Guid("44444444-0001-0001-0001-000000000014"),
+                            Nombre = "Vegano"
                         });
                 });
 
@@ -872,6 +1296,171 @@ namespace GustosApp.Infraestructure.Migrations
                             Id = new Guid("22222222-0001-0001-0001-000000000031"),
                             ImagenUrl = "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/vino_artesanal.jpg?alt=media&token=fd22ec00-7739-4776-b488-63e46c2937c5",
                             Nombre = "Vino tinto"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000032"),
+                            Nombre = "Ensalada Caprese"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000033"),
+                            Nombre = "Tarta de Verduras"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000034"),
+                            Nombre = "Omelette de vegetales"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000035"),
+                            Nombre = "Pizza Margarita"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000036"),
+                            Nombre = "Milanesa de berenjena"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000037"),
+                            Nombre = "Ñoquis con salsa de tomate"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000038"),
+                            Nombre = "Ravioles de ricota y espinaca"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000039"),
+                            Nombre = "Fideos con pesto"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000040"),
+                            Nombre = "Panqueques de avena con frutas"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000041"),
+                            Nombre = "Empanadas de humita"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000042"),
+                            Nombre = "Lasaña vegetariana"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000043"),
+                            Nombre = "Arroz primavera"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000044"),
+                            Nombre = "Polenta con salsa de tomate"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000045"),
+                            Nombre = "Sopa de calabaza"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000046"),
+                            Nombre = "Tortilla de papas"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000047"),
+                            Nombre = "Quesadillas de vegetales"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000048"),
+                            Nombre = "Bruschettas con tomate y albahaca"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000049"),
+                            Nombre = "Pastel de papas vegetariano"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000050"),
+                            Nombre = "Pizza cuatro quesos"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000051"),
+                            Nombre = "Ensalada de quinoa con vegetales"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000052"),
+                            Nombre = "Curry de vegetales con arroz"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000053"),
+                            Nombre = "Hamburguesa de lentejas"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000054"),
+                            Nombre = "Sopa crema de zapallo con leche vegetal"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000055"),
+                            Nombre = "Arroz frito con tofu"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000056"),
+                            Nombre = "Guiso de lentejas vegano"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000057"),
+                            Nombre = "Pan integral con palta y tomate"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000058"),
+                            Nombre = "Panqueques de banana sin huevo"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000059"),
+                            Nombre = "Wrap de falafel con hummus"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000060"),
+                            Nombre = "Brownie vegano(con harina integral y aceite de coco"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000061"),
+                            Nombre = "Tarta vegana de calabaza"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000062"),
+                            Nombre = "Empanadas veganas"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000063"),
+                            Nombre = "Tacos veganos"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-0001-0001-0001-000000000064"),
+                            Nombre = "Fideos de arroz con verduras salteadas"
                         });
                 });
 
@@ -945,6 +1534,41 @@ namespace GustosApp.Infraestructure.Migrations
                         .IsUnique();
 
                     b.ToTable("MiembrosGrupos");
+                });
+
+            modelBuilder.Entity("GustosApp.Domain.Model.Notificacion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("Leida")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Mensaje")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("Tipo")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid>("UsuarioDestinoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioDestinoId");
+
+                    b.ToTable("Notificaciones", (string)null);
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.Restaurante", b =>
@@ -1588,6 +2212,25 @@ namespace GustosApp.Infraestructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("GustosApp.Domain.Model.ChatMessage", b =>
+                {
+                    b.HasOne("GustosApp.Domain.Model.Grupo", "Grupo")
+                        .WithMany()
+                        .HasForeignKey("GrupoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GustosApp.Domain.Model.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Grupo");
+
+                    b.Navigation("Usuario");
+                });
+
             modelBuilder.Entity("GustosApp.Domain.Model.Grupo", b =>
                 {
                     b.HasOne("GustosApp.Domain.Model.Usuario", "Administrador")
@@ -1662,6 +2305,17 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Navigation("Grupo");
 
                     b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("GustosApp.Domain.Model.Notificacion", b =>
+                {
+                    b.HasOne("GustosApp.Domain.Model.Usuario", "UsuarioDestino")
+                        .WithMany()
+                        .HasForeignKey("UsuarioDestinoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("UsuarioDestino");
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.RestauranteEspecialidad", b =>

@@ -2,6 +2,7 @@ using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using GustosApp.API.Hubs;
 using GustosApp.API.Hubs.GustosApp.API.Hubs;
+using GustosApp.API.Hubs.Services;
 using GustosApp.API.Mapping;
 using GustosApp.API.Middleware;
 using GustosApp.Application.Interfaces;
@@ -156,6 +157,8 @@ builder.Services.AddScoped<ObtenerChatGrupoUseCase>();
 builder.Services.AddScoped<EnviarMensajeGrupoUseCase>();
 builder.Services.AddScoped<ActualizarGustosAGrupoUseCase>();
 builder.Services.AddScoped<ObtenerPreferenciasGruposUseCase>();
+builder.Services.AddScoped<INotificacionRealtimeService, SignalRNotificacionRealtimeService>();
+
 
 // Para notificaciones en tiempo real
 builder.Services.AddSignalR();
@@ -263,6 +266,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<ChatHub>("/chatHub");
-
+app.MapHub<ChatHub>("/notificacionesHub");
 
 app.Run();

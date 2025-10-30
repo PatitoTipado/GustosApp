@@ -9,12 +9,18 @@ namespace GustosApp.Application.Tests.mocks
 
         public ObtenerNotificacionUsuarioUseCase(INotificacionRepository repository)
         {
-            this._repository = repository;
+            _repository = repository;
         }
 
         public async Task<List<Notificacion>> HandleAsync(Guid usuarioId, CancellationToken ct)
         {
-            return await _repository.ObtenerNotificacionPorUsuarioAsync(usuarioId, ct);
+            if (usuarioId == Guid.Empty)
+                throw new ArgumentException("El ID del usuario no puede ser vacío.");
+
+
+            var notificaciones= await _repository.ObtenerNotificacionPorUsuarioAsync(usuarioId, ct);
+
+            return notificaciones;
         }
     }
 }

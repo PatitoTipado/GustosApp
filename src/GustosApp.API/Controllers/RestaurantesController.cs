@@ -36,6 +36,7 @@ namespace GustosApp.API.Controllers
             _obtenerDetalles = obtenerDetalles;
 
         }
+        [Authorize]
         [HttpGet("cercanos")]
         public async Task<IActionResult> GetCercanos(double lat, double lng, int radio = 2000, string? types = null, string? priceLevels = null, 
             bool? openNow = null, double? minRating = null, int minUserRatings = 0, string? serves = null, 
@@ -65,6 +66,7 @@ namespace GustosApp.API.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> Get(
             CancellationToken ct,
             [FromQuery(Name = "near.lat")] double? lat = -34.641812775271,

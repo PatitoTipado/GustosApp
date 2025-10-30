@@ -24,19 +24,27 @@ namespace GustosApp.Infraestructure.Repositories
            await _context.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task MarcarComoLeidaAsync(Guid usuarioId, CancellationToken ct)
+        public async Task EliminarAsync(Guid notificacionId, CancellationToken ct)
         {
-            var notificaciones = await _context.Notificaciones
-                .Where(n => n.UsuarioDestinoId == usuarioId && !n.Leida)
-                .ToListAsync(ct);
-
-            foreach (var n in notificaciones)
+            var notificacion = await _context.Notificaciones.FindAsync(notificacionId, ct);
+            if (notificacion != null)
             {
-                n.Leida = true;
+                _context.Notificaciones.Remove(notificacion);
+                await _context.SaveChangesAsync(ct);
             }
-
-            await _context.SaveChangesAsync(ct);
         }
+
+        public async Task MarcarComoLeidaAsync(Guid notificacionId, CancellationToken ct)
+        {
+            var notificacion = await _context.Notificaciones.FindAsync(notificacionId, ct);
+
+            if (notificacion != null && !notificacion.Leida)
+            {
+                notificacion.Leida = true;
+                await _context.SaveChangesAsync(ct);
+            }
+        }
+
 
         public async Task <List<Notificacion>> ObtenerNotificacionPorUsuarioAsync(Guid usuarioId, CancellationToken ct)
         {

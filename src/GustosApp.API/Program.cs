@@ -1,9 +1,11 @@
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
+using GustosApp.API.Hubs;
 using GustosApp.API.Hubs.GustosApp.API.Hubs;
 using GustosApp.API.Mapping;
 using GustosApp.API.Middleware;
 using GustosApp.Application.Interfaces;
+using GustosApp.Application.Tests.mocks;
 using GustosApp.Application.UseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Infraestructure;
@@ -104,6 +106,8 @@ builder.Services.AddScoped<IMiembroGrupoRepository, MiembroGrupoRepositoryEF>();
 builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepositoryEF>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepositoryEF>();
 builder.Services.AddScoped<IGustosGrupoRepository, GustosGrupoRepositoryEF>();
+builder.Services.AddScoped<INotificacionRepository, NotificacionRepositoryEF>();
+
 // Chat repository
 builder.Services.AddScoped<GustosApp.Domain.Interfaces.IChatRepository, GustosApp.Infraestructure.Repositories.ChatRepositoryEF>();
 builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
@@ -136,6 +140,9 @@ builder.Services.AddScoped<BuscarRestaurantesCercanosUseCase>();
 builder.Services.AddScoped<ActualizarDetallesRestauranteUseCase>();
 builder.Services.AddScoped<RemoverMiembroGrupoUseCase>();
 builder.Services.AddScoped<SugerirGustosSobreUnRadioUseCase>();
+builder.Services.AddScoped<CrearNotificacionUseCase>();
+builder.Services.AddScoped<ObtenerNotificacionUsuarioUseCase>();
+builder.Services.AddScoped<MarcarNotificacionLeidaUseCase>();
 // UseCases y repositorios de amistad
 builder.Services.AddScoped<GustosApp.Domain.Interfaces.ISolicitudAmistadRepository, GustosApp.Infraestructure.Repositories.SolicitudAmistadRepositoryEF>();
 builder.Services.AddScoped<EnviarSolicitudAmistadUseCase>();
@@ -150,6 +157,8 @@ builder.Services.AddScoped<EnviarMensajeGrupoUseCase>();
 builder.Services.AddScoped<ActualizarGustosAGrupoUseCase>();
 builder.Services.AddScoped<ObtenerPreferenciasGruposUseCase>();
 
+// Para notificaciones en tiempo real
+builder.Services.AddSignalR();
 
 // =====================
 //    Restaurantes (DI)
@@ -232,6 +241,12 @@ builder.Services.AddAuthorization(options =>
 */
 
 var app = builder.Build();
+app.UseRouting();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();
+    endpoints.MapHub<NotificacionesHub>("/notificacionesHub"); // 🔹 registro del Hub
+});
 
 // =====================
 //   Pipeline HTTP

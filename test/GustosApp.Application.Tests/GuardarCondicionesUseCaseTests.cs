@@ -60,7 +60,7 @@ public class GuardarCondicionesUseCaseTests
         _usuarioRepoMock.Verify(r => r.SaveChangesAsync(ct), Times.Once);
         Assert.Equal(RegistroPaso.Gustos, usuario.PasoActual);
         Assert.Equal(2, usuario.CondicionesMedicas.Count);
-        Assert.Equal("Condiciones médicas actualizadas correctamente.", result.mensaje);
+       
     }
 
     [Fact]
@@ -104,7 +104,7 @@ public class GuardarCondicionesUseCaseTests
         // Assert
         Assert.Equal(2, usuario.CondicionesMedicas.Count);
         Assert.DoesNotContain(usuario.CondicionesMedicas, c => c.Nombre == "Obesidad");
-        Assert.Equal("Condiciones médicas actualizadas correctamente.", result.mensaje);
+        
         Assert.Equal(RegistroPaso.Gustos, usuario.PasoActual);
 
         _usuarioRepoMock.Verify(r => r.SaveChangesAsync(ct), Times.Once);
@@ -157,7 +157,7 @@ public class GuardarCondicionesUseCaseTests
         // Assert
         Assert.Equal(4, usuario.CondicionesMedicas.Count);
         Assert.Contains(usuario.CondicionesMedicas, c => c.Nombre == "Sarampion");
-        Assert.Equal("Condiciones médicas actualizadas correctamente.", result.mensaje);
+       
         Assert.Equal(RegistroPaso.Gustos, usuario.PasoActual);
 
         _usuarioRepoMock.Verify(r => r.SaveChangesAsync(ct), Times.Once);
@@ -206,7 +206,7 @@ public class GuardarCondicionesUseCaseTests
         Assert.Empty(usuario.CondicionesMedicas);
         Assert.DoesNotContain(usuario.CondicionesMedicas, c => c.Nombre == "Obesidad" 
         && c.Nombre == "Hipertensión" && c.Nombre == "Diabetes");
-        Assert.Equal("Condiciones médicas actualizadas correctamente.", result.mensaje);
+        
         Assert.Equal(RegistroPaso.Gustos, usuario.PasoActual);
 
         _usuarioRepoMock.Verify(r => r.SaveChangesAsync(ct), Times.Once);
@@ -223,7 +223,7 @@ public class GuardarCondicionesUseCaseTests
         var result = await _useCase.HandleAsync(uid, new List<Guid>(), skip: true, ct);
 
         // Assert
-        Assert.Equal("Paso omitido", result.mensaje);
+       
         _usuarioRepoMock.Verify(r => r.SaveChangesAsync(ct), Times.Never);
     }
 

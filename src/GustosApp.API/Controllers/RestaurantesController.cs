@@ -21,14 +21,47 @@ namespace GustosApp.API.Controllers
         private readonly IServicioRestaurantes _servicio;
         private readonly ObtenerGustosUseCase _obtenerGustos;
         private readonly SugerirGustosSobreUnRadioUseCase _sugerirGustos;
+        private readonly BuscarRestaurantesCercanosUseCase _buscarRestaurantes;
+        private readonly ActualizarDetallesRestauranteUseCase _obtenerDetalles;
 
 
-        public RestaurantesController(IServicioRestaurantes servicio, SugerirGustosSobreUnRadioUseCase sugerirGustos, ObtenerGustosUseCase obtenerGustos)
+        public RestaurantesController(IServicioRestaurantes servicio, SugerirGustosSobreUnRadioUseCase sugerirGustos,
+            ObtenerGustosUseCase obtenerGustos,BuscarRestaurantesCercanosUseCase buscarRestaurantes, 
+            ActualizarDetallesRestauranteUseCase obtenerDetalles)
         {
             _servicio = servicio;
             _obtenerGustos = obtenerGustos;
             _sugerirGustos = sugerirGustos;
+            _buscarRestaurantes = buscarRestaurantes;
+            _obtenerDetalles = obtenerDetalles;
 
+        }
+        [HttpGet("cercanos")]
+        public async Task<IActionResult> GetCercanos(double lat, double lng, int radio = 2000, string? types = null, string? priceLevels = null, 
+            bool? openNow = null, double? minRating = null, int minUserRatings = 0, string? serves = null, 
+            CancellationToken ct = default)
+        {
+
+            var result = await _buscarRestaurantes.HandleAsync(lat, lng, radio, types, priceLevels, openNow, minRating, minUserRatings, serves, ct);
+
+            return Ok(new
+            {
+                count = result.Count,
+                restaurantes = result
+            });
+        }
+
+
+
+        [HttpGet("detalles")]
+        public async Task<IActionResult> GetDetalles([FromQuery] string placeId, CancellationToken ct = default)
+        {
+            var result = await _obtenerDetalles.HandleAsync(placeId, ct);
+            return Ok(new
+            {
+                message = "Detalles actualizados",
+                detalles = result
+            });
         }
 
         [HttpGet]

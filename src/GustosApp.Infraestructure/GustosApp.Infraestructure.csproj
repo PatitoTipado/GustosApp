@@ -38,9 +38,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="ML\model.onnx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
     <Resource Include="ML\tokenizer.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>

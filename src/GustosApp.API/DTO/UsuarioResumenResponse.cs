@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using GustosApp.Domain.Model;
 
-namespace GustosApp.Application.DTO
+namespace GustosApp.API.DTO
 {
     public class UsuarioResumenResponse
     {

@@ -34,9 +34,11 @@ namespace GustosApp.Infraestructure.Repositories
 
         public async Task<List<Gusto>> obtenerGustosPorNombre(List<string>gustos)
         {
-            return await _dbContext.Gustos
-                .Where(g => gustos.Contains(g.Nombre))
-                .ToListAsync();
+            List<Gusto> resultados =await _dbContext.Gustos.ToListAsync();
+
+            resultados = resultados.Where(g => gustos.Contains(g.Nombre)).ToList();
+
+            return resultados;
         }
     }
 }

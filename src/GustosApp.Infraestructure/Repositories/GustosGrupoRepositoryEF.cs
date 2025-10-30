@@ -61,5 +61,15 @@ namespace GustosApp.Infraestructure.Repositories
             return gustos;
         }
 
+        public async Task<List<Guid>> ObtenerGustosIdsDelGrupo(Guid grupoId)
+        {
+            var gustosIds = await _context.GrupoGustos
+                .Where(gg => gg.GrupoId == grupoId)
+                .Select(gg => gg.GustoId)
+                .ToListAsync();
+
+            return gustosIds;
+        }
+
     }
 }

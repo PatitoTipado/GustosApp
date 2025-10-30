@@ -25,10 +25,11 @@ namespace GustosApp.API.Controllers
         private readonly EnviarMensajeGrupoUseCase _enviarMensajeGrupoUseCase;
         private readonly ObtenerGrupoDetalleUseCase _obtenerGrupoDetalleUseCase;
         private readonly RemoverMiembroGrupoUseCase _removerMiembroUseCase;
-        private ActualizarGustosAGrupoUseCase _actualizarGustosGrupoUseCase;
         private readonly IServicioRestaurantes _servicio;
         private readonly ObtenerPreferenciasGruposUseCase _obtenerPreferenciasGrupos;
         private readonly SugerirGustosSobreUnRadioUseCase _sugerirGustos;
+        private readonly EliminarGustosGrupoUseCase _eliminarGustoGrupoUseCase;
+        private readonly ActualizarGustosAGrupoUseCase _actualizarGustosGrupoUseCase;
 
         public GrupoController(
             CrearGrupoUseCase crearGrupoUseCase,
@@ -46,7 +47,8 @@ namespace GustosApp.API.Controllers
             ActualizarGustosAGrupoUseCase actualizarGustosAGrupoUseCase,
             IServicioRestaurantes servicio,
             SugerirGustosSobreUnRadioUseCase sugerirGustos,
-            ObtenerPreferenciasGruposUseCase obtenerGustos
+            ObtenerPreferenciasGruposUseCase obtenerGustos,
+            EliminarGustosGrupoUseCase eliminarGustosGrupoUseCase
             )
         {
             _servicio = servicio;
@@ -65,7 +67,7 @@ namespace GustosApp.API.Controllers
             _actualizarGustosGrupoUseCase = actualizarGustosAGrupoUseCase;
             _obtenerPreferenciasGrupos = obtenerGustos;
             _sugerirGustos = sugerirGustos;
-
+            _eliminarGustoGrupoUseCase = eliminarGustosGrupoUseCase;
         }
 
         [HttpPost("crear-prueba")]
@@ -426,7 +428,25 @@ namespace GustosApp.API.Controllers
             {
                 return BadRequest(ex.Message);
             }
+        }
 
+        [HttpPut("eliminarGustos")]
+        public async Task<IActionResult> eliminarGustosGrupo(Guid grupoId, [FromBody] List<string> gustos)
+        {
+            try
+            {
+                var firebaseUid = GetFirebaseUid();
+                var resultado = await _eliminarGustoGrupoUseCase.Handle(gustos, grupoId);
+                return Ok(resultado);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpGet]

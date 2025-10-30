@@ -29,6 +29,7 @@ namespace GustosApp.API.Controllers
         private readonly IServicioRestaurantes _servicio;
         private readonly ObtenerPreferenciasGruposUseCase _obtenerPreferenciasGrupos;
         private readonly SugerirGustosSobreUnRadioUseCase _sugerirGustos;
+        private readonly ObtenerRestaurantesAleatoriosGrupoUseCase _obtenerRestaurantesAleatorios;
 
         public GrupoController(
             CrearGrupoUseCase crearGrupoUseCase,
@@ -46,7 +47,8 @@ namespace GustosApp.API.Controllers
             ActualizarGustosAGrupoUseCase actualizarGustosAGrupoUseCase,
             IServicioRestaurantes servicio,
             SugerirGustosSobreUnRadioUseCase sugerirGustos,
-            ObtenerPreferenciasGruposUseCase obtenerGustos
+            ObtenerPreferenciasGruposUseCase obtenerGustos,
+            ObtenerRestaurantesAleatoriosGrupoUseCase obtenerRestaurantesAleatorios
             )
         {
             _servicio = servicio;
@@ -65,6 +67,7 @@ namespace GustosApp.API.Controllers
             _actualizarGustosGrupoUseCase = actualizarGustosAGrupoUseCase;
             _obtenerPreferenciasGrupos = obtenerGustos;
             _sugerirGustos = sugerirGustos;
+            _obtenerRestaurantesAleatorios = obtenerRestaurantesAleatorios;
 
         }
 
@@ -271,6 +274,55 @@ namespace GustosApp.API.Controllers
             }
 
             return Ok(recommendations);
+        }
+
+        /// <summary>
+        /// Obtiene restaurantes aleatorios basados en las preferencias del grupo
+        /// </summary>
+        /// <param name="grupoId">ID del grupo</param>
+        /// <param name="request">Parámetros de búsqueda (cantidad, ubicación opcional)</param>
+        /// <param name="ct">Token de cancelación</param>
+        /// <returns>Lista de restaurantes aleatorios que coinciden con los gustos del grupo</returns>
+        /// <response code="200">Retorna la lista de restaurantes encontrados</response>
+        /// <response code="400">Si el grupoId es inválido o el grupo no existe</response>
+        /// <response code="401">Si el token de autenticación es inválido</response>
+        /// <response code="403">Si el usuario no es miembro del grupo</response>
+        /// <response code="500">Si ocurre un error interno del servidor</response>
+        [HttpPost("{grupoId}/restaurantes-aleatorios")]
+        [ProducesResponseType(typeof(List<RestauranteAleatorioResponse>), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(500)]
+        public async Task<IActionResult> ObtenerRestaurantesAleatorios(
+            Guid grupoId, 
+            [FromBody] ObtenerRestaurantesAleatoriosRequest request, 
+            CancellationToken ct)
+        {
+            try
+            {
+                var firebaseUid = GetFirebaseUid();
+                
+                // Verificar que el usuario es miembro del grupo
+                var usuario = await _obtenerGruposUseCase.HandleAsync(firebaseUid, ct);
+                var esMiembro = usuario.Any(g => g.Id == grupoId);
+                
+                if (!esMiembro)
+                {
+                    return Forbid("No eres miembro de este grupo");
+                }
+
+                var restaurantes = await _obtenerRestaurantesAleatorios.HandleAsync(grupoId, request, ct);
+                return Ok(restaurantes);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error al obtener restaurantes: {ex.Message}");
+            }
         }
     }
 }

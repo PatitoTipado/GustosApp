@@ -10,51 +10,115 @@ namespace GustosApp.Infraestructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateIndex(
-                name: "IX_ChatMessages_GrupoId",
-                table: "ChatMessages",
-                column: "GrupoId");
+            migrationBuilder.Sql(@"
+IF NOT EXISTS (
+    SELECT name
+    FROM sys.indexes
+    WHERE name = N'IX_ChatMessages_GrupoId'
+      AND object_id = OBJECT_ID(N'[dbo].[ChatMessages]')
+)
+BEGIN
+    CREATE INDEX [IX_ChatMessages_GrupoId] ON [dbo].[ChatMessages]([GrupoId]);
+END
+");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_ChatMessages_UsuarioId",
-                table: "ChatMessages",
-                column: "UsuarioId");
+            migrationBuilder.Sql(@"
+IF NOT EXISTS (
+    SELECT name
+    FROM sys.indexes
+    WHERE name = N'IX_ChatMessages_UsuarioId'
+      AND object_id = OBJECT_ID(N'[dbo].[ChatMessages]')
+)
+BEGIN
+    CREATE INDEX [IX_ChatMessages_UsuarioId] ON [dbo].[ChatMessages]([UsuarioId]);
+END
+");
 
-            migrationBuilder.AddForeignKey(
-                name: "FK_ChatMessages_Grupos_GrupoId",
-                table: "ChatMessages",
-                column: "GrupoId",
-                principalTable: "Grupos",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
+            migrationBuilder.Sql(@"
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.foreign_keys
+    WHERE name = N'FK_ChatMessages_Grupos_GrupoId'
+      AND parent_object_id = OBJECT_ID(N'[dbo].[ChatMessages]')
+)
+BEGIN
+    ALTER TABLE [dbo].[ChatMessages] WITH CHECK
+    ADD CONSTRAINT [FK_ChatMessages_Grupos_GrupoId]
+        FOREIGN KEY ([GrupoId]) REFERENCES [dbo].[Grupos] ([Id])
+        ON DELETE CASCADE;
+END
+");
 
-            migrationBuilder.AddForeignKey(
-                name: "FK_ChatMessages_Usuarios_UsuarioId",
-                table: "ChatMessages",
-                column: "UsuarioId",
-                principalTable: "Usuarios",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
+            migrationBuilder.Sql(@"
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.foreign_keys
+    WHERE name = N'FK_ChatMessages_Usuarios_UsuarioId'
+      AND parent_object_id = OBJECT_ID(N'[dbo].[ChatMessages]')
+)
+BEGIN
+    ALTER TABLE [dbo].[ChatMessages] WITH CHECK
+    ADD CONSTRAINT [FK_ChatMessages_Usuarios_UsuarioId]
+        FOREIGN KEY ([UsuarioId]) REFERENCES [dbo].[Usuarios] ([Id])
+        ON DELETE CASCADE;
+END
+");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_ChatMessages_Grupos_GrupoId",
-                table: "ChatMessages");
+            migrationBuilder.Sql(@"
+IF EXISTS (
+    SELECT 1
+    FROM sys.foreign_keys
+    WHERE name = N'FK_ChatMessages_Grupos_GrupoId'
+      AND parent_object_id = OBJECT_ID(N'[dbo].[ChatMessages]')
+)
+BEGIN
+    ALTER TABLE [dbo].[ChatMessages]
+    DROP CONSTRAINT [FK_ChatMessages_Grupos_GrupoId];
+END
+");
 
-            migrationBuilder.DropForeignKey(
-                name: "FK_ChatMessages_Usuarios_UsuarioId",
-                table: "ChatMessages");
+            migrationBuilder.Sql(@"
+IF EXISTS (
+    SELECT 1
+    FROM sys.foreign_keys
+    WHERE name = N'FK_ChatMessages_Usuarios_UsuarioId'
+      AND parent_object_id = OBJECT_ID(N'[dbo].[ChatMessages]')
+)
+BEGIN
+    ALTER TABLE [dbo].[ChatMessages]
+    DROP CONSTRAINT [FK_ChatMessages_Usuarios_UsuarioId];
+END
+");
 
-            migrationBuilder.DropIndex(
-                name: "IX_ChatMessages_GrupoId",
-                table: "ChatMessages");
+            migrationBuilder.Sql(@"
+IF EXISTS (
+    SELECT name
+    FROM sys.indexes
+    WHERE name = N'IX_ChatMessages_GrupoId'
+      AND object_id = OBJECT_ID(N'[dbo].[ChatMessages]')
+)
+BEGIN
+    DROP INDEX [IX_ChatMessages_GrupoId] ON [dbo].[ChatMessages];
+END
+");
 
-            migrationBuilder.DropIndex(
-                name: "IX_ChatMessages_UsuarioId",
-                table: "ChatMessages");
+            migrationBuilder.Sql(@"
+IF EXISTS (
+    SELECT name
+    FROM sys.indexes
+    WHERE name = N'IX_ChatMessages_UsuarioId'
+      AND object_id = OBJECT_ID(N'[dbo].[ChatMessages]')
+)
+BEGIN
+    DROP INDEX [IX_ChatMessages_UsuarioId] ON [dbo].[ChatMessages];
+END
+");
         }
     }
 }
+
+

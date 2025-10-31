@@ -12,7 +12,11 @@ namespace GustosApp.Domain.Model
     public enum PlanUsuario { Free = 0, Plus = 1 }
     public class Usuario
     {
+    
         public Guid Id { get;  set; } = Guid.NewGuid();
+
+        public bool EsPrivado { get; set; } = false;
+
 
         // Identidad externa
         public string FirebaseUid { get;  set; }
@@ -100,6 +104,8 @@ namespace GustosApp.Domain.Model
             return gustosIncompatibles.Select(g => g.Nombre).ToList();
         }
 
+
+        public ICollection<UsuarioRestauranteVisitado> Visitados { get; set; } = new List<UsuarioRestauranteVisitado>();
 
     }
 }

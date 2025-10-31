@@ -8,6 +8,8 @@ namespace GustosApp.Domain.Model
 {
 
     public enum RegistroPaso { Ninguno = 0, Restricciones = 1, Condiciones = 2, Gustos = 3, Verificacion = 4, Finalizado = 5 }
+    
+    public enum PlanUsuario { Free = 0, Plus = 1 }
     public class Usuario
     {
         public Guid Id { get;  set; } = Guid.NewGuid();
@@ -22,6 +24,7 @@ namespace GustosApp.Domain.Model
         public string? FotoPerfilUrl { get;  set; }
         public DateTime FechaRegistro { get;  set; } = DateTime.UtcNow;
         public bool Activo { get;  set; } = true;
+        public PlanUsuario Plan { get; set; } = PlanUsuario.Free;
 
         public ICollection<Gusto> Gustos { get; set; } = new List<Gusto>();
         public ICollection<Restriccion> Restricciones { get; set; } = new List<Restriccion>();
@@ -39,6 +42,13 @@ namespace GustosApp.Domain.Model
         public void AvanzarPaso(RegistroPaso paso)
         {
             if ((int)paso >= (int)PasoActual) PasoActual = paso;
+        }
+        
+        public bool EsPremium() => Plan == PlanUsuario.Plus;
+        
+        public void ActualizarAPlan(PlanUsuario nuevoPlan)
+        {
+            Plan = nuevoPlan;
         }
         public Usuario()
         {

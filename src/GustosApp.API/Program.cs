@@ -225,11 +225,19 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyAllowSpecificOrigins,
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "http://localhost:5174")
+            policy.WithOrigins("http://localhost:3000", "http://localhost:5174", "https://lois-membranous-glancingly.ngrok-free.dev")
                   .AllowCredentials()
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
+    
+    // Política más permisiva para desarrollo
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
 });
 
 /* (Opcional) Exigir role=negocio para crear restaurantes
@@ -253,6 +261,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseStaticFiles(); // Habilitar archivos estáticos
 
 app.UseCors(MyAllowSpecificOrigins);
 

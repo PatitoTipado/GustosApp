@@ -43,6 +43,28 @@ namespace GustosApp.Application.UseCases
             if (await _miembroGrupoRepository.UsuarioEsMiembroActivoAsync(grupo.Id, usuario.Id, cancellationToken))
                 throw new ArgumentException("Ya eres miembro de este grupo");
 
+            // Verificar límite de grupos para usuarios Free
+            if (!usuario.EsPremium())
+            {
+                var gruposActuales = await _grupoRepository.GetGruposByUsuarioIdAsync(usuario.Id, cancellationToken);
+                var cantidadGrupos = gruposActuales.Count();
+                
+                if (cantidadGrupos >= 3)
+                {
+                    var beneficios = new BeneficiosPremiumDto { Precio = 9999.99m }; // Precio en pesos argentinos
+                    var response = new LimiteGruposAlcanzadoResponse(
+                        "Has alcanzado el límite de 3 grupos para usuarios gratuitos. Upgrade a Premium para unirte a grupos ilimitados.",
+                        "Free",
+                        3,
+                        cantidadGrupos,
+                        beneficios,
+                        "/api/pago/crear" // URL temporal, se actualizará cuando implementemos el controlador
+                    );
+                    
+                    throw new InvalidOperationException($"LIMITE_GRUPOS_ALCANZADO:{System.Text.Json.JsonSerializer.Serialize(response)}");
+                }
+            }
+
             // Agregar al usuario como miembro del grupo
             var miembro = new MiembroGrupo(grupo.Id, usuario.Id, false);
             await _miembroGrupoRepository.CreateAsync(miembro, cancellationToken);

@@ -107,6 +107,7 @@ builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepository
 builder.Services.AddScoped<IReviewRepository, ReviewRepositoryEF>();
 builder.Services.AddScoped<IGustosGrupoRepository, GustosGrupoRepositoryEF>();
 builder.Services.AddScoped<INotificacionRepository, NotificacionRepositoryEF>();
+builder.Services.AddScoped<IValoracionUsuarioRepository, ValoracionUsuarioRepositoryEF>();
 
 // Chat repository
 builder.Services.AddScoped<GustosApp.Domain.Interfaces.IChatRepository, GustosApp.Infraestructure.Repositories.ChatRepositoryEF>();
@@ -156,6 +157,7 @@ builder.Services.AddScoped<ObtenerChatGrupoUseCase>();
 builder.Services.AddScoped<EnviarMensajeGrupoUseCase>();
 builder.Services.AddScoped<ActualizarGustosAGrupoUseCase>();
 builder.Services.AddScoped<ObtenerPreferenciasGruposUseCase>();
+builder.Services.AddScoped<CrearValoracionUsuarioUseCase>();
 
 // Para notificaciones en tiempo real
 builder.Services.AddSignalR();

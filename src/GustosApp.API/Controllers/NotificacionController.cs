@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GustosApp.API.Controllers
 {
+    [ApiController]
+    [Route("api/[controller]")]
     public class NotificacionController : Controller
     {
         private readonly CrearNotificacionUseCase _crearNotificacion;

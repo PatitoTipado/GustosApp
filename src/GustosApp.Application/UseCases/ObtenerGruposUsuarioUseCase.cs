@@ -51,6 +51,7 @@ namespace GustosApp.Application.UseCases
                             m.Usuario?.FirebaseUid, // Add Firebase UID
                             m.Usuario != null ? (m.Usuario.Nombre + " " + m.Usuario.Apellido) : string.Empty,
                             m.Usuario != null ? m.Usuario.Email : string.Empty,
+                            m.Usuario?.IdUsuario ?? string.Empty,
                             m.FechaUnion,
                             m.EsAdministrador
                         ));

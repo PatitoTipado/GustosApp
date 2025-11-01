@@ -4,7 +4,7 @@ namespace GustosApp.Application.DTO
 {
     public class EnviarSolicitudRequest
     {
-        public string EmailDestino { get; set; }
+        public string UsernameDestino { get; set; } = null!;
         public string? Mensaje { get; set; }
     }
 }

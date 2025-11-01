@@ -40,17 +40,20 @@ namespace GustosApp.Application.DTO
         public string? UsuarioFirebaseUid { get; set; }
         public string UsuarioNombre { get; set; } = string.Empty;
         public string UsuarioEmail { get; set; } = string.Empty;
+
+        public string UsuarioUsername { get; set; } = string.Empty;
         public DateTime FechaUnion { get; set; }
         public bool EsAdministrador { get; set; }
 
         public MiembroGrupoResponse(Guid id, Guid usuarioId, string? usuarioFirebaseUid, string usuarioNombre, 
-            string usuarioEmail, DateTime fechaUnion, bool esAdministrador)
+            string usuarioEmail, string usuarioUsername, DateTime fechaUnion, bool esAdministrador)
         {
             Id = id;
             UsuarioId = usuarioId;
             UsuarioFirebaseUid = usuarioFirebaseUid;
             UsuarioNombre = usuarioNombre;
             UsuarioEmail = usuarioEmail;
+            UsuarioUsername = usuarioUsername;
             FechaUnion = fechaUnion;
             EsAdministrador = esAdministrador;
         }

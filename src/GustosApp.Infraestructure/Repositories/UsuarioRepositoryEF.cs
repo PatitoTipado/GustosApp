@@ -61,5 +61,28 @@ namespace GustosApp.Infraestructure.Repositories
                 .Include(u => u.Restricciones) 
                 .FirstOrDefaultAsync(u => u.Id == usuarioId);
         }
+
+        public async Task<IEnumerable<Usuario>> GetAllExceptAsync(Guid excludeId, int limit, CancellationToken ct)
+        {
+            return await _db.Usuarios
+                .Where(u => u.Id != excludeId && u.Activo)
+                .OrderBy(u => u.Nombre)
+                .Take(limit)
+                .ToListAsync(ct);
+        }
+
+        public async Task<IEnumerable<Usuario>> BuscarPorUsernameAsync(string search, Guid excludeId, CancellationToken ct)
+        {
+            var normalized = search.Trim().ToLower();
+
+            return await _db.Usuarios
+                .Where(u => u.Id != excludeId &&
+                            u.Activo &&
+                            u.IdUsuario.ToLower().Contains(normalized))
+                .OrderBy(u => u.IdUsuario)
+                .Take(50)
+                .ToListAsync(ct);
+        }
+
     }
 }

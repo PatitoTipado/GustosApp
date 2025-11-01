@@ -46,6 +46,10 @@ namespace GustosApp.API.Mapping
            .ForMember(dest => dest.Tipo,
                opt => opt.MapFrom(src => src.Tipo.ToString()));
 
+            CreateMap<Usuario, UsuarioSimpleResponse>()
+                .ForMember(dest => dest.Username,
+                opt => opt.MapFrom(src => src.IdUsuario));
+
         }
     }
 }

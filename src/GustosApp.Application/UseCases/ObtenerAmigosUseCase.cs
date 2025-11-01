@@ -21,14 +21,14 @@ namespace GustosApp.Application.UseCases
             _usuarioRepository = usuarioRepository;
         }
 
-        public async Task<IEnumerable<UsuarioSimpleResponse>> HandleAsync(string firebaseUid, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Usuario>> HandleAsync(string firebaseUid, CancellationToken cancellationToken = default)
         {
             var usuario = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid, cancellationToken);
             if (usuario == null) throw new UnauthorizedAccessException("Usuario no encontrado");
 
-            var amigos = await _solicitudRepository.GetAmigosByUsuarioIdAsync(usuario.Id, cancellationToken);
+            return  await _solicitudRepository.GetAmigosByUsuarioIdAsync(usuario.Id, cancellationToken);
 
-            return amigos.Select(a => new UsuarioSimpleResponse { Id = a.Id, Nombre = a.Nombre + " " + a.Apellido, Email = a.Email, FotoPerfilUrl = a.FotoPerfilUrl,username=a.IdUsuario }).ToList();
+            
         }
     }
 
@@ -47,28 +47,17 @@ namespace GustosApp.Application.UseCases
         public async Task<bool> HandleAsync(string firebaseUid, Guid amigoId, CancellationToken cancellationToken = default)
         {
             var usuario = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid, cancellationToken);
-            if (usuario == null) throw new UnauthorizedAccessException("Usuario no encontrado");
+            if (usuario == null)
+                throw new UnauthorizedAccessException("Usuario no encontrado");
 
-            // Buscar cualquier solicitud entre usuario.Id y amigoId que esté Aceptada
-            var pendientes = await _solicitudRepository.GetSolicitudesEnviadasByUsuarioIdAsync(usuario.Id, cancellationToken);
-            var enviada = pendientes.FirstOrDefault(s => s.DestinatarioId == amigoId && s.Estado == EstadoSolicitud.Aceptada);
+            // Buscar amistad aceptada en ambos sentidos
+            var amistad = await _solicitudRepository.GetAmistadEntreUsuariosAsync(usuario.Id, amigoId, cancellationToken);
+            if (amistad == null)
+                throw new ArgumentException("No se encontró una amistad activa con el usuario especificado");
 
-            if (enviada != null)
-            {
-                await _solicitudRepository.DeleteAsync(enviada.Id, cancellationToken);
-                return true;
-            }
-
-            var recibidas = await _solicitudRepository.GetSolicitudesEnviadasByUsuarioIdAsync(amigoId, cancellationToken);
-            var reciproca = recibidas.FirstOrDefault(s => s.DestinatarioId == usuario.Id && s.Estado == EstadoSolicitud.Aceptada);
-            if (reciproca != null)
-            {
-                await _solicitudRepository.DeleteAsync(reciproca.Id, cancellationToken);
-                return true;
-            }
-
-            // No se encontró amistad aceptada
-            throw new ArgumentException("No se encontró una amistad activa con el usuario especificado");
+            await _solicitudRepository.DeleteAsync(amistad.Id, cancellationToken);
+            return true;
         }
+    
     }
 }

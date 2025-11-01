@@ -69,5 +69,15 @@ namespace GustosApp.Infraestructure.Repositories
                 await _context.SaveChangesAsync(cancellationToken);
             }
         }
+        public async Task<SolicitudAmistad?> GetAmistadEntreUsuariosAsync(Guid usuarioAId, Guid usuarioBId, CancellationToken ct = default)
+        {
+            return await _context.SolicitudesAmistad
+                .FirstOrDefaultAsync(s =>
+                    s.Estado == EstadoSolicitud.Aceptada &&
+                    ((s.RemitenteId == usuarioAId && s.DestinatarioId == usuarioBId) ||
+                     (s.RemitenteId == usuarioBId && s.DestinatarioId == usuarioAId)),
+                    ct);
+        }
+
     }
 }

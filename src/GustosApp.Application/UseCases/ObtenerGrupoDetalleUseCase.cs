@@ -31,9 +31,17 @@ namespace GustosApp.Application.UseCases
                 foreach (var m in grupo.Miembros.Where(m => m.Activo)) // Only include active members
                 {
                     if (m == null) continue;
-                    resp.Miembros.Add(new MiembroGrupoResponse(m.Id, m.UsuarioId, m.Usuario?.FirebaseUid, // Include Firebase UID
-                        m.Usuario != null ? (m.Usuario.Nombre + " " + m.Usuario.Apellido) : string.Empty, 
-                        m.Usuario != null ? m.Usuario.Email : string.Empty, m.FechaUnion, m.EsAdministrador));
+                    resp.Miembros.Add(new MiembroGrupoResponse(
+                    m.Id,
+                    m.UsuarioId,
+                    m.Usuario?.FirebaseUid,
+                    m.Usuario != null ? (m.Usuario.Nombre + " " + m.Usuario.Apellido) : string.Empty,
+                    m.Usuario?.Email ?? string.Empty,
+                    m.Usuario?.IdUsuario ?? string.Empty, 
+                    m.FechaUnion,
+                    m.EsAdministrador
+                    ));
+
                 }
             }
 

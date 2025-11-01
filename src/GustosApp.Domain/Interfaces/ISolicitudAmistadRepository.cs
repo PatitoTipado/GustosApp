@@ -15,5 +15,8 @@ namespace GustosApp.Domain.Interfaces
         Task<SolicitudAmistad> CreateAsync(SolicitudAmistad solicitud, CancellationToken cancellationToken = default);
         Task<SolicitudAmistad> UpdateAsync(SolicitudAmistad solicitud, CancellationToken cancellationToken = default);
         Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+
+        Task<SolicitudAmistad?> GetAmistadEntreUsuariosAsync(Guid usuarioAId, Guid usuarioBId, CancellationToken ct = default);
+
     }
 }

@@ -28,7 +28,7 @@ namespace GustosApp.Application.UseCases
 
             var amigos = await _solicitudRepository.GetAmigosByUsuarioIdAsync(usuario.Id, cancellationToken);
 
-            return amigos.Select(a => new UsuarioSimpleResponse { Id = a.Id, Nombre = a.Nombre + " " + a.Apellido, Email = a.Email, FotoPerfilUrl = a.FotoPerfilUrl }).ToList();
+            return amigos.Select(a => new UsuarioSimpleResponse { Id = a.Id, Nombre = a.Nombre + " " + a.Apellido, Email = a.Email, FotoPerfilUrl = a.FotoPerfilUrl,username=a.IdUsuario }).ToList();
         }
     }
 

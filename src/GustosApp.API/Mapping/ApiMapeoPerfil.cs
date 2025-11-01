@@ -42,6 +42,10 @@ namespace GustosApp.API.Mapping
                 (src => src.CondicionesMedicas.Select(c => c.Nombre).ToList()));
 
 
+            CreateMap<Notificacion, NotificacionDTO>()
+           .ForMember(dest => dest.Tipo,
+               opt => opt.MapFrom(src => src.Tipo.ToString()));
+
         }
     }
 }

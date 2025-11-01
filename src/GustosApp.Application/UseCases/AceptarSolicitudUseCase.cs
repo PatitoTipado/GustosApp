@@ -7,7 +7,7 @@ namespace GustosApp.Application.UseCases
     {
         private readonly ISolicitudAmistadRepository _solicitudRepository;
         private readonly IUsuarioRepository _usuarioRepository;
-        private readonly IMiembroGrupoRepository _miembroGrupoRepository; // not used but keeping DI style
+        private readonly IMiembroGrupoRepository _miembroGrupoRepository; 
 
         public AceptarSolicitudUseCase(ISolicitudAmistadRepository solicitudRepository, IUsuarioRepository usuarioRepository, IMiembroGrupoRepository miembroGrupoRepository)
         {

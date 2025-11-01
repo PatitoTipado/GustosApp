@@ -4,6 +4,7 @@ using GustosApp.Infraestructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GustosApp.Infraestructure.Migrations
 {
     [DbContext(typeof(GustosDbContext))]
-    partial class GustosDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251101033401_NotificacionInvitacion56")]
+    partial class NotificacionInvitacion56
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1498,6 +1501,10 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.HasIndex("GrupoId");
 
+                    b.HasIndex("NotificacionId")
+                        .IsUnique()
+                        .HasFilter("[NotificacionId] IS NOT NULL");
+
                     b.HasIndex("UsuarioInvitadoId");
 
                     b.HasIndex("UsuarioInvitadorId");
@@ -1568,10 +1575,6 @@ namespace GustosApp.Infraestructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("InvitacionId")
-                        .IsUnique()
-                        .HasFilter("[InvitacionId] IS NOT NULL");
 
                     b.HasIndex("UsuarioDestinoId");
 
@@ -2276,6 +2279,11 @@ namespace GustosApp.Infraestructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("GustosApp.Domain.Model.Notificacion", "Notificacion")
+                        .WithOne()
+                        .HasForeignKey("GustosApp.Domain.Model.InvitacionGrupo", "NotificacionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("GustosApp.Domain.Model.Usuario", "UsuarioInvitado")
                         .WithMany("InvitacionesRecibidas")
                         .HasForeignKey("UsuarioInvitadoId")
@@ -2289,6 +2297,8 @@ namespace GustosApp.Infraestructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Grupo");
+
+                    b.Navigation("Notificacion");
 
                     b.Navigation("UsuarioInvitado");
 
@@ -2316,18 +2326,11 @@ namespace GustosApp.Infraestructure.Migrations
 
             modelBuilder.Entity("GustosApp.Domain.Model.Notificacion", b =>
                 {
-                    b.HasOne("GustosApp.Domain.Model.InvitacionGrupo", "Invitacion")
-                        .WithOne("Notificacion")
-                        .HasForeignKey("GustosApp.Domain.Model.Notificacion", "InvitacionId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("GustosApp.Domain.Model.Usuario", "UsuarioDestino")
-                        .WithMany("Notificaciones")
+                        .WithMany()
                         .HasForeignKey("UsuarioDestinoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Invitacion");
 
                     b.Navigation("UsuarioDestino");
                 });
@@ -2441,11 +2444,6 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Navigation("GruposRelacionados");
                 });
 
-            modelBuilder.Entity("GustosApp.Domain.Model.InvitacionGrupo", b =>
-                {
-                    b.Navigation("Notificacion");
-                });
-
             modelBuilder.Entity("GustosApp.Domain.Model.Restaurante", b =>
                 {
                     b.Navigation("Platos");
@@ -2462,8 +2460,6 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Navigation("InvitacionesRecibidas");
 
                     b.Navigation("MiembrosGrupos");
-
-                    b.Navigation("Notificaciones");
                 });
 #pragma warning restore 612, 618
         }

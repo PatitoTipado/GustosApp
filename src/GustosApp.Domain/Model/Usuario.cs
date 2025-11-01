@@ -34,6 +34,7 @@ namespace GustosApp.Domain.Model
         public ICollection<MiembroGrupo> MiembrosGrupos { get; set; } = new List<MiembroGrupo>();
         public ICollection<InvitacionGrupo> InvitacionesRecibidas { get; set; } = new List<InvitacionGrupo>();
         public ICollection<InvitacionGrupo> InvitacionesEnviadas { get; set; } = new List<InvitacionGrupo>();
+        public ICollection<Notificacion> Notificaciones { get; set; } = new List<Notificacion>();
 
 
         public void AvanzarPaso(RegistroPaso paso)

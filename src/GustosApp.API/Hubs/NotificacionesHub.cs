@@ -1,72 +1,120 @@
 ﻿using System.Text.RegularExpressions;
+using AutoMapper;
+using Azure.Core;
+using GustosApp.API.DTO;
 using GustosApp.Application.Tests.mocks;
 using GustosApp.Application.UseCases;
+using GustosApp.Domain.Interfaces;
+using GustosApp.Domain.Model;
 using Microsoft.AspNetCore.SignalR;
 
 namespace GustosApp.API.Hubs
 {
+
     public class NotificacionesHub : Hub
     {
+        private readonly ObtenerNotificacionesUsuarioUseCase _obtenerNotificaciones;
+        private readonly MarcarNotificacionLeidaUseCase _marcarLeida;
+        private readonly EliminarNotificacionUseCase _eliminarNotificacion;
+        private readonly ObtenerUsuarioUseCase _obtenerUsuario;
+        private readonly AceptarInvitacionGrupoUseCase _aceptarInvitacionGrupo;
+        private readonly ObtenerNotificacionUsuarioUseCase _obtenerNotificacion;
+        private readonly IMapper _mapper;
 
-
-        public class NotificacionesHub : Hub
-        {
-            private readonly ObtenerNotificacionesUsuarioUseCase _obtenerNotificaciones;
-            private readonly MarcarNotificacionLeidaUseCase _marcarLeida;
-            private readonly EliminarNotificacionUseCase _eliminarNotificacion;
-
-            public NotificacionesHub(
+        public NotificacionesHub(
                 ObtenerNotificacionesUsuarioUseCase obtenerNotificaciones,
                 MarcarNotificacionLeidaUseCase marcarLeida,
-                EliminarNotificacionUseCase eliminarNotificacion)
+                EliminarNotificacionUseCase eliminarNotificacion,
+                ObtenerUsuarioUseCase obtenerUsuario,
+                AceptarInvitacionGrupoUseCase aceptar,
+                ObtenerNotificacionUsuarioUseCase obtenerNotificacion,
+                IMapper mapper)
+        {
+            _obtenerNotificaciones = obtenerNotificaciones;
+            _marcarLeida = marcarLeida;
+            _eliminarNotificacion = eliminarNotificacion;
+            _obtenerUsuario = obtenerUsuario;
+            _aceptarInvitacionGrupo = aceptar;
+            _obtenerNotificacion = obtenerNotificacion;
+            _mapper = mapper;
+        }
+
+        // 🔹 Se ejecuta al conectarse un usuario
+        public override async Task OnConnectedAsync()
+        {
+
+            var firebaseUid = Context.User?.FindFirst("user_id")?.Value;
+            if (firebaseUid == null) return;
+
+            var usuario = await _obtenerUsuario.HandleAsync(firebaseUid, CancellationToken.None);
+            if (usuario == null) return;
+
+            var notificaciones = await _obtenerNotificaciones.HandleAsync(usuario.Id, CancellationToken.None);
+
+            //DTO
+            var notificacionesDTO = _mapper.Map<List<NotificacionDTO>>(notificaciones);
+
+
+            await Clients.Caller.SendAsync("CargarNotificaciones", notificacionesDTO);
+            await base.OnConnectedAsync();
+        }
+
+
+        public async Task EnviarNotificacionATodos(string mensaje)
+        {
+            await Clients.All.SendAsync("RecibirNotificacion", new { Mensaje = mensaje });
+        }
+
+        public async Task EnviarNotificacionAUsuario(string usuarioId, string mensaje)
+        {
+            await Clients.User(usuarioId).SendAsync("RecibirNotificacion", new { Mensaje = mensaje });
+        }
+
+
+        public async Task MarcarComoLeida(Guid notificacionId)
+        {
+            await _marcarLeida.HandleAsync(notificacionId, CancellationToken.None);
+            await Clients.Caller.SendAsync("NotificacionMarcadaLeida", notificacionId);
+        }
+
+
+        public async Task RechazarInvitacion(Guid notificacionId)
+        {
+            await _eliminarNotificacion.HandleAsync(notificacionId, CancellationToken.None);
+            await Clients.Caller.SendAsync("NotificacionEliminada", notificacionId);
+        }
+
+        public async Task AceptarInvitacion(Guid notificacionId)
+        {
+            var uid = Context.User?.FindFirst("user_id")?.Value;
+            if (uid == null) return;
+
+            var usuario = await _obtenerUsuario.HandleAsync(uid, CancellationToken.None);
+            if (usuario == null) return;
+
+            
+            var notificacion = await _obtenerNotificacion.HandleAsync(notificacionId, CancellationToken.None);
+            if (notificacion == null)
             {
-                _obtenerNotificaciones = obtenerNotificaciones;
-                _marcarLeida = marcarLeida;
-                _eliminarNotificacion = eliminarNotificacion;
+                Console.WriteLine($"⚠️ No se encontró la notificación con ID {notificacionId}");
+                return;
             }
 
-            // 🔹 Se ejecuta al conectarse un usuario
-            public override async Task OnConnectedAsync()
+            
+            if (!notificacion.InvitacionId.HasValue)
             {
-                var uid = Context.User?.FindFirst("user_id")?.Value;
-                if (uid == null) return;
-
-                await base.OnConnectedAsync();
-
-                if (Guid.TryParse(userId, out var usuarioGuid))
-                {
-                    var notificaciones = await _obtenerNotificaciones.HandleAsync(usuarioGuid, CancellationToken.None);
-
-               
-                    await Clients.Caller.SendAsync("CargarNotificaciones", notificaciones);
-                }
-
-                await base.OnConnectedAsync();
+                Console.WriteLine($"⚠️ La notificación {notificacionId} no tiene un InvitacionId asociado.");
+                return;
             }
 
            
-            public async Task EnviarNotificacionATodos(string mensaje)
-            {
-                await Clients.All.SendAsync("RecibirNotificacion", new { Mensaje = mensaje });
-            }
+            await _aceptarInvitacionGrupo.HandleAsync(usuario.FirebaseUid, notificacion.InvitacionId.Value, CancellationToken.None);
 
-            public async Task EnviarNotificacionAUsuario(string usuarioId, string mensaje)
-            {
-                await Clients.User(usuarioId).SendAsync("RecibirNotificacion", new { Mensaje = mensaje });
-            }
+            
+            await _eliminarNotificacion.HandleAsync(notificacionId, CancellationToken.None);
 
-            // 🔹 Cliente marca una notificación como leída
-            public async Task MarcarComoLeida(Guid notificacionId)
-            {
-                await _marcarLeida.HandleAsync(notificacionId, CancellationToken.None);
-                await Clients.Caller.SendAsync("NotificacionMarcadaLeida", notificacionId);
-            }
-
-            // 🔹 Cliente elimina una notificación (p. ej. si acepta o rechaza invitación)
-            public async Task EliminarNotificacion(Guid notificacionId)
-            {
-                await _eliminarNotificacion.HandleAsync(notificacionId, CancellationToken.None);
-                await Clients.Caller.SendAsync("NotificacionEliminada", notificacionId);
-            }
+           
+            await Clients.Caller.SendAsync("NotificacionEliminada", notificacionId);
         }
     }
+}

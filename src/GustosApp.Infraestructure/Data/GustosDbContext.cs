@@ -263,7 +263,21 @@ public class GustosDbContext : DbContext
 
             entity.Property(n => n.UsuarioDestinoId)
                 .IsRequired();
+
+         
+            entity.HasOne(n => n.UsuarioDestino)
+                .WithMany(u => u.Notificaciones)
+                .HasForeignKey(n => n.UsuarioDestinoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+         
+            entity.HasOne(n => n.Invitacion)
+                .WithOne(i => i.Notificacion)
+                .HasForeignKey<Notificacion>(n => n.InvitacionId) 
+                .OnDelete(DeleteBehavior.SetNull);
         });
+
+
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(GustosDbContext).Assembly);
 

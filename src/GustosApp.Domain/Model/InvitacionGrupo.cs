@@ -17,6 +17,8 @@ namespace GustosApp.Domain.Model
     public class InvitacionGrupo
     {
         public Guid Id { get; private set; } = Guid.NewGuid();
+
+        public Guid? NotificacionId { get; set; }
         public Guid GrupoId { get; private set; }
         public Guid UsuarioInvitadoId { get; private set; }
         public Guid UsuarioInvitadorId { get; private set; }
@@ -30,6 +32,8 @@ namespace GustosApp.Domain.Model
         public Grupo Grupo { get; set; }
         public Usuario UsuarioInvitado { get; set; }
         public Usuario UsuarioInvitador { get; set; }
+
+        public Notificacion? Notificacion { get; set; }
 
         private InvitacionGrupo() { } // Para EF Core
 

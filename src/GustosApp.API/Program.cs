@@ -108,6 +108,7 @@ builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepository
 builder.Services.AddScoped<IReviewRepository, ReviewRepositoryEF>();
 builder.Services.AddScoped<IGustosGrupoRepository, GustosGrupoRepositoryEF>();
 builder.Services.AddScoped<INotificacionRepository, NotificacionRepositoryEF>();
+builder.Services.AddScoped<INotificacionRealtimeService, SignalRNotificacionRealtimeService>();
 
 // Chat repository
 builder.Services.AddScoped<GustosApp.Domain.Interfaces.IChatRepository, GustosApp.Infraestructure.Repositories.ChatRepositoryEF>();
@@ -142,6 +143,7 @@ builder.Services.AddScoped<ActualizarDetallesRestauranteUseCase>();
 builder.Services.AddScoped<RemoverMiembroGrupoUseCase>();
 builder.Services.AddScoped<SugerirGustosSobreUnRadioUseCase>();
 builder.Services.AddScoped<CrearNotificacionUseCase>();
+builder.Services.AddScoped<ObtenerNotificacionesUsuarioUseCase>();
 builder.Services.AddScoped<ObtenerNotificacionUsuarioUseCase>();
 builder.Services.AddScoped<MarcarNotificacionLeidaUseCase>();
 // UseCases y repositorios de amistad
@@ -157,7 +159,8 @@ builder.Services.AddScoped<ObtenerChatGrupoUseCase>();
 builder.Services.AddScoped<EnviarMensajeGrupoUseCase>();
 builder.Services.AddScoped<ActualizarGustosAGrupoUseCase>();
 builder.Services.AddScoped<ObtenerPreferenciasGruposUseCase>();
-builder.Services.AddScoped<INotificacionRealtimeService, SignalRNotificacionRealtimeService>();
+builder.Services.AddScoped<EliminarNotificacionUseCase>();
+
 
 
 // Para notificaciones en tiempo real
@@ -266,6 +269,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<ChatHub>("/chatHub");
-app.MapHub<ChatHub>("/notificacionesHub");
+app.MapHub<NotificacionesHub>("/notificacionesHub");
 
 app.Run();

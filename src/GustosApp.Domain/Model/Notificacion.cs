@@ -13,6 +13,8 @@ namespace GustosApp.Domain.Model
 
         public Guid UsuarioDestinoId { get; set; }
 
+        public Guid? InvitacionId { get; set; }
+
         public string Titulo { get; set; } = string.Empty;
 
         public string Mensaje { get; set; } = string.Empty;
@@ -25,5 +27,9 @@ namespace GustosApp.Domain.Model
 
         // Relación opcional con Usuario (si la tenés)
         public Usuario? UsuarioDestino { get; set; }
+        public InvitacionGrupo? Invitacion { get; set; }
+
+
+
     }
 }

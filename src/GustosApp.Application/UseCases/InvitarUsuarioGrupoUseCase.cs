@@ -1,4 +1,5 @@
 using GustosApp.Application.DTO;
+using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 
@@ -10,16 +11,22 @@ namespace GustosApp.Application.UseCases
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IInvitacionGrupoRepository _invitacionRepository;
         private readonly IMiembroGrupoRepository _miembroGrupoRepository;
-
+        private readonly INotificacionRepository _notificacionRepository;
+        private readonly INotificacionRealtimeService _notificacionRealtimeService;
         public InvitarUsuarioGrupoUseCase(IGrupoRepository grupoRepository,
             IUsuarioRepository usuarioRepository,
             IInvitacionGrupoRepository invitacionRepository,
-            IMiembroGrupoRepository miembroGrupoRepository)
+            IMiembroGrupoRepository miembroGrupoRepository,
+            INotificacionRepository notificacionRepository,
+            INotificacionRealtimeService notificacionRealtimeService)
         {
             _grupoRepository = grupoRepository;
             _usuarioRepository = usuarioRepository;
             _invitacionRepository = invitacionRepository;
             _miembroGrupoRepository = miembroGrupoRepository;
+            _notificacionRepository = notificacionRepository;
+            _notificacionRealtimeService = notificacionRealtimeService;
+
         }
 
         public async Task<InvitacionGrupoResponse> HandleAsync(string firebaseUid, Guid grupoId, InvitacionGrupoRequest request, CancellationToken cancellationToken = default)
@@ -75,9 +82,46 @@ namespace GustosApp.Application.UseCases
             if (await _invitacionRepository.ExisteInvitacionPendienteAsync(grupoId, usuarioInvitado.Id, cancellationToken))
                 throw new ArgumentException("Ya existe una invitación pendiente para este usuario");
 
-            // Crear la invitación
-            var invitacion = new InvitacionGrupo(grupoId, usuarioInvitado.Id, usuarioInvitador.Id, request.MensajePersonalizado);
+            //  Crear notificación (sin enviar aún)
+            var notificacion = new Notificacion
+            {
+                UsuarioDestinoId = usuarioInvitado.Id,
+                Titulo = "Invitación a grupo",
+                Mensaje = $"{usuarioInvitador.Nombre} te ha invitado a unirte al grupo '{grupo.Nombre}'",
+                Tipo = TipoNotificacion.InvitacionGrupo,
+                Leida = false,
+                FechaCreacion = DateTime.UtcNow,
+            };
+            await _notificacionRepository.crearAsync(notificacion, cancellationToken);
+
+            // 2 Crear invitación y vincular notificación
+            var invitacion = new InvitacionGrupo(
+                 grupoId,
+                 usuarioInvitado.Id,
+                 usuarioInvitador.Id,
+                 request.MensajePersonalizado)
+            {
+                NotificacionId = notificacion.Id
+            };
             await _invitacionRepository.CreateAsync(invitacion, cancellationToken);
+
+            //  Actualizar notificación con la invitación asociada
+            notificacion.InvitacionId = invitacion.Id;
+            await _notificacionRepository.UpdateAsync(notificacion, cancellationToken);
+
+            // Obtener la notificación actualizada desde la base
+            var notificacionFinal = await _notificacionRepository.GetByIdAsync(notificacion.Id, cancellationToken);
+
+            // Enviar notificación en tiempo real solo una vez, con datos completos
+            await _notificacionRealtimeService.EnviarNotificacionAsync(
+                usuarioInvitado.FirebaseUid,
+                notificacionFinal.Titulo,
+                notificacionFinal.Mensaje,
+                notificacionFinal.Tipo.ToString(),
+                cancellationToken,
+                notificacionFinal.Id,               
+                 notificacionFinal.InvitacionId      
+            );
 
             // Obtener la invitación completa con relaciones
             var invitacionCompleta = await _invitacionRepository.GetByIdAsync(invitacion.Id, cancellationToken);

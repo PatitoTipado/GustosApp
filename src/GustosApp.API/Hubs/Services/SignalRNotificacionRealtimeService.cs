@@ -12,15 +12,27 @@ namespace GustosApp.API.Hubs.Services
             _hubContext = hubContext;
         }
 
-        public async Task EnviarNotificacionAsync(Guid usuarioDestinoId, string titulo, string mensaje, string tipo, CancellationToken ct)
+        public async Task EnviarNotificacionAsync(
+    string firebaseUid,
+    string titulo,
+    string mensaje,
+    string tipo,
+    CancellationToken ct,
+    Guid? notificacionId = null,
+    Guid? invitacionId = null)
         {
-            await _hubContext.Clients.User(usuarioDestinoId.ToString())
+            Console.WriteLine($"📡 Enviando notificación a usuario {firebaseUid} → {titulo}");
+
+            await _hubContext.Clients.User(firebaseUid)
                 .SendAsync("RecibirNotificacion", new
                 {
+                    Id = notificacionId,
+                    InvitacionId = invitacionId,
                     Titulo = titulo,
                     Mensaje = mensaje,
-                    Tipo = tipo
+                    Tipo = tipo,
+                    FechaCreacion = DateTime.UtcNow
                 }, ct);
         }
     }
-}
+    }

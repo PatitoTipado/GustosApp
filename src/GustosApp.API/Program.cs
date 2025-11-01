@@ -7,6 +7,7 @@ using GustosApp.API.Middleware;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.Tests.mocks;
 using GustosApp.Application.UseCases;
+using GustosApp.Application.Handlers;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Infraestructure;
 using GustosApp.Infraestructure.ML;
@@ -17,6 +18,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 // Usar System.Text.Json para manejar el secreto de Firebase
 using System.Text.Json;
+using GustosApp.Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -157,6 +159,8 @@ builder.Services.AddScoped<EnviarMensajeGrupoUseCase>();
 builder.Services.AddScoped<ActualizarGustosAGrupoUseCase>();
 builder.Services.AddScoped<ObtenerPreferenciasGruposUseCase>();
 builder.Services.AddScoped<EliminarGustosGrupoUseCase>();
+builder.Services.AddScoped<DesactivarMiembroDeGrupoUseCase>();
+builder.Services.AddScoped<IServicioPreferenciasGrupos,ServicioPreferenciasGrupos>();
 
 // Para notificaciones en tiempo real
 builder.Services.AddSignalR();

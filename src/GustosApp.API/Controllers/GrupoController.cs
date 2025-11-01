@@ -1,4 +1,5 @@
 using GustosApp.Application.DTO;
+using GustosApp.Application.Handlers;
 using GustosApp.Application.Services;
 using GustosApp.Application.UseCases;
 using Microsoft.AspNetCore.Authorization;
@@ -28,8 +29,7 @@ namespace GustosApp.API.Controllers
         private readonly IServicioRestaurantes _servicio;
         private readonly ObtenerPreferenciasGruposUseCase _obtenerPreferenciasGrupos;
         private readonly SugerirGustosSobreUnRadioUseCase _sugerirGustos;
-        private readonly EliminarGustosGrupoUseCase _eliminarGustoGrupoUseCase;
-        private readonly ActualizarGustosAGrupoUseCase _actualizarGustosGrupoUseCase;
+        private readonly IServicioPreferenciasGrupos _servicioPreferenciasGrupos;
 
         public GrupoController(
             CrearGrupoUseCase crearGrupoUseCase,
@@ -44,11 +44,10 @@ namespace GustosApp.API.Controllers
             RemoverMiembroGrupoUseCase removerMiembroUseCase,
             ObtenerChatGrupoUseCase obtenerChatGrupoUseCase,
             EnviarMensajeGrupoUseCase enviarMensajeGrupoUseCase,
-            ActualizarGustosAGrupoUseCase actualizarGustosAGrupoUseCase,
             IServicioRestaurantes servicio,
             SugerirGustosSobreUnRadioUseCase sugerirGustos,
             ObtenerPreferenciasGruposUseCase obtenerGustos,
-            EliminarGustosGrupoUseCase eliminarGustosGrupoUseCase
+            IServicioPreferenciasGrupos servicioPreferenciasGrupos
             )
         {
             _servicio = servicio;
@@ -64,10 +63,9 @@ namespace GustosApp.API.Controllers
             _removerMiembroUseCase = removerMiembroUseCase;
             _obtenerChatGrupoUseCase = obtenerChatGrupoUseCase;
             _enviarMensajeGrupoUseCase = enviarMensajeGrupoUseCase;
-            _actualizarGustosGrupoUseCase = actualizarGustosAGrupoUseCase;
             _obtenerPreferenciasGrupos = obtenerGustos;
             _sugerirGustos = sugerirGustos;
-            _eliminarGustoGrupoUseCase = eliminarGustosGrupoUseCase;
+            _servicioPreferenciasGrupos = servicioPreferenciasGrupos;
         }
 
         [HttpPost("crear")]
@@ -225,7 +223,7 @@ namespace GustosApp.API.Controllers
         public async Task<IActionResult> agregarGustoDeGrupo(Guid grupoId, [FromBody] List<string> gustos)
         {
             var firebaseUid = GetFirebaseUid();
-            var resultado = await _actualizarGustosGrupoUseCase.Handle(gustos, grupoId);
+            var resultado = await _servicioPreferenciasGrupos.ActualizarGustosDeGrupo(gustos, grupoId);
             return Ok(resultado);
         }
 
@@ -233,9 +231,18 @@ namespace GustosApp.API.Controllers
         public async Task<IActionResult> eliminarGustosGrupo(Guid grupoId, [FromBody] List<string> gustos)
         {
             var firebaseUid = GetFirebaseUid();
-            var resultado = await _eliminarGustoGrupoUseCase.Handle(gustos, grupoId);
+            var resultado = await _servicioPreferenciasGrupos.EliminarGustosDeGrupo(gustos, grupoId);
             return Ok(resultado);
         }
+
+        [HttpPatch("desactivarMiembro")]
+        public async Task<IActionResult> desactivarMiembroDeGrupo(Guid grupoId, Guid usuarioId)
+        {
+            var firebaseUid = GetFirebaseUid();
+            var resultado = await _servicioPreferenciasGrupos.DesactivarMiembroDeGrupo(grupoId, usuarioId,firebaseUid);
+            return Ok(resultado);
+        }
+
 
         [HttpGet]
         public async Task<IActionResult> recomendarRestauranteGrupo(CancellationToken ct,

@@ -1,0 +1,37 @@
+﻿using GustosApp.Application.Services;
+using GustosApp.Application.UseCases;
+
+namespace GustosApp.Application.Handlers
+{
+    public class ServicioPreferenciasGrupos: IServicioPreferenciasGrupos
+    {
+        private readonly ActualizarGustosAGrupoUseCase _actualizarGustosGrupoUseCase;
+        private readonly EliminarGustosGrupoUseCase _eliminarGustosGrupoUseCase;
+        private readonly DesactivarMiembroDeGrupoUseCase _desacivarMiembroDeGrupoUseCase;
+
+        public ServicioPreferenciasGrupos(
+            ActualizarGustosAGrupoUseCase actualizarGustosGrupoUseCase,
+            EliminarGustosGrupoUseCase eliminarGustosGrupoUseCase,
+            DesactivarMiembroDeGrupoUseCase desacivarMiembroDeGrupoUseCase)
+        {
+            _actualizarGustosGrupoUseCase = actualizarGustosGrupoUseCase;
+            _eliminarGustosGrupoUseCase = eliminarGustosGrupoUseCase;
+            _desacivarMiembroDeGrupoUseCase = desacivarMiembroDeGrupoUseCase;
+        }
+
+        public Task<bool> ActualizarGustosDeGrupo(List<string> gustosDeUsuario, Guid grupoId)
+        {
+            return _actualizarGustosGrupoUseCase.Handle(gustosDeUsuario, grupoId);
+        }
+
+        public Task<bool> DesactivarMiembroDeGrupo(Guid grupoId, Guid usuarioId, string firebaseUid)
+        {
+            return _desacivarMiembroDeGrupoUseCase.Handle(grupoId, usuarioId, firebaseUid);
+        }
+
+        public Task<bool> EliminarGustosDeGrupo(List<string> gustosDeUsuario,Guid grupoId)
+        {
+            return _eliminarGustosGrupoUseCase.Handle(gustosDeUsuario,grupoId);
+        }
+    }
+}

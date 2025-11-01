@@ -4,6 +4,7 @@ using GustosApp.Infraestructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GustosApp.Infraestructure.Migrations
 {
     [DbContext(typeof(GustosDbContext))]
-    partial class GustosDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251031020809_PlanUsuario")]
+    partial class PlanUsuario
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1992,9 +1995,6 @@ namespace GustosApp.Infraestructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<bool>("EsPrivado")
-                        .HasColumnType("bit");
-
                     b.Property<DateTime>("FechaRegistro")
                         .HasColumnType("datetime2");
 
@@ -2031,47 +2031,6 @@ namespace GustosApp.Infraestructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Usuarios");
-                });
-
-            modelBuilder.Entity("GustosApp.Domain.Model.UsuarioRestauranteVisitado", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("FechaVisitaUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<double>("Latitud")
-                        .HasColumnType("float");
-
-                    b.Property<double>("Longitud")
-                        .HasColumnType("float");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
-
-                    b.Property<string>("PlaceId")
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<Guid?>("RestauranteId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("UsuarioId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PlaceId");
-
-                    b.HasIndex("RestauranteId");
-
-                    b.HasIndex("UsuarioId");
-
-                    b.ToTable("UsuarioRestauranteVisitados", (string)null);
                 });
 
             modelBuilder.Entity("RestauranteRestriccion", b =>
@@ -2412,24 +2371,6 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Navigation("Remitente");
                 });
 
-            modelBuilder.Entity("GustosApp.Domain.Model.UsuarioRestauranteVisitado", b =>
-                {
-                    b.HasOne("GustosApp.Domain.Model.Restaurante", "Restaurante")
-                        .WithMany()
-                        .HasForeignKey("RestauranteId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.HasOne("GustosApp.Domain.Model.Usuario", "Usuario")
-                        .WithMany("Visitados")
-                        .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Restaurante");
-
-                    b.Navigation("Usuario");
-                });
-
             modelBuilder.Entity("RestauranteRestriccion", b =>
                 {
                     b.HasOne("GustosApp.Domain.Model.Restaurante", null)
@@ -2505,8 +2446,6 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Navigation("InvitacionesRecibidas");
 
                     b.Navigation("MiembrosGrupos");
-
-                    b.Navigation("Visitados");
                 });
 #pragma warning restore 612, 618
         }

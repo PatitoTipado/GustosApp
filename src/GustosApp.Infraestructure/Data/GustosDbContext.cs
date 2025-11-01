@@ -38,12 +38,17 @@ public class GustosDbContext : DbContext
 
     public DbSet<Notificacion> Notificaciones { get; set; }
 
+    public DbSet<UsuarioRestauranteVisitado> UsuarioRestauranteVisitados { get; set; }
+
     public GustosDbContext(DbContextOptions<GustosDbContext> options)
     : base(options) { }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        
+        modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.UsuarioRestauranteVisitadoConfiguration());
+
 
         modelBuilder.Entity<Restaurante>()
             .HasMany(r => r.Reviews)

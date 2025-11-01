@@ -71,11 +71,18 @@ namespace GustosApp.API.Controllers
         [HttpPost("crear")]
         public async Task<IActionResult> CrearGrupo([FromBody] CrearGrupoRequest request, CancellationToken ct)
         {
-            
+            try
+            {
                 var firebaseUid = GetFirebaseUid();
                 var resultado = await _crearGrupoUseCase.HandleAsync(firebaseUid, request, ct);
                 return Ok(resultado);
-           
+            }
+            catch (InvalidOperationException ex) when (ex.Message.StartsWith("LIMITE_GRUPOS_ALCANZADO:"))
+            {
+                var jsonResponse = ex.Message.Substring("LIMITE_GRUPOS_ALCANZADO:".Length);
+                var response = System.Text.Json.JsonSerializer.Deserialize<LimiteGruposAlcanzadoResponse>(jsonResponse);
+                return StatusCode(402, response); // 402 Payment Required
+            }
         }
 
         [HttpPost("{grupoId}/invitar")]
@@ -95,11 +102,18 @@ namespace GustosApp.API.Controllers
         [HttpPost("unirse")]
         public async Task<IActionResult> UnirseGrupo([FromBody] UnirseGrupoRequest request, CancellationToken ct)
         {
-           
+            try
+            {
                 var firebaseUid = GetFirebaseUid();
                 var resultado = await _unirseGrupoUseCase.HandleAsync(firebaseUid, request, ct);
                 return Ok(resultado);
-         
+            }
+            catch (InvalidOperationException ex) when (ex.Message.StartsWith("LIMITE_GRUPOS_ALCANZADO:"))
+            {
+                var jsonResponse = ex.Message.Substring("LIMITE_GRUPOS_ALCANZADO:".Length);
+                var response = System.Text.Json.JsonSerializer.Deserialize<LimiteGruposAlcanzadoResponse>(jsonResponse);
+                return StatusCode(402, response); // 402 Payment Required
+            }
         }
 
         [HttpPost("{grupoId}/abandonar")]

@@ -32,4 +32,8 @@
 		<ProjectReference Include="..\GustosApp.Infraestructure\GustosApp.Infraestructure.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="NewFolder\" />
+	</ItemGroup>
+
 </Project>

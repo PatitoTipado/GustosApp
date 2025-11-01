@@ -26,7 +26,10 @@ namespace GustosApp.Infraestructure.Repositories
             => _db.Usuarios.FirstOrDefaultAsync(u => u.Email == email, ct);
 
         public Task<Usuario?> GetByUsernameAsync(string username, CancellationToken ct = default)
-            => _db.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == username, ct);
+            => _db.Usuarios
+                .Include(u => u.Gustos)
+                .Include(u => u.Visitados)
+                .FirstOrDefaultAsync(u => u.IdUsuario == username, ct);
 
         public async Task<IEnumerable<Usuario>> GetAllAsync(int limit = 100, CancellationToken ct = default)
         {

@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using GustosApp.Domain.Model;
 using GustosApp.API.DTO;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 
 namespace GustosApp.API.Controllers
 {
@@ -31,12 +32,13 @@ namespace GustosApp.API.Controllers
         private readonly RegistrarUsuarioUseCase _registrar;
         private readonly IMapper _mapper;
 
+        private readonly IUsuarioRepository _usuarioRepository;
 
 
 
         public UsuarioController(RegistrarUsuarioUseCase context, GuardarRestriccionesUseCase saveRestr, GuardarCondicionesUseCase saveCond,
             ObtenerGustosFiltradosUseCase getGustos, GuardarGustosUseCase saveGustos, ObtenerResumenRegistroUseCase resumen, FinalizarRegistroUseCase finalizar,
-            IMapper mapper)
+            IMapper mapper, IUsuarioRepository usuarioRepository)
         {
     
             _registrar = context;
@@ -47,6 +49,7 @@ namespace GustosApp.API.Controllers
             _saveGustos = saveGustos;
             _resumen = resumen;
             _mapper = mapper;
+             _usuarioRepository = usuarioRepository;
         }
 
         [Authorize]
@@ -199,8 +202,41 @@ namespace GustosApp.API.Controllers
             await _finalizar.HandleAsync(uid, ct);
             return Ok(new { mensaje = "Registro finalizado", pasoActual = "Finalizado" });
         }
-    }
 
+         [HttpGet("{username}/perfil")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetPerfilUsuario([FromRoute] string username, CancellationToken ct = default)
+        {
+            var user = await _usuarioRepository.GetByUsernameAsync(username, ct);
+            if (user is null)
+                return NotFound(new { mensaje = "Usuario no encontrado" });
+
+            var resp = new UsuarioPerfilResponse
+            {
+                Nombre = user.Nombre,
+                Apellido = user.Apellido,
+                Username = user.IdUsuario,
+                FotoPerfilUrl = user.FotoPerfilUrl,
+                EsPrivado = user.EsPrivado,
+                Gustos = (user.Gustos ?? new System.Collections.Generic.List<Gusto>())
+                    .Select(g => new GustoLiteDto { Id = g.Id, Nombre = g.Nombre })
+                    .ToList(),
+                Visitados = (user.Visitados ?? new System.Collections.Generic.List<UsuarioRestauranteVisitado>())
+                    .Select(v => new VisitadoDto
+                    {
+                        Id = !string.IsNullOrWhiteSpace(v.PlaceId)
+                            ? v.PlaceId!
+                            : (v.RestauranteId.HasValue ? v.RestauranteId.Value.ToString() : v.Id.ToString()),
+                        Nombre = v.Nombre,
+                        Lat = v.Latitud,
+                        Lng = v.Longitud
+                    })
+                    .ToList()
+            };
+
+            return Ok(resp);
+        }
+}
 
 }
 

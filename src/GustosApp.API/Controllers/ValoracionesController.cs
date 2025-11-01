@@ -4,6 +4,7 @@ using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases;
 using GustosApp.Domain.Model;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading;
 
 namespace GustosApp.API.Controllers
 {
@@ -14,13 +15,15 @@ namespace GustosApp.API.Controllers
 
         private readonly CrearValoracionUsuarioUseCase _crearValoracionUsuarioUseCase;
         private readonly IValoracionUsuarioRepository _valoracionUsuarioRepository;
+        private readonly ActualizarValoracionRestauranteUseCase _actualizarValoracionRestauranteUseCase;
         private readonly IMapper _mapper;
 
-        public ValoracionesController(CrearValoracionUsuarioUseCase crearValoracionUsuarioUseCase, IValoracionUsuarioRepository valoracionUsuarioRepository,IMapper  mapper)
+        public ValoracionesController(CrearValoracionUsuarioUseCase crearValoracionUsuarioUseCase, IValoracionUsuarioRepository valoracionUsuarioRepository,IMapper  mapper, ActualizarValoracionRestauranteUseCase actualizarValoracionRestauranteUseCase)
         {
             _crearValoracionUsuarioUseCase = crearValoracionUsuarioUseCase;
             _valoracionUsuarioRepository = valoracionUsuarioRepository;
             _mapper = mapper;
+            _actualizarValoracionRestauranteUseCase = actualizarValoracionRestauranteUseCase;
         }
 
         [HttpPost]
@@ -33,6 +36,9 @@ namespace GustosApp.API.Controllers
                 request.Comentario,
                 ct
                 );
+
+            await _actualizarValoracionRestauranteUseCase.HandleAsync(request.RestauranteId, ct);
+
             return Ok("Valoracion registrada");
         }
 

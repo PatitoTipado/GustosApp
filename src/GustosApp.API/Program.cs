@@ -108,6 +108,7 @@ builder.Services.AddScoped<IReviewRepository, ReviewRepositoryEF>();
 builder.Services.AddScoped<IGustosGrupoRepository, GustosGrupoRepositoryEF>();
 builder.Services.AddScoped<INotificacionRepository, NotificacionRepositoryEF>();
 builder.Services.AddScoped<IValoracionUsuarioRepository, ValoracionUsuarioRepositoryEF>();
+builder.Services.AddScoped<ActualizarValoracionRestauranteUseCase>();
 
 // Chat repository
 builder.Services.AddScoped<GustosApp.Domain.Interfaces.IChatRepository, GustosApp.Infraestructure.Repositories.ChatRepositoryEF>();

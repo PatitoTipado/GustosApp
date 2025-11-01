@@ -37,5 +37,13 @@ namespace GustosApp.Infraestructure.Repositories
                             .Include(v => v.Usuario) 
                             .ToListAsync(cancellationToken);
         }
+
+        public async Task<List<Valoracion>> ObtenerPorRestauranteAsync(Guid restauranteId, CancellationToken cancellationToken)
+        {
+            return await _context.Valoraciones
+                .Where(v => v.RestauranteId == restauranteId)
+                .ToListAsync(cancellationToken);
+        }
+
     }
 }

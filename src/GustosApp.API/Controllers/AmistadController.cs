@@ -20,7 +20,7 @@ namespace GustosApp.API.Controllers
         private readonly AceptarSolicitudUseCase _aceptarSolicitud;
         private readonly RechazarSolicitudUseCase _rechazarSolicitud;
         private readonly ObtenerAmigosUseCase _obtenerAmigos;
-    private readonly EliminarAmigoUseCase _eliminarAmigo;
+        private readonly EliminarAmigoUseCase _eliminarAmigo;
         private readonly IUsuarioRepository _usuarioRepository;
 
         public AmistadController(EnviarSolicitudAmistadUseCase enviarSolicitud,
@@ -52,9 +52,10 @@ namespace GustosApp.API.Controllers
             return firebaseUid;
         }
 
-    [HttpGet("buscar-usuarios")]
-    public async Task<IActionResult> BuscarUsuarios([FromQuery] string? q, CancellationToken ct)
+        [HttpGet("buscar-usuarios")]
+        public async Task<IActionResult> BuscarUsuarios([FromQuery] string? q, CancellationToken ct)
         {
+            GetFirebaseUid();
             var results = new List<UsuarioSimpleResponse>();
 
             if (string.IsNullOrWhiteSpace(q))
@@ -86,25 +87,9 @@ namespace GustosApp.API.Controllers
         [HttpPost("enviar")]
         public async Task<IActionResult> EnviarSolicitud([FromBody] EnviarSolicitudRequest request, CancellationToken ct)
         {
-            try
-            {
-                var uid = GetFirebaseUid();
-                var resp = await _enviarSolicitud.HandleAsync(uid, request, ct);
-                return Ok(resp);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                // Dev: devolver stack trace completo temporalmente para depuración local
-                return StatusCode(500, ex.ToString());
-            }
+            var uid = GetFirebaseUid();
+            var resp = await _enviarSolicitud.HandleAsync(uid, request, ct);
+            return Ok(resp);
         }
 
         [HttpGet("solicitudes")]
@@ -118,30 +103,19 @@ namespace GustosApp.API.Controllers
         [HttpPost("{solicitudId}/aceptar")]
         public async Task<IActionResult> Aceptar(Guid solicitudId, CancellationToken ct)
         {
-            try
-            {
-                var uid = GetFirebaseUid();
-                var resp = await _aceptarSolicitud.HandleAsync(uid, solicitudId, ct);
-                return Ok(resp);
-            }
-            catch (UnauthorizedAccessException ex) { return Unauthorized(ex.Message); }
-            catch (ArgumentException ex) { return BadRequest(ex.Message); }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            var uid = GetFirebaseUid();
+            var resp = await _aceptarSolicitud.HandleAsync(uid, solicitudId, ct);
+            return Ok(resp);
         }
 
         [HttpPost("{solicitudId}/rechazar")]
         public async Task<IActionResult> Rechazar(Guid solicitudId, CancellationToken ct)
         {
-            try
-            {
-                var uid = GetFirebaseUid();
-                var resp = await _rechazarSolicitud.HandleAsync(uid, solicitudId, ct);
-                return Ok(resp);
-            }
-            catch (UnauthorizedAccessException ex) { return Unauthorized(ex.Message); }
-            catch (ArgumentException ex) { return BadRequest(ex.Message); }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            var uid = GetFirebaseUid();
+            var resp = await _rechazarSolicitud.HandleAsync(uid, solicitudId, ct);
+            return Ok(resp);
         }
+
 
         [HttpGet("amigos")]
         public async Task<IActionResult> ObtenerAmigos(CancellationToken ct)
@@ -154,20 +128,13 @@ namespace GustosApp.API.Controllers
         [HttpDelete("{amigoId}")]
         public async Task<IActionResult> EliminarAmigo(string amigoId, CancellationToken ct)
         {
-            try
+            var uid = GetFirebaseUid();
+            if (!Guid.TryParse(amigoId, out var amigoGuid))
             {
-                var uid = GetFirebaseUid();
-                if (!Guid.TryParse(amigoId, out var amigoGuid))
-                {
-                    return BadRequest("El id de amigo no es un GUID válido.");
-                }
-
-                var ok = await _eliminarAmigo.HandleAsync(uid, amigoGuid, ct);
-                return Ok(new { success = ok });
+                return BadRequest("El id de amigo no es un GUID válido.");
             }
-            catch (UnauthorizedAccessException ex) { return Unauthorized(ex.Message); }
-            catch (ArgumentException ex) { return BadRequest(ex.Message); }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            var ok = await _eliminarAmigo.HandleAsync(uid, amigoGuid, ct);
+            return Ok(new { success = ok });
         }
     }
 }

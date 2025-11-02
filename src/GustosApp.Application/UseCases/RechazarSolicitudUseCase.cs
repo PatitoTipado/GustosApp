@@ -1,6 +1,7 @@
 
 using GustosApp.Application.DTO;
 using GustosApp.Domain.Interfaces;
+using GustosApp.Domain.Model;
 
 namespace GustosApp.Application.UseCases
 {
@@ -15,7 +16,7 @@ namespace GustosApp.Application.UseCases
             _usuarioRepository = usuarioRepository;
         }
 
-        public async Task<SolicitudAmistadResponse> HandleAsync(string firebaseUid, Guid solicitudId, CancellationToken cancellationToken = default)
+        public async Task<SolicitudAmistad> HandleAsync(string firebaseUid, Guid solicitudId, CancellationToken cancellationToken = default)
         {
             var usuario = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid, cancellationToken);
             if (usuario == null) throw new UnauthorizedAccessException("Usuario no encontrado");
@@ -28,16 +29,7 @@ namespace GustosApp.Application.UseCases
             solicitud.Rechazar();
             await _solicitudRepository.UpdateAsync(solicitud, cancellationToken);
 
-            return new SolicitudAmistadResponse
-            {
-                Id = solicitud.Id,
-                Remitente = new UsuarioSimpleResponse { Id = solicitud.Remitente.Id, Nombre = solicitud.Remitente.Nombre + " " + solicitud.Remitente.Apellido, Email = solicitud.Remitente.Email, FotoPerfilUrl = solicitud.Remitente.FotoPerfilUrl },
-                Destinatario = new UsuarioSimpleResponse { Id = solicitud.Destinatario.Id, Nombre = solicitud.Destinatario.Nombre + " " + solicitud.Destinatario.Apellido, Email = solicitud.Destinatario.Email, FotoPerfilUrl = solicitud.Destinatario.FotoPerfilUrl },
-                Estado = solicitud.Estado.ToString(),
-                FechaEnvio = solicitud.FechaEnvio,
-                FechaRespuesta = solicitud.FechaRespuesta,
-                Mensaje = solicitud.Mensaje
-            };
+            return solicitud;
         }
     }
 }

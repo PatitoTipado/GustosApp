@@ -1,6 +1,6 @@
-using System;
 
-namespace GustosApp.Application.DTO
+
+namespace GustosApp.API.DTO
 {
     public class UsuarioSimpleResponse
     {

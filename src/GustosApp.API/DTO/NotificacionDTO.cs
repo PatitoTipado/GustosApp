@@ -1,4 +1,4 @@
-﻿using GustosApp.Domain.Model;
+﻿
 
 namespace GustosApp.API.DTO
 {

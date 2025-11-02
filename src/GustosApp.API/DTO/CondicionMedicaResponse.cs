@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GustosApp.Application.DTO
+namespace GustosApp.API.DTO
 {
     public class CondicionMedicaResponse
     {

@@ -3,7 +3,8 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
-using GustosApp.Application.DTO;
+
+using GustosApp.API.DTO;
 using GustosApp.Application.UseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
@@ -23,6 +24,7 @@ namespace GustosApp.API.Controllers
         private readonly RechazarSolicitudUseCase _rechazarSolicitud;
         private readonly ObtenerAmigosUseCase _obtenerAmigos;
         private readonly EliminarAmigoUseCase _eliminarAmigo;
+        private readonly BuscarUsuariosUseCase _buscarUsuarios;
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IMapper _mapper;
 
@@ -33,6 +35,7 @@ namespace GustosApp.API.Controllers
                 RechazarSolicitudUseCase rechazarSolicitud,
                 ObtenerAmigosUseCase obtenerAmigos,
                 EliminarAmigoUseCase eliminarAmigo,
+                BuscarUsuariosUseCase buscarUsuarios,
                 IUsuarioRepository usuarioRepository,
                 IMapper mapper)
         {
@@ -43,80 +46,95 @@ namespace GustosApp.API.Controllers
             _obtenerAmigos = obtenerAmigos;
             _eliminarAmigo = eliminarAmigo;
             _usuarioRepository = usuarioRepository;
+            _buscarUsuarios = buscarUsuarios;
             _mapper = mapper;
         }
 
-       
-        [Authorize]
+
+        /// <summary>
+        /// Busca usuarios por nombre de usuario (parcial) o devuelve los primeros 50.
+        /// </summary>
+        /// <param name="username">Texto parcial del nombre de usuario</param>
+        /// <returns>Lista de usuarios encontrados</returns>
         [HttpGet("buscar-usuarios")]
+        [ProducesResponseType(typeof(IEnumerable<UsuarioSimpleResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> BuscarUsuarios([FromQuery] string? username, CancellationToken ct)
         {
-            var firebaseUid = GetFirebaseUid();
+            var firebaseUid = User.FindFirst("user_id")?.Value
+                            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                            ?? User.FindFirst("sub")?.Value;
 
-            if (!string.IsNullOrWhiteSpace(username) && username.Length < 2)
-                return BadRequest(new { message = "El nombre de usuario debe tener al menos 2 caracteres para la búsqueda." });
+            if (string.IsNullOrWhiteSpace(firebaseUid))
+                return Unauthorized(new { message = "Token inválido o sin UID." });
+
+                var usuarios = await _buscarUsuarios.HandleAsync(firebaseUid, username, ct);
+
+                var response = _mapper.Map<IEnumerable<UsuarioSimpleResponse>>(usuarios);
+
+                return Ok(response);
           
-            // Obtener usuario actual (para excluirlo de resultados)
-            var usuarioActual = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid, ct);
-            if (usuarioActual == null)
-                return Unauthorized("Usuario no encontrado o token inválido.");
-
-            IEnumerable<Usuario> usuarios;
-
-            if (string.IsNullOrWhiteSpace(username))
-            {
-                // Si no se pasa 'username', devolver los primeros 50 usuarios distintos al actual
-                usuarios = await _usuarioRepository.GetAllExceptAsync(usuarioActual.Id, 50, ct);
-            }
-            else
-            {
-                // Buscar coincidencias parciales por username (username)
-                usuarios = await _usuarioRepository.BuscarPorUsernameAsync(username, usuarioActual.Id, ct);
-            }
-
-            var results = usuarios.Select(u => new UsuarioSimpleResponse
-            {
-                Id = u.Id,
-                Nombre = $"{u.Nombre} {u.Apellido}",
-                Email = u.Email,
-                FotoPerfilUrl = u.FotoPerfilUrl,
-                Username = u.IdUsuario
-            });
-
-            return Ok(results);
         }
-
+      
         [Authorize]
         [HttpPost("enviar")]
+        [ProducesResponseType(typeof(SolicitudAmistadResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> EnviarSolicitud([FromBody] EnviarSolicitudRequest request, CancellationToken ct)
         {
             var uid = GetFirebaseUid();
-            var resp = await _enviarSolicitud.HandleAsync(uid, request, ct);
-            return Ok(resp);
+            var solicitud = await _enviarSolicitud.HandleAsync(uid, request.UsernameDestino,request.Mensaje, ct);
+            var response = _mapper.Map<SolicitudAmistadResponse>(solicitud);
+
+            return Ok(response);
         }
+
+
+        
         [Authorize]
         [HttpGet("solicitudes")]
+        [ProducesResponseType(typeof(IEnumerable<SolicitudAmistadResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> ObtenerSolicitudes(CancellationToken ct)
         {
             var uid = GetFirebaseUid();
-            var resp = await _obtenerPendientes.HandleAsync(uid, ct);
-            return Ok(resp);
+            var listaSolicitudesAmistad = await _obtenerPendientes.HandleAsync(uid, ct);
+            var response = _mapper.Map<IEnumerable<SolicitudAmistadResponse>>(listaSolicitudesAmistad);
+
+
+            return Ok(response);
         }
         [Authorize]
         [HttpPost("{solicitudId}/aceptar")]
+        [ProducesResponseType(typeof(SolicitudAmistadResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Aceptar(Guid solicitudId, CancellationToken ct)
         {
             var uid = GetFirebaseUid();
-            var resp = await _aceptarSolicitud.HandleAsync(uid, solicitudId, ct);
-            return Ok(resp);
+
+            var solicitud = await _aceptarSolicitud.HandleAsync(uid, solicitudId, ct);
+            var response = _mapper.Map<SolicitudAmistadResponse>(solicitud);
+
+            return Ok(response);
         }
+
+
         [Authorize]
         [HttpPost("{solicitudId}/rechazar")]
+        [ProducesResponseType(typeof(SolicitudAmistadResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Rechazar(Guid solicitudId, CancellationToken ct)
         {
             var uid = GetFirebaseUid();
-            var resp = await _rechazarSolicitud.HandleAsync(uid, solicitudId, ct);
-            return Ok(resp);
+            var solicitud = await _rechazarSolicitud.HandleAsync(uid, solicitudId, ct);
+            var response = _mapper.Map<SolicitudAmistadResponse>(solicitud);
+
+
+            return Ok(response);
         }
 
         [Authorize]
@@ -135,6 +153,10 @@ namespace GustosApp.API.Controllers
 
         [Authorize]
         [HttpDelete("{username}")]
+        [ProducesResponseType(typeof(EliminarAmigoResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> EliminarAmigo(string username, CancellationToken ct)
         {
             var firebaseUid = GetFirebaseUid();
@@ -154,8 +176,13 @@ namespace GustosApp.API.Controllers
                 return BadRequest(new { message = "No podés eliminarte a vos mismo como amigo." });
 
             var ok = await _eliminarAmigo.HandleAsync(firebaseUid, amigo.Id, ct);
+            var response = new EliminarAmigoResponse
+            {
+                Success = ok,
+                Message = $"Eliminaste a {username} de tu lista de amigos."
+            };
 
-            return Ok(new { success = ok, message = $"Eliminaste a {username} de tu lista de amigos." });
+            return Ok(response);
         }
         private string GetFirebaseUid()
         {

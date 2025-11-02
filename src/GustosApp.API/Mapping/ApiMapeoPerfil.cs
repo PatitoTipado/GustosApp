@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+
 using GustosApp.API.DTO;
 using GustosApp.Application.DTO;
 using GustosApp.Domain.Model;
@@ -49,6 +50,17 @@ namespace GustosApp.API.Mapping
             CreateMap<Usuario, UsuarioSimpleResponse>()
                 .ForMember(dest => dest.Username,
                 opt => opt.MapFrom(src => src.IdUsuario));
+
+            
+            CreateMap<SolicitudAmistad, SolicitudAmistadResponse>()
+                .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado.ToString()))
+                .ForMember(dest => dest.Remitente, opt => opt.MapFrom(src => src.Remitente))
+                .ForMember(dest => dest.Destinatario, opt => opt.MapFrom(src => src.Destinatario));
+
+
+
+            CreateMap<CondicionMedica, CondicionMedicaResponse>()
+           .ForMember(dest => dest.Seleccionado, opt => opt.Ignore());
 
         }
     }

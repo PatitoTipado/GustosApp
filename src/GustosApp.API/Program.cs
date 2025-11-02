@@ -160,6 +160,7 @@ builder.Services.AddScoped<EnviarMensajeGrupoUseCase>();
 builder.Services.AddScoped<ActualizarGustosAGrupoUseCase>();
 builder.Services.AddScoped<ObtenerPreferenciasGruposUseCase>();
 builder.Services.AddScoped<EliminarNotificacionUseCase>();
+builder.Services.AddScoped<BuscarUsuariosUseCase>();
 
 
 

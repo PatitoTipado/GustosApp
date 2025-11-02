@@ -54,7 +54,6 @@ namespace GustosApp.API.Controllers
 
         [Authorize]
         [HttpPost("registrar")]
-
         //Documentacion swagger statuscodes
         [ProducesResponseType(typeof(RegistrarUsuarioResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

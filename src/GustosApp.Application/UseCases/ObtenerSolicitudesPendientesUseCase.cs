@@ -1,5 +1,6 @@
 using GustosApp.Application.DTO;
 using GustosApp.Domain.Interfaces;
+using GustosApp.Domain.Model;
 
 namespace GustosApp.Application.UseCases
 {
@@ -14,22 +15,16 @@ namespace GustosApp.Application.UseCases
             _usuarioRepository = usuarioRepository;
         }
 
-        public async Task<IEnumerable<SolicitudAmistadResponse>> HandleAsync(string firebaseUid, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<SolicitudAmistad>> HandleAsync(
+             string firebaseUid,
+             CancellationToken ct = default)
         {
-            var usuario = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid, cancellationToken);
-            if (usuario == null) throw new UnauthorizedAccessException("Usuario no encontrado");
+            var usuario = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid, ct)
+                ?? throw new UnauthorizedAccessException("Usuario no encontrado");
 
-            var pendientes = await _solicitudRepository.GetSolicitudesPendientesByUsuarioIdAsync(usuario.Id, cancellationToken);
+            var pendientes = await _solicitudRepository.GetSolicitudesPendientesByUsuarioIdAsync(usuario.Id, ct);
 
-            return pendientes.Select(p => new SolicitudAmistadResponse
-            {
-                Id = p.Id,
-                Remitente = new UsuarioSimpleResponse { Id = p.Remitente.Id, Nombre = p.Remitente.Nombre + " " + p.Remitente.Apellido, Email = p.Remitente.Email, FotoPerfilUrl = p.Remitente.FotoPerfilUrl },
-                Destinatario = new UsuarioSimpleResponse { Id = p.Destinatario.Id, Nombre = p.Destinatario.Nombre + " " + p.Destinatario.Apellido, Email = p.Destinatario.Email, FotoPerfilUrl = p.Destinatario.FotoPerfilUrl },
-                Estado = p.Estado.ToString(),
-                FechaEnvio = p.FechaEnvio,
-                Mensaje = p.Mensaje
-            }).ToList();
+            return pendientes;
         }
     }
 }

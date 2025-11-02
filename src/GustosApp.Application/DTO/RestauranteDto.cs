@@ -23,7 +23,9 @@ namespace GustosApp.Application.DTO
         public double Lng { get; set; }
         public double Rating { get; set; }
         public string GooglePlaceId { get; set; }
-        public string Tipo { get; set; }
+
+        public string? PrimaryType { get; set; }
+        public IReadOnlyList<string> Types { get; set; } = Array.Empty<string>();
         public string? ImagenUrl { get; set; }
         public decimal? Valoracion { get; set; }
         public List<string> Platos { get; set; }
@@ -38,7 +40,8 @@ namespace GustosApp.Application.DTO
             PropietarioUid = string.Empty;
             Nombre = string.Empty;
             Direccion = string.Empty;
-            Tipo = string.Empty;
+            PrimaryType = null;
+            Types = Array.Empty<string>();
             Platos = new List<string>();
             GustosQueSirve = new List<GustoDto>();
             RestriccionesQueRespeta = new List<RestriccionResponse>();
@@ -48,7 +51,7 @@ namespace GustosApp.Application.DTO
         public RestauranteDto(
             Guid id, string propietarioUid, string nombre, string direccion, double latitud,
             double longitud, object? horarios, DateTime creadoUtc, DateTime actualizadoUtc,
-            string tipo, string? imagenUrl, decimal? valoracion, List<string> platos,
+            string? primaryType, IReadOnlyList<string>? types, string? imagenUrl, decimal? valoracion, List<string> platos,
             ICollection<GustoDto> gustosQueSirve, ICollection<RestriccionResponse> restriccionesQueRespeta,
             double score)
         {
@@ -61,7 +64,8 @@ namespace GustosApp.Application.DTO
             Horarios = horarios;
             CreadoUtc = creadoUtc;
             ActualizadoUtc = actualizadoUtc;
-            Tipo = tipo ?? string.Empty;
+            PrimaryType = primaryType;
+            Types = types ?? Array.Empty<string>();
             ImagenUrl = imagenUrl;
             Valoracion = valoracion;
             Platos = platos ?? new List<string>();

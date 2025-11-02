@@ -16,6 +16,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using GustosApp.Infraestructure.Ocr;
+using GustosApp.Infraestructure.Parsing;
+using GustosApp.Infraestructure.Files;      
+
 // Usar System.Text.Json para manejar el secreto de Firebase
 using System.Text.Json;
 
@@ -78,6 +82,26 @@ builder.Services.AddSingleton<IEmbeddingService>(sp =>
 
 // Autorización explícita 
 builder.Services.AddAuthorization();
+
+// Almacenamiento de archivos local (wwwroot/uploads)
+builder.Services.AddSingleton<IAlmacenamientoArchivos>(sp =>
+{
+    var env = sp.GetRequiredService<IWebHostEnvironment>();
+    var uploadsRoot = Path.Combine(env.ContentRootPath, "wwwroot", "uploads");
+    return new LocalFileStorage(uploadsRoot);
+});
+
+// OCR + Parser
+builder.Services.AddSingleton<IOcrService>(sp =>
+{
+    // Ruta base del host (la da el API host)
+    var env = sp.GetRequiredService<IWebHostEnvironment>();
+    // tessdata en el proyecto API (copiá eng.traineddata y spa.traineddata ahí)
+    var tessdataPath = Path.Combine(env.ContentRootPath, "tessdata");
+    return new TesseractOcrService(tessdataPath);
+});
+builder.Services.AddSingleton<IMenuParser, SimpleMenuParser>();
+
 
 // =====================
 //    Controllers / JSON

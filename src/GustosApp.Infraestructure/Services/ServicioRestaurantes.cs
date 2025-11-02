@@ -45,7 +45,8 @@ namespace GustosApp.Infraestructure.Services
                 Horarios = horarios,
                 CreadoUtc = r.CreadoUtc,
                 ActualizadoUtc = r.ActualizadoUtc,
-                Tipo = r.Tipo.ToString(),
+                PrimaryType = r.PrimaryType,
+                Types = SafeDeserializeTypes(r.TypesJson),
                 ImagenUrl = r.ImagenUrl,
                 Valoracion = r.Valoracion,
                 Platos = r.Platos.Select(p => p.Plato.ToString()).ToList(),
@@ -64,7 +65,23 @@ namespace GustosApp.Infraestructure.Services
                     .Select(g => new RestriccionResponse(g.Id, g.Nombre))
                     .ToList()
             };
+
+            static List<string> SafeDeserializeTypes(string json)
+            {
+                try
+                {
+                    return string.IsNullOrWhiteSpace(json)
+                        ? new List<string>()
+                        : JsonSerializer.Deserialize<List<string>>(json) ?? new List<string>();
+                }
+                catch
+                {
+                    return new List<string>();
+                }
+            }
         }
+
+
 
         public async Task<IReadOnlyList<RestauranteDto>> BuscarAsync(
     string? tipo,
@@ -77,13 +94,10 @@ namespace GustosApp.Infraestructure.Services
 
             var q = _db.Restaurantes.AsNoTracking()
 
-                // Incluye Platos (Se asume 1:N o una entidad de unión simple)
                 .Include(r => r.Platos)
 
-                // Carga de Gustos N:N: Cargar la tabla de unión y la entidad final
                 .Include(r => r.GustosQueSirve)
 
-                // Carga de Restricciones N:N: Cargar la tabla de unión y la entidad final
                 .Include(r => r.RestriccionesQueRespeta)
 
                 .AsSplitQuery();
@@ -103,15 +117,12 @@ namespace GustosApp.Infraestructure.Services
                 }
             }
 
-            // 1.1. Filtro por Tipo (SQL)
             if (!string.IsNullOrWhiteSpace(tipo))
             {
-                if (!Enum.TryParse<TipoRestaurante>(tipo, ignoreCase: true, out var tipoEnum))
-                    return Array.Empty<RestauranteDto>();
-                q = q.Where(r => r.Tipo == tipoEnum);
+                var t = tipo.Trim();
+                q = q.Where(r => r.PrimaryType == t || r.TypesJson.Contains($"\"{t}\""));
             }
 
-            // 1.2. Filtro por Plato (SQL)
             if (!string.IsNullOrWhiteSpace(plato))
             {
                 if (!Enum.TryParse<PlatoComida>(plato, ignoreCase: true, out var platoEnum))
@@ -119,28 +130,21 @@ namespace GustosApp.Infraestructure.Services
                 q = q.Where(r => r.Platos.Any(p => p.Plato == platoEnum));
             }
 
-            // Si no hay coordenadas, ordenar por Nombre antes de traer la lista.
             if (!lat.HasValue || !lng.HasValue || !radioMetros.HasValue || radioMetros.Value <= 0)
             {
                 q = q.OrderBy(r => r.NombreNormalizado);
             }
 
-            // MATERIALIZACIÓN TEMPRANA: Ejecutar la consulta SQL y traer los primeros resultados.
-            // Esto es el "Tráete primero la entidad". Traeremos hasta 1000 para luego filtrar.
+
             var lista = await q.Take(1000).ToListAsync();
 
-            // --------------------------------------------------------------------------------
-            // 2. FILTRADO Y ORDENACIÓN EN MEMORIA (LINQ to Objects)
-            // --------------------------------------------------------------------------------
 
-            // 2.1. Aplicar Filtro de Proximidad (Bounding Box) y Ordenación en memoria
             if (lat.HasValue && lng.HasValue && radioMetros.HasValue && radioMetros.Value > 0)
             {
                 var latVal = lat.Value;
                 var lngVal = lng.Value;
                 var radioMetrosVal = radioMetros.Value;
 
-                // Cálculos de Bounding Box
                 var degLat = radioMetrosVal / 111_000.0;
                 var degLng = radioMetrosVal / (111_000.0 * Math.Cos(latVal * Math.PI / 180.0));
 
@@ -149,15 +153,16 @@ namespace GustosApp.Infraestructure.Services
                 var minLng = lngVal - degLng;
                 var maxLng = lngVal + degLng;
 
-                // 2.1.1. Filtrar en memoria por Bounding Box
-                lista = lista.Where(r => r.Latitud >= minLat && r.Latitud <= maxLat
-                                      && r.Longitud >= minLng && r.Longitud <= maxLng)
-                             .ToList();
+                // Latitud/Longitud son double (no-null), filtramos directo
+                lista = lista
+                    .Where(r =>
+                        r.Latitud >= minLat && r.Latitud <= maxLat &&
+                        r.Longitud >= minLng && r.Longitud <= maxLng)
+                    .ToList();
 
-                // 2.1.2. Aplicar Ordenación por Distancia (Manhattan) en memoria
                 lista = lista
                     .OrderBy(r => Math.Abs(r.Latitud - latVal) + Math.Abs(r.Longitud - lngVal))
-                    .Take(200) // Limitar a los 200 más cercanos después de la ordenación
+                    .Take(200)
                     .ToList();
             }
 
@@ -181,8 +186,7 @@ namespace GustosApp.Infraestructure.Services
                 }
             }
 
-            // 3. MAPEAR Y DEVOLVER
-            // Los datos necesarios para Map (GustosQueSirve, RestriccionesQueRespeta, etc.) ya están cargados.
+
             return lista.Select(Map).ToList();
         }
 
@@ -195,8 +199,15 @@ namespace GustosApp.Infraestructure.Services
             if (nombreEnUso)
                 throw new ArgumentException("El nombre ya está en uso.");
 
-            if (!Enum.TryParse<TipoRestaurante>(dto.Tipo, true, out var tipoParsed))
-                throw new ArgumentException("Tipo inválido.");
+            var primaryType = string.IsNullOrWhiteSpace(dto.PrimaryType)
+                ? "restaurant"
+                : dto.PrimaryType!.Trim();
+
+            var typesList = (dto.Types ?? new())
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .Select(t => t.Trim())
+                .Distinct()
+                .ToList();
 
             var platosParsed = (dto.Platos ?? new())
                 .Select(s =>
@@ -209,22 +220,26 @@ namespace GustosApp.Infraestructure.Services
                 .ToList();
 
             var ahora = DateTime.UtcNow;
-            var entidad = new Restaurante
-            {
-                Id = Guid.NewGuid(),
-                PropietarioUid = propietarioUid,
-                Nombre = dto.Nombre.Trim(),
-                NombreNormalizado = nombreNorm,
-                Direccion = dto.Direccion.Trim(),
-                Latitud = dto.Latitud,
-                Longitud = dto.Longitud,
-                HorariosJson = dto.Horarios is null ? "{}" : JsonSerializer.Serialize(dto.Horarios),
-                CreadoUtc = ahora,
-                ActualizadoUtc = ahora,
-                Tipo = tipoParsed,
-                ImagenUrl = string.IsNullOrWhiteSpace(dto.ImagenUrl) ? null : dto.ImagenUrl!.Trim(),
-                Valoracion = dto.Valoracion
-            };
+
+            var (latOpt, lngOpt) = dto.Coordenadas;
+            if (latOpt is null || lngOpt is null)
+                throw new ArgumentException("Lat/Lng requeridos en el cuerpo (usa 'lat' y 'lng' o 'latitud' y 'longitud')."); var entidad = new Restaurante
+                {
+                    Id = Guid.NewGuid(),
+                    PropietarioUid = propietarioUid,
+                    Nombre = dto.Nombre.Trim(),
+                    NombreNormalizado = nombreNorm,
+                    Direccion = dto.Direccion.Trim(),
+                    Latitud = latOpt.Value,
+                    Longitud = lngOpt.Value,
+                    HorariosJson = dto.HorariosComoJson ?? "{}",
+                    CreadoUtc = ahora,
+                    ActualizadoUtc = ahora,
+                    PrimaryType = primaryType,
+                    TypesJson = JsonSerializer.Serialize(typesList),
+                    ImagenUrl = string.IsNullOrWhiteSpace(dto.ImagenUrl) ? null : dto.ImagenUrl!.Trim(),
+                    Valoracion = dto.Valoracion
+                };
 
             foreach (var p in platosParsed)
                 entidad.Platos.Add(new RestaurantePlato { RestauranteId = entidad.Id, Plato = p });
@@ -270,10 +285,10 @@ namespace GustosApp.Infraestructure.Services
                 .Where(r => r.Latitud >= minLat && r.Latitud <= maxLat
                          && r.Longitud >= minLng && r.Longitud <= maxLng);
 
-            if (!string.IsNullOrWhiteSpace(tipo) &&
-                Enum.TryParse<TipoRestaurante>(tipo, true, out var tipoParsed))
+            if (!string.IsNullOrWhiteSpace(tipo))
             {
-                q = q.Where(r => r.Tipo == tipoParsed);
+                var t = tipo.Trim();
+                q = q.Where(r => r.PrimaryType == t || r.TypesJson.Contains($"\"{t}\""));
             }
 
             if (platos is not null)
@@ -312,8 +327,15 @@ namespace GustosApp.Infraestructure.Services
             if (conflictoNombre)
                 throw new ArgumentException("El nombre ya está en uso.");
 
-            if (!Enum.TryParse<TipoRestaurante>(dto.Tipo, true, out var tipoParsed))
-                throw new ArgumentException("Tipo inválido.");
+            var primaryType = string.IsNullOrWhiteSpace(dto.PrimaryType)
+                ? r.PrimaryType
+                : dto.PrimaryType!.Trim();
+
+            var typesList = (dto.Types ?? new())
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .Select(t => t.Trim())
+                .Distinct()
+                .ToList();
 
             var platosParsed = (dto.Platos ?? new())
                 .Select(s =>
@@ -324,16 +346,23 @@ namespace GustosApp.Infraestructure.Services
                 })
                 .Distinct()
                 .ToList();
+            var coords = dto.Coordenadas;
+            var latOpt = coords.lat;   // double?
+            var lngOpt = coords.lng;   // double?
+
+            if (latOpt is null || lngOpt is null)
+                throw new ArgumentException("Lat/Lng requeridos para actualizar ubicación.");
 
             r.Nombre = dto.Nombre.Trim();
             r.NombreNormalizado = nombreNorm;
             r.Direccion = dto.Direccion.Trim();
-            r.Latitud = dto.Latitud;
-            r.Longitud = dto.Longitud;
-            r.HorariosJson = dto.Horarios is null ? "{}" : JsonSerializer.Serialize(dto.Horarios);
+            r.Latitud = latOpt.Value;
+            r.Longitud = lngOpt.Value;
+            r.HorariosJson = dto.HorariosComoJson ?? "{}";
             r.ActualizadoUtc = DateTime.UtcNow;
 
-            r.Tipo = tipoParsed;
+            r.PrimaryType = primaryType;
+            r.TypesJson = JsonSerializer.Serialize(typesList);
             r.ImagenUrl = string.IsNullOrWhiteSpace(dto.ImagenUrl) ? null : dto.ImagenUrl!.Trim();
             r.Valoracion = dto.Valoracion;
 
@@ -354,6 +383,9 @@ namespace GustosApp.Infraestructure.Services
             }
 
             await _db.SaveChangesAsync();
+            await _db.Entry(r).Collection(x => x.Platos).LoadAsync();
+            await _db.Entry(r).Collection(x => x.GustosQueSirve).LoadAsync();
+            await _db.Entry(r).Collection(x => x.RestriccionesQueRespeta).LoadAsync();
             return Map(r);
         }
 

@@ -15,6 +15,11 @@ namespace GustosApp.API.DTO
         public int CantidadMiembros { get; set; }
         public List<MiembroGrupoResponse> Miembros { get; set; } = new List<MiembroGrupoResponse>();
 
+        public GrupoResponse()
+        {
+
+        }
+
         public GrupoResponse(Guid id, string nombre, string? descripcion, Guid administradorId, 
             string? administradorFirebaseUid, string administradorNombre, DateTime fechaCreacion, bool activo, 
             string? codigoInvitacion, DateTime? fechaExpiracionCodigo, int cantidadMiembros)
@@ -44,6 +49,11 @@ namespace GustosApp.API.DTO
         public string UsuarioUsername { get; set; } = string.Empty;
         public DateTime FechaUnion { get; set; }
         public bool EsAdministrador { get; set; }
+
+        public MiembroGrupoResponse()
+        {
+
+        }
 
         public MiembroGrupoResponse(Guid id, Guid usuarioId, string? usuarioFirebaseUid, string usuarioNombre, 
             string usuarioEmail, string usuarioUsername, DateTime fechaUnion, bool esAdministrador)

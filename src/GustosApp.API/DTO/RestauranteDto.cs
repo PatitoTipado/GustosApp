@@ -32,6 +32,8 @@ namespace GustosApp.Application.DTO
         public ICollection<RestriccionResponse> RestriccionesQueRespeta { get; set; }
         public double Score { get; set; }
 
+
+        
         // --- CONSTRUCTOR 1: Vacío (Requerido por serializadores/mapeadores) ---
         public RestauranteDto()
         {

@@ -154,7 +154,7 @@ namespace GustosApp.API.Controllers
         }
         [Authorize]
         [HttpGet("mis-grupos")]
-        [ProducesResponseType(typeof(IEnumerable<GrupoResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(List<GrupoResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> ObtenerMisGrupos(CancellationToken ct)
         {
@@ -162,7 +162,7 @@ namespace GustosApp.API.Controllers
 
                 var grupos = await _obtenerGruposUseCase.HandleAsync(firebaseUid, ct);
 
-                 var response = _mapper.Map<IEnumerable<GrupoResponse>>(grupos);
+                 var response = _mapper.Map<List<GrupoResponse>>(grupos);
 
             return Ok(response);
           

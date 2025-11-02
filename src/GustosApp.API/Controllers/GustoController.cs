@@ -1,4 +1,6 @@
-﻿using GustosApp.Application.DTO;
+﻿using AutoMapper;
+using GustosApp.API.DTO;
+using GustosApp.Application.DTO;
 using GustosApp.Application.UseCases;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,46 +16,57 @@ namespace GustosApp.API.Controllers
     {
 
         private readonly ObtenerGustosFiltradosUseCase _obtenerGustos;
+        private IMapper _mapper;
 
-      
-        public GustoController(ObtenerGustosFiltradosUseCase obtenerGustos)
+
+        public GustoController(ObtenerGustosFiltradosUseCase obtenerGustos,
+            IMapper mapper)
         {
             _obtenerGustos = obtenerGustos;
+            _mapper = mapper;
         }
 
 
         // GET: api/<ValuesController>
-        
+
+        [Authorize]
         [HttpGet]
+        [ProducesResponseType(typeof(ObtenerGustosFiltradosResponse),StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> ObtenerGustosFiltrados(CancellationToken ct)
         {
-            var uid = User.FindFirst("user_id")?.Value
-                        ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                        ?? User.FindFirst("sub")?.Value;
+            var uid = GetFirebaseUid();
 
             if (string.IsNullOrWhiteSpace(uid))
                 return Unauthorized(new { message = "Token no válido o sin UID" });
 
-            var resp = await _obtenerGustos.HandleAsync(uid, ct);
+            var result = await _obtenerGustos.HandleAsync(uid, ct);
 
-            // Unir la información
-            var gustos = resp.GustosFiltrados
-                .Select(g => new GustoDto
-                {
-                    Id = g.Id,
-                    Nombre = g.Nombre,
-                    ImagenUrl = g.ImagenUrl,
-                    Seleccionado = resp.GustosSeleccionados.Contains(g.Id)
-                })
-                .ToList();
+            var gustos = _mapper.Map<List<GustoDto>>(result.GustosFiltrados);
 
-            return Ok(new
+            foreach (var g in gustos)
+                g.Seleccionado = result.GustosSeleccionados.Contains(g.Id);
+
+            var response = new ObtenerGustosFiltradosResponse
             {
-                pasoActual = "Condiciones",
-                next = "/registro/gustos",
-                gustos
-            });
+                PasoActual = "Condiciones",
+                Next = "/registro/gustos",
+                Gustos = gustos
+            };
 
+            return Ok(response);
+        }
+
+        private string GetFirebaseUid()
+        {
+            var firebaseUid = User.FindFirst("user_id")?.Value
+                            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                            ?? User.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrWhiteSpace(firebaseUid))
+                throw new UnauthorizedAccessException("No se encontró el UID de Firebase en el token.");
+
+            return firebaseUid;
         }
     }
 }

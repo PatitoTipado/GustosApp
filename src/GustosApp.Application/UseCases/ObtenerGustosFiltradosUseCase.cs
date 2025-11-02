@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using GustosApp.Application.DTO;
+using GustosApp.Application.Model;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 
@@ -19,7 +20,7 @@ namespace GustosApp.Application.UseCases
             _gustos = gustos;
         }
 
-        public async Task<ObtenerGustosFiltradosResponse> HandleAsync(string firebaseUid, CancellationToken ct)
+        public async Task<GustosFiltradosResult> HandleAsync(string firebaseUid, CancellationToken ct)
         {
             var usuario = await _usuarios.GetByFirebaseUidAsync(firebaseUid, ct)
                           ?? throw new Exception("Usuario no encontrado");
@@ -39,14 +40,9 @@ namespace GustosApp.Application.UseCases
                     .Any(t => tagsProhibidos.Contains(t.NombreNormalizado)))
                 .ToList();
 
-            return new ObtenerGustosFiltradosResponse
+            return new GustosFiltradosResult
             {
-                GustosFiltrados = gustosFiltrados.Select(g => new GustoDto
-                {
-                    Id = g.Id,
-                    Nombre = g.Nombre,
-                    ImagenUrl = g.ImagenUrl
-                }).ToList(),
+                GustosFiltrados = gustosFiltrados,
                 GustosSeleccionados = usuario.Gustos.Select(g => g.Id).ToList()
             };
         }

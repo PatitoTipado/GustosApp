@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GustosApp.Domain.Model;
 
-namespace GustosApp.Application.DTO
+namespace GustosApp.Application.Model
 {
-    public class ObtenerGustosFiltradosResponse
+    public class GustosFiltradosResult
     {
-        public List<GustoDto> GustosFiltrados { get; set; } = new();
+        public List<Gusto> GustosFiltrados { get; set; } = new();
         public List<Guid> GustosSeleccionados { get; set; } = new();
     }
-    
-    
 }

@@ -1,4 +1,4 @@
-﻿namespace GustosApp.Application.DTO
+﻿namespace GustosApp.Applicationm.DTO
 {
     public class UsuarioPreferenciasDTO
     {

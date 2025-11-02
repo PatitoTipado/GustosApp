@@ -62,6 +62,59 @@ namespace GustosApp.API.Mapping
             CreateMap<CondicionMedica, CondicionMedicaResponse>()
            .ForMember(dest => dest.Seleccionado, opt => opt.Ignore());
 
+
+            
+            CreateMap<MiembroGrupo, MiembroGrupoResponse>()
+                .ForMember(dest => dest.UsuarioId, opt => opt.MapFrom(src => src.UsuarioId))
+                .ForMember(dest => dest.UsuarioFirebaseUid, opt => opt.MapFrom(src => src.Usuario.FirebaseUid))
+                .ForMember(dest => dest.UsuarioNombre, opt => opt.MapFrom(src => $"{src.Usuario.Nombre} {src.Usuario.Apellido}"))
+                .ForMember(dest => dest.UsuarioEmail, opt => opt.MapFrom(src => src.Usuario.Email))
+                .ForMember(dest => dest.UsuarioUsername, opt => opt.MapFrom(src => src.Usuario.IdUsuario))
+                .ForMember(dest => dest.FechaUnion, opt => opt.MapFrom(src => src.FechaUnion))
+                .ForMember(dest => dest.EsAdministrador, opt => opt.MapFrom(src => src.EsAdministrador));
+
+
+
+            CreateMap<Grupo, GrupoResponse>()
+             .ForMember(dest => dest.AdministradorFirebaseUid,
+                 opt => opt.MapFrom(src => src.Administrador != null ? src.Administrador.FirebaseUid : null))
+                 .ForMember(dest => dest.AdministradorNombre,
+                      opt => opt.MapFrom(src => src.Administrador != null
+                      ? $"{src.Administrador.Nombre} {src.Administrador.Apellido}"
+                      : string.Empty))
+            .ForMember(dest => dest.CantidadMiembros,
+                opt => opt.MapFrom(src => src.Miembros.Count(m => m.Activo)))
+            .ForMember(dest => dest.Miembros,
+                opt => opt.MapFrom(src => src.Miembros.Where(m => m.Activo)));
+
+
+            CreateMap<InvitacionGrupo, InvitacionGrupoResponse>()
+            .ForMember(dest => dest.GrupoNombre, opt => opt.MapFrom(src => src.Grupo.Nombre))
+            .ForMember(dest => dest.UsuarioInvitadoNombre,
+                opt => opt.MapFrom(src => $"{src.UsuarioInvitado.Nombre} {src.UsuarioInvitado.Apellido}"))
+             .ForMember(dest => dest.UsuarioInvitadoEmail, opt => opt.MapFrom(src => src.UsuarioInvitado.Email))
+             .ForMember(dest => dest.UsuarioInvitadorNombre,
+                   opt => opt.MapFrom(src => $"{src.UsuarioInvitador.Nombre} {src.UsuarioInvitador.Apellido}"))
+             .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado.ToString()));
+
+
+            CreateMap<ChatMessage, ChatMessageResponse>();
+
+
+            CreateMap<Restaurante, RestauranteDto>()
+            .ForMember(dest => dest.Lat, opt => opt.MapFrom(src => src.Latitud))
+            .ForMember(dest => dest.Lng, opt => opt.MapFrom(src => src.Longitud))
+            .ForMember(dest => dest.Tipo, opt => opt.MapFrom(src => src.Tipo.ToString()))
+            .ForMember(dest => dest.Score, opt => opt.MapFrom(src => src.Score))
+            .ForMember(dest => dest.GustosQueSirve, opt => opt.MapFrom(src =>
+                 src.GustosQueSirve.Select(g => new GustoDto(g.Id, g.Nombre, g.ImagenUrl))))
+            .ForMember(dest => dest.RestriccionesQueRespeta, opt => opt.MapFrom(src =>
+                 src.RestriccionesQueRespeta.Select(r => new RestriccionResponse(r.Id, r.Nombre))));
+
+
+            CreateMap<Gusto, GustoDto>()
+            .ForMember(dest => dest.Seleccionado, opt => opt.Ignore());
+
         }
     }
 }

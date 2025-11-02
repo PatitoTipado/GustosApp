@@ -1,3 +1,5 @@
+using AutoMapper;
+using GustosApp.API.DTO;
 using GustosApp.Application.DTO;
 using GustosApp.Application.Services;
 using GustosApp.Application.UseCases;
@@ -29,6 +31,9 @@ namespace GustosApp.API.Controllers
         private readonly IServicioRestaurantes _servicio;
         private readonly ObtenerPreferenciasGruposUseCase _obtenerPreferenciasGrupos;
         private readonly SugerirGustosSobreUnRadioUseCase _sugerirGustos;
+        private readonly IMapper _mapper;
+
+       
 
         public GrupoController(
             CrearGrupoUseCase crearGrupoUseCase,
@@ -46,7 +51,8 @@ namespace GustosApp.API.Controllers
             ActualizarGustosAGrupoUseCase actualizarGustosAGrupoUseCase,
             IServicioRestaurantes servicio,
             SugerirGustosSobreUnRadioUseCase sugerirGustos,
-            ObtenerPreferenciasGruposUseCase obtenerGustos
+            ObtenerPreferenciasGruposUseCase obtenerGustos,
+            IMapper mapper
             )
         {
             _servicio = servicio;
@@ -65,89 +71,120 @@ namespace GustosApp.API.Controllers
             _actualizarGustosGrupoUseCase = actualizarGustosAGrupoUseCase;
             _obtenerPreferenciasGrupos = obtenerGustos;
             _sugerirGustos = sugerirGustos;
+            _mapper = mapper;
 
         }
-
+        [Authorize]
         [HttpPost("crear")]
+        [ProducesResponseType(typeof(GrupoResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(LimiteGruposAlcanzadoResponse), StatusCodes.Status402PaymentRequired)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> CrearGrupo([FromBody] CrearGrupoRequest request, CancellationToken ct)
         {
-            try
-            {
                 var firebaseUid = GetFirebaseUid();
-                var resultado = await _crearGrupoUseCase.HandleAsync(firebaseUid, request, ct);
-                return Ok(resultado);
-            }
-            catch (InvalidOperationException ex) when (ex.Message.StartsWith("LIMITE_GRUPOS_ALCANZADO:"))
-            {
-                var jsonResponse = ex.Message.Substring("LIMITE_GRUPOS_ALCANZADO:".Length);
-                var response = System.Text.Json.JsonSerializer.Deserialize<LimiteGruposAlcanzadoResponse>(jsonResponse);
-                return StatusCode(402, response); // 402 Payment Required
-            }
-        }
 
+                var grupo = await _crearGrupoUseCase.HandleAsync(firebaseUid, request.Nombre,request.Descripcion, ct);
+
+            var response = _mapper.Map<GrupoResponse>(grupo);
+           
+            return Ok(response);
+         
+        }
+        [Authorize]
         [HttpPost("{grupoId}/invitar")]
+        [ProducesResponseType(typeof(InvitacionGrupoResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> InvitarUsuario(Guid grupoId, [FromBody] InvitacionGrupoRequest request, CancellationToken ct)
         {
            
-                if ((request.EmailUsuario == null || string.IsNullOrWhiteSpace(request.EmailUsuario)) && (!request.UsuarioId.HasValue || request.UsuarioId == Guid.Empty) && (request.UsuarioUsername == null || string.IsNullOrWhiteSpace(request.UsuarioUsername)))
+                if ((request.EmailUsuario == null || string.IsNullOrWhiteSpace(request.EmailUsuario)) && (!request.UsuarioId.HasValue 
+                || request.UsuarioId == Guid.Empty) && (request.UsuarioUsername == null || string.IsNullOrWhiteSpace(request.UsuarioUsername)))
                 {
                     return BadRequest("Se debe proporcionar UsuarioId, UsuarioUsername o EmailUsuario para invitar");
                 }
                 var firebaseUid = GetFirebaseUid();
-                var resultado = await _invitarUsuarioUseCase.HandleAsync(firebaseUid, grupoId, request, ct);
-                return Ok(resultado);
+                var invitacion = await _invitarUsuarioUseCase.HandleAsync(firebaseUid, grupoId, request.EmailUsuario,
+                  
+                 request.UsuarioId,request.UsuarioUsername,request.MensajePersonalizado, ct);
+               
+                 var response = _mapper.Map<InvitacionGrupoResponse>(invitacion);
+
+            return Ok(response);
            
         }
+
+
         [Authorize]
         [HttpPost("unirse")]
+        [ProducesResponseType(typeof(GrupoResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(LimiteGruposAlcanzadoResponse), StatusCodes.Status402PaymentRequired)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> UnirseGrupo([FromBody] UnirseGrupoRequest request, CancellationToken ct)
         {
-            try
-            {
+           
                 var firebaseUid = GetFirebaseUid();
-                var resultado = await _unirseGrupoUseCase.HandleAsync(firebaseUid, request, ct);
-                return Ok(resultado);
-            }
-            catch (InvalidOperationException ex) when (ex.Message.StartsWith("LIMITE_GRUPOS_ALCANZADO:"))
-            {
-                var jsonResponse = ex.Message.Substring("LIMITE_GRUPOS_ALCANZADO:".Length);
-                var response = System.Text.Json.JsonSerializer.Deserialize<LimiteGruposAlcanzadoResponse>(jsonResponse);
-                return StatusCode(402, response); // 402 Payment Required
-            }
-        }
+            var grupo = await _unirseGrupoUseCase.HandleAsync(firebaseUid, request, ct);
 
+
+            var response = _mapper.Map<GrupoResponse>(grupo);
+            return Ok(response);
+            
+            
+        }
+        [Authorize]
         [HttpPost("{grupoId}/abandonar")]
+        [ProducesResponseType(typeof(AbandonarGrupoResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> AbandonarGrupo(Guid grupoId, CancellationToken ct)
         {
            
                 var firebaseUid = GetFirebaseUid();
                 var resultado = await _abandonarGrupoUseCase.HandleAsync(firebaseUid, grupoId, ct);
-                return Ok(new { success = resultado, message = "Has abandonado el grupo exitosamente" });
+
+            var response = new AbandonarGrupoResponse
+            {
+                Success = resultado,
+                Mensaje = "Has abandonado el grupo exitosamente"
+            };
+                return Ok(response);
          
         }
         [Authorize]
         [HttpGet("mis-grupos")]
+        [ProducesResponseType(typeof(IEnumerable<GrupoResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> ObtenerMisGrupos(CancellationToken ct)
         {
                 var firebaseUid = GetFirebaseUid();
 
-                var resultado = await _obtenerGruposUseCase.HandleAsync(firebaseUid, ct);
+                var grupos = await _obtenerGruposUseCase.HandleAsync(firebaseUid, ct);
 
-                return Ok(resultado);
+                 var response = _mapper.Map<IEnumerable<GrupoResponse>>(grupos);
+
+            return Ok(response);
           
         }
-
+        [Authorize]
         [HttpGet("invitaciones")]
+        [ProducesResponseType(typeof(IEnumerable<InvitacionGrupoResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> ObtenerInvitaciones(CancellationToken ct)
         {
            
                 var firebaseUid = GetFirebaseUid();
-                var resultado = await _obtenerInvitacionesUseCase.HandleAsync(firebaseUid, ct);
-                return Ok(resultado);
+                var invitaciones = await _obtenerInvitacionesUseCase.HandleAsync(firebaseUid, ct);
+
+            var response = _mapper.Map<IEnumerable<InvitacionGrupoResponse>>(invitaciones);
+            return Ok(response);
            
         }
-
+        [Authorize]
         [HttpDelete("{grupoId}")]
+        [ProducesResponseType(typeof(EliminarGrupoResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> EliminarGrupo(string grupoId, CancellationToken ct)
         {
            
@@ -157,11 +194,19 @@ namespace GustosApp.API.Controllers
                 return BadRequest("El id de grupo no es un GUID válido");
 
                 var ok = await _eliminarGrupoUseCase.HandleAsync(firebaseUid, gid, ct);
-                return Ok(new { success = ok });
+
+            var response = new EliminarGrupoResponse
+            {
+                Success = ok,
+                Mensaje = "Has eliminado el grupo correctamente"
+            };
+                return Ok(response);
           
         }
-
+        [Authorize]
         [HttpDelete("{grupoId}/miembros/{usuarioId}")]
+        [ProducesResponseType(typeof(RemoverMiembroResponse), StatusCodes.Status200OK)]
+
         public async Task<IActionResult> RemoverMiembro(string grupoId, string usuarioId, CancellationToken ct)
         {
            
@@ -169,44 +214,115 @@ namespace GustosApp.API.Controllers
                 if (!Guid.TryParse(grupoId, out var gid)) return BadRequest("El id de grupo no es un GUID válido");
                 if (!Guid.TryParse(usuarioId, out var uid)) return BadRequest("El id de usuario no es un GUID válido");
                 var ok = await _removerMiembroUseCase.HandleAsync(firebaseUid, gid, uid, ct);
-                return Ok(new { success = ok });
+            var response = new RemoverMiembroResponse
+            {
+                Success = ok,
+                Mensaje = "Has removido al miembro  correctamente"
+            };
+
+                return Ok(response);
           
         }
-
+        [Authorize]
         [HttpGet("{grupoId}/chat")]
+        [ProducesResponseType(typeof(IEnumerable<ChatMessageResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> ObtenerChat(string grupoId, CancellationToken ct)
         {
            
                 var firebaseUid = GetFirebaseUid();
                 if (!Guid.TryParse(grupoId, out var gid)) return BadRequest("El id de grupo no es un GUID válido");
-                var msgs = await _obtenerChatGrupoUseCase.HandleAsync(firebaseUid, gid, ct);
-                return Ok(msgs);
+               
+            var msgs = await _obtenerChatGrupoUseCase.HandleAsync(firebaseUid, gid, ct);
+
+                var response = _mapper.Map<IEnumerable<ChatMessageResponse>>(msgs);
+
+                 return Ok(response);
           
         }
-
+        [Authorize]
         [HttpGet("{grupoId}")]
+        [ProducesResponseType(typeof(GrupoResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+
         public async Task<IActionResult> ObtenerGrupo(string grupoId, CancellationToken ct)
         {
           
                 var firebaseUid = GetFirebaseUid();
                 if (!Guid.TryParse(grupoId, out var gid)) return BadRequest("El id de grupo no es un GUID válido");
-                var detalle = await _obtenerGrupoDetalleUseCase.HandleAsync(firebaseUid, gid, ct);
-                return Ok(detalle);
-  
+
+            var grupo = await _obtenerGrupoDetalleUseCase.HandleAsync(firebaseUid, gid, ct);
+
+            var response = _mapper.Map<GrupoResponse>(grupo);
+            return Ok(response);
+
         }
 
-     
 
+        [Authorize]
         [HttpPost("invitaciones/{invitacionId}/aceptar")]
+        [ProducesResponseType(typeof(GrupoResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> AceptarInvitacion(Guid invitacionId, CancellationToken ct)
         {
           
                 var firebaseUid = GetFirebaseUid();
-                var resultado = await _aceptarInvitacionUseCase.HandleAsync(firebaseUid, invitacionId, ct);
-                return Ok(resultado);
+                var grupo = await _aceptarInvitacionUseCase.HandleAsync(firebaseUid, invitacionId, ct);
+                 var response = _mapper.Map<GrupoResponse>(grupo);
+            
+            return Ok(response);
+            
            
         }
+        [Authorize]
+        [HttpPut("actualizarGustos")]
+        [ProducesResponseType(typeof(ActualizarGustosGrupoResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> agregarGustoDeGrupo(Guid grupoId,List<string> gustos)
+        {
+            var firebaseUid = GetFirebaseUid();
+            var ok = await _actualizarGustosGrupoUseCase.Handle(gustos,grupoId);
 
+            var response = new ActualizarGustosGrupoResponse
+            {
+                Success = ok,
+                Mensaje = "Gustos actualizados correctamente"
+            };
+            return Ok(response);
+        }
+
+        [Authorize]
+        [HttpGet("grupo/{grupoId}")]
+        [ProducesResponseType(typeof(IEnumerable<RestauranteDto>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> RecomendarRestauranteGrupo(Guid grupoId,
+            [FromQuery(Name = "near.lat")] double? lat = -34.641812775271,
+            [FromQuery(Name = "near.lng")] double? lng = -58.56990230458638,
+            [FromQuery(Name = "radiusMeters")] int? radius = 1000,
+            [FromQuery] string? tipo = "",
+            [FromQuery] string? plato = "",
+            [FromQuery] int top = 10,
+             CancellationToken ct = default)
+        {
+            var firebaseUid = GetFirebaseUid();
+
+          
+
+            // Buscar restaurantes desde la infraestructura
+            var restaurantes = await _servicio.BuscarAsync(tipo, plato, lat, lng, radius);
+
+            // Obtener preferencias del grupo
+            var preferencias = await _obtenerPreferenciasGrupos.HandleAsync(grupoId, ct);
+
+            // Obtener recomendaciones
+            var recomendados = _sugerirGustos.Handle(preferencias, restaurantes, top, ct);
+
+            // Mapear al DTO
+            var response = _mapper.Map<List<RestauranteDto>>(recomendados);
+
+            return Ok(response);
+        }
         private string GetFirebaseUid()
         {
             var firebaseUid = User.FindFirst("user_id")?.Value
@@ -219,67 +335,5 @@ namespace GustosApp.API.Controllers
             return firebaseUid;
         }
 
-        [HttpPut("actualizarGustos")]
-        public async Task<IActionResult> agregarGustoDeGrupo(Guid grupoId,List<string> gustos)
-        {
-            var firebaseUid = GetFirebaseUid();
-            var resultado = await _actualizarGustosGrupoUseCase.Handle(gustos,grupoId);
-            return Ok(resultado);
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> recomendarRestauranteGrupo(CancellationToken ct,
-        [FromBody]Guid grupoId,
-        [FromQuery(Name = "near.lat")] double? lat = -34.641812775271,
-        [FromQuery(Name = "near.lng")] double? lng = -58.56990230458638,
-        [FromQuery(Name = "radiusMeters")] int? radius = 1000,
-        [FromQuery] string? tipo = "",
-        [FromQuery] string? plato = "",
-        [FromQuery] int top = 10
- )
-        {
-            var res = await _servicio.BuscarAsync(
-                tipo: tipo,
-                plato: plato,
-                lat: lat,
-                lng: lng,
-                radioMetros: radius
-            );
-
-            Console.WriteLine(res.ToList().Count());
-            Console.WriteLine(res.ToList().Count());
-            Console.WriteLine(res.ToList().Count());
-
-            var firebaseUid = User.FindFirst("user_id")?.Value
-            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-            ?? User.FindFirst("sub")?.Value;
-
-            if (string.IsNullOrWhiteSpace(firebaseUid))
-            {
-                return Unauthorized(new { message = "No se encontró el UID de Firebase en el token." });
-            }
-
-            var preferenciasDTO = await _obtenerPreferenciasGrupos.Handle(grupoId,ct);
-
-            Console.WriteLine(preferenciasDTO.ToString());
-            Console.WriteLine(preferenciasDTO.ToString());
-            Console.WriteLine(preferenciasDTO.ToString());
-
-            var recommendations = _sugerirGustos.Handle(preferenciasDTO, res.ToList(), top, ct);
-
-            Console.WriteLine(recommendations.ToList().Count());
-            Console.WriteLine(recommendations.ToList().Count());
-            Console.WriteLine(recommendations.ToList().Count());
-
-            foreach (var item in recommendations)
-            {
-                foreach (var gusto in item.GustosQueSirve)
-                {
-                    Console.WriteLine(gusto.Nombre);
-                }
-            }
-
-            return Ok(recommendations);
-        }
     }
 }

@@ -46,6 +46,6 @@ namespace GustosApp.Domain.Model
         public string? ImagenUrl { get; set; }                
         public decimal? Valoracion { get; set; }                  
         public ICollection<RestaurantePlato> Platos { get; set; } = new List<RestaurantePlato>();
-
+        public double Score { get; set; }
     }
 }

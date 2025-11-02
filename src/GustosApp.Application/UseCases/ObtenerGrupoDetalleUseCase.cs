@@ -4,48 +4,32 @@ using System.Threading;
 using System.Threading.Tasks;
 using GustosApp.Application.DTO;
 using GustosApp.Domain.Interfaces;
+using GustosApp.Domain.Model;
 
 namespace GustosApp.Application.UseCases
 {
     public class ObtenerGrupoDetalleUseCase
     {
         private readonly IGrupoRepository _grupoRepository;
+        private readonly IUsuarioRepository _usuarioRepository;
 
-        public ObtenerGrupoDetalleUseCase(IGrupoRepository grupoRepository)
+        public ObtenerGrupoDetalleUseCase(IGrupoRepository grupoRepository,
+            IUsuarioRepository usuarioRepository)
         {
             _grupoRepository = grupoRepository;
+            _usuarioRepository = usuarioRepository;
         }
 
-        public async Task<GrupoResponse> HandleAsync(string firebaseUid, Guid grupoId, CancellationToken cancellationToken = default)
+        public async Task<Grupo> HandleAsync(string firebaseUid, Guid grupoId, CancellationToken cancellationToken = default)
         {
-            var grupo = await _grupoRepository.GetByIdAsync(grupoId, cancellationToken);
-            if (grupo == null) throw new ArgumentException("Grupo no encontrado");
+            var usuario = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid, cancellationToken)
+            ?? throw new UnauthorizedAccessException("Usuario no encontrado");
 
-            var resp = new GrupoResponse(grupo.Id, grupo.Nombre, grupo.Descripcion, grupo.AdministradorId, 
-                grupo.Administrador?.FirebaseUid, // Include Firebase UID
-                grupo.Administrador != null ? (grupo.Administrador.Nombre + " " + grupo.Administrador.Apellido) : string.Empty,
-                grupo.FechaCreacion, grupo.Activo, grupo.CodigoInvitacion, grupo.FechaExpiracionCodigo, grupo.Miembros?.Count(m => m.Activo) ?? 0);
+            // Buscar el grupo con sus relaciones
+            var grupo = await _grupoRepository.GetByIdAsync(grupoId, cancellationToken)
+                ?? throw new ArgumentException("Grupo no encontrado");
 
-            if (grupo.Miembros != null)
-            {
-                foreach (var m in grupo.Miembros.Where(m => m.Activo)) // Only include active members
-                {
-                    if (m == null) continue;
-                    resp.Miembros.Add(new MiembroGrupoResponse(
-                    m.Id,
-                    m.UsuarioId,
-                    m.Usuario?.FirebaseUid,
-                    m.Usuario != null ? (m.Usuario.Nombre + " " + m.Usuario.Apellido) : string.Empty,
-                    m.Usuario?.Email ?? string.Empty,
-                    m.Usuario?.IdUsuario ?? string.Empty, 
-                    m.FechaUnion,
-                    m.EsAdministrador
-                    ));
-
-                }
-            }
-
-            return resp;
+            return grupo;
         }
-    }
+    } 
 }

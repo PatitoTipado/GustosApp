@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace GustosApp.Application.DTO
+namespace GustosApp.API.DTO
 {
     public class InvitacionGrupoRequest
     {

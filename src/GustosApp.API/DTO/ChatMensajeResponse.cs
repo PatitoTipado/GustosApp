@@ -1,6 +1,6 @@
 ﻿namespace GustosApp.API.DTO
 {
-    public class ChatMessageResponse
+    public class ChatMensajeResponse
     {
         public Guid Id { get; set; }
         public Guid GrupoId { get; set; }

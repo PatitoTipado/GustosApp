@@ -8,10 +8,10 @@ using GustosApp.Domain.Model;
 
 namespace GustosApp.Infraestructure.Repositories
 {
-    public class ReviewRepositoryEF : IReviewRepository
+    public class ReseñaRepositoryEF : IReseñaRepository
     {
         private readonly GustosDbContext _context;
-        public ReviewRepositoryEF(GustosDbContext context) => _context = context;
+        public ReseñaRepositoryEF(GustosDbContext context) => _context = context;
 
         public async Task RemoveByRestauranteIdAsync(Guid restauranteId, CancellationToken ct)
         {
@@ -20,7 +20,7 @@ namespace GustosApp.Infraestructure.Repositories
             await _context.SaveChangesAsync(ct);
         }
 
-        public async Task AddAsync(ReviewRestaurante reseña, CancellationToken ct)
+        public async Task AddAsync(ReseñaRestaurante reseña, CancellationToken ct)
         {
             await _context.ReviewsRestaurantes.AddAsync(reseña, ct);
         }

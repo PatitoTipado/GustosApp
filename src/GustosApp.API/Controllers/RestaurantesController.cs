@@ -1,3 +1,6 @@
+using AutoMapper;
+using GustosApp.API.DTO;
+using GustosApp.Application.DTO;
 using GustosApp.Application.DTOs.Restaurantes;
 using GustosApp.Application.Services;
 using GustosApp.Application.UseCases;
@@ -20,20 +23,23 @@ namespace GustosApp.API.Controllers
     {
         private readonly IServicioRestaurantes _servicio;
         private readonly ObtenerGustosUseCase _obtenerGustos;
-        private readonly SugerirGustosSobreUnRadioUseCase _sugerirGustos;
+        private readonly SugerirGustosUseCase _sugerirGustos;
         private readonly BuscarRestaurantesCercanosUseCase _buscarRestaurantes;
         private readonly ActualizarDetallesRestauranteUseCase _obtenerDetalles;
+        private IMapper _mapper;
 
 
-        public RestaurantesController(IServicioRestaurantes servicio, SugerirGustosSobreUnRadioUseCase sugerirGustos,
+        public RestaurantesController(IServicioRestaurantes servicio, SugerirGustosUseCase sugerirGustos,
             ObtenerGustosUseCase obtenerGustos,BuscarRestaurantesCercanosUseCase buscarRestaurantes, 
-            ActualizarDetallesRestauranteUseCase obtenerDetalles)
+            ActualizarDetallesRestauranteUseCase obtenerDetalles,
+            IMapper mapper)
         {
             _servicio = servicio;
             _obtenerGustos = obtenerGustos;
             _sugerirGustos = sugerirGustos;
             _buscarRestaurantes = buscarRestaurantes;
             _obtenerDetalles = obtenerDetalles;
+            _mapper = mapper;
 
         }
         [Authorize]
@@ -45,11 +51,10 @@ namespace GustosApp.API.Controllers
 
             var result = await _buscarRestaurantes.HandleAsync(lat, lng, radio, types, priceLevels, openNow, minRating, minUserRatings, serves, ct);
 
-            return Ok(new
-            {
-                count = result.Count,
-                restaurantes = result
-            });
+            var response = _mapper.Map<List<RestauranteListadoDto>>(result);
+            return Ok(new { count = response.Count, restaurantes = response });
+
+          
         }
 
 
@@ -57,12 +62,10 @@ namespace GustosApp.API.Controllers
         [HttpGet("detalles")]
         public async Task<IActionResult> GetDetalles([FromQuery] string placeId, CancellationToken ct = default)
         {
-            var result = await _obtenerDetalles.HandleAsync(placeId, ct);
-            return Ok(new
-            {
-                message = "Detalles actualizados",
-                detalles = result
-            });
+            var restaurante = await _obtenerDetalles.HandleAsync(placeId, ct);
+
+            var detalles = _mapper.Map<RestauranteListadoDto>(restaurante);
+            return Ok(new { message = "Detalles actualizados", detalles });
         }
 
         [HttpGet]
@@ -99,27 +102,40 @@ namespace GustosApp.API.Controllers
                 return Unauthorized(new { message = "No se encontró el UID de Firebase en el token." });
             }
 
-            var preferenciasDTO = await _obtenerGustos.Handle(firebaseUid, ct);
+            var preferencias = await _obtenerGustos.HandleAsync(firebaseUid, ct);
 
-            Console.WriteLine(preferenciasDTO.ToString());
-            Console.WriteLine(preferenciasDTO.ToString());
-            Console.WriteLine(preferenciasDTO.ToString());
+            
 
-            var recommendations = _sugerirGustos.Handle(preferenciasDTO, res.ToList(), top, ct);
+            var recommendations = await _sugerirGustos.Handle(preferencias,  top, ct);
 
-            Console.WriteLine(recommendations.ToList().Count());
-            Console.WriteLine(recommendations.ToList().Count());
-            Console.WriteLine(recommendations.ToList().Count());
 
-            foreach (var item in recommendations)
+
+            var response = recommendations.Select(r => new RestauranteDto
             {
-                foreach (var gusto in item.GustosQueSirve)
-                {
-                    Console.WriteLine(gusto.Nombre);
-                }
-            }
+                Id = r.Id,
+                PropietarioUid = r.PropietarioUid,
+                Nombre = r.Nombre,
+                Direccion = r.Direccion,
+                Lat = r.Latitud,
+                Lng = r.Longitud,
+                ImagenUrl = r.ImagenUrl,
+                Rating = r.Rating ?? 0,
+                Valoracion = r.Valoracion,
+                Tipo = r.Categoria,
+                GustosQueSirve = r.GustosQueSirve
+             .Select(g => new GustoDto(g.Id, g.Nombre, g.ImagenUrl))
+             .ToList(),
+                RestriccionesQueRespeta = r.RestriccionesQueRespeta
+             .Select(re => new RestriccionResponse(re.Id, re.Nombre))
+             .ToList(),
+                Score = r.Score
+            }).ToList();
 
-            return Ok(recommendations);
+            return Ok(new
+            {
+                total = response.Count,
+                recomendaciones = response
+            });
         }
 
 

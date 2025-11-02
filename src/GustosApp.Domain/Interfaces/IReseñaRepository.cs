@@ -7,10 +7,10 @@ using GustosApp.Domain.Model;
 
 namespace GustosApp.Domain.Interfaces
 {
-    public interface IReviewRepository
+    public interface IReseñaRepository
     {
         Task RemoveByRestauranteIdAsync(Guid restauranteId, CancellationToken ct);
-        Task AddAsync(ReviewRestaurante reseña, CancellationToken ct);
+        Task AddAsync(ReseñaRestaurante reseña, CancellationToken ct);
     }
 
 }

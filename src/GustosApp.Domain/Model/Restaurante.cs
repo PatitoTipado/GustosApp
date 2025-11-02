@@ -37,7 +37,7 @@ namespace GustosApp.Domain.Model
         public string? WebUrl { get; set; }
         public string? EmbeddingVector { get; set; }
 
-        public ICollection<ReviewRestaurante> Reviews { get; set; } = new List<ReviewRestaurante>();
+        public ICollection<ReseñaRestaurante> Reviews { get; set; } = new List<ReseñaRestaurante>();
         public ICollection<Gusto> GustosQueSirve { get; set; } = new List<Gusto>();
         public ICollection<Restriccion> RestriccionesQueRespeta { get; set; } = new List<Restriccion>();
 

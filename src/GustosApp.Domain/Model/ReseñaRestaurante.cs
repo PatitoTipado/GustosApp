@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace GustosApp.Domain.Model
 {
-        public class ReviewRestaurante
+        public class ReseñaRestaurante
     {
 
  

@@ -22,13 +22,13 @@ public class GustosDbContext : DbContext
     public DbSet<MiembroGrupo> MiembrosGrupos { get; set; }
     public DbSet<InvitacionGrupo> InvitacionesGrupos { get; set; }
     public DbSet<SolicitudAmistad> SolicitudesAmistad { get; set; }
-    public DbSet<ChatMessage> ChatMessages { get; set; }
+    public DbSet<ChatMensaje> ChatMessages { get; set; }
 
     
     public DbSet<RestauranteEspecialidad> RestauranteEspecialidades { get; set; }
     public DbSet<Restaurante> Restaurantes { get; set; }
 
-    public DbSet<ReviewRestaurante> ReviewsRestaurantes { get; set; }
+    public DbSet<ReseñaRestaurante> ReviewsRestaurantes { get; set; }
 
     public DbSet<Tag> Tags { get; set; }
 
@@ -51,9 +51,11 @@ public class GustosDbContext : DbContext
 
 
         modelBuilder.Entity<Restaurante>()
+              .Ignore(r => r.Score)
             .HasMany(r => r.Reviews)
                 .WithOne()
                 .HasForeignKey(r => r.RestauranteId)
+
                 .OnDelete(DeleteBehavior.Cascade);
         // Relaciones muchos a muchos
         modelBuilder.Entity<Usuario>()
@@ -233,9 +235,9 @@ public class GustosDbContext : DbContext
             .OnDelete(DeleteBehavior.Restrict); // No eliminar un Gusto si está siendo usado por grupos
 
         // Chat messages
-        modelBuilder.Entity<ChatMessage>()
+        modelBuilder.Entity<ChatMensaje>()
             .HasKey(c => c.Id);
-        modelBuilder.Entity<ChatMessage>()
+        modelBuilder.Entity<ChatMensaje>()
             .Property(c => c.Mensaje)
             .IsRequired();
 

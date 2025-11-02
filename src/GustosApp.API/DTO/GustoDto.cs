@@ -8,8 +8,6 @@ namespace GustosApp.API.DTO
 {
     public class GustoDto
     {
-        
-      
         public Guid Id { get; set; }
         public string Nombre { get; set; }
         public string? ImagenUrl { get; set; }

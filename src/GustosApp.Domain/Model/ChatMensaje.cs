@@ -2,7 +2,7 @@ using System;
 
 namespace GustosApp.Domain.Model
 {
-    public class ChatMessage
+    public class ChatMensaje
     {
         public Guid Id { get; set; }
         public Grupo Grupo { get; set; }

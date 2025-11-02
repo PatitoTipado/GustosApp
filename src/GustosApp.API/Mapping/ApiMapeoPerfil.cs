@@ -98,7 +98,7 @@ namespace GustosApp.API.Mapping
              .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado.ToString()));
 
 
-            CreateMap<ChatMessage, ChatMessageResponse>();
+            CreateMap<ChatMensaje, ChatMensajeResponse>();
 
 
             CreateMap<Restaurante, RestauranteDto>()
@@ -111,6 +111,8 @@ namespace GustosApp.API.Mapping
             .ForMember(dest => dest.RestriccionesQueRespeta, opt => opt.MapFrom(src =>
                  src.RestriccionesQueRespeta.Select(r => new RestriccionResponse(r.Id, r.Nombre))));
 
+            CreateMap<Restaurante, RestauranteListadoDto>()
+           .ForMember(dest => dest.PrimaryType, opt => opt.MapFrom(src => src.Categoria));
 
             CreateMap<Gusto, GustoDto>()
             .ForMember(dest => dest.Seleccionado, opt => opt.Ignore());

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using GustosApp.Application.DTO;
 using GustosApp.Domain.Interfaces;
+using GustosApp.Domain.Model;
 
 namespace GustosApp.Application.UseCases
 {
@@ -17,30 +18,17 @@ namespace GustosApp.Application.UseCases
             _usuarioRepo = usuarioRepo;
         }
 
-        public async Task<UsuarioPreferenciasDTO> Handle(string firebaseUid, CancellationToken ct = default)
+        public async Task<UsuarioPreferencias> HandleAsync(string firebaseUid, CancellationToken ct = default)
         {
-            var usuario = await _usuarioRepo.GetByFirebaseUidAsync(firebaseUid, ct);
+            var usuario = await _usuarioRepo.GetByFirebaseUidAsync(firebaseUid, ct)
+                ?? throw new UnauthorizedAccessException("Usuario no encontrado o no registrado.");
 
-            if (usuario == null)
-                throw new UnauthorizedAccessException("Usuario no encontrado o no registrado.");
-
-            var dto = new UsuarioPreferenciasDTO
+            return new UsuarioPreferencias
             {
-                Gustos = usuario.Gustos
-                                .Select(g => g.Nombre)
-                                .ToList(),
-
-                Restricciones = usuario.Restricciones
-                                       .Select(r => r.Nombre)
-                                       .ToList(),
-
-                CondicionesMedicas = usuario.CondicionesMedicas
-                                            .Select(c => c.Nombre)
-                                            .ToList()
+                Gustos = usuario.Gustos.Select(g => g.Nombre).ToList(),
+                Restricciones = usuario.Restricciones.Select(r => r.Nombre).ToList(),
+                CondicionesMedicas = usuario.CondicionesMedicas.Select(c => c.Nombre).ToList()
             };
-
-            return dto;
-
         }
 
     }

@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
-using GustosApp.Application.DTO;
-using GustosApp.Application.DTOs.Restaurantes;
-using GustosApp.Application.Services;
-using GustosApp.Domain.Model;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using GustosApp.Application.Services;
+using GustosApp.Application.DTOs.Restaurantes;
+using GustosApp.Domain.Model;
+using GustosApp.Infraestructure;
 
 namespace GustosApp.Infraestructure.Services
 {
@@ -23,175 +19,14 @@ namespace GustosApp.Infraestructure.Services
         private static string NormalizarNombre(string nombre)
             => (nombre ?? string.Empty).Trim().ToLowerInvariant();
 
-        private static RestauranteDto Map(Restaurante r)
-        {
-            object? horarios = null;
-            try
-            {
-                horarios = string.IsNullOrWhiteSpace(r.HorariosJson)
-                    ? null
-                    : JsonSerializer.Deserialize<object>(r.HorariosJson);
-            }
-            catch { horarios = null; }
-
-            return new RestauranteDto
-            {
-                Id = r.Id,
-                PropietarioUid = r.PropietarioUid,
-                Nombre = r.Nombre,
-                Direccion = r.Direccion,
-                Lat = r.Latitud,
-                Lng = r.Longitud,
-                Horarios = horarios,
-                CreadoUtc = r.CreadoUtc,
-                ActualizadoUtc = r.ActualizadoUtc,
-                Tipo = r.Tipo.ToString(),
-                ImagenUrl = r.ImagenUrl,
-                Valoracion = r.Valoracion,
-                Platos = r.Platos.Select(p => p.Plato.ToString()).ToList(),
-
-                //
-                GustosQueSirve = r.GustosQueSirve
-                    .Select(g => new GustoDto
-                    {
-                        Id = g.Id,
-                        Nombre = g.Nombre
-                    })
-                    .ToList(),
-
-                //
-                RestriccionesQueRespeta = r.RestriccionesQueRespeta
-                    .Select(g => new RestriccionResponse(g.Id, g.Nombre))
-                    .ToList()
-            };
-        }
-
-        public async Task<IReadOnlyList<RestauranteDto>> BuscarAsync(
-    string? tipo,
-    string? plato,
-    double? lat = null,
-    double? lng = null,
-    int? radioMetros = null)
-        {
-            // 1. CARGA INICIAL y DEFINICIÓN DE INCLUDES (Ejecución en la BD)
-
-            var q = _db.Restaurantes.AsNoTracking()
-
-                // Incluye Platos (Se asume 1:N o una entidad de unión simple)
-                .Include(r => r.Platos)
-
-                // Carga de Gustos N:N: Cargar la tabla de unión y la entidad final
-                .Include(r => r.GustosQueSirve)
-
-                // Carga de Restricciones N:N: Cargar la tabla de unión y la entidad final
-                .Include(r => r.RestriccionesQueRespeta)
-
-                .AsSplitQuery();
-
-            foreach (var r in q)
-            {
-                Console.WriteLine(r.Id);
-                Console.WriteLine(r.Nombre);
-
-                Console.WriteLine(r.GustosQueSirve.Count);
-                Console.WriteLine(r.GustosQueSirve.Count);
-                Console.WriteLine(r.GustosQueSirve.Count);
-
-                foreach (var rr in r.GustosQueSirve)
-                {
-                    Console.WriteLine($"- {rr.Nombre}");
-                }
-            }
-
-            // 1.1. Filtro por Tipo (SQL)
-            if (!string.IsNullOrWhiteSpace(tipo))
-            {
-                if (!Enum.TryParse<TipoRestaurante>(tipo, ignoreCase: true, out var tipoEnum))
-                    return Array.Empty<RestauranteDto>();
-                q = q.Where(r => r.Tipo == tipoEnum);
-            }
-
-            // 1.2. Filtro por Plato (SQL)
-            if (!string.IsNullOrWhiteSpace(plato))
-            {
-                if (!Enum.TryParse<PlatoComida>(plato, ignoreCase: true, out var platoEnum))
-                    return Array.Empty<RestauranteDto>();
-                q = q.Where(r => r.Platos.Any(p => p.Plato == platoEnum));
-            }
-
-            // Si no hay coordenadas, ordenar por Nombre antes de traer la lista.
-            if (!lat.HasValue || !lng.HasValue || !radioMetros.HasValue || radioMetros.Value <= 0)
-            {
-                q = q.OrderBy(r => r.NombreNormalizado);
-            }
-
-            // MATERIALIZACIÓN TEMPRANA: Ejecutar la consulta SQL y traer los primeros resultados.
-            // Esto es el "Tráete primero la entidad". Traeremos hasta 1000 para luego filtrar.
-            var lista = await q.Take(1000).ToListAsync();
-
-            // --------------------------------------------------------------------------------
-            // 2. FILTRADO Y ORDENACIÓN EN MEMORIA (LINQ to Objects)
-            // --------------------------------------------------------------------------------
-
-            // 2.1. Aplicar Filtro de Proximidad (Bounding Box) y Ordenación en memoria
-            if (lat.HasValue && lng.HasValue && radioMetros.HasValue && radioMetros.Value > 0)
-            {
-                var latVal = lat.Value;
-                var lngVal = lng.Value;
-                var radioMetrosVal = radioMetros.Value;
-
-                // Cálculos de Bounding Box
-                var degLat = radioMetrosVal / 111_000.0;
-                var degLng = radioMetrosVal / (111_000.0 * Math.Cos(latVal * Math.PI / 180.0));
-
-                var minLat = latVal - degLat;
-                var maxLat = latVal + degLat;
-                var minLng = lngVal - degLng;
-                var maxLng = lngVal + degLng;
-
-                // 2.1.1. Filtrar en memoria por Bounding Box
-                lista = lista.Where(r => r.Latitud >= minLat && r.Latitud <= maxLat
-                                      && r.Longitud >= minLng && r.Longitud <= maxLng)
-                             .ToList();
-
-                // 2.1.2. Aplicar Ordenación por Distancia (Manhattan) en memoria
-                lista = lista
-                    .OrderBy(r => Math.Abs(r.Latitud - latVal) + Math.Abs(r.Longitud - lngVal))
-                    .Take(200) // Limitar a los 200 más cercanos después de la ordenación
-                    .ToList();
-            }
-
-            Console.WriteLine("Lista");
-            Console.WriteLine("Lista");
-            Console.WriteLine("Lista");
-
-
-            foreach (var r in lista)
-            {
-                Console.WriteLine(r.Id);
-                Console.WriteLine(r.Nombre);
-
-                Console.WriteLine(r.GustosQueSirve.Count);
-                Console.WriteLine(r.GustosQueSirve.Count);
-                Console.WriteLine(r.GustosQueSirve.Count);
-
-                foreach (var rr in r.GustosQueSirve)
-                {
-                    Console.WriteLine($"- {rr.Nombre}");
-                }
-            }
-
-            // 3. MAPEAR Y DEVOLVER
-            // Los datos necesarios para Map (GustosQueSirve, RestriccionesQueRespeta, etc.) ya están cargados.
-            return lista.Select(Map).ToList();
-        }
-
-
-        public async Task<RestauranteDto> CrearAsync(string propietarioUid, CrearRestauranteDto dto)
+        // Crear restaurante
+        public async Task<Restaurante> CrearAsync(string propietarioUid, CrearRestauranteDto dto)
         {
             var nombreNorm = NormalizarNombre(dto.Nombre);
-            var nombreEnUso = await _db.Restaurantes.AsNoTracking()
+            var nombreEnUso = await _db.Restaurantes
+                .AsNoTracking()
                 .AnyAsync(r => r.NombreNormalizado == nombreNorm);
+
             if (nombreEnUso)
                 throw new ArgumentException("El nombre ya está en uso.");
 
@@ -231,76 +66,38 @@ namespace GustosApp.Infraestructure.Services
 
             _db.Restaurantes.Add(entidad);
             await _db.SaveChangesAsync();
-            await _db.Entry(entidad).Collection(x => x.Platos).LoadAsync();
 
-            return Map(entidad);
+            return entidad;
         }
 
-        public async Task<RestauranteDto?> ObtenerAsync(Guid id)
+        // Obtener restaurante por ID
+        public async Task<Restaurante?> ObtenerAsync(Guid id)
         {
-            var r = await _db.Restaurantes
+            return await _db.Restaurantes
                 .Include(x => x.Platos)
+                .Include(x => x.GustosQueSirve)
+                .Include(x => x.RestriccionesQueRespeta)
                 .FirstOrDefaultAsync(x => x.Id == id);
-            return r is null ? null : Map(r);
         }
 
-        public async Task<RestauranteDto?> ObtenerPorPropietarioAsync(string propietarioUid)
+        // Obtener por propietario UID
+        public async Task<Restaurante?> ObtenerPorPropietarioAsync(string propietarioUid)
         {
-            var r = await _db.Restaurantes.AsNoTracking()
+            return await _db.Restaurantes
+                .AsNoTracking()
                 .Include(x => x.Platos)
+                .Include(x => x.GustosQueSirve)
+                .Include(x => x.RestriccionesQueRespeta)
                 .FirstOrDefaultAsync(x => x.PropietarioUid == propietarioUid);
-            return r is null ? null : Map(r);
         }
 
-        public async Task<IReadOnlyList<RestauranteDto>> ListarCercanosAsync(
-            double lat, double lng, int radioMetros,
-            string? tipo = null,
-            IEnumerable<string>? platos = null)
-        {
-            double degLat = radioMetros / 111_000.0;
-            double degLng = radioMetros / (111_000.0 * Math.Cos(lat * Math.PI / 180.0));
-
-            var minLat = lat - degLat;
-            var maxLat = lat + degLat;
-            var minLng = lng - degLng;
-            var maxLng = lng + degLng;
-
-            var q = _db.Restaurantes.AsNoTracking()
-                .Include(r => r.Platos)
-                .Where(r => r.Latitud >= minLat && r.Latitud <= maxLat
-                         && r.Longitud >= minLng && r.Longitud <= maxLng);
-
-            if (!string.IsNullOrWhiteSpace(tipo) &&
-                Enum.TryParse<TipoRestaurante>(tipo, true, out var tipoParsed))
-            {
-                q = q.Where(r => r.Tipo == tipoParsed);
-            }
-
-            if (platos is not null)
-            {
-                var set = new HashSet<PlatoComida>(
-                    platos.Select(p => Enum.TryParse<PlatoComida>(p, true, out var v) ? v : (PlatoComida?)null)
-                          .Where(v => v.HasValue)
-                          .Select(v => v!.Value));
-                if (set.Count > 0)
-                {
-                    q = q.Where(r => r.Platos.Any(p => set.Contains(p.Plato)));
-                }
-            }
-
-            var lista = await q
-                .OrderBy(r => Math.Abs(r.Latitud - lat) + Math.Abs(r.Longitud - lng))
-                .Take(200)
-                .ToListAsync();
-
-            return lista.Select(Map).ToList();
-        }
-
-        public async Task<RestauranteDto?> ActualizarAsync(Guid id, string solicitanteUid, bool esAdmin, ActualizarRestauranteDto dto)
+        // Actualizar restaurante
+        public async Task<Restaurante?> ActualizarAsync(Guid id, string solicitanteUid, bool esAdmin, ActualizarRestauranteDto dto)
         {
             var r = await _db.Restaurantes
                 .Include(x => x.Platos)
                 .FirstOrDefaultAsync(x => x.Id == id);
+
             if (r is null) return null;
 
             if (!esAdmin && r.PropietarioUid != solicitanteUid)
@@ -309,6 +106,7 @@ namespace GustosApp.Infraestructure.Services
             var nombreNorm = NormalizarNombre(dto.Nombre);
             var conflictoNombre = await _db.Restaurantes
                 .AnyAsync(x => x.Id != id && x.NombreNormalizado == nombreNorm);
+
             if (conflictoNombre)
                 throw new ArgumentException("El nombre ya está en uso.");
 
@@ -332,7 +130,6 @@ namespace GustosApp.Infraestructure.Services
             r.Longitud = dto.Longitud;
             r.HorariosJson = dto.Horarios is null ? "{}" : JsonSerializer.Serialize(dto.Horarios);
             r.ActualizadoUtc = DateTime.UtcNow;
-
             r.Tipo = tipoParsed;
             r.ImagenUrl = string.IsNullOrWhiteSpace(dto.ImagenUrl) ? null : dto.ImagenUrl!.Trim();
             r.Valoracion = dto.Valoracion;
@@ -348,18 +145,20 @@ namespace GustosApp.Infraestructure.Services
                 var row = r.Platos.First(x => x.Plato == p);
                 _db.RestaurantePlatos.Remove(row);
             }
+
             foreach (var p in aAgregar)
             {
                 r.Platos.Add(new RestaurantePlato { RestauranteId = r.Id, Plato = p });
             }
 
             await _db.SaveChangesAsync();
-            return Map(r);
+            return r;
         }
 
+        // Eliminar restaurante
         public async Task<bool> EliminarAsync(Guid id, string solicitanteUid, bool esAdmin)
         {
-            var r = await _db.Restaurantes.FirstOrDefaultAsync(x => x.Id == id);
+            var r = await _db.Restaurantes.FindAsync(id);
             if (r is null) return false;
 
             if (!esAdmin && r.PropietarioUid != solicitanteUid)
@@ -369,6 +168,71 @@ namespace GustosApp.Infraestructure.Services
             await _db.SaveChangesAsync();
             return true;
         }
+
+        // Buscar con filtros
+        public async Task<List<Restaurante>> BuscarAsync(string? tipo, string? plato, double? lat = null, double? lng = null, int? radioMetros = null)
+        {
+            var q = _db.Restaurantes
+                .Include(r => r.Platos)
+                .Include(r => r.GustosQueSirve)
+                .Include(r => r.RestriccionesQueRespeta)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(tipo))
+            {
+                if (Enum.TryParse<TipoRestaurante>(tipo, true, out var tipoEnum))
+                    q = q.Where(r => r.Tipo == tipoEnum);
+            }
+
+            if (!string.IsNullOrWhiteSpace(plato))
+            {
+                q = q.Where(r => r.Platos.Any(p => p.Plato.ToString().Contains(plato)));
+            }
+
+            return await q.Take(500).ToListAsync();
+        }
+
+        // Cercanos
+        public async Task<List<Restaurante>> ListarCercanosAsync(double lat, double lng, int radioMetros, string? tipo = null, IEnumerable<string>? platos = null)
+        {
+            double degLat = radioMetros / 111_000.0;
+            double degLng = radioMetros / (111_000.0 * Math.Cos(lat * Math.PI / 180.0));
+
+            var minLat = lat - degLat;
+            var maxLat = lat + degLat;
+            var minLng = lng - degLng;
+            var maxLng = lng + degLng;
+
+            var q = _db.Restaurantes
+                .Include(r => r.Platos)
+                .Include(r => r.GustosQueSirve)
+                .Include(r => r.RestriccionesQueRespeta)
+                .Where(r => r.Latitud >= minLat && r.Latitud <= maxLat
+                         && r.Longitud >= minLng && r.Longitud <= maxLng);
+
+            if (!string.IsNullOrWhiteSpace(tipo) && Enum.TryParse<TipoRestaurante>(tipo, true, out var tipoParsed))
+            {
+                q = q.Where(r => r.Tipo == tipoParsed);
+            }
+
+            if (platos is not null && platos.Any())
+            {
+                var set = new HashSet<PlatoComida>(
+                    platos.Select(p => Enum.TryParse<PlatoComida>(p, true, out var v) ? v : (PlatoComida?)null)
+                          .Where(v => v.HasValue)
+                          .Select(v => v!.Value));
+
+                q = q.Where(r => r.Platos.Any(p => set.Contains(p.Plato)));
+            }
+
+            return await q
+                .OrderBy(r => Math.Abs(r.Latitud - lat) + Math.Abs(r.Longitud - lng))
+                .Take(200)
+                .ToListAsync();
+        }
+
+
+
     }
 }
 

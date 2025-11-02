@@ -24,7 +24,7 @@ namespace GustosApp.Application.UseCases
             _http = http;
         }
 
-        public async Task<List<RestauranteListadoDto>> HandleAsync(
+        public async Task<List<Restaurante>> HandleAsync(
             double lat,
             double lng,
             int radioMetros,
@@ -36,25 +36,71 @@ namespace GustosApp.Application.UseCases
             string? servesCsv = null,
             CancellationToken ct = default)
         {
-            // cache-first
-            var cached = await _repo.GetNearbyAsync(lat, lng, radioMetros, maxAge: TimeSpan.FromHours(24), ct);
-            var cachedMapped = cached.Select(MapToListado).ToList();
-
-
-            if (cachedMapped.Count > 0 && !RequiresLiveDetails(servesCsv, openNow, priceLevelsCsv))
+            var cached = await _repo.GetNearbyAsync(lat, lng, radioMetros, TimeSpan.FromHours(24), ct);
+            if (cached.Any() && !RequiresLiveDetails(servesCsv))
             {
-                var filteredCached = ApplyInMemoryFilters(cachedMapped, typesCsv, priceLevelsCsv, openNow, minRating, minUserRatings, servesCsv);
-                if (filteredCached.Count > 0)
-                    return filteredCached;
+                return cached
+                    .Where(r => FiltroInMemory(r, typesCsv, priceLevelsCsv, openNow, minRating, minUserRatings))
+                    .ToList();
             }
 
-            //Nearby Search v1 (restaurants only)
-            var apiKey = _config["GooglePlaces:ApiKey"] ?? throw new InvalidOperationException("Falta GooglePlaces:ApiKey");
-            var fieldMask = "places.id,places.displayName,places.primaryType,places.types,places.priceLevel,places.rating,places.userRatingCount,places.currentOpeningHours.openNow,places.location,places.photos.name,places.formattedAddress";
+            var apiKey = _config["GooglePlaces:ApiKey"]
+                         ?? throw new InvalidOperationException("Falta GooglePlaces:ApiKey");
 
-            var req = new NearbyRequest
+            var req = BuildNearbyRequest(lat, lng, radioMetros, typesCsv);
+            var nearby = await EjecutarNearbyAsync(req, apiKey, ct);
+
+            foreach (var p in nearby.Places ?? new())
             {
-                IncludedTypes = ParseCsv(typesCsv) ?? new List<string> { "restaurant" },
+                var existente = await _repo.GetByPlaceIdAsync(p.Id, ct);
+                if (existente == null)
+                {
+                    var nuevo = new Restaurante
+                    {
+                        Id = Guid.NewGuid(),
+                        PropietarioUid = string.Empty,
+                        Nombre = p.DisplayName?.Text ?? "(sin nombre)",
+                        NombreNormalizado = (p.DisplayName?.Text ?? "").Trim().ToLowerInvariant(),
+                        Direccion = p.FormattedAddress ?? string.Empty,
+                        Latitud = p.Location?.Latitude ?? 0,
+                        Longitud = p.Location?.Longitude ?? 0,
+                        PlaceId = p.Id,
+                        Rating = p.Rating,
+                        CantidadResenas = p.UserRatingCount,
+                        Categoria = p.PrimaryType ?? "restaurant",
+                        ImagenUrl = GetPhotoUrl(p.Photos?.FirstOrDefault()?.Name, apiKey),
+                        UltimaActualizacion = DateTime.UtcNow
+                    };
+
+                    await _repo.AddAsync(nuevo, ct);
+                }
+            }
+
+            await TrySaveIgnoringNombreNormalizadoAsync(ct);
+
+            var final = await _repo.GetNearbyAsync(lat, lng, radioMetros, TimeSpan.Zero, ct);
+
+            return final
+                .Where(r => FiltroInMemory(r, typesCsv, priceLevelsCsv, openNow, minRating, minUserRatings))
+                .ToList();
+        }
+
+        // Métodos auxiliares más limpios y reutilizables
+        private static string? GetPhotoUrl(string? fotoName, string apiKey)
+        {
+            if (string.IsNullOrWhiteSpace(fotoName)) return null;
+            return $"https://places.googleapis.com/v1/{Uri.EscapeDataString(fotoName)}/media?maxWidthPx=800&key={apiKey}";
+        }
+
+        private static NearbyRequest BuildNearbyRequest(double lat, double lng, int radio, string? typesCsv)
+        {
+            var included = string.IsNullOrWhiteSpace(typesCsv)
+                ? new List<string> { "restaurant" }
+                : typesCsv.Split(',').Select(t => t.Trim()).ToList();
+
+            return new NearbyRequest
+            {
+                IncludedTypes = included,
                 MaxResultCount = 20,
                 LanguageCode = "es",
                 LocationRestriction = new LocationRestriction
@@ -62,276 +108,36 @@ namespace GustosApp.Application.UseCases
                     Circle = new Circle
                     {
                         Center = new LatLng { Latitude = lat, Longitude = lng },
-                        Radius = radioMetros
+                        Radius = radio
                     }
                 }
             };
+        }
 
-            var httpReq = new HttpRequestMessage(HttpMethod.Post, "https://places.googleapis.com/v1/places:searchNearby");
+        private async Task<NearbyResponse> EjecutarNearbyAsync(NearbyRequest req, string apiKey, CancellationToken ct)
+        {
+            using var httpReq = new HttpRequestMessage(HttpMethod.Post, "https://places.googleapis.com/v1/places:searchNearby");
             httpReq.Headers.TryAddWithoutValidation("X-Goog-Api-Key", apiKey);
-            httpReq.Headers.TryAddWithoutValidation("X-Goog-FieldMask", fieldMask);
+            httpReq.Headers.TryAddWithoutValidation("X-Goog-FieldMask",
+                "places.id,places.displayName,places.primaryType,places.priceLevel,places.rating,places.userRatingCount,places.location,places.photos.name,places.formattedAddress");
             httpReq.Content = new StringContent(JsonSerializer.Serialize(req), Encoding.UTF8, "application/json");
 
-            var httpResp = await _http.SendAsync(httpReq, ct);
-            httpResp.EnsureSuccessStatusCode();
-            var nearby = await httpResp.Content.ReadFromJsonAsync<NearbyResponse>(cancellationToken: ct);
-
-            var items = new List<RestauranteListadoDto>();
-            foreach (var p in nearby?.Places ?? new())
-            {
-                var placeId = p.Id;
-                var fotoName = p.Photos?.FirstOrDefault()?.Name;
-                string? photoUrl = null;
-                if (!string.IsNullOrWhiteSpace(fotoName))
-                {
-
-                    photoUrl = $"https://places.googleapis.com/v1/{Uri.EscapeDataString(fotoName)}/media?maxWidthPx=800&key={apiKey}";
-                }
-
-
-                var existente = await _repo.GetByPlaceIdAsync(placeId, ct);
-                Guid idParaDto;
-
-                if (existente is null)
-                {
-                    var nuevo = new Restaurante
-                    {
-                        Id = Guid.NewGuid(),
-                        PropietarioUid = string.Empty,
-                        Nombre = p.DisplayName?.Text ?? "(sin nombre)",
-                        NombreNormalizado = (p.DisplayName?.Text ?? string.Empty).Trim().ToLowerInvariant(),
-                        Direccion = p.FormattedAddress ?? string.Empty,   // <-- cambio aquí
-                        Latitud = p.Location?.Latitude ?? 0,
-                        Longitud = p.Location?.Longitude ?? 0,
-                        HorariosJson = "{}",
-                        CreadoUtc = DateTime.UtcNow,
-                        ActualizadoUtc = DateTime.UtcNow,
-                        PlaceId = placeId,
-                        Rating = p.Rating,
-                        CantidadResenas = p.UserRatingCount,
-                        Categoria = p.PrimaryType ?? "restaurant",
-                        ImagenUrl = photoUrl,
-                        UltimaActualizacion = DateTime.UtcNow
-                    };
-                    await _repo.AddAsync(nuevo, ct);
-                    idParaDto = nuevo.Id;                
-                }
-                else
-                {
-                    idParaDto = existente.Id;
-                }
-
-                items.Add(new RestauranteListadoDto
-                {
-                    Id = idParaDto,
-                    PlaceId = placeId,
-                    Nombre = p.DisplayName?.Text ?? "",
-                    Direccion = p.FormattedAddress ?? string.Empty,       
-                    Latitud = p.Location?.Latitude ?? 0,
-                    Longitud = p.Location?.Longitude ?? 0,
-                    ImagenUrl = photoUrl,
-                    Rating = p.Rating,
-                    CantidadResenas = p.UserRatingCount,
-                    PrimaryType = p.PrimaryType,
-                    Types = p.Types,
-                    PriceLevel = p.PriceLevel,
-                    OpenNow = p.CurrentOpeningHours?.OpenNow
-                });
-
-            }
-
-
-            var saved = await TrySaveIgnoringNombreNormalizadoAsync(ct);
-
-
-            if (RequiresLiveDetails(servesCsv, openNow: null, priceLevelsCsv: null))
-            {
-                items = await EnrichWithDetailsAndFilterAsync(items, servesCsv, minRating, minUserRatings, apiKey, ct);
-            }
-            else
-            {
-
-                items = ApplyInMemoryFilters(items, typesCsv, priceLevelsCsv, openNow, minRating, minUserRatings, servesCsv);
-            }
-
-            return items;
+            var resp = await _http.SendAsync(httpReq, ct);
+            resp.EnsureSuccessStatusCode();
+            return await resp.Content.ReadFromJsonAsync<NearbyResponse>(cancellationToken: ct) ?? new NearbyResponse();
         }
 
-        private static List<string>? ParseCsv(string? csv) =>
-            string.IsNullOrWhiteSpace(csv) ? null :
-            csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-               .Select(s => s).ToList();
-
-        private static bool RequiresLiveDetails(string? servesCsv, bool? openNow, string? priceLevelsCsv)
+        private static bool FiltroInMemory(Restaurante r, string? typesCsv, string? priceLevelsCsv,
+            bool? openNow, double? minRating, int minUserRatings)
         {
+            if (minRating.HasValue && (r.Rating ?? 0) < minRating.Value)
+                return false;
 
-            return !string.IsNullOrWhiteSpace(servesCsv);
+            if (minUserRatings > 0 && (r.CantidadResenas ?? 0) < minUserRatings)
+                return false;
+
+            return true;
         }
-
-        private async Task<List<RestauranteListadoDto>> EnrichWithDetailsAndFilterAsync(
-            List<RestauranteListadoDto> items,
-            string? servesCsv,
-            double? minRating,
-            int minUserRatings,
-            string apiKey,
-            CancellationToken ct)
-        {
-            var serveFlags = ParseCsv(servesCsv)?.ToHashSet(StringComparer.OrdinalIgnoreCase) ?? new();
-
-            var list = new List<RestauranteListadoDto>();
-            foreach (var it in items)
-            {
-                var details = await GetPlaceDetailsAsync(it, apiKey, ct);
-                if (details is null) continue;
-
-                ApplyDetailsToDto(it, details);
-
-                if (minRating.HasValue && (it.Rating ?? 0) < minRating.Value) continue;
-                if (minUserRatings > 0 && (it.CantidadResenas ?? 0) < minUserRatings) continue;
-
-                if (serveFlags.Count > 0)
-                {
-                    bool ok = true;
-                    foreach (var f in serveFlags)
-                    {
-                        ok &= f switch
-                        {
-                            "servesVegetarianFood" => it.ServesVegetarianFood == true,
-                            "servesCoffee" => it.ServesCoffee == true,
-                            "servesBeer" => it.ServesBeer == true,
-                            "servesWine" => it.ServesWine == true,
-                            "delivery" => it.Delivery == true,
-                            "takeout" => it.Takeout == true,
-                            "dineIn" => it.DineIn == true,
-                            _ => true
-                        };
-                        if (!ok) break;
-                    }
-                    if (!ok) continue;
-                }
-
-                list.Add(it);
-            }
-            return list;
-        }
-
-        private async Task<PlaceDetails?> GetPlaceDetailsAsync(
-    RestauranteListadoDto it,
-    string apiKey,
-    CancellationToken ct)
-        {
-
-            if (string.IsNullOrWhiteSpace(it.PlaceId))
-                return null;
-
-            var fieldMask =
-                "id,displayName,primaryType,types,priceLevel,rating,userRatingCount," +
-                "currentOpeningHours.openNow," +
-                "delivery,takeout,dineIn,curbsidePickup,reservable," +
-                "servesBreakfast,servesBrunch,servesLunch,servesDinner," +
-                "servesBeer,servesWine,servesCocktails,servesCoffee,servesVegetarianFood";
-
-            var url = $"https://places.googleapis.com/v1/places/{Uri.EscapeDataString(it.PlaceId)}";
-
-            using var req = new HttpRequestMessage(HttpMethod.Get, url);
-            req.Headers.TryAddWithoutValidation("X-Goog-Api-Key", apiKey);
-            req.Headers.TryAddWithoutValidation("X-Goog-FieldMask", fieldMask);
-
-            var resp = await _http.SendAsync(req, ct);
-            if (!resp.IsSuccessStatusCode)
-                return null;
-
-            var details = await resp.Content.ReadFromJsonAsync<PlaceDetails>(cancellationToken: ct);
-            return details;
-        }
-
-
-        private static void ApplyDetailsToDto(RestauranteListadoDto it, PlaceDetails d)
-        {
-            it.PriceLevel = d.PriceLevel ?? it.PriceLevel;
-            it.Rating = d.Rating ?? it.Rating;
-            it.CantidadResenas = d.UserRatingCount ?? it.CantidadResenas;
-            it.OpenNow = d.CurrentOpeningHours?.OpenNow ?? it.OpenNow;
-            it.PrimaryType = d.PrimaryType ?? it.PrimaryType;
-            it.Types = d.Types ?? it.Types;
-            it.Delivery = d.Delivery;
-            it.Takeout = d.Takeout;
-            it.DineIn = d.DineIn;
-            it.ServesVegetarianFood = d.ServesVegetarianFood;
-            it.ServesCoffee = d.ServesCoffee;
-            it.ServesBeer = d.ServesBeer;
-            it.ServesWine = d.ServesWine;
-        }
-
-        private static RestauranteListadoDto MapToListado(Restaurante e) => new RestauranteListadoDto
-        {
-            Id = e.Id,
-            PlaceId = e.PlaceId,
-            Nombre = e.Nombre,
-            Direccion = e.Direccion,
-            Latitud = e.Latitud,
-            Longitud = e.Longitud,
-            ImagenUrl = e.ImagenUrl,
-            Rating = e.Rating,
-            CantidadResenas = e.CantidadResenas,
-            PrimaryType = e.Categoria,
-            Types = null,
-            PriceLevel = null,
-            OpenNow = null
-        };
-
-        private static List<RestauranteListadoDto> ApplyInMemoryFilters(
-            List<RestauranteListadoDto> items,
-            string? typesCsv,
-            string? priceLevelsCsv,
-            bool? openNow,
-            double? minRating,
-            int minUserRatings,
-            string? servesCsv)
-        {
-            var filtered = items.AsEnumerable();
-
-            var types = ParseCsv(typesCsv)?.ToHashSet(StringComparer.OrdinalIgnoreCase);
-            if (types is { Count: > 0 })
-            {
-                filtered = filtered.Where(i =>
-                    (i.PrimaryType != null && types.Contains(i.PrimaryType)) ||
-                    (i.Types != null && i.Types.Any(t => types.Contains(t)))
-                );
-            }
-
-            var priceLevels = ParseCsv(priceLevelsCsv)?.ToHashSet(StringComparer.OrdinalIgnoreCase);
-            if (priceLevels is { Count: > 0 })
-            {
-                filtered = filtered.Where(i => i.PriceLevel != null && priceLevels.Contains(i.PriceLevel));
-            }
-
-            if (openNow.HasValue)
-            {
-                filtered = filtered.Where(i => i.OpenNow == openNow.Value);
-            }
-
-            if (minRating.HasValue)
-            {
-                filtered = filtered.Where(i => (i.Rating ?? 0) >= minRating.Value);
-            }
-            if (minUserRatings > 0)
-            {
-                filtered = filtered.Where(i => (i.CantidadResenas ?? 0) >= minUserRatings);
-            }
-
-
-            return filtered.ToList();
-        }
-
-        private static bool IsNombreNormalizadoUniqueViolation(Exception ex)
-        {
-            var msg = ex.InnerException?.Message ?? ex.Message;
-            return msg.Contains("UX_Restaurantes_NombreNormalizado", StringComparison.OrdinalIgnoreCase)
-                   || msg.Contains("Cannot insert duplicate key", StringComparison.OrdinalIgnoreCase)
-                   || msg.Contains("2601");
-        }
-
 
         private async Task<bool> TrySaveIgnoringNombreNormalizadoAsync(CancellationToken ct)
         {
@@ -346,7 +152,17 @@ namespace GustosApp.Application.UseCases
             }
         }
 
+        private static bool IsNombreNormalizadoUniqueViolation(Exception ex)
+        {
+            var msg = ex.InnerException?.Message ?? ex.Message;
+            return msg.Contains("UX_Restaurantes_NombreNormalizado", StringComparison.OrdinalIgnoreCase)
+                   || msg.Contains("Cannot insert duplicate key", StringComparison.OrdinalIgnoreCase)
+                   || msg.Contains("2601");
+        }
 
+        private static bool RequiresLiveDetails(string? servesCsv) =>
+            !string.IsNullOrWhiteSpace(servesCsv);
     }
+
 }
 

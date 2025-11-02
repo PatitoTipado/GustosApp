@@ -225,7 +225,7 @@ namespace GustosApp.API.Controllers
         }
         [Authorize]
         [HttpGet("{grupoId}/chat")]
-        [ProducesResponseType(typeof(IEnumerable<ChatMessageResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IEnumerable<ChatMensajeResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> ObtenerChat(string grupoId, CancellationToken ct)
         {
@@ -235,7 +235,7 @@ namespace GustosApp.API.Controllers
                
             var msgs = await _obtenerChatGrupoUseCase.HandleAsync(firebaseUid, gid, ct);
 
-                var response = _mapper.Map<IEnumerable<ChatMessageResponse>>(msgs);
+                var response = _mapper.Map<IEnumerable<ChatMensajeResponse>>(msgs);
 
                  return Ok(response);
           

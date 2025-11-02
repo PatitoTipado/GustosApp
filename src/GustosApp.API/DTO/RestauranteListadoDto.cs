@@ -1,4 +1,4 @@
-namespace GustosApp.Application.DTOs.Restaurantes
+namespace GustosApp.API.DTO
 {
     public class RestauranteListadoDto
     {

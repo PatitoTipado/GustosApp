@@ -105,7 +105,7 @@ builder.Services.AddScoped<IGustoRepository, GustoRepositoryEF>();
 builder.Services.AddScoped<IGrupoRepository, GrupoRepositoryEF>();
 builder.Services.AddScoped<IMiembroGrupoRepository, MiembroGrupoRepositoryEF>();
 builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepositoryEF>();
-builder.Services.AddScoped<IReviewRepository, ReviewRepositoryEF>();
+builder.Services.AddScoped<IReseñaRepository, ReseñaRepositoryEF>();
 builder.Services.AddScoped<IGustosGrupoRepository, GustosGrupoRepositoryEF>();
 builder.Services.AddScoped<INotificacionRepository, NotificacionRepositoryEF>();
 builder.Services.AddScoped<INotificacionRealtimeService, SignalRNotificacionRealtimeService>();

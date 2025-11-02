@@ -21,89 +21,69 @@ namespace GustosApp.Application.UseCases
             _restaurantRepo = restaurantRepo;
         }
 
-        public async Task<List<RestauranteDto>> Handle(UsuarioPreferenciasDTO usuario, int maxResults = 10, CancellationToken ct = default)
+        public async Task<List<Restaurante>> Handle(UsuarioPreferencias usuario, int maxResults = 10, CancellationToken ct = default)
         {
-            //mediante el usuario conseguir los restaurantes que tengan al menos un gusto del usuario y respete por lo menos una restriccion
-            var restaurantes = await _restaurantRepo.buscarRestauranteParaUsuariosConGustosYRestricciones(usuario.Gustos,usuario.Restricciones, ct);
-            //var restaurantes = await _restaurantRepo.GetAllAsync(ct);
+            var restaurantes = await _restaurantRepo.buscarRestauranteParaUsuariosConGustosYRestricciones(
+              usuario.Gustos,
+              usuario.Restricciones,
+              ct);
+
             var resultados = new List<(Restaurante restaurante, double score)>();
+
+            //  2. Crear embedding de los gustos del usuario
             var userEmb = _embeddingService.GetEmbedding(string.Join(" ", usuario.Gustos));
 
             foreach (var rest in restaurantes)
             {
                 double maxScoreBase = 0;
+
+                // Comparar embeddings con cada gusto del restaurante
                 foreach (var especialidad in rest.GustosQueSirve)
                 {
                     var baseEmb = _embeddingService.GetEmbedding(especialidad.Nombre);
                     double scoreSimilitud = CosineSimilarity.Coseno(userEmb, baseEmb);
 
                     if (scoreSimilitud > maxScoreBase)
-                    {
                         maxScoreBase = scoreSimilitud;
-                    }
                 }
-                double scoreBase = maxScoreBase;
-                double penalizacion = 0;
 
+                double penalizacion = 0;
                 foreach (var gusto in usuario.Gustos)
                 {
-                    if (!rest.GustosQueSirve.Any(e => e.Nombre != null && e.Nombre.ToLower().Contains(gusto.ToLower())))
+                    if (!rest.GustosQueSirve.Any(e =>
+                        e.Nombre != null &&
+                        e.Nombre.ToLower().Contains(gusto.ToLower())))
                     {
                         penalizacion += FactorPenalizacion;
                     }
                 }
 
-                double scoreFinal = scoreBase * (1 - penalizacion);
+                double scoreFinal = maxScoreBase * (1 - penalizacion);
 
                 if (scoreFinal >= UmbralMinimo)
                 {
+                    
+                    rest.Score = scoreFinal;
                     resultados.Add((rest, scoreFinal));
                 }
             }
-            // 4. Ordenar, limitar y mapear al DTO de respuesta (Corregido)
-            var recomendacionesOrdenadas = resultados
-                // 4.1. Ordena del Score m�s alto al m�s bajo (�Aplica al listado 'resultados'!)
+
+            //  3. Ordenar por score y limitar
+            var recomendaciones = resultados
                 .OrderByDescending(x => x.score)
-
-                // 4.2. Toma el n�mero m�ximo de resultados
                 .Take(maxResults)
-
-                // 4.3. Mapea al RestauranteResponse
-                .Select(x => new RestauranteDto(
-                    // Mapeo de propiedades simples
-                    id: x.restaurante.Id,
-                    propietarioUid: x.restaurante.PropietarioUid,
-                    nombre: x.restaurante.Nombre,
-                    direccion: x.restaurante.Direccion,
-                    latitud: x.restaurante.Latitud,
-                    longitud: x.restaurante.Longitud,
-                    horarios: x.restaurante.HorariosJson,
-                    creadoUtc: x.restaurante.CreadoUtc,
-                    actualizadoUtc: x.restaurante.ActualizadoUtc,
-                    tipo: null,
-                    imagenUrl: x.restaurante.ImagenUrl,
-                    valoracion: x.restaurante.Valoracion,
-
-                    // Mapeo de colecciones
-                    platos: new List<string>(),
-                    
-                    gustosQueSirve: x.restaurante.GustosQueSirve
-                        .Select(g => new GustoDto(g.Id, g.Nombre, g.ImagenUrl))
-                        .ToList(),
-
-                    restriccionesQueRespeta: x.restaurante.RestriccionesQueRespeta
-                        .Select(r => new RestriccionResponse(r.Id, r.Nombre))
-                        .ToList(),
-
-                    // El Score final para mostrar
-                    score: x.score
-                ))
+                .Select(x =>
+                {
+                    x.restaurante.Score = x.score;
+                    return x.restaurante;
+                })
                 .ToList();
 
-            return recomendacionesOrdenadas;
+            return recomendaciones;
         }
     }
-}
+    }
+
     
 
     

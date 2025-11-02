@@ -42,7 +42,10 @@ namespace GustosApp.Domain.Model
         public ICollection<Restriccion> RestriccionesQueRespeta { get; set; } = new List<Restriccion>();
 
         // ====== V2 ======
-        public TipoRestaurante Tipo { get; set; }                 
+
+        public string PrimaryType { get; set; } = "restaurant";
+        public string TypesJson { get; set; } = "[]";
+
         public string? ImagenUrl { get; set; }                
         public decimal? Valoracion { get; set; }                  
         public ICollection<RestaurantePlato> Platos { get; set; } = new List<RestaurantePlato>();

@@ -39,4 +39,15 @@
 		<ProjectReference Include="..\GustosApp.Infraestructure\GustosApp.Infraestructure.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="NewFolder\" />
+	</ItemGroup>
+
+	<ItemGroup>
+  <Content Include="tessdata\**\*">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </Content>
+</ItemGroup>
+
+
 </Project>

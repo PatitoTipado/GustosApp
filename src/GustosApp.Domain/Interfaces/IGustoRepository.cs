@@ -11,6 +11,8 @@ namespace GustosApp.Domain.Interfaces
     {
         Task<List<Gusto>> GetAllAsync(CancellationToken ct);
         Task<List<Gusto>> GetByIdsAsync(List<Guid> ids, CancellationToken ct);
+        List<Gusto> ObtenerGustoPorCoincidencia(string nombreGusto);
         Task<List<Gusto>> obtenerGustosPorNombre(List<string> gustos);
+        List<Gusto> obtenerGustosPorPaginacion(int cantidadInicio, int final);
     }
 }

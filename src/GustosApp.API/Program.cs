@@ -184,6 +184,9 @@ builder.Services.AddScoped<EnviarMensajeGrupoUseCase>();
 builder.Services.AddScoped<ActualizarGustosAGrupoUseCase>();
 builder.Services.AddScoped<ObtenerPreferenciasGruposUseCase>();
 builder.Services.AddScoped<EliminarNotificacionUseCase>();
+builder.Services.AddScoped<ObtenerGustosPaginacionUseCase>();
+builder.Services.AddScoped<BuscarGustoPorCoincidenciaUseCase>();
+builder.Services.AddScoped<ObtenerGustosSeleccionadosPorUsuarioYParaFiltrarUseCase>();
 builder.Services.AddScoped<BuscarUsuariosUseCase>();
 
 

@@ -19,11 +19,12 @@ namespace GustosApp.API.Controllers
         private readonly ObtenerGustosPaginacionUseCase _obtenerGustosPaginacion;
         private readonly BuscarGustoPorCoincidenciaUseCase _buscarGustoPorCoincidencia;
         private readonly ObtenerGustosSeleccionadosPorUsuarioYParaFiltrarUseCase _obtenerGustosSeleccionadosPorUsuarioYParaFiltrarUseCase;
-        private IMapper _mapper;
+        private readonly IMapper _mapper;
         public GustoController(
-            IMapper mapper;
+           
            ObtenerGustosFiltradosUseCase obtenerGustos,
-            ObtenerGustosPaginacionUseCase obtenerGustosPaginacion,
+            IMapper mapper,
+             ObtenerGustosPaginacionUseCase obtenerGustosPaginacion,
             BuscarGustoPorCoincidenciaUseCase buscarGustoPorCoincidenciaUseCase,
             ObtenerGustosSeleccionadosPorUsuarioYParaFiltrarUseCase obtenerGustosSeleccionadosPorUsuarioYParaFiltrarUseCase)
         {
@@ -33,17 +34,7 @@ namespace GustosApp.API.Controllers
             _obtenerGustosSeleccionadosPorUsuarioYParaFiltrarUseCase = obtenerGustosSeleccionadosPorUsuarioYParaFiltrarUseCase;  
             _mapper = mapper;
             }
-        private string GetFirebaseUid()
-        {
-            var firebaseUid = User.FindFirst("user_id")?.Value
-                            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                            ?? User.FindFirst("sub")?.Value;
-
-            if (string.IsNullOrWhiteSpace(firebaseUid))
-                throw new UnauthorizedAccessException("No se encontró el UID de Firebase en el token.");
-
-            return firebaseUid;
-        }
+        
 
         [HttpGet("obtenerGustosPaginados")]
         public async Task<IActionResult> ObtenerGustos(CancellationToken ct, int cantidadInicio,int final)

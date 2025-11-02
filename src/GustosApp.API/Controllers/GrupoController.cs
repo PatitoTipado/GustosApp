@@ -223,7 +223,7 @@ namespace GustosApp.API.Controllers
         public async Task<IActionResult> agregarGustoDeGrupo(Guid grupoId, [FromBody] List<string> gustos)
         {
             var firebaseUid = GetFirebaseUid();
-            var resultado = await _servicioPreferenciasGrupos.ActualizarGustosDeGrupo(gustos, grupoId);
+            var resultado = await _servicioPreferenciasGrupos.ActualizarGustosDeGrupo(gustos, grupoId, firebaseUid);
             return Ok(resultado);
         }
 
@@ -231,7 +231,7 @@ namespace GustosApp.API.Controllers
         public async Task<IActionResult> eliminarGustosGrupo(Guid grupoId, [FromBody] List<string> gustos)
         {
             var firebaseUid = GetFirebaseUid();
-            var resultado = await _servicioPreferenciasGrupos.EliminarGustosDeGrupo(gustos, grupoId);
+            var resultado = await _servicioPreferenciasGrupos.EliminarGustosDeGrupo(gustos, grupoId,firebaseUid);
             return Ok(resultado);
         }
 

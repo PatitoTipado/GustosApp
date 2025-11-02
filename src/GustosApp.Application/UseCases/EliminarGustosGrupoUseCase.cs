@@ -13,21 +13,42 @@ namespace GustosApp.Application.UseCases
         private IGrupoRepository _grupoRepository;
         private IGustoRepository _gustoRepository;
         private IGustosGrupoRepository _gustosGrupoRepository;
+        private IUsuarioRepository _usuarioRepository;
+        private IMiembroGrupoRepository _miembroGrupoRepository;
 
-        public EliminarGustosGrupoUseCase(IGrupoRepository grupoRepository, IGustoRepository gustoRepository, IGustosGrupoRepository gustosGrupoRepository)
+        public EliminarGustosGrupoUseCase(
+            IGrupoRepository grupoRepository,
+            IGustoRepository gustoRepository,
+            IGustosGrupoRepository gustosGrupoRepository,
+            IUsuarioRepository usuarioRepository,
+            IMiembroGrupoRepository miembroGrupoRepository)
         {
             _grupoRepository = grupoRepository;
             _gustoRepository = gustoRepository;
             _gustosGrupoRepository = gustosGrupoRepository;
+            _usuarioRepository = usuarioRepository;
+            _miembroGrupoRepository = miembroGrupoRepository;
         }
 
-        public Task<bool> Handle(List<string> gustosDeUsuario, Guid grupoId)
+        public Task<bool> Handle(List<string> gustosDeUsuario, Guid grupoId,string firebaseUid)
         {
             //primero validamos que exista el grupo -> todos estos false los cambiare por exeptions despues
 
+            var miembroGrupo = _usuarioRepository.GetByFirebaseUidAsync(firebaseUid).Result;
+
+            if (miembroGrupo == null)
+            {
+                throw new UnauthorizedAccessException("El usuario no existe.");
+            }
+
             if (!_grupoRepository.ExistsAsync(grupoId).Result)
             {
-                return Task.FromResult(false);
+                throw new KeyNotFoundException("el grupo no existe.");
+            }
+
+            if (!(_miembroGrupoRepository.UsuarioEsMiembroActivoAsync(grupoId, miembroGrupo.Id).Result))
+            {
+                throw new UnauthorizedAccessException("El miembro no es un usuario activo (expulsado)");
             }
 
             //validamos que los gustos existan
@@ -36,10 +57,10 @@ namespace GustosApp.Application.UseCases
 
             if (gustos == null || gustos.Count() == 0)
             {
-                return Task.FromResult(false);
+                throw new KeyNotFoundException("No existen los gustos mencionados.");
             }
 
-            return _gustosGrupoRepository.EliminarGustosAlGrupo(grupoId, gustos);
+            return _gustosGrupoRepository.EliminarGustosAlGrupo(grupoId, gustos,miembroGrupo.Id);
         }
     }
 }

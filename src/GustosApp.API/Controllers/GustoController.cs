@@ -23,7 +23,23 @@ namespace GustosApp.API.Controllers
 
 
         // GET: api/<ValuesController>
-        
+
+        [HttpGet]
+        public async Task<IActionResult> ObtenerGustos(CancellationToken ct,int cantidadDeGustos)
+        {
+            var uid = User.FindFirst("user_id")?.Value
+                        ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                        ?? User.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrWhiteSpace(uid))
+                return Unauthorized(new { message = "Token no válido o sin UID" });
+
+            var resp = await _obtenerGustos.HandleAsync(uid, ct);
+
+            return Ok(resp);
+
+        }
+
         [HttpGet]
         public async Task<IActionResult> ObtenerGustosFiltrados(CancellationToken ct)
         {

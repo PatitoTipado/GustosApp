@@ -232,6 +232,13 @@ public class GustosDbContext : DbContext
             .HasForeignKey(gg => gg.GustoId)
             .OnDelete(DeleteBehavior.Restrict); // No eliminar un Gusto si está siendo usado por grupos
 
+        // 4. Relación de GrupoGusto con MiembroGrupo
+        modelBuilder.Entity<GrupoGusto>()
+            .HasOne(gg => gg.Miembro)
+            .WithMany(m => m.GustosSeleccionados)
+            .HasForeignKey(gg => gg.MiembroId)
+            .OnDelete(DeleteBehavior.Restrict); 
+
         // Chat messages
         modelBuilder.Entity<ChatMessage>()
             .HasKey(c => c.Id);

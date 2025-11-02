@@ -19,9 +19,9 @@ namespace GustosApp.Application.Handlers
             _desacivarMiembroDeGrupoUseCase = desacivarMiembroDeGrupoUseCase;
         }
 
-        public Task<bool> ActualizarGustosDeGrupo(List<string> gustosDeUsuario, Guid grupoId)
+        public Task<bool> ActualizarGustosDeGrupo(List<string> gustosDeUsuario, Guid grupoId, string firebaseUid)
         {
-            return _actualizarGustosGrupoUseCase.Handle(gustosDeUsuario, grupoId);
+            return _actualizarGustosGrupoUseCase.Handle(gustosDeUsuario, grupoId, firebaseUid);
         }
 
         public Task<bool> DesactivarMiembroDeGrupo(Guid grupoId, Guid usuarioId, string firebaseUid)
@@ -29,9 +29,9 @@ namespace GustosApp.Application.Handlers
             return _desacivarMiembroDeGrupoUseCase.Handle(grupoId, usuarioId, firebaseUid);
         }
 
-        public Task<bool> EliminarGustosDeGrupo(List<string> gustosDeUsuario,Guid grupoId)
+        public Task<bool> EliminarGustosDeGrupo(List<string> gustosDeUsuario,Guid grupoId, string firebaseuid)
         {
-            return _eliminarGustosGrupoUseCase.Handle(gustosDeUsuario,grupoId);
+            return _eliminarGustosGrupoUseCase.Handle(gustosDeUsuario,grupoId,firebaseuid);
         }
     }
 }

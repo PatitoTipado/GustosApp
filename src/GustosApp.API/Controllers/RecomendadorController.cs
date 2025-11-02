@@ -43,7 +43,7 @@ namespace GustosApp.API.Controllers
 
         [HttpGet("test")]
         [Authorize]
-        public async Task<IActionResult> test()
+        public IActionResult test()
         {
             return Ok("autorizado");
         }

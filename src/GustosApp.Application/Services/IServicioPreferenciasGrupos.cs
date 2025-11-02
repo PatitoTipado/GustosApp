@@ -9,8 +9,8 @@ namespace GustosApp.Application.Services
 {
     public interface IServicioPreferenciasGrupos
     {
-        public Task<bool> ActualizarGustosDeGrupo(List<string> gustosDeUsuario, Guid grupoId);
+        public Task<bool> ActualizarGustosDeGrupo(List<string> gustosDeUsuario, Guid grupoId,string firebaseUid);
         Task<bool> DesactivarMiembroDeGrupo(Guid grupoId, Guid usuarioId, string firebaseUid);
-        public Task<bool> EliminarGustosDeGrupo(List<string> gustosDeUsuario,Guid grupoId);
+        public Task<bool> EliminarGustosDeGrupo(List<string> gustosDeUsuario,Guid grupoId,string firebaseuid);
     }
 }

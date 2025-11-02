@@ -25,7 +25,7 @@ namespace GustosApp.Application.UseCases
         public List<RestauranteDto> Handle(UsuarioPreferenciasDTO usuario, List<RestauranteDto> filtrados, int maxResults = 10, CancellationToken ct = default)
         {
             //mediante el usuario conseguir los restaurantes que tengan al menos un gusto del usuario y respete por lo menos una restriccion
-            List<RestauranteDto> restaurantes = filtrarRestaurante(usuario.Gustos, usuario.Restricciones, filtrados , ct);
+            List<RestauranteDto> restaurantes = filtrarRestaurante(usuario.Gustos, usuario.Restricciones, filtrados, ct);
             //var restaurantes = await _restaurantRepo.GetAllAsync(ct);
             var resultados = new List<(RestauranteDto restaurante, double score)>();
             var userEmb = _embeddingService.GetEmbedding(string.Join(" ", usuario.Gustos));
@@ -81,7 +81,8 @@ namespace GustosApp.Application.UseCases
                     horarios: x.restaurante.Horarios,
                     creadoUtc: x.restaurante.CreadoUtc,
                     actualizadoUtc: x.restaurante.ActualizadoUtc,
-                    tipo: x.restaurante.Tipo,
+                    x.restaurante.PrimaryType,
+                    x.restaurante.Types,
                     imagenUrl: x.restaurante.ImagenUrl,
                     valoracion: x.restaurante.Valoracion,
 
@@ -107,7 +108,7 @@ namespace GustosApp.Application.UseCases
         private List<RestauranteDto> filtrarRestaurante(
             List<string> gustos,
             List<string> restricciones,
-            List<RestauranteDto> restaurantes, 
+            List<RestauranteDto> restaurantes,
             CancellationToken ct)
         {
             if (restaurantes == null || !restaurantes.Any())

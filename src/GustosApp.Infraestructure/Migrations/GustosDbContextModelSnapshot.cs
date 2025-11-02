@@ -1675,6 +1675,9 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Property<double?>("Rating")
                         .HasColumnType("float");
 
+                    b.Property<int>("Tipo")
+                        .HasColumnType("int");
+
                     b.Property<string>("TypesJson")
                         .IsRequired()
                         .ValueGeneratedOnAdd()

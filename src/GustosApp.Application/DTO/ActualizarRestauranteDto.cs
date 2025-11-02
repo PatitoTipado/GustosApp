@@ -40,4 +40,6 @@ public class ActualizarRestauranteDto
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         });
+
+    public string? Tipo { get; set; }
 }

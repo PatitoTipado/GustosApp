@@ -3,9 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using FluentAssertions;
-using GustosApp.Application.DTOs.Restaurantes;
-using GustosApp.Domain.Model;
-using GustosApp.Infraestructure.Services;
+
 using GustosApp.API.Tests.Infraestructura;
 using Xunit;
 

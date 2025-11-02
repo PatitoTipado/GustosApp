@@ -18,6 +18,8 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using System.IO;
+using System.Text.Json;
+
 
 // Controlador para restaurantes que se registran en la app por un usuario y restaurantes traidos de Places v1
 
@@ -42,7 +44,7 @@ namespace GustosApp.API.Controllers
 
         public RestaurantesController(
      IServicioRestaurantes servicio,
-     SugerirGustosSobreUnRadioUseCase sugerirGustos,
+     SugerirGustosUseCase sugerirGustos,
      ObtenerGustosUseCase obtenerGustos,
      BuscarRestaurantesCercanosUseCase buscarRestaurantes,
      ActualizarDetallesRestauranteUseCase obtenerDetalles,
@@ -196,10 +198,16 @@ namespace GustosApp.API.Controllers
             dto.Latitud = lat;
             dto.Longitud = lng;
 
-            if (dto.Horarios is not null && dto.Horarios is not string)
+            if (dto.Horarios is null)
             {
-                dto.Horarios = dto.HorariosComoJson;
+                var json = dto.HorariosComoJson;
+                if (!string.IsNullOrWhiteSpace(json))
+                {
+                    dto.Horarios = JsonSerializer.Deserialize<JsonElement>(json);
+                }
             }
+
+
 
             var creado = await _servicio.CrearAsync(uid, dto);
 
@@ -246,10 +254,10 @@ namespace GustosApp.API.Controllers
                 creado.Id,
                 creado.Nombre,
                 creado.Direccion,
-                creado.Lat,
-                creado.Lng,
+                creado.Latitud,
+                creado.Longitud,
                 PrimaryType = creado.PrimaryType,
-                Types = creado.Types,
+                Types = creado.TypesJson,
                 creado.ImagenUrl,
                 GustosVinculados = dto.GustosQueSirveIds,
                 RestriccionesVinculadas = dto.RestriccionesQueRespetaIds

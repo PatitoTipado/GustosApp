@@ -59,9 +59,11 @@ namespace GustosApp.Infraestructure.Migrations
                     UltimaActualizacion = table.Column<DateTime>(type: "datetime2", nullable: false),
                     WebUrl = table.Column<string>(type: "nvarchar(2048)", maxLength: 2048, nullable: true),
                     EmbeddingVector = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Tipo = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: false),
+                    PrimaryType = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false, defaultValue: "restaurant"),
+                    TypesJson = table.Column<string>(type: "nvarchar(max)", nullable: false, defaultValue: "[]"),
                     ImagenUrl = table.Column<string>(type: "nvarchar(2048)", maxLength: 2048, nullable: true),
-                    Valoracion = table.Column<decimal>(type: "decimal(3,2)", precision: 3, scale: 2, nullable: true)
+                    Valoracion = table.Column<decimal>(type: "decimal(3,2)", precision: 3, scale: 2, nullable: true),
+                    Tipo = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -153,6 +155,50 @@ namespace GustosApp.Infraestructure.Migrations
                     table.ForeignKey(
                         name: "FK_RestauranteGustos_Restaurantes_restaurantesId",
                         column: x => x.restaurantesId,
+                        principalTable: "Restaurantes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RestauranteImagenes",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    RestauranteId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Tipo = table.Column<int>(type: "int", nullable: false),
+                    Url = table.Column<string>(type: "nvarchar(1024)", maxLength: 1024, nullable: false),
+                    Orden = table.Column<int>(type: "int", nullable: true),
+                    FechaCreacionUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RestauranteImagenes", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RestauranteImagenes_Restaurantes_RestauranteId",
+                        column: x => x.RestauranteId,
+                        principalTable: "Restaurantes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RestauranteMenus",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    RestauranteId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Moneda = table.Column<string>(type: "nvarchar(8)", maxLength: 8, nullable: false),
+                    Json = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Version = table.Column<int>(type: "int", nullable: false),
+                    FechaActualizacionUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RestauranteMenus", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RestauranteMenus_Restaurantes_RestauranteId",
+                        column: x => x.RestauranteId,
                         principalTable: "Restaurantes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -1020,6 +1066,16 @@ namespace GustosApp.Infraestructure.Migrations
                 column: "restaurantesId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_RestImagen_Rest_Tipo_Orden",
+                table: "RestauranteImagenes",
+                columns: new[] { "RestauranteId", "Tipo", "Orden" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RestMenu_RestauranteId",
+                table: "RestauranteMenus",
+                column: "RestauranteId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_RestauranteRestricciones_RestriccionesQueRespetaId",
                 table: "RestauranteRestricciones",
                 column: "RestriccionesQueRespetaId");
@@ -1033,6 +1089,11 @@ namespace GustosApp.Infraestructure.Migrations
                 name: "IX_Restaurantes_NombreNormalizado",
                 table: "Restaurantes",
                 column: "NombreNormalizado");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Restaurantes_PrimaryType",
+                table: "Restaurantes",
+                column: "PrimaryType");
 
             migrationBuilder.CreateIndex(
                 name: "UX_Restaurantes_PlaceId",
@@ -1136,6 +1197,12 @@ namespace GustosApp.Infraestructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "RestauranteGustos");
+
+            migrationBuilder.DropTable(
+                name: "RestauranteImagenes");
+
+            migrationBuilder.DropTable(
+                name: "RestauranteMenus");
 
             migrationBuilder.DropTable(
                 name: "RestaurantePlatos");

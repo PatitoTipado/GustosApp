@@ -7,7 +7,7 @@ using GustosApp.API.DTO;
 using GustosApp.Application.DTO;
 using GustosApp.Domain.Model;
 
-namespace GustosApp.Application.DTO
+namespace GustosApp.API.DTO
 {
     public class RestauranteDto
     {
@@ -33,9 +33,10 @@ namespace GustosApp.Application.DTO
         public ICollection<GustoDto> GustosQueSirve { get; set; }
         public ICollection<RestriccionResponse> RestriccionesQueRespeta { get; set; }
         public double Score { get; set; }
+        public string? Tipo { get; internal set; }
 
 
-        
+
         // --- CONSTRUCTOR 1: Vacío (Requerido por serializadores/mapeadores) ---
         public RestauranteDto()
         {

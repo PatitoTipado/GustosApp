@@ -50,5 +50,6 @@ namespace GustosApp.Domain.Model
         public decimal? Valoracion { get; set; }                  
         public ICollection<RestaurantePlato> Platos { get; set; } = new List<RestaurantePlato>();
         public double Score { get; set; }
+        public TipoRestaurante Tipo { get; set; }
     }
 }

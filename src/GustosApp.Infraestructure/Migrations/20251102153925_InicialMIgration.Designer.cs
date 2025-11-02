@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GustosApp.Infraestructure.Migrations
 {
     [DbContext(typeof(GustosDbContext))]
-    [Migration("20251031011146_NotificacionesIDInvitaciones")]
-    partial class NotificacionesIDInvitaciones
+    [Migration("20251102153925_InicialMIgration")]
+    partial class InicialMIgration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1548,6 +1548,9 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Property<DateTime>("FechaCreacion")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid?>("InvitacionId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<bool>("Leida")
                         .HasColumnType("bit");
 
@@ -1568,6 +1571,10 @@ namespace GustosApp.Infraestructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("InvitacionId")
+                        .IsUnique()
+                        .HasFilter("[InvitacionId] IS NOT NULL");
 
                     b.HasIndex("UsuarioDestinoId");
 
@@ -1998,6 +2005,9 @@ namespace GustosApp.Infraestructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<bool>("EsPrivado")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime>("FechaRegistro")
                         .HasColumnType("datetime2");
 
@@ -2019,6 +2029,9 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Property<int>("PasoActual")
                         .HasColumnType("int");
 
+                    b.Property<int>("Plan")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
@@ -2031,6 +2044,47 @@ namespace GustosApp.Infraestructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Usuarios");
+                });
+
+            modelBuilder.Entity("GustosApp.Domain.Model.UsuarioRestauranteVisitado", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("FechaVisitaUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double>("Latitud")
+                        .HasColumnType("float");
+
+                    b.Property<double>("Longitud")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("PlaceId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<Guid?>("RestauranteId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlaceId");
+
+                    b.HasIndex("RestauranteId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("UsuarioRestauranteVisitados", (string)null);
                 });
 
             modelBuilder.Entity("RestauranteRestriccion", b =>
@@ -2312,11 +2366,18 @@ namespace GustosApp.Infraestructure.Migrations
 
             modelBuilder.Entity("GustosApp.Domain.Model.Notificacion", b =>
                 {
+                    b.HasOne("GustosApp.Domain.Model.InvitacionGrupo", "Invitacion")
+                        .WithOne("Notificacion")
+                        .HasForeignKey("GustosApp.Domain.Model.Notificacion", "InvitacionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("GustosApp.Domain.Model.Usuario", "UsuarioDestino")
-                        .WithMany()
+                        .WithMany("Notificaciones")
                         .HasForeignKey("UsuarioDestinoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Invitacion");
 
                     b.Navigation("UsuarioDestino");
                 });
@@ -2369,6 +2430,24 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Navigation("Destinatario");
 
                     b.Navigation("Remitente");
+                });
+
+            modelBuilder.Entity("GustosApp.Domain.Model.UsuarioRestauranteVisitado", b =>
+                {
+                    b.HasOne("GustosApp.Domain.Model.Restaurante", "Restaurante")
+                        .WithMany()
+                        .HasForeignKey("RestauranteId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("GustosApp.Domain.Model.Usuario", "Usuario")
+                        .WithMany("Visitados")
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Restaurante");
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("RestauranteRestriccion", b =>
@@ -2430,6 +2509,11 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Navigation("GruposRelacionados");
                 });
 
+            modelBuilder.Entity("GustosApp.Domain.Model.InvitacionGrupo", b =>
+                {
+                    b.Navigation("Notificacion");
+                });
+
             modelBuilder.Entity("GustosApp.Domain.Model.Restaurante", b =>
                 {
                     b.Navigation("Platos");
@@ -2446,6 +2530,10 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Navigation("InvitacionesRecibidas");
 
                     b.Navigation("MiembrosGrupos");
+
+                    b.Navigation("Notificaciones");
+
+                    b.Navigation("Visitados");
                 });
 #pragma warning restore 612, 618
         }

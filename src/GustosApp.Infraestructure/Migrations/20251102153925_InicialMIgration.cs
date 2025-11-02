@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace GustosApp.Infraestructure.Migrations
 {
     /// <inheritdoc />
-    public partial class Inicial : Migration
+    public partial class InicialMIgration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -98,6 +98,7 @@ namespace GustosApp.Infraestructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    EsPrivado = table.Column<bool>(type: "bit", nullable: false),
                     FirebaseUid = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Email = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -106,6 +107,7 @@ namespace GustosApp.Infraestructure.Migrations
                     FotoPerfilUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     FechaRegistro = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Activo = table.Column<bool>(type: "bit", nullable: false),
+                    Plan = table.Column<int>(type: "int", nullable: false),
                     PasoActual = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -316,29 +318,6 @@ namespace GustosApp.Infraestructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Notificaciones",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UsuarioDestinoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Titulo = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Mensaje = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    Tipo = table.Column<int>(type: "int", nullable: false),
-                    Leida = table.Column<bool>(type: "bit", nullable: false),
-                    FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Notificaciones", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Notificaciones_Usuarios_UsuarioDestinoId",
-                        column: x => x.UsuarioDestinoId,
-                        principalTable: "Usuarios",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "SolicitudesAmistad",
                 columns: table => new
                 {
@@ -410,6 +389,35 @@ namespace GustosApp.Infraestructure.Migrations
                     table.ForeignKey(
                         name: "FK_UsuarioGustos_Usuarios_UsuariosId",
                         column: x => x.UsuariosId,
+                        principalTable: "Usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UsuarioRestauranteVisitados",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UsuarioId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    RestauranteId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    PlaceId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true),
+                    Nombre = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
+                    Latitud = table.Column<double>(type: "float", nullable: false),
+                    Longitud = table.Column<double>(type: "float", nullable: false),
+                    FechaVisitaUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UsuarioRestauranteVisitados", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UsuarioRestauranteVisitados_Restaurantes_RestauranteId",
+                        column: x => x.RestauranteId,
+                        principalTable: "Restaurantes",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_UsuarioRestauranteVisitados_Usuarios_UsuarioId",
+                        column: x => x.UsuarioId,
                         principalTable: "Usuarios",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -497,6 +505,7 @@ namespace GustosApp.Infraestructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    NotificacionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     GrupoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UsuarioInvitadoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UsuarioInvitadorId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -552,6 +561,36 @@ namespace GustosApp.Infraestructure.Migrations
                     table.ForeignKey(
                         name: "FK_MiembrosGrupos_Usuarios_UsuarioId",
                         column: x => x.UsuarioId,
+                        principalTable: "Usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Notificaciones",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UsuarioDestinoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    InvitacionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Titulo = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Mensaje = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    Tipo = table.Column<int>(type: "int", nullable: false),
+                    Leida = table.Column<bool>(type: "bit", nullable: false),
+                    FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Notificaciones", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Notificaciones_InvitacionesGrupos_InvitacionId",
+                        column: x => x.InvitacionId,
+                        principalTable: "InvitacionesGrupos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_Notificaciones_Usuarios_UsuarioDestinoId",
+                        column: x => x.UsuarioDestinoId,
                         principalTable: "Usuarios",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -959,6 +998,13 @@ namespace GustosApp.Infraestructure.Migrations
                 column: "UsuarioId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Notificaciones_InvitacionId",
+                table: "Notificaciones",
+                column: "InvitacionId",
+                unique: true,
+                filter: "[InvitacionId] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Notificaciones_UsuarioDestinoId",
                 table: "Notificaciones",
                 column: "UsuarioDestinoId");
@@ -1026,6 +1072,21 @@ namespace GustosApp.Infraestructure.Migrations
                 column: "UsuariosId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_UsuarioRestauranteVisitados_PlaceId",
+                table: "UsuarioRestauranteVisitados",
+                column: "PlaceId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UsuarioRestauranteVisitados_RestauranteId",
+                table: "UsuarioRestauranteVisitados",
+                column: "RestauranteId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UsuarioRestauranteVisitados_UsuarioId",
+                table: "UsuarioRestauranteVisitados",
+                column: "UsuarioId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UsuarioRestricciones_UsuariosId",
                 table: "UsuarioRestricciones",
                 column: "UsuariosId");
@@ -1065,9 +1126,6 @@ namespace GustosApp.Infraestructure.Migrations
                 name: "GustoTags");
 
             migrationBuilder.DropTable(
-                name: "InvitacionesGrupos");
-
-            migrationBuilder.DropTable(
                 name: "MiembrosGrupos");
 
             migrationBuilder.DropTable(
@@ -1101,16 +1159,16 @@ namespace GustosApp.Infraestructure.Migrations
                 name: "UsuarioGustos");
 
             migrationBuilder.DropTable(
+                name: "UsuarioRestauranteVisitados");
+
+            migrationBuilder.DropTable(
                 name: "UsuarioRestricciones");
 
             migrationBuilder.DropTable(
-                name: "Grupos");
+                name: "InvitacionesGrupos");
 
             migrationBuilder.DropTable(
                 name: "Tags");
-
-            migrationBuilder.DropTable(
-                name: "Restaurantes");
 
             migrationBuilder.DropTable(
                 name: "CondicionesMedicas");
@@ -1119,7 +1177,13 @@ namespace GustosApp.Infraestructure.Migrations
                 name: "Gustos");
 
             migrationBuilder.DropTable(
+                name: "Restaurantes");
+
+            migrationBuilder.DropTable(
                 name: "Restricciones");
+
+            migrationBuilder.DropTable(
+                name: "Grupos");
 
             migrationBuilder.DropTable(
                 name: "Usuarios");

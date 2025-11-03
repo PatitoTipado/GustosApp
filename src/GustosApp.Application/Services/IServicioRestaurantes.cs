@@ -15,6 +15,8 @@ namespace GustosApp.Application.Services
         Task<Restaurante?> ActualizarAsync(Guid id, string solicitanteUid, bool esAdmin, ActualizarRestauranteDto dto);
         Task<bool> EliminarAsync(Guid id, string solicitanteUid, bool esAdmin);
 
+        Task<Restaurante> ObtenerReseñasDesdeGooglePlaces(string placeId, CancellationToken ct);
+
         Task<List<Restaurante>> BuscarAsync(
         string? tipo,
         string? plato,

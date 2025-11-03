@@ -1,13 +1,7 @@
-﻿using GustosApp.Application.DTO;
-using GustosApp.Application.DTOs.Restaurantes;
+﻿using GustosApp.Application.DTOs.Restaurantes;
 using GustosApp.Application.Services;
-using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
-using GustosApp.Infraestructure;
-using GustosApp.Infraestructure.Extrerno.GooglePlacesModel;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using System.Net.Http.Json;
 using System.Text.Json;
 
 namespace GustosApp.Infraestructure.Services
@@ -23,59 +17,34 @@ namespace GustosApp.Infraestructure.Services
 
         private static string NormalizarNombre(string nombre)
             => (nombre ?? string.Empty).Trim().ToLowerInvariant();
-        
-
-
 
         public async Task<List<Restaurante>> BuscarAsync(
-    string? tipo,
-    string? plato,
-    double? lat = null,
-    double? lng = null,
-    int? radioMetros = null)
+            double rating,
+            string? tipo,
+            string? plato,
+            double? lat = null,
+            double? lng = null,
+            int? radioMetros = null
+            )
         {
-            // 1. CARGA INICIAL y DEFINICIÓN DE INCLUDES (Ejecución en la BD)
-
-            var q = _db.Restaurantes.AsNoTracking()
-
+            var lista = await _db.Restaurantes
+                .AsNoTracking()
                 .Include(r => r.Platos)
-
                 .Include(r => r.GustosQueSirve)
-
                 .Include(r => r.RestriccionesQueRespeta)
+                .AsSplitQuery()
+                .ToListAsync();
 
-                .AsSplitQuery();
-
-            foreach (var r in q)
-            {
-                Console.WriteLine(r.Id);
-                Console.WriteLine(r.Nombre);
-
-                Console.WriteLine(r.GustosQueSirve.Count);
-                Console.WriteLine(r.GustosQueSirve.Count);
-                Console.WriteLine(r.GustosQueSirve.Count);
-
-                foreach (var rr in r.GustosQueSirve)
-                {
-                    Console.WriteLine($"- {rr.Nombre}");
-                }
-            }
-
+            // 2️⃣ Filtro por tipo
             if (!string.IsNullOrWhiteSpace(tipo))
             {
                 var t = tipo.Trim();
-                q = q.Where(r => r.PrimaryType == t || r.TypesJson.Contains($"\"{t}\""));
+                lista = lista
+                    .Where(r => r.PrimaryType == t || r.TypesJson.Contains($"\"{t}\""))
+                    .ToList();
             }
 
-            if (!lat.HasValue || !lng.HasValue || !radioMetros.HasValue || radioMetros.Value <= 0)
-            {
-                q = q.OrderBy(r => r.NombreNormalizado);
-            }
-
-
-            var lista = await q.Take(1000).ToListAsync();
-
-
+            // 3️⃣ Filtro geográfico y por rating
             if (lat.HasValue && lng.HasValue && radioMetros.HasValue && radioMetros.Value > 0)
             {
                 var latVal = lat.Value;
@@ -90,42 +59,30 @@ namespace GustosApp.Infraestructure.Services
                 var minLng = lngVal - degLng;
                 var maxLng = lngVal + degLng;
 
-                // Latitud/Longitud son double (no-null), filtramos directo
                 lista = lista
                     .Where(r =>
                         r.Latitud >= minLat && r.Latitud <= maxLat &&
-                        r.Longitud >= minLng && r.Longitud <= maxLng)
-                    .ToList();
-
-                lista = lista
+                        r.Longitud >= minLng && r.Longitud <= maxLng &&
+                        (r.Rating >= rating)
+                    )
                     .OrderBy(r => Math.Abs(r.Latitud - latVal) + Math.Abs(r.Longitud - lngVal))
                     .Take(200)
                     .ToList();
             }
-
-            Console.WriteLine("Lista");
-            Console.WriteLine("Lista");
-            Console.WriteLine("Lista");
-
-
-            foreach (var r in lista)
+            else
             {
-                Console.WriteLine(r.Id);
-                Console.WriteLine(r.Nombre);
-
-                Console.WriteLine(r.GustosQueSirve.Count);
-                Console.WriteLine(r.GustosQueSirve.Count);
-                Console.WriteLine(r.GustosQueSirve.Count);
-
-                foreach (var rr in r.GustosQueSirve)
-                {
-                    Console.WriteLine($"- {rr.Nombre}");
-                }
+                // Si no hay coordenadas, filtra sólo por rating y nombre
+                lista = lista
+                    .Where(r =>(r.Rating.HasValue && r.Rating.Value >= rating))
+                    .OrderBy(r => r.NombreNormalizado)
+                    .Take(1000)
+                    .ToList();
             }
 
-
-            return lista.ToList();
+            return lista;
         }
+
+
 
 
         public async Task<Restaurante> CrearAsync(string propietarioUid, CrearRestauranteDto dto)

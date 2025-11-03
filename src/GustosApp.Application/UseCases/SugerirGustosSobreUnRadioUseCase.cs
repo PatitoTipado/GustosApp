@@ -22,7 +22,7 @@ namespace GustosApp.Application.UseCases
             _restaurantRepo = restaurantRepo;
         }
 
-        public List<Restaurante> Handle( PreferenciasGrupo preferencias,List<Restaurante> restaurantesFiltrados,
+        public List<Restaurante> Handle( UsuarioPreferencias preferencias,List<Restaurante> restaurantesFiltrados,
             int maxResults = 10, CancellationToken ct = default)
         {
             List<Restaurante> restaurantes = filtrarRestaurante(

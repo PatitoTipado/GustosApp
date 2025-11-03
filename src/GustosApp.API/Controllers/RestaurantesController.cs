@@ -93,7 +93,7 @@ namespace GustosApp.API.Controllers
             var response = _mapper.Map<List<RestauranteListadoDto>>(result);
             return Ok(new { count = response.Count, restaurantes = response });
 
-          
+
         }
 
 
@@ -143,9 +143,9 @@ namespace GustosApp.API.Controllers
 
             var preferencias = await _obtenerGustos.HandleAsync(firebaseUid, ct);
 
-            
 
-            var recommendations = await _sugerirGustos.Handle(preferencias,  top, ct);
+
+            var recommendations = await _sugerirGustos.Handle(preferencias, top, ct);
 
 
 
@@ -182,16 +182,16 @@ namespace GustosApp.API.Controllers
         public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
         {
             var restaurante = await _servicio.ObtenerAsync(id);
-         
+
             if (restaurante == null)
                 return NotFound("Restaurante no encontrado");
 
-            
+
             if (restaurante.Reviews == null || !restaurante.Reviews.Any())
             {
-                var actualizado = await _servicio.ObtenerReseñasDesdeGooglePlaces(restaurante.PlaceId,ct);
+                var actualizado = await _servicio.ObtenerReseñasDesdeGooglePlaces(restaurante.PlaceId, ct);
                 if (actualizado is not null)
-                    restaurante = actualizado; 
+                    restaurante = actualizado;
             }
 
             return Ok(restaurante);
@@ -452,6 +452,64 @@ namespace GustosApp.API.Controllers
                 version = existente.Version,
                 menu = doc.RootElement
             });
+        }
+
+        private static RestauranteDto Map(Restaurante r)
+        {
+            object? horarios = null;
+            try
+            {
+                horarios = string.IsNullOrWhiteSpace(r.HorariosJson)
+                    ? null
+                    : JsonSerializer.Deserialize<object>(r.HorariosJson);
+            }
+            catch { horarios = null; }
+
+            return new RestauranteDto
+            {
+                Id = r.Id,
+                PropietarioUid = r.PropietarioUid,
+                Nombre = r.Nombre,
+                Direccion = r.Direccion,
+                Latitud = r.Latitud,
+                Longitud = r.Longitud,
+                Horarios = horarios,
+                CreadoUtc = r.CreadoUtc,
+                ActualizadoUtc = r.ActualizadoUtc,
+                PrimaryType = r.PrimaryType,
+                Types = SafeDeserializeTypes(r.TypesJson),
+                ImagenUrl = r.ImagenUrl,
+                Valoracion = r.Valoracion,
+                Platos = r.Platos.Select(p => p.Plato.ToString()).ToList(),
+
+                //
+                GustosQueSirve = r.GustosQueSirve
+                    .Select(g => new GustoDto
+                    {
+                        Id = g.Id,
+                        Nombre = g.Nombre
+                    })
+                    .ToList(),
+
+                //
+                RestriccionesQueRespeta = r.RestriccionesQueRespeta
+                    .Select(g => new RestriccionResponse(g.Id, g.Nombre))
+                    .ToList()
+            };
+
+            static List<string> SafeDeserializeTypes(string json)
+            {
+                try
+                {
+                    return string.IsNullOrWhiteSpace(json)
+                        ? new List<string>()
+                        : JsonSerializer.Deserialize<List<string>>(json) ?? new List<string>();
+                }
+                catch
+                {
+                    return new List<string>();
+                }
+            }
         }
 
     }

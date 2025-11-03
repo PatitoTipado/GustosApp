@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-
+using GustosApp.Application.DTO;
 using GustosApp.Application.DTOs.Restaurantes;
 using GustosApp.Domain.Model;
 
@@ -15,8 +15,6 @@ namespace GustosApp.Application.Services
         Task<Restaurante?> ActualizarAsync(Guid id, string solicitanteUid, bool esAdmin, ActualizarRestauranteDto dto);
         Task<bool> EliminarAsync(Guid id, string solicitanteUid, bool esAdmin);
 
-        Task<Restaurante> ObtenerReseñasDesdeGooglePlaces(string placeId, CancellationToken ct);
-
         Task<List<Restaurante>> BuscarAsync(
         string? tipo,
         string? plato,
@@ -25,7 +23,8 @@ namespace GustosApp.Application.Services
         int? radioMetros = null
     );
 
-    Task<List<Restaurante>> ListarCercanosAsync(
-        double lat, double lng, int radioMetros, string? tipo = null, IEnumerable<string>? platos = null);
+        Task<IReadOnlyList<Restaurante>> ListarCercanosAsync(
+            double lat, double lng, int radioMetros, string? tipo = null, IEnumerable<string>? platos = null);
+        Task<Restaurante> ObtenerReseñasDesdeGooglePlaces(string placeId, CancellationToken ct);
     }
 }

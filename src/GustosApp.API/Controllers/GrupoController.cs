@@ -3,6 +3,7 @@ using GustosApp.API.DTO;
 using GustosApp.Application.DTO;
 using GustosApp.Application.Services;
 using GustosApp.Application.UseCases;
+using GustosApp.Domain.Model;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -306,8 +307,6 @@ namespace GustosApp.API.Controllers
              CancellationToken ct = default)
         {
             var firebaseUid = GetFirebaseUid();
-
-          
 
             // Buscar restaurantes desde la infraestructura
             var restaurantes = await _servicio.BuscarAsync(tipo, plato, lat, lng, radius);

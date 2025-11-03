@@ -57,7 +57,5 @@ namespace GustosApp.Application.DTOs.Restaurantes
                 });
             }
         }
-
-        public string? Tipo { get; set; }
     }
 }

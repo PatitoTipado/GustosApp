@@ -234,7 +234,7 @@ public class ServicioRestaurantes : IServicioRestaurantes
         var resp = await _http.SendAsync(req, ct);
         if (!resp.IsSuccessStatusCode)
         {
-            Console.WriteLine($"⚠️ Google Places API error: {resp.StatusCode}");
+            Console.WriteLine($" Google Places API error: {resp.StatusCode}");
             return await _repo.GetByPlaceIdAsync(placeId, ct)
                 ?? new Restaurante { PlaceId = placeId, Nombre = "(sin datos)" };
         }
@@ -244,7 +244,7 @@ public class ServicioRestaurantes : IServicioRestaurantes
             return await _repo.GetByPlaceIdAsync(placeId, ct)
                 ?? new Restaurante { PlaceId = placeId, Nombre = "(sin datos)" };
 
-        // 🔎 Buscar restaurante existente
+        //  Buscar restaurante existente
         var existente = await _repo.GetByPlaceIdAsync(placeId, ct);
 
         if (existente is null)

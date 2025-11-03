@@ -102,8 +102,8 @@ namespace GustosApp.API.Mapping
 
 
             CreateMap<Restaurante, RestauranteDto>()
-            .ForMember(dest => dest.Lat, opt => opt.MapFrom(src => src.Latitud))
-            .ForMember(dest => dest.Lng, opt => opt.MapFrom(src => src.Longitud))
+            .ForMember(dest => dest.Latitud, opt => opt.MapFrom(src => src.Latitud))
+            .ForMember(dest => dest.Longitud, opt => opt.MapFrom(src => src.Longitud))
             .ForMember(dest => dest.Tipo, opt => opt.MapFrom(src => src.Tipo.ToString()))
             .ForMember(dest => dest.Score, opt => opt.MapFrom(src => src.Score))
             .ForMember(dest => dest.GustosQueSirve, opt => opt.MapFrom(src =>

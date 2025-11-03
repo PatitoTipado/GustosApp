@@ -15,7 +15,10 @@ namespace GustosApp.Domain.Model
             public double Rating { get; set; }
             public string Texto { get; set; } = string.Empty;
 
-            public Guid RestauranteId { get; set; }
+             public string Fecha { get; set; } = string.Empty;
+             public string? Foto { get; set; }
+
+        public Guid RestauranteId { get; set; }
         }
 
     }

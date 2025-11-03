@@ -28,7 +28,7 @@ public class GustosDbContext : DbContext
     public DbSet<RestauranteEspecialidad> RestauranteEspecialidades { get; set; }
     public DbSet<Restaurante> Restaurantes { get; set; }
 
-    public DbSet<ReseñaRestaurante> ReviewsRestaurantes { get; set; }
+    public DbSet<ReseñaRestaurante> ReseñasRestaurantes { get; set; }
 
     public DbSet<Tag> Tags { get; set; }
 

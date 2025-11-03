@@ -179,10 +179,22 @@ namespace GustosApp.API.Controllers
 
 
         [HttpGet("{id:guid}")]
-        public async Task<IActionResult> GetById(Guid id)
+        public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
         {
-            var r = await _servicio.ObtenerAsync(id);
-            return r is null ? NotFound() : Ok(r);
+            var restaurante = await _servicio.ObtenerAsync(id);
+         
+            if (restaurante == null)
+                return NotFound("Restaurante no encontrado");
+
+            
+            if (restaurante.Reviews == null || !restaurante.Reviews.Any())
+            {
+                var actualizado = await _servicio.ObtenerReseñasDesdeGooglePlaces(restaurante.PlaceId,ct);
+                if (actualizado is not null)
+                    restaurante = actualizado; 
+            }
+
+            return Ok(restaurante);
         }
 
         [HttpPost]

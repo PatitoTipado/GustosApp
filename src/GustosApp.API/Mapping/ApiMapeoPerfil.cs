@@ -26,7 +26,8 @@ namespace GustosApp.API.Mapping
                 .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Nombre))
                 .ForMember(dest => dest.Apellido, opt => opt.MapFrom(src => src.Apellido))
                 .ForMember(dest => dest.Username, opt => opt.MapFrom(src => src.IdUsuario))
-                .ForMember(dest => dest.FotoPerfilUrl, opt => opt.MapFrom(src => src.FotoPerfilUrl));
+                .ForMember(dest => dest.FotoPerfilUrl, opt => opt.MapFrom(src => src.FotoPerfilUrl))
+                .ForMember(dest => dest.Plan, opt => opt.MapFrom(src => src.Plan.ToString()));
 
 
             CreateMap<Restriccion, RestriccionDto>()

@@ -45,7 +45,7 @@ namespace GustosApp.API.Controllers
                 return Unauthorized(new { message = "Token no válido o sin UID" });
 
 
-            var usuario = await _usuario.HandleAsync(uid, ct)
+            var usuario = await _usuario.HandleAsync(FirebaseUid: uid, ct:ct)
                           ?? throw new InvalidOperationException("Usuario no encontrado.");
 
             var todas = await _obtenerRestricciones.HandleAsync(uid,ct);

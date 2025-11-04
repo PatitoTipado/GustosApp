@@ -12,7 +12,7 @@ namespace GustosApp.Domain.Interfaces
         Task<Grupo> UpdateAsync(Grupo grupo, CancellationToken cancellationToken = default);
         Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
         Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default);
-        Task<bool> UsuarioEsMiembroAsync(Guid grupoId, Guid usuarioId, CancellationToken cancellationToken = default);
+        Task<bool> UsuarioEsMiembroAsync(Guid grupoId, string firebaseUid, CancellationToken cancellationToken = default);
         Task<bool> UsuarioEsAdministradorAsync(Guid grupoId, Guid usuarioId, CancellationToken cancellationToken = default);
     }
 }

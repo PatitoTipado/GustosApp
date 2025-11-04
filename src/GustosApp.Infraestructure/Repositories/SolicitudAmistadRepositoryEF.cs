@@ -18,11 +18,11 @@ namespace GustosApp.Infraestructure.Repositories
                 .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
 
         public async Task<IEnumerable<SolicitudAmistad>> GetSolicitudesPendientesByUsuarioIdAsync(Guid usuarioId, CancellationToken cancellationToken = default)
-            => await _context.SolicitudesAmistad
-                .Include(s => s.Remitente)
-                .Include(s => s.Destinatario)
-                .Where(s => s.DestinatarioId == usuarioId && s.Estado == EstadoSolicitud.Pendiente)
-                .ToListAsync(cancellationToken);
+             => await _context.SolicitudesAmistad
+                 .Include(s => s.Remitente)
+                 .Include(s => s.Destinatario)
+                 .Where(s => s.DestinatarioId == usuarioId && s.Estado == EstadoSolicitud.Pendiente)
+                 .ToListAsync(cancellationToken);
 
         public async Task<IEnumerable<SolicitudAmistad>> GetSolicitudesEnviadasByUsuarioIdAsync(Guid usuarioId, CancellationToken cancellationToken = default)
             => await _context.SolicitudesAmistad

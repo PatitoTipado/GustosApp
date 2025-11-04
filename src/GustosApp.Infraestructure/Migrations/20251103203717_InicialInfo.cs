@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace GustosApp.Infraestructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InicialMIgration : Migration
+    public partial class InicialInfo : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -118,6 +118,29 @@ namespace GustosApp.Infraestructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ReseñasRestaurantes",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Autor = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Rating = table.Column<double>(type: "float", nullable: false),
+                    Texto = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Fecha = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Foto = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    RestauranteId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ReseñasRestaurantes", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ReseñasRestaurantes_Restaurantes_RestauranteId",
+                        column: x => x.RestauranteId,
+                        principalTable: "Restaurantes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "RestauranteEspecialidades",
                 columns: table => new
                 {
@@ -216,27 +239,6 @@ namespace GustosApp.Infraestructure.Migrations
                     table.PrimaryKey("PK_RestaurantePlatos", x => new { x.RestauranteId, x.Plato });
                     table.ForeignKey(
                         name: "FK_RestaurantePlatos_Restaurantes_RestauranteId",
-                        column: x => x.RestauranteId,
-                        principalTable: "Restaurantes",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ReviewsRestaurantes",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Autor = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Rating = table.Column<double>(type: "float", nullable: false),
-                    Texto = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    RestauranteId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ReviewsRestaurantes", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ReviewsRestaurantes_Restaurantes_RestauranteId",
                         column: x => x.RestauranteId,
                         principalTable: "Restaurantes",
                         principalColumn: "Id",
@@ -1056,6 +1058,11 @@ namespace GustosApp.Infraestructure.Migrations
                 column: "UsuarioDestinoId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ReseñasRestaurantes_RestauranteId",
+                table: "ReseñasRestaurantes",
+                column: "RestauranteId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_RestauranteEspecialidades_RestauranteId",
                 table: "RestauranteEspecialidades",
                 column: "RestauranteId");
@@ -1106,11 +1113,6 @@ namespace GustosApp.Infraestructure.Migrations
                 name: "IX_RestriccionTags_TagsId",
                 table: "RestriccionTags",
                 column: "TagsId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ReviewsRestaurantes_RestauranteId",
-                table: "ReviewsRestaurantes",
-                column: "RestauranteId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SolicitudesAmistad_DestinatarioId",
@@ -1193,6 +1195,9 @@ namespace GustosApp.Infraestructure.Migrations
                 name: "Notificaciones");
 
             migrationBuilder.DropTable(
+                name: "ReseñasRestaurantes");
+
+            migrationBuilder.DropTable(
                 name: "RestauranteEspecialidades");
 
             migrationBuilder.DropTable(
@@ -1212,9 +1217,6 @@ namespace GustosApp.Infraestructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "RestriccionTags");
-
-            migrationBuilder.DropTable(
-                name: "ReviewsRestaurantes");
 
             migrationBuilder.DropTable(
                 name: "SolicitudesAmistad");

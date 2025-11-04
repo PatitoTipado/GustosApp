@@ -193,6 +193,8 @@ builder.Services.AddScoped<ObtenerGustosPaginacionUseCase>();
 builder.Services.AddScoped<BuscarGustoPorCoincidenciaUseCase>();
 builder.Services.AddScoped<ObtenerGustosSeleccionadosPorUsuarioYParaFiltrarUseCase>();
 builder.Services.AddScoped<BuscarUsuariosUseCase>();
+builder.Services.AddScoped<ConfirmarAmistadEntreUsuarios>();
+builder.Services.AddScoped<VerificarSiMiembroEstaEnGrupoUseCase>();
 
 
 

@@ -201,25 +201,23 @@ public class GustosDbContext : DbContext
             .IsUnique();
 
         // Configurar enum para EstadoInvitacion
-        modelBuilder.Entity<InvitacionGrupo>()
-            .Property(i => i.Estado)
-            .HasConversion<int>();
+        modelBuilder.Entity<SolicitudAmistad>(entity =>
+        {
+            entity.Property(s => s.Estado)
+                .HasConversion<int>();
 
-        modelBuilder.Entity<SolicitudAmistad>()
-            .HasOne(s => s.Remitente)
-            .WithMany()
-            .HasForeignKey("RemitenteId")
-            .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(s => s.Remitente)
+                .WithMany()
+                .HasForeignKey(s => s.RemitenteId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-        modelBuilder.Entity<SolicitudAmistad>()
-            .HasOne(s => s.Destinatario)
-            .WithMany()
-            .HasForeignKey("DestinatarioId")
-            .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(s => s.Destinatario)
+                .WithMany()
+                .HasForeignKey(s => s.DestinatarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
 
-        modelBuilder.Entity<SolicitudAmistad>()
-            .Property(s => s.Estado)
-            .HasConversion<int>();
+
 
         // 1. Configuración de la clave compuesta para la tabla GrupoGustos
         modelBuilder.Entity<GrupoGusto>()

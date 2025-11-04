@@ -30,17 +30,18 @@ namespace GustosApp.API.Controllers
         private readonly ObtenerResumenRegistroUseCase _resumen;
         private readonly FinalizarRegistroUseCase _finalizar;
         private readonly RegistrarUsuarioUseCase _registrar;
+        private readonly ObtenerUsuarioUseCase _obtenerUsuario;
+        private readonly ConfirmarAmistadEntreUsuarios _confirmarAmistadEntreUsuarios;
         private readonly IMapper _mapper;
-
-        private readonly IUsuarioRepository _usuarioRepository;
 
 
 
         public UsuarioController(RegistrarUsuarioUseCase context, GuardarRestriccionesUseCase saveRestr, GuardarCondicionesUseCase saveCond,
             ObtenerGustosFiltradosUseCase getGustos, GuardarGustosUseCase saveGustos, ObtenerResumenRegistroUseCase resumen, FinalizarRegistroUseCase finalizar,
-            IMapper mapper, IUsuarioRepository usuarioRepository)
+            IMapper mapper, IUsuarioRepository usuarioRepository,
+            ObtenerUsuarioUseCase obtenerUsuario, ConfirmarAmistadEntreUsuarios confirmarAmistadEntreUsuarios)
         {
-    
+
             _registrar = context;
             _saveRestr = saveRestr;
             _saveCond = saveCond;
@@ -49,7 +50,8 @@ namespace GustosApp.API.Controllers
             _saveGustos = saveGustos;
             _resumen = resumen;
             _mapper = mapper;
-             _usuarioRepository = usuarioRepository;
+            _obtenerUsuario = obtenerUsuario;
+            _confirmarAmistadEntreUsuarios = confirmarAmistadEntreUsuarios;
         }
 
         [Authorize]
@@ -80,7 +82,7 @@ namespace GustosApp.API.Controllers
                 Message = "Usuario registrado exitosamente.",
                 //mapeo el usuario que devuelve el usecase a un DTO para el front
                 Usuario = _mapper.Map<UsuarioResponse>(usuarioGuardado)
-               
+
             };
             return Ok(response);
         }
@@ -100,7 +102,7 @@ namespace GustosApp.API.Controllers
             if (string.IsNullOrWhiteSpace(uid))
                 return Unauthorized(new { message = "Token no válido o sin UID" });
 
-            var restriccionesGuardadas= await _saveRestr.HandleAsync(uid, req.Ids,req.Skip, ct);
+            var restriccionesGuardadas = await _saveRestr.HandleAsync(uid, req.Ids, req.Skip, ct);
 
             var response = new GuardarRestriccionesResponse
             {
@@ -124,7 +126,7 @@ namespace GustosApp.API.Controllers
             if (string.IsNullOrWhiteSpace(uid))
                 return Unauthorized(new { message = "Token no válido o sin UID" });
 
-            var condiciones= await _saveCond.HandleAsync(uid, req.Ids, req.Skip, ct);
+            var condiciones = await _saveCond.HandleAsync(uid, req.Ids, req.Skip, ct);
 
             var response = new GuardarCondicionesResponse
             {
@@ -132,12 +134,12 @@ namespace GustosApp.API.Controllers
                 GustosRemovidos = condiciones
             };
 
-            
+
             return Ok(response);
-            
+
         }
 
-       
+
 
 
         [Authorize]
@@ -154,9 +156,9 @@ namespace GustosApp.API.Controllers
             if (string.IsNullOrWhiteSpace(uid))
                 return Unauthorized(new { message = "Token no válido o sin UID" });
 
-            var gustos=await _saveGustos.HandleAsync(uid, req.Ids, ct);
-            
-            var response= new GuardarGustosResponse
+            var gustos = await _saveGustos.HandleAsync(uid, req.Ids, ct);
+
+            var response = new GuardarGustosResponse
             {
                 Mensaje = "Gustos guardados correctamente",
                 GustosIncompatibles = gustos
@@ -181,9 +183,9 @@ namespace GustosApp.API.Controllers
 
             var resumenUsuario = await _resumen.HandleAsync(uid, ct);
 
-             var response = _mapper.Map<UsuarioResumenResponse>(resumenUsuario);
+            var response = _mapper.Map<UsuarioResumenResponse>(resumenUsuario);
             return Ok(response);
-       
+
         }
 
         [Authorize]
@@ -202,25 +204,50 @@ namespace GustosApp.API.Controllers
             return Ok(new { mensaje = "Registro finalizado", pasoActual = "Finalizado" });
         }
 
-         [HttpGet("{username}/perfil")]
-        [AllowAnonymous]
+        [HttpGet("{username}/perfil")]
+        [Authorize]
         public async Task<IActionResult> GetPerfilUsuario([FromRoute] string username, CancellationToken ct = default)
         {
-            var user = await _usuarioRepository.GetByUsernameAsync(username, ct);
-            if (user is null)
+           
+            var currentUid = GetFirebaseUid();
+
+            // Usuario solicitado (por username)
+            var usuarioPerfil = await _obtenerUsuario.HandleAsync(Username: username, ct: ct);
+            if (usuarioPerfil == null)
                 return NotFound(new { mensaje = "Usuario no encontrado" });
 
+            // Usuario autenticado (por UID)
+            var usuarioActual = await _obtenerUsuario.HandleAsync(FirebaseUid: currentUid, ct: ct);
+            if (usuarioActual == null)
+                return Unauthorized(new { mensaje = "Usuario autenticado no encontrado" });
+
+            // Verificar si es su propio perfil
+            var esMiPerfil = usuarioPerfil.FirebaseUid == usuarioActual.FirebaseUid;
+
+
+            var amistad = await _confirmarAmistadEntreUsuarios.HandleAsync(usuarioActual.Id, usuarioPerfil.Id, ct);
+
+
+
+
+            // Mapear respuesta
             var resp = new UsuarioPerfilResponse
             {
-                Nombre = user.Nombre,
-                Apellido = user.Apellido,
-                Username = user.IdUsuario,
-                FotoPerfilUrl = user.FotoPerfilUrl,
-                EsPrivado = user.EsPrivado,
-                Gustos = (user.Gustos ?? new System.Collections.Generic.List<Gusto>())
-                    .Select(g => new GustoLiteDto { Id = g.Id, Nombre = g.Nombre })
+                Nombre = usuarioPerfil.Nombre,
+                Apellido = usuarioPerfil.Apellido,
+                Username = usuarioPerfil.IdUsuario,
+                FotoPerfilUrl = usuarioPerfil.FotoPerfilUrl,
+                EsPrivado = usuarioPerfil.EsPrivado,
+                EsMiPerfil = esMiPerfil,
+                EsAmigo = amistad != null && amistad.Estado == EstadoSolicitud.Aceptada,
+                Gustos = (usuarioPerfil.Gustos ?? new List<Gusto>())
+                    .Select(g => new GustoLiteDto
+                    {
+                        Id = g.Id,
+                        Nombre = g.Nombre
+                    })
                     .ToList(),
-                Visitados = (user.Visitados ?? new System.Collections.Generic.List<UsuarioRestauranteVisitado>())
+                Visitados = (usuarioPerfil.Visitados ?? new List<UsuarioRestauranteVisitado>())
                     .Select(v => new VisitadoDto
                     {
                         Id = !string.IsNullOrWhiteSpace(v.PlaceId)
@@ -235,7 +262,20 @@ namespace GustosApp.API.Controllers
 
             return Ok(resp);
         }
-}
 
+
+        private string GetFirebaseUid()
+        {
+            var firebaseUid = User.FindFirst("user_id")?.Value
+                            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                            ?? User.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrWhiteSpace(firebaseUid))
+                throw new UnauthorizedAccessException("No se encontró el UID de Firebase en el token.");
+
+            return firebaseUid;
+        }
+
+    }
 }
 

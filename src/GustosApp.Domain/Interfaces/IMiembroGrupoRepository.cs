@@ -5,7 +5,7 @@ namespace GustosApp.Domain.Interfaces
     public interface IMiembroGrupoRepository
     {
         Task<MiembroGrupo?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-        Task<MiembroGrupo?> GetByGrupoYUsuarioAsync(Guid grupoId, Guid usuarioId, CancellationToken cancellationToken = default);
+        Task<MiembroGrupo?> GetByGrupoYUsuarioAsync(Guid grupoId, string username, CancellationToken cancellationToken = default);
         Task<IEnumerable<MiembroGrupo>> GetMiembrosByGrupoIdAsync(Guid grupoId, CancellationToken cancellationToken = default);
         Task<IEnumerable<MiembroGrupo>> GetGruposByUsuarioIdAsync(Guid usuarioId, CancellationToken cancellationToken = default);
         Task<MiembroGrupo> CreateAsync(MiembroGrupo miembro, CancellationToken cancellationToken = default);

@@ -3,6 +3,7 @@ using GustosApp.API.DTO;
 using GustosApp.Application.DTO;
 using GustosApp.Application.Services;
 using GustosApp.Application.UseCases;
+using GustosApp.Domain.Model;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -123,15 +124,12 @@ namespace GustosApp.API.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> UnirseGrupo([FromBody] UnirseGrupoRequest request, CancellationToken ct)
         {
-           
-                var firebaseUid = GetFirebaseUid();
+            var firebaseUid = GetFirebaseUid();
             var grupo = await _unirseGrupoUseCase.HandleAsync(firebaseUid, request, ct);
 
-
             var response = _mapper.Map<GrupoResponse>(grupo);
+
             return Ok(response);
-            
-            
         }
         [Authorize]
         [HttpPost("{grupoId}/abandonar")]
@@ -300,17 +298,13 @@ namespace GustosApp.API.Controllers
             [FromQuery(Name = "near.lat")] double? lat = -34.641812775271,
             [FromQuery(Name = "near.lng")] double? lng = -58.56990230458638,
             [FromQuery(Name = "radiusMeters")] int? radius = 1000,
-            [FromQuery] string? tipo = "",
-            [FromQuery] string? plato = "",
             [FromQuery] int top = 10,
              CancellationToken ct = default)
         {
             var firebaseUid = GetFirebaseUid();
 
-          
-
             // Buscar restaurantes desde la infraestructura
-            var restaurantes = await _servicio.BuscarAsync(tipo, plato, lat, lng, radius);
+            var restaurantes = await _servicio.BuscarAsync(0,"", "", lat, lng, radius);
 
             // Obtener preferencias del grupo
             var preferencias = await _obtenerPreferenciasGrupos.HandleAsync(grupoId, ct);

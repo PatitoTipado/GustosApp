@@ -18,11 +18,11 @@ namespace GustosApp.Application.UseCases
             _gustosGrupoRepository = gustosGrupoRepository;
         }
 
-        public async Task<PreferenciasGrupo> HandleAsync(Guid grupoId,CancellationToken ct)
+        public async Task<UsuarioPreferencias> HandleAsync(Guid grupoId,CancellationToken ct)
         {
             var gustos = await _gustosGrupoRepository.ObtenerGustosDelGrupo(grupoId);
 
-            return new PreferenciasGrupo { Gustos = gustos };
+            return new UsuarioPreferencias { Gustos = gustos };
         }
 
     }

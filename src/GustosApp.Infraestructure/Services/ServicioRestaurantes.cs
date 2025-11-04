@@ -1,18 +1,30 @@
 ﻿using GustosApp.Application.DTOs.Restaurantes;
 using GustosApp.Application.Services;
+using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
+using GustosApp.Infraestructure.Extrerno.GooglePlacesModel;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+﻿using System.Net.Http.Json;
 using System.Text.Json;
+using static System.Net.WebRequestMethods;
 
 namespace GustosApp.Infraestructure.Services
 {
     public class ServicioRestaurantes : IServicioRestaurantes
     {
         private readonly GustosDbContext _db;
+        private readonly IConfiguration _config;
+        private readonly HttpClient _http;
+        private readonly IRestauranteRepository _repo;
 
-        public ServicioRestaurantes(GustosDbContext db)
+        public ServicioRestaurantes(GustosDbContext db,
+        IConfiguration config, HttpClient http, IRestauranteRepository repo)
         {
             _db = db;
+            _config = config;
+            _http = http;
+            _repo = repo;
         }
 
         private static string NormalizarNombre(string nombre)
@@ -298,9 +310,115 @@ namespace GustosApp.Infraestructure.Services
             return true;
         }
 
-        public Task<Restaurante> ObtenerResenasDesdeGooglePlaces(string placeId, CancellationToken ct)
+        public async Task<Restaurante> ObtenerResenasDesdeGooglePlaces(string placeId, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrWhiteSpace(placeId))
+                throw new ArgumentException("placeId requerido", nameof(placeId));
+
+            var apiKey = _config["GooglePlaces:ApiKey"]
+                ?? throw new InvalidOperationException("Falta GooglePlaces:ApiKey");
+
+            // Campos a solicitar (optimizados)
+            var fieldMask = string.Join(",",
+                "id,displayName,primaryType,types,priceLevel,rating,userRatingCount,",
+                "formattedAddress,internationalPhoneNumber,websiteUri,location,photos.name,",
+                "currentOpeningHours,reviews"
+            );
+
+            // Forzar idioma español en la respuesta
+            var url = $"https://places.googleapis.com/v1/places/{Uri.EscapeDataString(placeId)}?languageCode=es";
+
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            req.Headers.TryAddWithoutValidation("X-Goog-Api-Key", apiKey);
+            req.Headers.TryAddWithoutValidation("X-Goog-FieldMask", fieldMask);
+
+            var resp = await _http.SendAsync(req, ct);
+            if (!resp.IsSuccessStatusCode)
+            {
+                Console.WriteLine($" Google Places API error: {resp.StatusCode}");
+                return await _repo.GetByPlaceIdAsync(placeId, ct)
+                    ?? new Restaurante { PlaceId = placeId, Nombre = "(sin datos)" };
+            }
+
+            var details = await resp.Content.ReadFromJsonAsync<PlaceDetails>(cancellationToken: ct);
+            if (details is null)
+                return await _repo.GetByPlaceIdAsync(placeId, ct)
+                    ?? new Restaurante { PlaceId = placeId, Nombre = "(sin datos)" };
+
+            //  Buscar restaurante existente
+            var existente = await _repo.GetByPlaceIdAsync(placeId, ct);
+
+            if (existente is null)
+            {
+                existente = new Restaurante
+                {
+                    Id = Guid.NewGuid(),
+                    PropietarioUid = string.Empty,
+                    Nombre = details.DisplayName?.Text ?? "(sin nombre)",
+                    NombreNormalizado = (details.DisplayName?.Text ?? string.Empty).Trim().ToLowerInvariant(),
+                    Direccion = details.FormattedAddress ?? string.Empty,
+                    Latitud = details.Location?.Latitude ?? 0,
+                    Longitud = details.Location?.Longitude ?? 0,
+                    PlaceId = placeId,
+                    Rating = details.Rating,
+                    CantidadResenas = details.UserRatingCount,
+                    Categoria = details.PrimaryType ?? "restaurant",
+                    UltimaActualizacion = DateTime.UtcNow,
+                    ImagenUrl = GetPhotoUrl(details.Photos?.FirstOrDefault()?.Name, apiKey),
+                    Reviews = new List<ReseñaRestaurante>()
+                };
+
+                await _repo.AddAsync(existente, ct);
+            }
+            else
+            {
+                //  Actualizar campos básicos si ya existe
+                existente.Nombre = details.DisplayName?.Text ?? existente.Nombre;
+                existente.Direccion = details.FormattedAddress ?? existente.Direccion;
+                existente.Latitud = details.Location?.Latitude ?? existente.Latitud;
+                existente.Longitud = details.Location?.Longitude ?? existente.Longitud;
+                existente.Rating = details.Rating ?? existente.Rating;
+                existente.CantidadResenas = details.UserRatingCount ?? existente.CantidadResenas;
+                existente.Categoria = details.PrimaryType ?? existente.Categoria;
+                existente.ImagenUrl = GetPhotoUrl(details.Photos?.FirstOrDefault()?.Name, apiKey);
+                existente.ActualizadoUtc = DateTime.UtcNow;
+                existente.UltimaActualizacion = DateTime.UtcNow;
+            }
+
+            // Procesar reseñas (si hay)
+            if (details.Reviews is { Count: > 0 })
+            {
+                var reseñas = details.Reviews.Select(r => new ReseñaRestaurante
+                {
+                    Id = Guid.NewGuid(),
+                    RestauranteId = existente.Id,
+                    Autor = r.AuthorAttribution?.DisplayName ?? "Anónimo",
+                    Texto = r.Text?.Text ?? "",
+                    Rating = r.Rating,
+                    Fecha = r.RelativePublishTimeDescription ?? "",
+                    Foto = r.AuthorAttribution?.PhotoUri
+                }).ToList();
+
+                // Evitar duplicar reseñas
+                var idsExistentes = existente.Reviews?.Select(x => x.Texto)?.ToHashSet() ?? new HashSet<string>();
+                var nuevas = reseñas.Where(r => !idsExistentes.Contains(r.Texto)).ToList();
+
+                if (nuevas.Any())
+                {
+                    await _db.ReseñasRestaurantes.AddRangeAsync(nuevas, ct);
+                    await _db.SaveChangesAsync(ct);
+                    existente.Reviews = nuevas;
+                }
+            }
+
+            await _db.SaveChangesAsync(ct);
+            return existente;
+        }
+
+        private static string? GetPhotoUrl(string? fotoName, string apiKey)
+        {
+            if (string.IsNullOrWhiteSpace(fotoName)) return null;
+            return $"https://places.googleapis.com/v1/{Uri.EscapeDataString(fotoName)}/media?maxWidthPx=800&key={apiKey}";
         }
     }
 }

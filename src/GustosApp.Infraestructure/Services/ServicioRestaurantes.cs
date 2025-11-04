@@ -298,7 +298,7 @@ namespace GustosApp.Infraestructure.Services
             return true;
         }
 
-        public Task<Restaurante> ObtenerReseñasDesdeGooglePlaces(string placeId, CancellationToken ct)
+        public Task<Restaurante> ObtenerResenasDesdeGooglePlaces(string placeId, CancellationToken ct)
         {
             throw new NotImplementedException();
         }

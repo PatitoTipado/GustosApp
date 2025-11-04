@@ -15,14 +15,14 @@ namespace GustosApp.Infraestructure.Repositories
 
         public async Task RemoveByRestauranteIdAsync(Guid restauranteId, CancellationToken ct)
         {
-            var reseñas = _context.ReviewsRestaurantes.Where(r => r.RestauranteId == restauranteId);
-            _context.ReviewsRestaurantes.RemoveRange(reseñas);
+            var reseñas = _context.ReseñasRestaurantes.Where(r => r.RestauranteId == restauranteId);
+            _context.ReseñasRestaurantes.RemoveRange(reseñas);
             await _context.SaveChangesAsync(ct);
         }
 
         public async Task AddAsync(ReseñaRestaurante reseña, CancellationToken ct)
         {
-            await _context.ReviewsRestaurantes.AddAsync(reseña, ct);
+            await _context.ReseñasRestaurantes.AddAsync(reseña, ct);
         }
     }
 

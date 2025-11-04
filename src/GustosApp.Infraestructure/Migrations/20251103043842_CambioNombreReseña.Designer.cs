@@ -4,6 +4,7 @@ using GustosApp.Infraestructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GustosApp.Infraestructure.Migrations
 {
     [DbContext(typeof(GustosDbContext))]
-    partial class GustosDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251103043842_CambioNombreReseña")]
+    partial class CambioNombreReseña
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1681,6 +1684,9 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.Property<double?>("Rating")
                         .HasColumnType("float");
+
+                    b.Property<int>("Tipo")
+                        .HasColumnType("int");
 
                     b.Property<string>("TypesJson")
                         .IsRequired()

@@ -20,8 +20,8 @@ namespace GustosApp.API.DTO
 
         public string Nombre { get; set; }
         public string Direccion { get; set; }
-        public double Lat { get; set; }
-        public double Lng { get; set; }
+        public double Latitud { get; set; }
+        public double Longitud { get; set; }
         public double Rating { get; set; }
         public string GooglePlaceId { get; set; }
 
@@ -33,7 +33,7 @@ namespace GustosApp.API.DTO
         public ICollection<GustoDto> GustosQueSirve { get; set; }
         public ICollection<RestriccionResponse> RestriccionesQueRespeta { get; set; }
         public double Score { get; set; }
-        public string? Tipo { get; internal set; }
+        public string? Tipo { get;  set; }
 
 
 
@@ -63,8 +63,8 @@ namespace GustosApp.API.DTO
             PropietarioUid = propietarioUid ?? string.Empty;
             Nombre = nombre ?? string.Empty;
             Direccion = direccion ?? string.Empty;
-            Lat = latitud;
-            Lng = longitud;
+            Latitud = latitud;
+            Longitud = longitud;
             Horarios = horarios;
             CreadoUtc = creadoUtc;
             ActualizadoUtc = actualizadoUtc;

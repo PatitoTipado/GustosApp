@@ -112,6 +112,7 @@ namespace GustosApp.API.Controllers
         public async Task<IActionResult> Get(
             [FromQuery]List<string>? gustos,
             CancellationToken ct,
+            string tipoDeRestaurante,
             [FromQuery]double rating,
             [FromQuery(Name = "near.lat")] double? lat = -34.641812775271,
             [FromQuery(Name = "near.lng")] double? lng = -58.56990230458638,
@@ -120,7 +121,7 @@ namespace GustosApp.API.Controllers
         )
         {
             var res = await _servicio.BuscarAsync(
-                tipo: "",
+                tipo: tipoDeRestaurante,
                 plato: "",
                 lat: lat,
                 lng: lng,
@@ -216,10 +217,7 @@ namespace GustosApp.API.Controllers
                 }
             }
 
-
-
             var creado = await _servicio.CrearAsync(uid, dto);
-
 
             var restaurante = await _db.Restaurantes
                 .Include(r => r.GustosQueSirve)

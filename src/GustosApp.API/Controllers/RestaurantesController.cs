@@ -158,7 +158,7 @@ namespace GustosApp.API.Controllers
                 ImagenUrl = r.ImagenUrl,
                 Rating = r.Rating ?? 0,
                 Valoracion = r.Valoracion,
-                Tipo = r.Categoria,
+                Tipo = r.TypesJson,
                 GustosQueSirve = r.GustosQueSirve
              .Select(g => new GustoDto(g.Id, g.Nombre, g.ImagenUrl))
              .ToList(),

@@ -52,7 +52,7 @@ namespace GustosApp.Infraestructure.Services
             {
                 var t = tipo.Trim();
                 lista = lista
-                    .Where(r => r.PrimaryType == t || r.TypesJson.Contains($"\"{t}\""))
+                    .Where(r =>r.TypesJson != null && r.TypesJson.ToLower().Contains($"\"{t}\""))
                     .ToList();
             }
 

@@ -106,6 +106,7 @@ namespace GustosApp.API.Controllers
 
             return Ok(response);
         }
+
         [Authorize]
         [HttpPost("{solicitudId}/aceptar")]
         [ProducesResponseType(typeof(SolicitudAmistadResponse), StatusCodes.Status200OK)]

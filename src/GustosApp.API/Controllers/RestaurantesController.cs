@@ -112,7 +112,7 @@ namespace GustosApp.API.Controllers
         public async Task<IActionResult> Get(
             [FromQuery]List<string>? gustos,
             CancellationToken ct,
-            string tipoDeRestaurante,
+            string? tipoDeRestaurante,
             [FromQuery]double rating,
             [FromQuery(Name = "near.lat")] double? lat = -34.641812775271,
             [FromQuery(Name = "near.lng")] double? lng = -58.56990230458638,

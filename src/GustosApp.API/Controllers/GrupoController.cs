@@ -212,6 +212,7 @@ namespace GustosApp.API.Controllers
         {
            var firebaseUid = GetFirebaseUid();
                
+            //revsisar como hace para sacar a un miembro
             var ok = await _removerMiembroUseCase.HandleAsync(firebaseUid, grupoId, username, ct);
             var response = new RemoverMiembroResponse
             {

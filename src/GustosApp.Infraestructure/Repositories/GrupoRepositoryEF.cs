@@ -86,8 +86,13 @@ namespace GustosApp.Infraestructure.Repositories
         public async Task<bool> UsuarioEsMiembroAsync(Guid grupoId, string firebaseUid, CancellationToken cancellationToken = default)
         {
             return await _context.MiembrosGrupos
-                .AnyAsync(m => m.GrupoId == grupoId && m.Usuario.FirebaseUid == firebaseUid, cancellationToken);
+                .AnyAsync(m =>
+                    m.GrupoId == grupoId &&
+                    m.Usuario.FirebaseUid == firebaseUid &&
+                    m.Activo,
+                    cancellationToken);
         }
+
 
         public async Task<bool> UsuarioEsAdministradorAsync(Guid grupoId, Guid usuarioId, CancellationToken cancellationToken = default)
         {

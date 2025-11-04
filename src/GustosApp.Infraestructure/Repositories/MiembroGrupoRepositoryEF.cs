@@ -22,12 +22,15 @@ namespace GustosApp.Infraestructure.Repositories
                 .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
         }
 
-        public async Task<MiembroGrupo?> GetByGrupoYUsuarioAsync(Guid grupoId, Guid usuarioId, CancellationToken cancellationToken = default)
+        public async Task<MiembroGrupo?> GetByGrupoYUsuarioAsync(Guid grupoId, string username, CancellationToken cancellationToken = default)
         {
             return await _context.MiembrosGrupos
-                .Include(m => m.Grupo)
-                .Include(m => m.Usuario)
-                .FirstOrDefaultAsync(m => m.GrupoId == grupoId && m.UsuarioId == usuarioId, cancellationToken);
+                 .Include(m => m.Grupo)
+                 .Include(m => m.Usuario)
+                 .FirstOrDefaultAsync(
+            m => m.GrupoId == grupoId && m.Usuario.IdUsuario == username,
+            cancellationToken
+        );
         }
 
         public async Task<IEnumerable<MiembroGrupo>> GetMiembrosByGrupoIdAsync(Guid grupoId, CancellationToken cancellationToken = default)

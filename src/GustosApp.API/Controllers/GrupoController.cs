@@ -25,13 +25,13 @@ namespace GustosApp.API.Controllers
         private readonly AceptarInvitacionGrupoUseCase _aceptarInvitacionUseCase;
         private readonly EliminarGrupoUseCase _eliminarGrupoUseCase;
         private readonly ObtenerChatGrupoUseCase _obtenerChatGrupoUseCase;
-        private readonly EnviarMensajeGrupoUseCase _enviarMensajeGrupoUseCase;
         private readonly ObtenerGrupoDetalleUseCase _obtenerGrupoDetalleUseCase;
         private readonly RemoverMiembroGrupoUseCase _removerMiembroUseCase;
         private ActualizarGustosAGrupoUseCase _actualizarGustosGrupoUseCase;
         private readonly IServicioRestaurantes _servicio;
         private readonly ObtenerPreferenciasGruposUseCase _obtenerPreferenciasGrupos;
         private readonly SugerirGustosSobreUnRadioUseCase _sugerirGustos;
+        private readonly VerificarSiMiembroEstaEnGrupoUseCase _verificacionMiembroGrupo;
         private readonly IMapper _mapper;
 
        
@@ -53,6 +53,7 @@ namespace GustosApp.API.Controllers
             IServicioRestaurantes servicio,
             SugerirGustosSobreUnRadioUseCase sugerirGustos,
             ObtenerPreferenciasGruposUseCase obtenerGustos,
+            VerificarSiMiembroEstaEnGrupoUseCase verificacionMiembroGrupo,
             IMapper mapper
             )
         {
@@ -68,10 +69,10 @@ namespace GustosApp.API.Controllers
             _obtenerGrupoDetalleUseCase = obtenerGrupoDetalleUseCase;
             _removerMiembroUseCase = removerMiembroUseCase;
             _obtenerChatGrupoUseCase = obtenerChatGrupoUseCase;
-            _enviarMensajeGrupoUseCase = enviarMensajeGrupoUseCase;
             _actualizarGustosGrupoUseCase = actualizarGustosAGrupoUseCase;
             _obtenerPreferenciasGrupos = obtenerGustos;
             _sugerirGustos = sugerirGustos;
+            _verificacionMiembroGrupo = verificacionMiembroGrupo;
             _mapper = mapper;
 
         }
@@ -201,17 +202,18 @@ namespace GustosApp.API.Controllers
                 return Ok(response);
           
         }
+
+     
         [Authorize]
-        [HttpDelete("{grupoId}/miembros/{usuarioId}")]
+        [HttpDelete("{grupoId}/miembros/{username}")]
         [ProducesResponseType(typeof(RemoverMiembroResponse), StatusCodes.Status200OK)]
 
-        public async Task<IActionResult> RemoverMiembro(string grupoId, string usuarioId, CancellationToken ct)
+        public async Task<IActionResult> RemoverMiembro(Guid grupoId, string username, CancellationToken ct)
         {
-           
-                var firebaseUid = GetFirebaseUid();
-                if (!Guid.TryParse(grupoId, out var gid)) return BadRequest("El id de grupo no es un GUID válido");
-                if (!Guid.TryParse(usuarioId, out var uid)) return BadRequest("El id de usuario no es un GUID válido");
-                var ok = await _removerMiembroUseCase.HandleAsync(firebaseUid, gid, uid, ct);
+           var firebaseUid = GetFirebaseUid();
+               
+            //revsisar como hace para sacar a un miembro
+            var ok = await _removerMiembroUseCase.HandleAsync(firebaseUid, grupoId, username, ct);
             var response = new RemoverMiembroResponse
             {
                 Success = ok,
@@ -243,13 +245,18 @@ namespace GustosApp.API.Controllers
         [ProducesResponseType(typeof(GrupoResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
 
         public async Task<IActionResult> ObtenerGrupo(string grupoId, CancellationToken ct)
         {
-          
                 var firebaseUid = GetFirebaseUid();
                 if (!Guid.TryParse(grupoId, out var gid)) return BadRequest("El id de grupo no es un GUID válido");
+
+                
+              bool esMiembro = await _verificacionMiembroGrupo.HandleAsync(firebaseUid, gid, ct);
+            if (!esMiembro)
+                return Forbid("No eres miembro de este grupo.");
 
             var grupo = await _obtenerGrupoDetalleUseCase.HandleAsync(firebaseUid, gid, ct);
 

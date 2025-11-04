@@ -51,6 +51,8 @@ namespace GustosApp.API.Middleware
                     result = new { status = 400, error = "BadRequest", message = ex.Message };
                     break;
 
+                    
+       
                 case KeyNotFoundException:
                     status = HttpStatusCode.NotFound;
                     result = new { status = 404, error = "NotFound", message = ex.Message };

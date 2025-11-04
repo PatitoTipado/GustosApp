@@ -65,7 +65,7 @@ namespace GustosApp.Application.UseCases
             await _invitacionRepository.UpdateAsync(invitacion, cancellationToken);
 
             // Verificar si ya existe un registro de miembro (podría estar inactivo)
-            var miembroExistente = await _miembroGrupoRepository.GetByGrupoYUsuarioAsync(invitacion.GrupoId, usuario.Id, cancellationToken);
+            var miembroExistente = await _miembroGrupoRepository.GetByGrupoYUsuarioAsync(invitacion.GrupoId, usuario.IdUsuario, cancellationToken);
 
             if (miembroExistente != null)
             {

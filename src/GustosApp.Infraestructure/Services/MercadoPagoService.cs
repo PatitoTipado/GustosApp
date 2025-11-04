@@ -30,6 +30,8 @@ namespace GustosApp.Infraestructure.Services
         {
             try
             {
+                var webhookUrl = _configuration["MercadoPago:WebhookUrl"];
+                
                 var request = new PreferenceRequest
                 {
                     Items = new List<PreferenceItemRequest>
@@ -37,10 +39,9 @@ namespace GustosApp.Infraestructure.Services
                         new PreferenceItemRequest
                         {
                             Title = "Plan Premium GustosApp",
-                            Description = "Upgrade a plan Premium - Grupos ilimitados y funciones exclusivas",
                             Quantity = 1,
                             CurrencyId = "ARS",
-                            UnitPrice = 9999.99m
+                            UnitPrice = 50.00m
                         }
                     },
                     Payer = new PreferencePayerRequest
@@ -48,20 +49,14 @@ namespace GustosApp.Infraestructure.Services
                         Email = email,
                         Name = nombreCompleto
                     },
+                    // CRÍTICO: Guardar el Firebase UID para vincular el pago con el usuario
+                    ExternalReference = firebaseUid,
+                    NotificationUrl = webhookUrl,
                     BackUrls = new PreferenceBackUrlsRequest
                     {
-                        Success = $"{_baseUrl}/pago/exito",
-                        Failure = $"{_baseUrl}/pago/fallo",
-                        Pending = $"{_baseUrl}/pago/pendiente"
-                    },
-                    AutoReturn = "approved",
-                    NotificationUrl = $"{_baseUrl}/api/pago/webhook",
-                    ExternalReference = firebaseUid, // Usamos el Firebase UID como referencia externa
-                    PaymentMethods = new PreferencePaymentMethodsRequest
-                    {
-                        ExcludedPaymentMethods = new List<PreferencePaymentMethodRequest>(),
-                        ExcludedPaymentTypes = new List<PreferencePaymentTypeRequest>(),
-                        Installments = 12 // Máximo 12 cuotas
+                        Success = "https://gustosapp.com/pago/exito",
+                        Failure = "https://gustosapp.com/pago/fallo",
+                        Pending = "https://gustosapp.com/pago/pendiente"
                     }
                 };
 
@@ -117,6 +112,41 @@ namespace GustosApp.Infraestructure.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"Error al verificar estado de pago {pagoId}: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> VerificarYProcesarPagosPendientesAsync(string firebaseUid)
+        {
+            try
+            {
+                Console.WriteLine($"🔍 [VerificarPagosPendientes] Buscando pagos para FirebaseUid: {firebaseUid}");
+                
+                // Por ahora, simplemente verificamos si el usuario existe y lo actualizamos
+                // En producción, MercadoPago llamará al webhook automáticamente
+                var usuario = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid);
+                
+                if (usuario == null)
+                {
+                    Console.WriteLine($"❌ [VerificarPagosPendientes] Usuario no encontrado");
+                    return false;
+                }
+
+                if (usuario.Plan == PlanUsuario.Plus)
+                {
+                    Console.WriteLine($"ℹ️ [VerificarPagosPendientes] Usuario ya es Premium");
+                    return true;
+                }
+
+                // En desarrollo: Actualizamos directamente si hay un pendingPayment en localStorage
+                // En producción: Solo el webhook debería actualizar
+                Console.WriteLine($"⚠️ [VerificarPagosPendientes] Usuario no es Premium aún. Esperando webhook de MercadoPago...");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ [VerificarPagosPendientes] Error: {ex.Message}");
+                Console.WriteLine($"❌ StackTrace: {ex.StackTrace}");
                 return false;
             }
         }

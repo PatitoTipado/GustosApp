@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Application.DTO;
 using System.Security.Claims;
+using GustosApp.Domain.Model;
 
 namespace GustosApp.API.Controllers
 {
@@ -101,8 +102,25 @@ namespace GustosApp.API.Controllers
         [AllowAnonymous]
         public IActionResult ObtenerBeneficiosPremium()
         {
-            var beneficios = new BeneficiosPremiumDto { Precio = 9999.99m };
+            var beneficios = new BeneficiosPremiumDto { Precio = 50.00m };
             return Ok(beneficios);
+        }
+
+        [HttpGet("diagnostico")]
+        [AllowAnonymous]
+        public IActionResult Diagnostico([FromServices] Microsoft.Extensions.Configuration.IConfiguration config)
+        {
+            var accessToken = config["MercadoPago:AccessToken"];
+            var publicKey = config["MercadoPago:PublicKey"];
+            
+            return Ok(new
+            {
+                hasAccessToken = !string.IsNullOrEmpty(accessToken),
+                accessTokenPrefix = accessToken?.Substring(0, Math.Min(15, accessToken.Length)),
+                hasPublicKey = !string.IsNullOrEmpty(publicKey),
+                publicKeyPrefix = publicKey?.Substring(0, Math.Min(15, publicKey.Length)),
+                isProduction = accessToken?.StartsWith("APP_USR") ?? false
+            });
         }
 
         [HttpPost("crear-test")]
@@ -128,6 +146,130 @@ namespace GustosApp.API.Controllers
             catch (Exception ex)
             {
                 return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet("verificar-reciente")]
+        [Authorize]
+        public async Task<IActionResult> VerificarPagoReciente()
+        {
+            try
+            {
+                var firebaseUid = GetFirebaseUid();
+                var usuario = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid);
+
+                if (usuario == null)
+                {
+                    return NotFound(new { aprobado = false, message = "Usuario no encontrado" });
+                }
+
+                // Verificar si el usuario ya es Premium
+                if (usuario.Plan == PlanUsuario.Plus)
+                {
+                    return Ok(new { aprobado = true, message = "Usuario ya es Premium" });
+                }
+
+                // Si no es Premium, devolver false
+                return Ok(new { aprobado = false, message = "Usuario aún no es Premium" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { aprobado = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet("verificar-estado-premium")]
+        [Authorize]
+        public async Task<IActionResult> VerificarEstadoPremium(CancellationToken ct)
+        {
+            try
+            {
+                Console.WriteLine("🔍 [VerificarEstadoPremium] Verificando estado del usuario...");
+                
+                var firebaseUid = GetFirebaseUid();
+                Console.WriteLine($"🔍 [VerificarEstadoPremium] FirebaseUid: {firebaseUid}");
+                
+                var usuario = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid, ct);
+
+                if (usuario == null)
+                {
+                    Console.WriteLine($"❌ [VerificarEstadoPremium] Usuario no encontrado");
+                    return NotFound(new { success = false, isPremium = false, message = "Usuario no encontrado" });
+                }
+
+                // Si el usuario aún no es Premium, intentar verificar pagos pendientes
+                if (usuario.Plan != PlanUsuario.Plus)
+                {
+                    Console.WriteLine($"🔍 [VerificarEstadoPremium] Usuario no es Premium, verificando pagos pendientes...");
+                    var pagoAprobado = await _pagoService.VerificarYProcesarPagosPendientesAsync(firebaseUid);
+                    
+                    if (pagoAprobado)
+                    {
+                        Console.WriteLine($"✅ [VerificarEstadoPremium] Pago aprobado encontrado, recargando usuario...");
+                        // Recargar el usuario para obtener el estado actualizado
+                        usuario = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid, ct);
+                    }
+                }
+
+                var isPremium = usuario.Plan == PlanUsuario.Plus;
+                Console.WriteLine($"✅ [VerificarEstadoPremium] Usuario: {usuario.Email}, Plan: {usuario.Plan}, IsPremium: {isPremium}");
+
+                return Ok(new 
+                { 
+                    success = true,
+                    isPremium = isPremium,
+                    plan = usuario.Plan.ToString(),
+                    message = isPremium ? "Usuario es Premium" : "Usuario es Free"
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ [VerificarEstadoPremium] Error: {ex.Message}");
+                return StatusCode(500, new { success = false, isPremium = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost("forzar-premium-dev")]
+        [Authorize]
+        public async Task<IActionResult> ForzarPremiumDev(CancellationToken ct)
+        {
+            try
+            {
+                Console.WriteLine("🔧 [ForzarPremiumDev] SOLO PARA DESARROLLO - Forzando Premium...");
+                
+                var firebaseUid = GetFirebaseUid();
+                Console.WriteLine($"🔧 [ForzarPremiumDev] FirebaseUid: {firebaseUid}");
+                
+                var usuario = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid, ct);
+
+                if (usuario == null)
+                {
+                    Console.WriteLine($"❌ [ForzarPremiumDev] Usuario no encontrado");
+                    return NotFound(new { success = false, message = "Usuario no encontrado" });
+                }
+
+                if (usuario.Plan == PlanUsuario.Plus)
+                {
+                    Console.WriteLine($"ℹ️ [ForzarPremiumDev] Usuario ya es Premium");
+                    return Ok(new { success = true, message = "Usuario ya es Premium", plan = "Plus" });
+                }
+
+                Console.WriteLine($"🔄 [ForzarPremiumDev] Actualizando usuario a Premium...");
+                await _usuarioRepository.UpdatePlanAsync(firebaseUid, PlanUsuario.Plus, ct);
+                Console.WriteLine($"✅ [ForzarPremiumDev] Usuario actualizado a Premium");
+
+                return Ok(new 
+                { 
+                    success = true,
+                    isPremium = true,
+                    message = "Usuario actualizado a Premium (DEV MODE)",
+                    plan = "Plus"
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ [ForzarPremiumDev] Error: {ex.Message}");
+                return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
 

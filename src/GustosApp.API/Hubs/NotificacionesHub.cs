@@ -46,7 +46,7 @@ namespace GustosApp.API.Hubs
             var firebaseUid = Context.User?.FindFirst("user_id")?.Value;
             if (firebaseUid == null) return;
 
-            var usuario = await _obtenerUsuario.HandleAsync(firebaseUid, CancellationToken.None);
+            var usuario = await _obtenerUsuario.HandleAsync(FirebaseUid :firebaseUid, ct:CancellationToken.None);
             if (usuario == null) return;
 
             var notificaciones = await _obtenerNotificaciones.HandleAsync(usuario.Id, CancellationToken.None);
@@ -89,7 +89,7 @@ namespace GustosApp.API.Hubs
             var uid = Context.User?.FindFirst("user_id")?.Value;
             if (uid == null) return;
 
-            var usuario = await _obtenerUsuario.HandleAsync(uid, CancellationToken.None);
+            var usuario = await _obtenerUsuario.HandleAsync(FirebaseUid : uid, ct:CancellationToken.None);
             if (usuario == null) return;
 
             

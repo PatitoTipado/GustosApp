@@ -2,27 +2,29 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using GustosApp.Application.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+
 
 namespace GustosApp.Infraestructure.Parsing
 {
-    /// <summary>
-    /// Parser heurístico simple para texto de menú OCR -> JSON canónico.
-    /// Estructura resultante:
-    /// {
-    ///   "nombreMenu": "Menú OCR",
-    ///   "moneda": "ARS",
-    ///   "categorias": [
-    ///     { "nombre": "Pizzas", "items": [
-    ///         { "nombre": "Margarita", "descripcion": "", "precios":[{"tamaño":"Único","monto":6500}], "tags":[] }
-    ///     ]}
-    ///   ]
-    /// }
-    /// </summary>
     public sealed class SimpleMenuParser : IMenuParser
     {
         private static readonly Regex PriceRegex = new(
+            // Captura 1..n precios por línea: $ 8.000, $8000, 8.000, 8000, 8.000,50, 8000.50, etc
             @"(?<!\S)\$?\s*(\d{1,3}(?:[.\s]\d{3})*|\d+)(?:[.,](\d{2}))?\s*\$?(?!\S)",
             RegexOptions.Compiled);
+
+        private static readonly Regex LooksLikeOnlyPrice = new(
+            @"^\s*\$?\s*(\d{1,3}(?:[.\s]\d{3})*|\d+)(?:[.,](\d{2}))?\s*\$?\s*$",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        private static readonly Regex SizeNearRegex = new(
+            @"\b(chico|chica|pequeño|pequeno|pequeña|mediano|mediana|grande|xl|xxl)\b",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private static readonly Regex CategoryRegex = new(
             @"^\s*([A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ\s\-]{2,}|[^:]{2,}:)\s*$",
@@ -58,8 +60,13 @@ namespace GustosApp.Infraestructure.Parsing
                     continue;
                 }
 
-                var (nombre, descripcion, precios) = ParseItem(line);
-                if (string.IsNullOrWhiteSpace(nombre) && precios.Count == 0)
+                // ⚠️ Evitar deconstrucción: más robusto en algunos toolchains
+                var parsed = ParseItem(line);
+                var nombre = parsed.nombre;
+                var descripcion = parsed.descripcion;
+                var preciosExtraidos = parsed.precios;
+
+                if (string.IsNullOrWhiteSpace(nombre) && preciosExtraidos.Count == 0)
                     continue;
 
                 if (actual == null)
@@ -72,7 +79,7 @@ namespace GustosApp.Infraestructure.Parsing
                 {
                     nombre = string.IsNullOrWhiteSpace(nombre) ? line : nombre,
                     descripcion = descripcion,
-                    precios = precios,
+                    precios = preciosExtraidos,
                     tags = new List<string>()
                 });
             }
@@ -94,7 +101,6 @@ namespace GustosApp.Infraestructure.Parsing
             if (line.EndsWith(":")) return true;
             if (CategoryRegex.IsMatch(line)) return true;
 
-            var up = line.ToUpperInvariant();
             var letters = line.Count(char.IsLetter);
             if (letters > 0)
             {
@@ -113,28 +119,45 @@ namespace GustosApp.Infraestructure.Parsing
 
         private static (string nombre, string descripcion, List<Precio> precios) ParseItem(string line)
         {
-            var precios = new List<Precio>();
+            var preciosExtraidos = new List<Precio>();
 
+            // 1) Extraer TODOS los precios y quitar TODAS las ocurrencias del texto
             var matches = PriceRegex.Matches(line);
             string clean = line;
             if (matches.Count > 0)
             {
-                var m = matches[^1];
-                var entero = m.Groups[1].Value;
-                var dec = m.Groups[2].Success ? m.Groups[2].Value : null;
-
-                var monto = NormalizaMonto(entero, dec);
-                if (monto.HasValue)
-                    precios.Add(new Precio { tamaño = "Único", monto = monto.Value });
-
-                clean = line.Remove(m.Index, m.Length).Trim();
+                // Quitar de derecha a izquierda para no romper offsets
+                foreach (Match m in matches.Cast<Match>().OrderByDescending(m => m.Index))
+                {
+                    var entero = m.Groups[1].Value;
+                    var dec = m.Groups[2].Success ? m.Groups[2].Value : null;
+                    var monto = NormalizaMonto(entero, dec);
+                    if (monto.HasValue)
+                    {
+                        // 2) Inferir tamaño cerca del precio
+                        var tam = InferirTamanioCercano(clean, m.Index, m.Length) ?? "Único";
+                        preciosExtraidos.Add(new Precio { tamaño = tam, monto = monto.Value });
+                    }
+                    clean = clean.Remove(m.Index, m.Length);
+                }
+                clean = clean.Trim();
             }
 
             var parts = clean.Split(new[] { " - ", " | " }, StringSplitOptions.None);
             var nombre = parts[0].Trim();
             var descripcion = parts.Length > 1 ? string.Join(" ", parts.Skip(1)).Trim() : "";
 
-            return (nombre, descripcion, precios);
+            // 3) Si quedó vacío o solo era precio, placeholder y/o pasar texto a descripción
+            if (string.IsNullOrWhiteSpace(nombre) || LooksLikeOnlyPrice.IsMatch(nombre))
+            {
+                if (!string.IsNullOrWhiteSpace(clean) && !LooksLikeOnlyPrice.IsMatch(clean))
+                {
+                    descripcion = string.IsNullOrWhiteSpace(descripcion) ? clean : $"{nombre} {descripcion}".Trim();
+                }
+                nombre = "Item";
+            }
+
+            return (nombre, descripcion, preciosExtraidos);
         }
 
         private static decimal? NormalizaMonto(string entero, string? dec)
@@ -142,13 +165,32 @@ namespace GustosApp.Infraestructure.Parsing
             var sinMiles = entero.Replace(".", "").Replace(" ", "");
             if (!long.TryParse(sinMiles, out var parteEntera)) return null;
 
-            int decimales = 0;
             if (!string.IsNullOrEmpty(dec) && int.TryParse(dec, out var d))
-            {
-                decimales = d;
-                return parteEntera + (decimales / 100m);
-            }
+                return parteEntera + (d / 100m);
+
             return parteEntera;
+        }
+
+        private static string? InferirTamanioCercano(string full, int priceIndex, int priceLen)
+        {
+            // Mirar ventana de ±20 chars
+            int start = Math.Max(0, priceIndex - 20);
+            int end = Math.Min(full.Length, priceIndex + priceLen + 20);
+            var window = full.Substring(start, end - start);
+
+            var m = SizeNearRegex.Match(window);
+            if (!m.Success) return null;
+
+            var raw = m.Value.ToLowerInvariant();
+            return raw switch
+            {
+                "chico" or "chica" or "pequeño" or "pequeno" or "pequeña" => "Chico",
+                "mediano" or "mediana" => "Mediano",
+                "grande" => "Grande",
+                "xl" => "XL",
+                "xxl" => "XXL",
+                _ => "Único"
+            };
         }
 
         private sealed class MenuDoc

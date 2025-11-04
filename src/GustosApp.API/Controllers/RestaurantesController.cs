@@ -31,7 +31,7 @@ namespace GustosApp.API.Controllers
     {
         private readonly IServicioRestaurantes _servicio;
         private readonly ObtenerGustosUseCase _obtenerGustos;
-        private readonly SugerirGustosUseCase _sugerirGustos;
+        private readonly SugerirGustosSobreUnRadioUseCase _sugerirGustos;
         private readonly BuscarRestaurantesCercanosUseCase _buscarRestaurantes;
         private readonly ActualizarDetallesRestauranteUseCase _obtenerDetalles;
         private readonly IAlmacenamientoArchivos _fileStorage;
@@ -44,7 +44,7 @@ namespace GustosApp.API.Controllers
 
         public RestaurantesController(
      IServicioRestaurantes servicio,
-     SugerirGustosUseCase sugerirGustos,
+     SugerirGustosSobreUnRadioUseCase sugerirGustos,
      ObtenerGustosUseCase obtenerGustos,
      BuscarRestaurantesCercanosUseCase buscarRestaurantes,
      ActualizarDetallesRestauranteUseCase obtenerDetalles,
@@ -110,21 +110,22 @@ namespace GustosApp.API.Controllers
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> Get(
+            [FromQuery]List<string>? gustos,
             CancellationToken ct,
+            [FromQuery]double rating,
             [FromQuery(Name = "near.lat")] double? lat = -34.641812775271,
             [FromQuery(Name = "near.lng")] double? lng = -58.56990230458638,
             [FromQuery(Name = "radiusMeters")] int? radius = 1000,
-            [FromQuery] string? tipo = "",
-            [FromQuery] string? plato = "",
             [FromQuery] int top = 10
         )
         {
             var res = await _servicio.BuscarAsync(
-                tipo: tipo,
-                plato: plato,
+                tipo: "",
+                plato: "",
                 lat: lat,
                 lng: lng,
-                radioMetros: radius
+                radioMetros: radius,
+                rating: rating
             );
 
             Console.WriteLine(res.ToList().Count());
@@ -141,13 +142,9 @@ namespace GustosApp.API.Controllers
                 return Unauthorized(new { message = "No se encontr el UID de Firebase en el token." });
             }
 
-            var preferencias = await _obtenerGustos.HandleAsync(firebaseUid, ct);
+            var preferencias = await _obtenerGustos.HandleAsync(firebaseUid, ct,gustos);
 
-
-
-            var recommendations = await _sugerirGustos.Handle(preferencias, top, ct);
-
-
+            var recommendations = _sugerirGustos.Handle(preferencias, res,top, ct);
 
             var response = recommendations.Select(r => new RestauranteDto
             {
@@ -452,64 +449,6 @@ namespace GustosApp.API.Controllers
                 version = existente.Version,
                 menu = doc.RootElement
             });
-        }
-
-        private static RestauranteDto Map(Restaurante r)
-        {
-            object? horarios = null;
-            try
-            {
-                horarios = string.IsNullOrWhiteSpace(r.HorariosJson)
-                    ? null
-                    : JsonSerializer.Deserialize<object>(r.HorariosJson);
-            }
-            catch { horarios = null; }
-
-            return new RestauranteDto
-            {
-                Id = r.Id,
-                PropietarioUid = r.PropietarioUid,
-                Nombre = r.Nombre,
-                Direccion = r.Direccion,
-                Latitud = r.Latitud,
-                Longitud = r.Longitud,
-                Horarios = horarios,
-                CreadoUtc = r.CreadoUtc,
-                ActualizadoUtc = r.ActualizadoUtc,
-                PrimaryType = r.PrimaryType,
-                Types = SafeDeserializeTypes(r.TypesJson),
-                ImagenUrl = r.ImagenUrl,
-                Valoracion = r.Valoracion,
-                Platos = r.Platos.Select(p => p.Plato.ToString()).ToList(),
-
-                //
-                GustosQueSirve = r.GustosQueSirve
-                    .Select(g => new GustoDto
-                    {
-                        Id = g.Id,
-                        Nombre = g.Nombre
-                    })
-                    .ToList(),
-
-                //
-                RestriccionesQueRespeta = r.RestriccionesQueRespeta
-                    .Select(g => new RestriccionResponse(g.Id, g.Nombre))
-                    .ToList()
-            };
-
-            static List<string> SafeDeserializeTypes(string json)
-            {
-                try
-                {
-                    return string.IsNullOrWhiteSpace(json)
-                        ? new List<string>()
-                        : JsonSerializer.Deserialize<List<string>>(json) ?? new List<string>();
-                }
-                catch
-                {
-                    return new List<string>();
-                }
-            }
         }
 
     }

@@ -16,6 +16,7 @@ namespace GustosApp.Application.Services
         Task<bool> EliminarAsync(Guid id, string solicitanteUid, bool esAdmin);
 
         Task<List<Restaurante>> BuscarAsync(
+        double rating,
         string? tipo,
         string? plato,
         double? lat = null,

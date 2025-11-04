@@ -22,13 +22,13 @@ public class GustosDbContext : DbContext
     public DbSet<MiembroGrupo> MiembrosGrupos { get; set; }
     public DbSet<InvitacionGrupo> InvitacionesGrupos { get; set; }
     public DbSet<SolicitudAmistad> SolicitudesAmistad { get; set; }
-    public DbSet<ChatMessage> ChatMessages { get; set; }
+    public DbSet<ChatMensaje> ChatMessages { get; set; }
 
-    
+
     public DbSet<RestauranteEspecialidad> RestauranteEspecialidades { get; set; }
     public DbSet<Restaurante> Restaurantes { get; set; }
 
-    public DbSet<ReviewRestaurante> ReviewsRestaurantes { get; set; }
+    public DbSet<ReseñaRestaurante> ReseñasRestaurantes { get; set; }
 
     public DbSet<Tag> Tags { get; set; }
 
@@ -38,6 +38,9 @@ public class GustosDbContext : DbContext
 
     public DbSet<Notificacion> Notificaciones { get; set; }
 
+    public DbSet<RestauranteImagen> RestauranteImagenes { get; set; }
+    public DbSet<RestauranteMenu> RestauranteMenus { get; set; }
+
     public DbSet<UsuarioRestauranteVisitado> UsuarioRestauranteVisitados { get; set; }
 
     public GustosDbContext(DbContextOptions<GustosDbContext> options)
@@ -46,14 +49,18 @@ public class GustosDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        
+
         modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.UsuarioRestauranteVisitadoConfiguration());
 
+        modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.RestauranteImagenConfiguration());
+        modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.RestauranteMenuConfiguration());
 
         modelBuilder.Entity<Restaurante>()
+              .Ignore(r => r.Score)
             .HasMany(r => r.Reviews)
                 .WithOne()
                 .HasForeignKey(r => r.RestauranteId)
+
                 .OnDelete(DeleteBehavior.Cascade);
         // Relaciones muchos a muchos
         modelBuilder.Entity<Usuario>()
@@ -216,7 +223,7 @@ public class GustosDbContext : DbContext
 
         // 1. Configuración de la clave compuesta para la tabla GrupoGustos
         modelBuilder.Entity<GrupoGusto>()
-            .HasKey(gg => gg.Id); 
+            .HasKey(gg => gg.Id);
 
         // 2. Relación de GrupoGustos con Grupo
         modelBuilder.Entity<GrupoGusto>()
@@ -240,16 +247,16 @@ public class GustosDbContext : DbContext
             .OnDelete(DeleteBehavior.Restrict); 
 
         // Chat messages
-        modelBuilder.Entity<ChatMessage>()
+        modelBuilder.Entity<ChatMensaje>()
             .HasKey(c => c.Id);
-        modelBuilder.Entity<ChatMessage>()
+        modelBuilder.Entity<ChatMensaje>()
             .Property(c => c.Mensaje)
             .IsRequired();
 
         modelBuilder.Entity<Restaurante>()
-            .HasMany(r => r.GustosQueSirve) 
-            .WithMany(g => g.restaurantes) 
-            .UsingEntity(j => j.ToTable("RestauranteGustos")); 
+            .HasMany(r => r.GustosQueSirve)
+            .WithMany(g => g.restaurantes)
+            .UsingEntity(j => j.ToTable("RestauranteGustos"));
 
         modelBuilder.Entity<Restaurante>()
             .HasMany(r => r.RestriccionesQueRespeta)
@@ -275,7 +282,21 @@ public class GustosDbContext : DbContext
 
             entity.Property(n => n.UsuarioDestinoId)
                 .IsRequired();
+
+
+            entity.HasOne(n => n.UsuarioDestino)
+                .WithMany(u => u.Notificaciones)
+                .HasForeignKey(n => n.UsuarioDestinoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+
+            entity.HasOne(n => n.Invitacion)
+                .WithOne(i => i.Notificacion)
+                .HasForeignKey<Notificacion>(n => n.InvitacionId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
+
+
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(GustosDbContext).Assembly);
 
@@ -428,7 +449,7 @@ public class GustosDbContext : DbContext
                     29 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/huevos-revueltos-desayuno.jpeg?alt=media&token=0f21b637-b499-427c-bdb0-f0a841a76a9b",
                     30 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/tipos-de-cerveza.jpg?alt=media&token=1cfa9e77-b663-421a-b649-d52a1ba751d2",
                     31 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/vino_artesanal.jpg?alt=media&token=fd22ec00-7739-4776-b488-63e46c2937c5",
-                     _ => null
+                    _ => null
                 }
             }).ToArray();
 
@@ -497,7 +518,7 @@ public class GustosDbContext : DbContext
         GT(53, "Harina"); GT(53, "Vegetal");
         GT(54, "Vegetal");
         GT(55, "Vegetal"); GT(55, "Frito"); GT(55, "Soja");
-        GT(56, "Vegetal"); 
+        GT(56, "Vegetal");
         GT(57, "Harina"); GT(57, "Vegetal");
         GT(58, "Harina"); GT(58, "Fruta");
         GT(59, "Harina"); GT(59, "Vegetal"); GT(59, "Soja");

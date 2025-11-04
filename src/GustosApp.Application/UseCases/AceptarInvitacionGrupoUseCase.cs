@@ -1,4 +1,5 @@
 using GustosApp.Application.DTO;
+using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 
@@ -10,19 +11,28 @@ namespace GustosApp.Application.UseCases
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IMiembroGrupoRepository _miembroGrupoRepository;
         private IGustosGrupoRepository _gustosGrupoRepository;
+        private readonly EliminarNotificacionUseCase _eliminarNotificacion;
+        private readonly INotificacionRealtimeService _notificacionRealtimeService;
+        private readonly IGrupoRepository _grupoRepository;
 
         public AceptarInvitacionGrupoUseCase(IInvitacionGrupoRepository invitacionRepository,
             IUsuarioRepository usuarioRepository,
             IMiembroGrupoRepository miembroGrupoRepository,
-            IGustosGrupoRepository gustosGrupoRepository)
+            IGustosGrupoRepository gustosGrupoRepository,
+            EliminarNotificacionUseCase eliminarNotificacion,
+            INotificacionRealtimeService notificacionRealtimeService,
+            IGrupoRepository grupoRepository)
         {
             _invitacionRepository = invitacionRepository;
             _usuarioRepository = usuarioRepository;
             _miembroGrupoRepository = miembroGrupoRepository;
             _gustosGrupoRepository = gustosGrupoRepository;
+            _eliminarNotificacion = eliminarNotificacion;
+            _notificacionRealtimeService = notificacionRealtimeService;
+            _grupoRepository = grupoRepository;
         }
 
-        public async Task<GrupoResponse> HandleAsync(string firebaseUid, Guid invitacionId, CancellationToken cancellationToken = default)
+        public async Task<Grupo> HandleAsync(string firebaseUid, Guid invitacionId, CancellationToken cancellationToken = default)
         {
             // Obtener el usuario
             var usuario = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid, cancellationToken);
@@ -56,7 +66,7 @@ namespace GustosApp.Application.UseCases
 
             // Verificar si ya existe un registro de miembro (podría estar inactivo)
             var miembroExistente = await _miembroGrupoRepository.GetByGrupoYUsuarioAsync(invitacion.GrupoId, usuario.Id, cancellationToken);
-            
+
             if (miembroExistente != null)
             {
                 // Reactivar el miembro existente
@@ -71,24 +81,34 @@ namespace GustosApp.Application.UseCases
                 await _gustosGrupoRepository.AgregarGustosAlGrupo(invitacion.GrupoId, usuario.Gustos.ToList(),miembro.Id);
             }
 
-            // Obtener el grupo completo con relaciones
-            var grupo = await _invitacionRepository.GetByIdAsync(invitacionId, cancellationToken);
-            if (grupo?.Grupo == null)
-                throw new InvalidOperationException("Error al aceptar la invitación");
 
-            return new GrupoResponse(
-                grupo.Grupo.Id,
-                grupo.Grupo.Nombre,
-                grupo.Grupo.Descripcion,
-                grupo.Grupo.AdministradorId,
-                grupo.Grupo.Administrador?.FirebaseUid, // Add Firebase UID
-                grupo.Grupo.Administrador != null ? (grupo.Grupo.Administrador.Nombre + " " + grupo.Grupo.Administrador.Apellido) : string.Empty,
-                grupo.Grupo.FechaCreacion,
-                grupo.Grupo.Activo,
-                grupo.Grupo.CodigoInvitacion,
-                grupo.Grupo.FechaExpiracionCodigo,
-                grupo.Grupo.Miembros.Count(m => m.Activo)
-            );
+            if (invitacion.NotificacionId != null && invitacion.NotificacionId.HasValue)
+            {
+                await _eliminarNotificacion.HandleAsync(invitacion.NotificacionId.Value, cancellationToken);
+
+                await _notificacionRealtimeService.EnviarNotificacionAsync(
+
+                    usuario.FirebaseUid,
+                    "NotificacionEliminada",
+                    invitacion.NotificacionId.Value.ToString(),
+                    "InvitacionGrupoEliminada",
+                    cancellationToken,
+                    invitacion.NotificacionId.Value
+                );
+            }
+
+
+
+            // Recupera el grupo actualizado con relaciones
+            var grupo = invitacion.Grupo ?? await _grupoRepository.GetByIdAsync
+                (invitacion.GrupoId, cancellationToken)
+                ?? throw new InvalidOperationException("Error al aceptar la invitación");
+
+            return grupo;
+
+
+
+           
         }
     }
 }

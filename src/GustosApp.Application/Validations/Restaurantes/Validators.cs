@@ -18,13 +18,32 @@ namespace GustosApp.Application.Validations.Restaurantes
                 .NotEmpty()
                 .MaximumLength(300);
 
-            RuleFor(x => x.Latitud).InclusiveBetween(-90, 90);
-            RuleFor(x => x.Longitud).InclusiveBetween(-180, 180);
+                        // Coordenadas: exigir lat/lng o latitud/longitud, y validar rango
+            RuleFor(x => x).Custom((dto, ctx) =>
+            {
+                var lat = dto.Lat ?? dto.Latitud;
+                var lng = dto.Lng ?? dto.Longitud;
 
-            RuleFor(x => x.Tipo)
-                .NotEmpty()
-                .Must(t => Enum.TryParse<TipoRestaurante>(t, true, out _))
-                .WithMessage("Tipo inválido.");
+                if (lat is null || lng is null)
+                {
+                    ctx.AddFailure("Coordenadas", "Lat/Lng requeridos (puede ser 'lat/lng' o 'latitud/longitud').");
+                    return;
+                }
+                if (lat < -90 || lat > 90)
+                    ctx.AddFailure("Lat/Lng", "Lat fuera de rango (-90 a 90).");
+                if (lng < -180 || lng > 180)
+                    ctx.AddFailure("Lat/Lng", "Lng fuera de rango (-180 a 180).");
+            });
+
+            RuleFor(x => x.PrimaryType)
+                .Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage("primaryType requerido.")
+                .MaximumLength(80)
+                .Matches("^[a-z0-9_]+$").WithMessage("primaryType debe usar minúsculas, números y '_' (ej: pizza_restaurant).");
+
+            RuleForEach(x => x.Types)
+                .MaximumLength(80)
+                .Matches("^[a-z0-9_]+$").WithMessage("Cada type debe usar minúsculas, números y '_' (ej: fast_food_restaurant).");
 
             When(x => x.Platos != null, () =>
             {

@@ -37,15 +37,18 @@ namespace GustosApp.Domain.Model
         public string? WebUrl { get; set; }
         public string? EmbeddingVector { get; set; }
 
-        public ICollection<ReviewRestaurante> Reviews { get; set; } = new List<ReviewRestaurante>();
+        public ICollection<ReseñaRestaurante> Reviews { get; set; } = new List<ReseñaRestaurante>();
         public ICollection<Gusto> GustosQueSirve { get; set; } = new List<Gusto>();
         public ICollection<Restriccion> RestriccionesQueRespeta { get; set; } = new List<Restriccion>();
 
         // ====== V2 ======
-        public TipoRestaurante Tipo { get; set; }                 
+
+        public string PrimaryType { get; set; } = "restaurant";
+        public string TypesJson { get; set; } = "[]";
+
         public string? ImagenUrl { get; set; }                
         public decimal? Valoracion { get; set; }                  
         public ICollection<RestaurantePlato> Platos { get; set; } = new List<RestaurantePlato>();
-
+        public double Score { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using GustosApp.Application.Interfaces;
+using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 using System;
 using System.Collections.Generic;

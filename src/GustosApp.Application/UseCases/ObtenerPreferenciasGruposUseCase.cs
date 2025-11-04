@@ -1,5 +1,6 @@
 ﻿using GustosApp.Application.DTO;
 using GustosApp.Domain.Interfaces;
+using GustosApp.Domain.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,13 +18,11 @@ namespace GustosApp.Application.UseCases
             _gustosGrupoRepository = gustosGrupoRepository;
         }
 
-        public async Task<UsuarioPreferenciasDTO> Handle(Guid grupoId,CancellationToken ct)
+        public async Task<UsuarioPreferencias> HandleAsync(Guid grupoId,CancellationToken ct)
         {
-            var gustosGrupo = await _gustosGrupoRepository.ObtenerGustosDelGrupo(grupoId);
+            var gustos = await _gustosGrupoRepository.ObtenerGustosDelGrupo(grupoId);
 
-            UsuarioPreferenciasDTO preferenciasDTOs = new UsuarioPreferenciasDTO { Gustos = gustosGrupo };
-
-            return preferenciasDTOs;
+            return new UsuarioPreferencias { Gustos = gustos };
         }
 
     }

@@ -32,6 +32,13 @@ namespace GustosApp.Infraestructure.Repositories
                 .ToListAsync(ct);
         }
 
+        public List<Gusto> ObtenerGustoPorCoincidencia(string nombreGusto)
+        {
+            return _dbContext.Gustos
+                .Where(g => g.Nombre.ToLower().Contains(nombreGusto.ToLower()))
+                .ToList();
+        }
+
         public async Task<List<Gusto>> obtenerGustosPorNombre(List<string>gustos)
         {
             List<Gusto> resultados =await _dbContext.Gustos.ToListAsync();
@@ -39,6 +46,15 @@ namespace GustosApp.Infraestructure.Repositories
             resultados = resultados.Where(g => gustos.Contains(g.Nombre)).ToList();
 
             return resultados;
+        }
+
+        public List<Gusto> obtenerGustosPorPaginacion(int cantidadInicio, int final)
+        {
+            return _dbContext.Gustos
+                .OrderBy(g => g.Nombre)       // siempre ordenar para que la paginación sea consistente
+                .Skip(cantidadInicio)           // offset
+                .Take(final)               // limit
+                .ToList();
         }
     }
 }

@@ -11,5 +11,6 @@ namespace GustosApp.Domain.Interfaces
         Task<string> CrearPreferenciaPagoAsync(string firebaseUid, string email, string nombreCompleto);
         Task<bool> ProcesarNotificacionPagoAsync(string pagoId);
         Task<bool> VerificarEstadoPagoAsync(string pagoId);
+        Task<bool> VerificarYProcesarPagosPendientesAsync(string firebaseUid);
     }
 }

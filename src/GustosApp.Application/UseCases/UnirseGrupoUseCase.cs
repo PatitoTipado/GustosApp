@@ -1,3 +1,4 @@
+using GustosApp.Application.Common.Exceptions;
 using GustosApp.Application.DTO;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
@@ -23,7 +24,7 @@ namespace GustosApp.Application.UseCases
             _gustosGrupoRepository = gustosGrupoRepository;
         }
 
-        public async Task<GrupoResponse> HandleAsync(string firebaseUid, UnirseGrupoRequest request, CancellationToken cancellationToken = default)
+        public async Task<Grupo> HandleAsync(string firebaseUid, UnirseGrupoRequest request, CancellationToken cancellationToken = default)
         {
             // Obtener el usuario
             var usuario = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid, cancellationToken);
@@ -48,20 +49,15 @@ namespace GustosApp.Application.UseCases
             {
                 var gruposActuales = await _grupoRepository.GetGruposByUsuarioIdAsync(usuario.Id, cancellationToken);
                 var cantidadGrupos = gruposActuales.Count();
-                
+
                 if (cantidadGrupos >= 3)
                 {
-                    var beneficios = new BeneficiosPremiumDto { Precio = 9999.99m }; // Precio en pesos argentinos
-                    var response = new LimiteGruposAlcanzadoResponse(
-                        "Has alcanzado el límite de 3 grupos para usuarios gratuitos. Upgrade a Premium para unirte a grupos ilimitados.",
-                        "Free",
-                        3,
-                        cantidadGrupos,
-                        beneficios,
-                        "/api/pago/crear" // URL temporal, se actualizará cuando implementemos el controlador
+                    throw new LimiteGruposAlcanzadoException(
+                        tipoPlan: "Free",
+                        limiteActual: 3,
+                        gruposActuales: cantidadGrupos,
+                        message: "Has alcanzado el límite de 3 grupos para usuarios gratuitos. Mejora a Premium para unirte a más grupos."
                     );
-                    
-                    throw new InvalidOperationException($"LIMITE_GRUPOS_ALCANZADO:{System.Text.Json.JsonSerializer.Serialize(response)}");
                 }
             }
 
@@ -75,19 +71,7 @@ namespace GustosApp.Application.UseCases
             if (grupoCompleto == null)
                 throw new InvalidOperationException("Error al unirse al grupo");
 
-            return new GrupoResponse(
-                grupoCompleto.Id,
-                grupoCompleto.Nombre,
-                grupoCompleto.Descripcion,
-                grupoCompleto.AdministradorId,
-                grupoCompleto.Administrador?.FirebaseUid, // Add Firebase UID
-                grupoCompleto.Administrador != null ? (grupoCompleto.Administrador.Nombre + " " + grupoCompleto.Administrador.Apellido) : string.Empty,
-                grupoCompleto.FechaCreacion,
-                grupoCompleto.Activo,
-                grupoCompleto.CodigoInvitacion,
-                grupoCompleto.FechaExpiracionCodigo,
-                grupoCompleto.Miembros.Count(m => m.Activo)
-            );
+            return grupoCompleto;
         }
     }
 }

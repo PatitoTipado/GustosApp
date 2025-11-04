@@ -12,6 +12,7 @@ namespace GustosApp.API.Controllers
     [Authorize]
     public class RecomendadorController : ControllerBase
     {
+        /*
         private readonly ObtenerGustosUseCase _obtenerGustos;
         private readonly SugerirGustosUseCase _sugerirGustos;
 
@@ -77,7 +78,7 @@ namespace GustosApp.API.Controllers
 
             return Ok(new { recomendaciones });
         }*/
-
+        
     }
 }
  

@@ -201,17 +201,23 @@ namespace GustosApp.API.Controllers
                 return Ok(response);
           
         }
+
+        /// <summary>
+        /// mODIFICAR ESTO.-.-
+        /// </summary>
+        /// <param name="grupoId"></param>
+        /// <param name="usuarioId"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
         [Authorize]
-        [HttpDelete("{grupoId}/miembros/{usuarioId}")]
+        [HttpDelete("{grupoId}/miembros/{username}")]
         [ProducesResponseType(typeof(RemoverMiembroResponse), StatusCodes.Status200OK)]
 
-        public async Task<IActionResult> RemoverMiembro(string grupoId, string usuarioId, CancellationToken ct)
+        public async Task<IActionResult> RemoverMiembro(Guid grupoId, string username, CancellationToken ct)
         {
-           
-                var firebaseUid = GetFirebaseUid();
-                if (!Guid.TryParse(grupoId, out var gid)) return BadRequest("El id de grupo no es un GUID válido");
-                if (!Guid.TryParse(usuarioId, out var uid)) return BadRequest("El id de usuario no es un GUID válido");
-                var ok = await _removerMiembroUseCase.HandleAsync(firebaseUid, gid, uid, ct);
+           var firebaseUid = GetFirebaseUid();
+               
+            var ok = await _removerMiembroUseCase.HandleAsync(firebaseUid, grupoId, username, ct);
             var response = new RemoverMiembroResponse
             {
                 Success = ok,

@@ -10,9 +10,14 @@ namespace GustosApp.API.DTO
         public string Username { get; set; } = string.Empty;
         public string? FotoPerfilUrl { get; set; }
         public bool EsPrivado { get; set; }
+        public bool EsAmigo { get;  set; }
+
+        public bool EsMiPerfil { get; set; } = false;
 
         public List<GustoLiteDto> Gustos { get; set; } = new();
         public List<VisitadoDto> Visitados { get; set; } = new();
+        
+        
     }
 
     public class GustoLiteDto

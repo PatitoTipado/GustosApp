@@ -26,6 +26,7 @@ namespace GustosApp.Application.Services
 
         Task<IReadOnlyList<Restaurante>> ListarCercanosAsync(
             double lat, double lng, int radioMetros, string? tipo = null, IEnumerable<string>? platos = null);
+       
         Task<Restaurante> ObtenerResenasDesdeGooglePlaces(string placeId, CancellationToken ct);
     }
 }

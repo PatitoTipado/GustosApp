@@ -1,4 +1,5 @@
 using GustosApp.Application.DTO;
+using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 
@@ -8,11 +9,17 @@ namespace GustosApp.Application.UseCases
     {
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly ISolicitudAmistadRepository _solicitudRepository;
+        private readonly ISolicitudAmistadRealtimeService _realtimeService;
 
-        public EnviarSolicitudAmistadUseCase(IUsuarioRepository usuarioRepository, ISolicitudAmistadRepository solicitudRepository)
+
+        public EnviarSolicitudAmistadUseCase(IUsuarioRepository usuarioRepository, 
+            ISolicitudAmistadRepository solicitudRepository, ISolicitudAmistadRealtimeService realtimeservice
+            )
         {
             _usuarioRepository = usuarioRepository;
             _solicitudRepository = solicitudRepository;
+            _realtimeService = realtimeservice;
+
         }
 
         public async Task<SolicitudAmistad> HandleAsync(
@@ -42,8 +49,11 @@ namespace GustosApp.Application.UseCases
             await _solicitudRepository.CreateAsync(solicitud, ct);
 
 
+
             var completa = await _solicitudRepository.GetByIdAsync(solicitud.Id, ct)
                 ?? throw new InvalidOperationException("Error al crear la solicitud");
+
+            await _realtimeService.EnviarSolicitudAsync(destinatario.FirebaseUid, completa, ct);
 
             return completa;
         }

@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace GustosApp.Infraestructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InicialInfo : Migration
+    public partial class inicio : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -62,8 +62,7 @@ namespace GustosApp.Infraestructure.Migrations
                     PrimaryType = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false, defaultValue: "restaurant"),
                     TypesJson = table.Column<string>(type: "nvarchar(max)", nullable: false, defaultValue: "[]"),
                     ImagenUrl = table.Column<string>(type: "nvarchar(2048)", maxLength: 2048, nullable: true),
-                    Valoracion = table.Column<decimal>(type: "decimal(3,2)", precision: 3, scale: 2, nullable: true),
-                    Tipo = table.Column<int>(type: "int", nullable: false)
+                    Valoracion = table.Column<decimal>(type: "decimal(3,2)", precision: 3, scale: 2, nullable: true)
                 },
                 constraints: table =>
                 {

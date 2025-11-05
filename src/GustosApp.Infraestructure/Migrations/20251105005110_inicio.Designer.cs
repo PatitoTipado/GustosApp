@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GustosApp.Infraestructure.Migrations
 {
     [DbContext(typeof(GustosDbContext))]
-    [Migration("20251103203717_InicialInfo")]
-    partial class InicialInfo
+    [Migration("20251105005110_inicio")]
+    partial class inicio
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1684,9 +1684,6 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.Property<double?>("Rating")
                         .HasColumnType("float");
-
-                    b.Property<int>("Tipo")
-                        .HasColumnType("int");
 
                     b.Property<string>("TypesJson")
                         .IsRequired()

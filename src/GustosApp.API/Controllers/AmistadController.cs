@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 
 using GustosApp.API.DTO;
+using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
@@ -26,6 +27,7 @@ namespace GustosApp.API.Controllers
         private readonly EliminarAmigoUseCase _eliminarAmigo;
         private readonly BuscarUsuariosUseCase _buscarUsuarios;
         private readonly IUsuarioRepository _usuarioRepository;
+      
         private readonly IMapper _mapper;
 
 
@@ -36,7 +38,8 @@ namespace GustosApp.API.Controllers
                 ObtenerAmigosUseCase obtenerAmigos,
                 EliminarAmigoUseCase eliminarAmigo,
                 BuscarUsuariosUseCase buscarUsuarios,
-                IUsuarioRepository usuarioRepository,
+                IUsuarioRepository usuarioRepository
+                ,
                 IMapper mapper)
         {
             _enviarSolicitud = enviarSolicitud;
@@ -47,6 +50,7 @@ namespace GustosApp.API.Controllers
             _eliminarAmigo = eliminarAmigo;
             _usuarioRepository = usuarioRepository;
             _buscarUsuarios = buscarUsuarios;
+         
             _mapper = mapper;
         }
 
@@ -88,6 +92,7 @@ namespace GustosApp.API.Controllers
             var solicitud = await _enviarSolicitud.HandleAsync(uid, request.UsernameDestino,request.Mensaje, ct);
             var response = _mapper.Map<SolicitudAmistadResponse>(solicitud);
 
+           
             return Ok(response);
         }
 

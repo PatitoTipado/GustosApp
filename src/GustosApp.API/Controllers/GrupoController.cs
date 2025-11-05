@@ -302,7 +302,7 @@ namespace GustosApp.API.Controllers
         }
 
         [Authorize]
-        [HttpGet("grupo/{grupoId}")]
+        [HttpGet("restaurantes/{grupoId}")]
         [ProducesResponseType(typeof(IEnumerable<RestauranteDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> RecomendarRestauranteGrupo(Guid grupoId,
             [FromQuery(Name = "near.lat")] double? lat = -34.641812775271,

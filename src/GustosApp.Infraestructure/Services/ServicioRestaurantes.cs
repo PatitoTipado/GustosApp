@@ -1,4 +1,5 @@
-﻿using GustosApp.Application.DTOs.Restaurantes;
+﻿using Google.Protobuf.WellKnownTypes;
+using GustosApp.Application.DTOs.Restaurantes;
 using GustosApp.Application.Services;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
@@ -118,7 +119,7 @@ namespace GustosApp.Infraestructure.Services
             var platosParsed = (dto.Platos ?? new())
                 .Select(s =>
                 {
-                    if (!Enum.TryParse<PlatoComida>(s, true, out var p))
+                    if (!System.Enum.TryParse<PlatoComida>(s, true, out var p))
                         throw new ArgumentException($"Plato inválido: {s}");
                     return p;
                 })
@@ -126,6 +127,11 @@ namespace GustosApp.Infraestructure.Services
                 .ToList();
 
             var ahora = DateTime.UtcNow;
+
+            if (dto.Valoracion is null)
+            {
+                dto.Valoracion = 0;
+            }
 
             var (latOpt, lngOpt) = dto.Coordenadas;
             if (latOpt is null || lngOpt is null)
@@ -146,8 +152,10 @@ namespace GustosApp.Infraestructure.Services
                     PrimaryType = primaryType,
                     TypesJson = JsonSerializer.Serialize(typesList),
                     ImagenUrl = string.IsNullOrWhiteSpace(dto.ImagenUrl) ? null : dto.ImagenUrl!.Trim(),
-                    Valoracion = (decimal?)dto.Valoracion
-                };
+                    Valoracion = (decimal?)dto.Valoracion,
+                    Rating= dto.Valoracion,
+                    CantidadResenas = 0
+            };
 
             foreach (var p in platosParsed)
                 entidad.Platos.Add(new RestaurantePlato { RestauranteId = entidad.Id, Plato = p });
@@ -202,7 +210,7 @@ namespace GustosApp.Infraestructure.Services
             if (platos is not null)
             {
                 var set = new HashSet<PlatoComida>(
-                    platos.Select(p => Enum.TryParse<PlatoComida>(p, true, out var v) ? v : (PlatoComida?)null)
+                    platos.Select(p => System.Enum.TryParse<PlatoComida>(p, true, out var v) ? v : (PlatoComida?)null)
                           .Where(v => v.HasValue)
                           .Select(v => v!.Value));
                 if (set.Count > 0)
@@ -248,7 +256,7 @@ namespace GustosApp.Infraestructure.Services
             var platosParsed = (dto.Platos ?? new())
                 .Select(s =>
                 {
-                    if (!Enum.TryParse<PlatoComida>(s, true, out var p))
+                    if (!System.Enum.TryParse<PlatoComida>(s, true, out var p))
                         throw new ArgumentException($"Plato inválido: {s}");
                     return p;
                 })

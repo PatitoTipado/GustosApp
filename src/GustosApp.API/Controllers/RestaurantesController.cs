@@ -186,7 +186,7 @@ namespace GustosApp.API.Controllers
                 return NotFound("Restaurante no encontrado");
 
 
-            if (restaurante.Reviews == null || !restaurante.Reviews.Any())
+            if (restaurante.PlaceId!=null && (restaurante.Reviews == null || !restaurante.Reviews.Any()))
             {
                 var actualizado = await _servicio.ObtenerResenasDesdeGooglePlaces(restaurante.PlaceId, ct);
                 if (actualizado is not null)

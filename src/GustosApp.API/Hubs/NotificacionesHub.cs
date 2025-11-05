@@ -39,7 +39,7 @@ namespace GustosApp.API.Hubs
             _mapper = mapper;
         }
 
-        // 🔹 Se ejecuta al conectarse un usuario
+        // Se ejecuta al conectarse un usuario
         public override async Task OnConnectedAsync()
         {
 

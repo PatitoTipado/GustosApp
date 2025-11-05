@@ -133,6 +133,7 @@ builder.Services.AddScoped<IReseñaRepository, ReseñaRepositoryEF>();
 builder.Services.AddScoped<IGustosGrupoRepository, GustosGrupoRepositoryEF>();
 builder.Services.AddScoped<INotificacionRepository, NotificacionRepositoryEF>();
 builder.Services.AddScoped<INotificacionRealtimeService, SignalRNotificacionRealtimeService>();
+builder.Services.AddScoped<ISolicitudAmistadRealtimeService, SignalRSolicitudAmistadRealtimeService>();
 
 // Chat repository
 builder.Services.AddScoped<GustosApp.Domain.Interfaces.IChatRepository, GustosApp.Infraestructure.Repositories.ChatRepositoryEF>();
@@ -310,5 +311,6 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<ChatHub>("/chatHub");
 app.MapHub<NotificacionesHub>("/notificacionesHub");
+app.MapHub<SolicitudesAmistadHub>("/solicitudesAmistadHub");
 
 app.Run();

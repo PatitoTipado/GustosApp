@@ -26,7 +26,10 @@ namespace GustosApp.Infraestructure.Repositories
             => _db.Usuarios.FirstOrDefaultAsync(u => u.Email == email, ct);
 
         public Task<Usuario?> GetByUsernameAsync(string username, CancellationToken ct = default)
-            => _db.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == username, ct);
+            => _db.Usuarios
+                .Include(u => u.Gustos)
+                .Include(u => u.Visitados)
+                .FirstOrDefaultAsync(u => u.IdUsuario == username, ct);
 
         public async Task<IEnumerable<Usuario>> GetAllAsync(int limit = 100, CancellationToken ct = default)
         {
@@ -41,6 +44,19 @@ namespace GustosApp.Infraestructure.Repositories
 
         public Task SaveChangesAsync(CancellationToken ct = default)
             => _db.SaveChangesAsync(ct);
+
+        public async Task UpdatePlanAsync(string firebaseUid, PlanUsuario plan, CancellationToken ct = default)
+        {
+            var usuario = await _db.Usuarios
+                .FirstOrDefaultAsync(u => u.FirebaseUid == firebaseUid, ct);
+            
+            if (usuario != null)
+            {
+                usuario.ActualizarAPlan(plan);
+                _db.Usuarios.Update(usuario);
+                await _db.SaveChangesAsync(ct);
+            }
+        }
 
         public Task<Usuario?> GetByFirebaseUidWithGustosAsync(string firebaseUid, CancellationToken ct = default)
         => _db.Usuarios
@@ -58,5 +74,28 @@ namespace GustosApp.Infraestructure.Repositories
                 .Include(u => u.Restricciones) 
                 .FirstOrDefaultAsync(u => u.Id == usuarioId);
         }
+
+        public async Task<IEnumerable<Usuario>> GetAllExceptAsync(Guid excludeId, int limit, CancellationToken ct)
+        {
+            return await _db.Usuarios
+                .Where(u => u.Id != excludeId && u.Activo)
+                .OrderBy(u => u.Nombre)
+                .Take(limit)
+                .ToListAsync(ct);
+        }
+
+        public async Task<IEnumerable<Usuario>> BuscarPorUsernameAsync(string search, Guid excludeId, CancellationToken ct)
+        {
+            var normalized = search.Trim().ToLower();
+
+            return await _db.Usuarios
+                .Where(u => u.Id != excludeId &&
+                            u.Activo &&
+                            u.IdUsuario.ToLower().Contains(normalized))
+                .OrderBy(u => u.IdUsuario)
+                .Take(50)
+                .ToListAsync(ct);
+        }
+
     }
 }

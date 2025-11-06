@@ -3,18 +3,20 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using GustosApp.Application.DTO;
 using GustosApp.Application.DTOs.Restaurantes;
+using GustosApp.Domain.Model;
 
 namespace GustosApp.Application.Services
 {
     public interface IServicioRestaurantes
     {
-        Task<RestauranteDto> CrearAsync(string propietarioUid, CrearRestauranteDto dto);
-        Task<RestauranteDto?> ObtenerAsync(Guid id);
-        Task<RestauranteDto?> ObtenerPorPropietarioAsync(string propietarioUid);
-        Task<RestauranteDto?> ActualizarAsync(Guid id, string solicitanteUid, bool esAdmin, ActualizarRestauranteDto dto);
+        Task<Restaurante> CrearAsync(string propietarioUid, CrearRestauranteDto dto);
+        Task<Restaurante?> ObtenerAsync(Guid id);
+        Task<Restaurante?> ObtenerPorPropietarioAsync(string propietarioUid);
+        Task<Restaurante?> ActualizarAsync(Guid id, string solicitanteUid, bool esAdmin, ActualizarRestauranteDto dto);
         Task<bool> EliminarAsync(Guid id, string solicitanteUid, bool esAdmin);
 
-        Task<IReadOnlyList<RestauranteDto>> BuscarAsync(
+        Task<List<Restaurante>> BuscarAsync(
+        double rating,
         string? tipo,
         string? plato,
         double? lat = null,
@@ -22,7 +24,9 @@ namespace GustosApp.Application.Services
         int? radioMetros = null
     );
 
-    Task<IReadOnlyList<RestauranteDto>> ListarCercanosAsync(
-        double lat, double lng, int radioMetros, string? tipo = null, IEnumerable<string>? platos = null);
+        Task<IReadOnlyList<Restaurante>> ListarCercanosAsync(
+            double lat, double lng, int radioMetros, string? tipo = null, IEnumerable<string>? platos = null);
+       
+        Task<Restaurante> ObtenerResenasDesdeGooglePlaces(string placeId, CancellationToken ct);
     }
 }

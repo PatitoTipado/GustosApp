@@ -25,13 +25,13 @@ public class ActualizarDetallesRestauranteUseCase
         _http = http;
     }
 
-    public async Task<RestauranteListadoDto?> HandleAsync(string placeId, CancellationToken ct = default)
+    public async Task<Restaurante?> HandleAsync(string placeId, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(placeId))
             throw new ArgumentException("placeId requerido", nameof(placeId));
 
         var apiKey = _config["GooglePlaces:ApiKey"]
-            ?? throw new InvalidOperationException("Falta GooglePlaces:ApiKey"); // <-- igual que Nearby
+            ?? throw new InvalidOperationException("Falta GooglePlaces:ApiKey");
 
         var fieldMask =
             "id,displayName,primaryType,types,priceLevel,rating,userRatingCount," +
@@ -53,8 +53,8 @@ public class ActualizarDetallesRestauranteUseCase
         var details = await resp.Content.ReadFromJsonAsync<PlaceDetails>(cancellationToken: ct);
         if (details is null) return null;
 
-        // upsert en tu repo
         var existente = await _repo.GetByPlaceIdAsync(placeId, ct);
+
         if (existente is null)
         {
             existente = new Restaurante
@@ -66,15 +66,14 @@ public class ActualizarDetallesRestauranteUseCase
                 Direccion = details.FormattedAddress ?? string.Empty,
                 Latitud = details.Location?.Latitude ?? 0,
                 Longitud = details.Location?.Longitude ?? 0,
-                HorariosJson = "{}",
-                CreadoUtc = DateTime.UtcNow,
-                ActualizadoUtc = DateTime.UtcNow,
                 PlaceId = placeId,
                 Rating = details.Rating,
                 CantidadResenas = details.UserRatingCount,
                 Categoria = details.PrimaryType ?? "restaurant",
-                UltimaActualizacion = DateTime.UtcNow
+                UltimaActualizacion = DateTime.UtcNow,
+                ImagenUrl = GetPhotoUrl(details.Photos?.FirstOrDefault()?.Name, apiKey)
             };
+
             await _repo.AddAsync(existente, ct);
         }
         else
@@ -86,40 +85,18 @@ public class ActualizarDetallesRestauranteUseCase
             existente.Rating = details.Rating ?? existente.Rating;
             existente.CantidadResenas = details.UserRatingCount ?? existente.CantidadResenas;
             existente.Categoria = details.PrimaryType ?? existente.Categoria;
+            existente.ImagenUrl = GetPhotoUrl(details.Photos?.FirstOrDefault()?.Name, apiKey);
             existente.ActualizadoUtc = DateTime.UtcNow;
             existente.UltimaActualizacion = DateTime.UtcNow;
         }
 
-        // foto opcional (igual que Nearby)
-        var fotoName = details.Photos?.FirstOrDefault()?.Name;
-        if (!string.IsNullOrWhiteSpace(fotoName))
-            existente.ImagenUrl = $"https://places.googleapis.com/v1/{Uri.EscapeDataString(fotoName)}/media?maxWidthPx=800&key={apiKey}";
-
         await _repo.SaveChangesAsync(ct);
+        return existente;
+    }
 
-        // map a DTO
-        return new RestauranteListadoDto
-        {
-            Id = existente.Id,
-            PlaceId = existente.PlaceId,
-            Nombre = existente.Nombre,
-            Direccion = existente.Direccion,
-            Latitud = existente.Latitud,
-            Longitud = existente.Longitud,
-            ImagenUrl = existente.ImagenUrl,
-            Rating = existente.Rating,
-            CantidadResenas = existente.CantidadResenas,
-            PrimaryType = details.PrimaryType ?? existente.Categoria,
-            Types = details.Types,
-            PriceLevel = details.PriceLevel,
-            OpenNow = details.CurrentOpeningHours?.OpenNow,
-            Delivery = details.Delivery,
-            Takeout = details.Takeout,
-            DineIn = details.DineIn,
-            ServesVegetarianFood = details.ServesVegetarianFood,
-            ServesCoffee = details.ServesCoffee,
-            ServesBeer = details.ServesBeer,
-            ServesWine = details.ServesWine
-        };
+    private static string? GetPhotoUrl(string? fotoName, string apiKey)
+    {
+        if (string.IsNullOrWhiteSpace(fotoName)) return null;
+        return $"https://places.googleapis.com/v1/{Uri.EscapeDataString(fotoName)}/media?maxWidthPx=800&key={apiKey}";
     }
 }

@@ -1,3 +1,4 @@
+using GustosApp.Application.Common.Exceptions;
 using GustosApp.Application.DTO;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
@@ -23,7 +24,7 @@ namespace GustosApp.Application.UseCases
             _gustosGrupoRepository = gustosGrupoRepository;
         }
 
-        public async Task<GrupoResponse> HandleAsync(string firebaseUid, UnirseGrupoRequest request, CancellationToken cancellationToken = default)
+        public async Task<Grupo> HandleAsync(string firebaseUid, UnirseGrupoRequest request, CancellationToken cancellationToken = default)
         {
             // Obtener el usuario
             var usuario = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid, cancellationToken);
@@ -43,6 +44,23 @@ namespace GustosApp.Application.UseCases
             if (await _miembroGrupoRepository.UsuarioEsMiembroActivoAsync(grupo.Id, usuario.Id, cancellationToken))
                 throw new ArgumentException("Ya eres miembro de este grupo");
 
+            // Verificar límite de grupos para usuarios Free
+            if (!usuario.EsPremium())
+            {
+                var gruposActuales = await _grupoRepository.GetGruposByUsuarioIdAsync(usuario.Id, cancellationToken);
+                var cantidadGrupos = gruposActuales.Count();
+
+                if (cantidadGrupos >= 3)
+                {
+                    throw new LimiteGruposAlcanzadoException(
+                        tipoPlan: "Free",
+                        limiteActual: 3,
+                        gruposActuales: cantidadGrupos,
+                        message: "Has alcanzado el límite de 3 grupos para usuarios gratuitos. Mejora a Premium para unirte a más grupos."
+                    );
+                }
+            }
+
             // Agregar al usuario como miembro del grupo
             var miembro = new MiembroGrupo(grupo.Id, usuario.Id, false);
             await _miembroGrupoRepository.CreateAsync(miembro, cancellationToken);
@@ -53,19 +71,7 @@ namespace GustosApp.Application.UseCases
             if (grupoCompleto == null)
                 throw new InvalidOperationException("Error al unirse al grupo");
 
-            return new GrupoResponse(
-                grupoCompleto.Id,
-                grupoCompleto.Nombre,
-                grupoCompleto.Descripcion,
-                grupoCompleto.AdministradorId,
-                grupoCompleto.Administrador?.FirebaseUid, // Add Firebase UID
-                grupoCompleto.Administrador != null ? (grupoCompleto.Administrador.Nombre + " " + grupoCompleto.Administrador.Apellido) : string.Empty,
-                grupoCompleto.FechaCreacion,
-                grupoCompleto.Activo,
-                grupoCompleto.CodigoInvitacion,
-                grupoCompleto.FechaExpiracionCodigo,
-                grupoCompleto.Miembros.Count(m => m.Activo)
-            );
+            return grupoCompleto;
         }
     }
 }

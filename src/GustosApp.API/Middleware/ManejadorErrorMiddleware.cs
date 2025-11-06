@@ -1,5 +1,7 @@
 ﻿using System.Net;
 using System.Text.Json;
+using GustosApp.Application.Common.Exceptions;
+using GustosApp.Application.DTO;
 
 namespace GustosApp.API.Middleware
 {
@@ -26,33 +28,78 @@ namespace GustosApp.API.Middleware
             }
         }
 
-        private static Task HandleExceptionAsync(HttpContext context, Exception ex, ILogger logger)
+        private static async Task HandleExceptionAsync(HttpContext context, Exception ex, ILogger logger)
         {
             logger.LogError(ex, "❌ Error no controlado: {Message}", ex.Message);
 
             var response = context.Response;
             response.ContentType = "application/json";
 
-            var status = ex switch
+            // Por defecto, error interno
+            var status = HttpStatusCode.InternalServerError;
+            object? result = null;
+
+            switch (ex)
             {
-                UnauthorizedAccessException => HttpStatusCode.Unauthorized,
-                ArgumentException => HttpStatusCode.BadRequest,
-                InvalidOperationException => HttpStatusCode.Conflict,
-                KeyNotFoundException => HttpStatusCode.NotFound,
-                _ => HttpStatusCode.InternalServerError
-            };
+                case UnauthorizedAccessException:
+                    status = HttpStatusCode.Unauthorized;
+                    result = new { status = 401, error = "Unauthorized", message = ex.Message };
+                    break;
+
+                case ArgumentException:
+                    status = HttpStatusCode.BadRequest;
+                    result = new { status = 400, error = "BadRequest", message = ex.Message };
+                    break;
+
+                    
+       
+                case KeyNotFoundException:
+                    status = HttpStatusCode.NotFound;
+                    result = new { status = 404, error = "NotFound", message = ex.Message };
+                    break;
+
+                case InvalidOperationException:
+                    status = HttpStatusCode.Conflict;
+                    result = new { status = 409, error = "Conflict", message = ex.Message };
+                    break;
+
+                
+                case LimiteGruposAlcanzadoException limiteEx:
+                    status = (HttpStatusCode)402; 
+                    var beneficios = new BeneficiosPremiumDto { Precio = 9999.99m };
+
+                    var responseObj = new LimiteGruposAlcanzadoResponse(
+                        $"Has alcanzado el límite de {limiteEx.LimiteActual} grupos para usuarios del plan {limiteEx.TipoPlan}.",
+                        limiteEx.TipoPlan,
+                        limiteEx.LimiteActual,
+                        limiteEx.GruposActuales,
+                        beneficios,
+                        "/api/pago/crear"
+                    );
+
+                    result = responseObj;
+                    break;
+
+                default:
+                    result = new
+                    {
+                        status = 500,
+                        error = "InternalServerError",
+                        message = ex.Message,
+                        detail = ex.InnerException?.Message
+                    };
+                    break;
+            }
 
             response.StatusCode = (int)status;
 
-            var result = JsonSerializer.Serialize(new
+            var json = JsonSerializer.Serialize(result, new JsonSerializerOptions
             {
-                status = (int)status,
-                error = status.ToString(),
-                message = ex.Message,
-                detail = ex.InnerException?.Message
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = true
             });
 
-            return response.WriteAsync(result);
+            await response.WriteAsync(json);
         }
     }
 }

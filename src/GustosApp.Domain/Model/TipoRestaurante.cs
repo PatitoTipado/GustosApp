@@ -1,4 +1,4 @@
-namespace GustosApp.Domain.Model
+﻿namespace GustosApp.Domain.Model
 {
     public enum TipoRestaurante
     {
@@ -11,6 +11,6 @@ namespace GustosApp.Domain.Model
         Vegetariana,
         Rapida,
         Restaurante,
-        Mediterranea     
+        Mediterranea
     }
 }

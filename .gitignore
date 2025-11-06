@@ -4,3 +4,4 @@ bin/
 obj/
 /src/GustosApp.API/appsettings.Development.json
 /src/GustosApp.API/secrets/
+appsettings.Development.json

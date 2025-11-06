@@ -114,5 +114,27 @@ namespace GustosApp.Infraestructure.Repositories
             return query.ToList();
         }
 
+        public async Task<List<Restaurante>> ObtenerRestaurantesPorGustosGrupo(
+            List<Guid> gustosIds,
+            CancellationToken ct = default)
+        {
+            if (!gustosIds.Any())
+            {
+                return new List<Restaurante>();
+            }
+
+            // Obtener restaurantes que sirvan al menos uno de los gustos del grupo
+            var restaurantes = await _db.Restaurantes
+                .Include(r => r.GustosQueSirve)
+                .Include(r => r.RestriccionesQueRespeta)
+                .Include(r => r.Reviews)
+                .Include(r => r.Platos)
+                .Where(r => r.GustosQueSirve.Any(g => gustosIds.Contains(g.Id)))
+                .ToListAsync(ct);
+
+            return restaurantes;
+        }
+
     }
 }
+

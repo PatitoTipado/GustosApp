@@ -137,6 +137,8 @@ builder.Services.AddScoped<INotificacionRepository, NotificacionRepositoryEF>();
 builder.Services.AddScoped<INotificacionRealtimeService, SignalRNotificacionRealtimeService>();
 builder.Services.AddScoped<ISolicitudAmistadRealtimeService, SignalRSolicitudAmistadRealtimeService>();
 
+builder.Services.AddScoped<IValoracionUsuarioRepository, ValoracionUsuarioRepositoryEF>();
+builder.Services.AddScoped<ActualizarValoracionRestauranteUseCase>();
 
 
 // Chat repository
@@ -197,6 +199,7 @@ builder.Services.AddScoped<ConfirmarAmistadEntreUsuarios>();
 builder.Services.AddScoped<VerificarSiMiembroEstaEnGrupoUseCase>();
 builder.Services.AddScoped<ObtenerRestaurantesAleatoriosGrupoUseCase>();
 
+builder.Services.AddScoped<CrearValoracionUsuarioUseCase>();
 
 // Para notificaciones en tiempo real
 builder.Services.AddSignalR();

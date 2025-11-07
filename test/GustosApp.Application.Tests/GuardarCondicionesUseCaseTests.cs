@@ -8,7 +8,7 @@ using Xunit;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 using GustosApp.Application.Tests.mocks;
-using GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedcasUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCases;
 
 
 

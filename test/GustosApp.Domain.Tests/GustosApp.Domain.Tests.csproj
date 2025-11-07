@@ -17,7 +17,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\test\GustosApp.Application.Tests\GustosApp.Application.Tests.csproj" />
+    <ProjectReference Include="..\GustosApp.Application.Tests\GustosApp.Application.Tests.csproj" />
+ 
   </ItemGroup>
 
   <ItemGroup>

@@ -19,13 +19,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GustosApp.Infraestructure",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GustosApp.Application.Tests", "test\GustosApp.Application.Tests\GustosApp.Application.Tests.csproj", "{07E18118-4D65-47EB-878B-484E988E4B47}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GustosApp.Domain.Tests", "GustosApp.Domain.Tests\GustosApp.Domain.Tests.csproj", "{179B9A0A-B2D2-47F4-B7BF-2D166A4272E7}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Elementos de la solución", "Elementos de la solución", "{D107F4C8-89CC-BEA8-D3D7-CA6B7733353D}"
 	ProjectSection(SolutionItems) = preProject
 		.dockerignore = .dockerignore
 		Dockerfile = Dockerfile
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GustosApp.Domain.Tests", "test\GustosApp.Domain.Tests\GustosApp.Domain.Tests.csproj", "{D4B849EC-1842-4342-9281-536D5134422A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -109,18 +109,18 @@ Global
 		{07E18118-4D65-47EB-878B-484E988E4B47}.Release|x64.Build.0 = Release|Any CPU
 		{07E18118-4D65-47EB-878B-484E988E4B47}.Release|x86.ActiveCfg = Release|Any CPU
 		{07E18118-4D65-47EB-878B-484E988E4B47}.Release|x86.Build.0 = Release|Any CPU
-		{179B9A0A-B2D2-47F4-B7BF-2D166A4272E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{179B9A0A-B2D2-47F4-B7BF-2D166A4272E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{179B9A0A-B2D2-47F4-B7BF-2D166A4272E7}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{179B9A0A-B2D2-47F4-B7BF-2D166A4272E7}.Debug|x64.Build.0 = Debug|Any CPU
-		{179B9A0A-B2D2-47F4-B7BF-2D166A4272E7}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{179B9A0A-B2D2-47F4-B7BF-2D166A4272E7}.Debug|x86.Build.0 = Debug|Any CPU
-		{179B9A0A-B2D2-47F4-B7BF-2D166A4272E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{179B9A0A-B2D2-47F4-B7BF-2D166A4272E7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{179B9A0A-B2D2-47F4-B7BF-2D166A4272E7}.Release|x64.ActiveCfg = Release|Any CPU
-		{179B9A0A-B2D2-47F4-B7BF-2D166A4272E7}.Release|x64.Build.0 = Release|Any CPU
-		{179B9A0A-B2D2-47F4-B7BF-2D166A4272E7}.Release|x86.ActiveCfg = Release|Any CPU
-		{179B9A0A-B2D2-47F4-B7BF-2D166A4272E7}.Release|x86.Build.0 = Release|Any CPU
+		{D4B849EC-1842-4342-9281-536D5134422A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4B849EC-1842-4342-9281-536D5134422A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4B849EC-1842-4342-9281-536D5134422A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D4B849EC-1842-4342-9281-536D5134422A}.Debug|x64.Build.0 = Debug|Any CPU
+		{D4B849EC-1842-4342-9281-536D5134422A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D4B849EC-1842-4342-9281-536D5134422A}.Debug|x86.Build.0 = Debug|Any CPU
+		{D4B849EC-1842-4342-9281-536D5134422A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4B849EC-1842-4342-9281-536D5134422A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4B849EC-1842-4342-9281-536D5134422A}.Release|x64.ActiveCfg = Release|Any CPU
+		{D4B849EC-1842-4342-9281-536D5134422A}.Release|x64.Build.0 = Release|Any CPU
+		{D4B849EC-1842-4342-9281-536D5134422A}.Release|x86.ActiveCfg = Release|Any CPU
+		{D4B849EC-1842-4342-9281-536D5134422A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -132,7 +132,7 @@ Global
 		{89A3D755-B457-4430-BBC6-77B88C8F0558} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{B4EC62DE-BEC5-4454-85A9-0FFF8AA29757} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{07E18118-4D65-47EB-878B-484E988E4B47} = {0C88DD14-F956-CE84-757C-A364CCF449FC}
-		{179B9A0A-B2D2-47F4-B7BF-2D166A4272E7} = {0C88DD14-F956-CE84-757C-A364CCF449FC}
+		{D4B849EC-1842-4342-9281-536D5134422A} = {0C88DD14-F956-CE84-757C-A364CCF449FC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {925902E6-5F1E-4EB5-B100-256EA054277E}

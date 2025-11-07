@@ -53,7 +53,7 @@ namespace GustosApp.API.Controllers
             SugerirGustosSobreUnRadioUseCase sugerirGustos,
             ObtenerPreferenciasGruposUseCase obtenerGustos,
             VerificarSiMiembroEstaEnGrupoUseCase verificacionMiembroGrupo,
-            IMapper mapper
+            IMapper mapper,
             ObtenerRestaurantesAleatoriosGrupoUseCase obtenerRestaurantesAleatorios
             )
         {

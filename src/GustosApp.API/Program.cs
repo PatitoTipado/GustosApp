@@ -23,6 +23,8 @@ using GustosApp.Infraestructure.Files;
 // Usar System.Text.Json para manejar el secreto de Firebase
 using System.Text.Json;
 
+using System.Text.Json;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // =====================
@@ -30,16 +32,15 @@ var builder = WebApplication.CreateBuilder(args);
 // =====================
 
 //(en la carpeta /secrets)
-//var firebaseKeyPath = Path.Combine(builder.Environment.ContentRootPath, "secrets", "firebase-key.json");
-var firebaseKeyPath = builder.Configuration["FIREBASE_SERVICE_ACCOUNT_JSON"];
-var firebaseProjectId = builder.Configuration["Firebase:ProjectId"];
+var firebaseKeyPath = Path.Combine(builder.Environment.ContentRootPath, "secrets", "firebase-key.json");
+var firebaseProjectId = "gustosapp-5c3c9";
 
 // Inicializar Firebase solo si no está inicializado (Admin SDK: útil p/ scripts, NO requerido para validar JWT)
 if (FirebaseApp.DefaultInstance == null)
 {
     FirebaseApp.Create(new AppOptions()
     {
-        Credential = GoogleCredential.FromJson(firebaseKeyPath)
+        Credential = GoogleCredential.FromFile(firebaseKeyPath)
     });
 }
 
@@ -136,6 +137,8 @@ builder.Services.AddScoped<INotificacionRepository, NotificacionRepositoryEF>();
 builder.Services.AddScoped<INotificacionRealtimeService, SignalRNotificacionRealtimeService>();
 builder.Services.AddScoped<ISolicitudAmistadRealtimeService, SignalRSolicitudAmistadRealtimeService>();
 
+
+
 // Chat repository
 builder.Services.AddScoped<GustosApp.Domain.Interfaces.IChatRepository, GustosApp.Infraestructure.Repositories.ChatRepositoryEF>();
 builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
@@ -192,9 +195,8 @@ builder.Services.AddScoped<ObtenerGustosSeleccionadosPorUsuarioYParaFiltrarUseCa
 builder.Services.AddScoped<BuscarUsuariosUseCase>();
 builder.Services.AddScoped<ConfirmarAmistadEntreUsuarios>();
 builder.Services.AddScoped<VerificarSiMiembroEstaEnGrupoUseCase>();
-
-
 builder.Services.AddScoped<ObtenerRestaurantesAleatoriosGrupoUseCase>();
+
 
 // Para notificaciones en tiempo real
 builder.Services.AddSignalR();
@@ -253,31 +255,23 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 
-     builder.Services.AddSignalR();
+builder.Services.AddSignalR();
 
 // =====================
 //    CORS
 // =====================
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
-
-var allowedOriginsString = builder.Configuration["CORS_ALLOWED_ORIGINS"];
-
-var allowedOrigins = allowedOriginsString?
-    .Split(',', StringSplitOptions.RemoveEmptyEntries)
-    .Select(s => s.Trim())
-    .ToArray() ?? Array.Empty<string>();
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,
         policy =>
         {
-            policy.WithOrigins(allowedOrigins)
+            policy.WithOrigins("http://localhost:3000", "http://localhost:5174", "https://lois-membranous-glancingly.ngrok-free.dev")
                   .AllowCredentials()
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
-    
+
     // Política más permisiva para desarrollo
     options.AddPolicy("AllowAll", policy =>
     {

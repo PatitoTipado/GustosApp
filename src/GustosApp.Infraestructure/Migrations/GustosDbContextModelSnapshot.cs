@@ -2123,39 +2123,6 @@ namespace GustosApp.Infraestructure.Migrations
                     b.ToTable("Usuarios");
                 });
 
-            modelBuilder.Entity("GustosApp.Domain.Model.Valoracion", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Comentario")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime>("FechaCreacion")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("RestauranteId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("UsuarioId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("ValoracionUsuario")
-                        .HasColumnType("int")
-                        .HasColumnName("Valoracion");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RestauranteId");
-
-                    b.HasIndex("UsuarioId", "RestauranteId")
-                        .IsUnique();
-
-                    b.ToTable("ValoracionUsuario", (string)null);
-                });
-
             modelBuilder.Entity("GustosApp.Domain.Model.UsuarioRestauranteVisitado", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2195,6 +2162,39 @@ namespace GustosApp.Infraestructure.Migrations
                     b.HasIndex("UsuarioId");
 
                     b.ToTable("UsuarioRestauranteVisitados", (string)null);
+                });
+
+            modelBuilder.Entity("GustosApp.Domain.Model.Valoracion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Comentario")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("RestauranteId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ValoracionUsuario")
+                        .HasColumnType("int")
+                        .HasColumnName("Valoracion");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RestauranteId");
+
+                    b.HasIndex("UsuarioId", "RestauranteId")
+                        .IsUnique();
+
+                    b.ToTable("ValoracionUsuario", (string)null);
                 });
 
             modelBuilder.Entity("RestauranteRestriccion", b =>

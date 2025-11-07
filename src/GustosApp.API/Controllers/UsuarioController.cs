@@ -2,7 +2,6 @@
 using Azure.Core;
 using System.Security.Claims;
 using GustosApp.Application.DTO;
-using GustosApp.Application.UseCases;
 using GustosApp.Infraestructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -15,6 +14,12 @@ using GustosApp.Domain.Model;
 using GustosApp.API.DTO;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using GustosApp.Application.UseCases.AmistadUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases;
+
+using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCases;
 
 namespace GustosApp.API.Controllers
 {

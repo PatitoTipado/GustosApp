@@ -1,6 +1,5 @@
 ﻿using GustosApp.API.DTO;
-using GustosApp.Application.Tests.mocks;
-using GustosApp.Application.UseCases;
+using GustosApp.Application.UseCases.NotificacionUseCases;
 using GustosApp.Domain.Model;
 using Microsoft.AspNetCore.Mvc;
 

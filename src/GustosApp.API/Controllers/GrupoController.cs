@@ -3,6 +3,10 @@ using GustosApp.API.DTO;
 using GustosApp.Application.DTO;
 using GustosApp.Application.Services;
 using GustosApp.Application.UseCases;
+using GustosApp.Application.UseCases.GrupoUseCases;
+using GustosApp.Application.UseCases.GrupoUseCases.ChatGrupoUseCases;
+using GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases;
+using GustosApp.Application.UseCases.RestauranteUseCases;
 using GustosApp.Domain.Model;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -301,7 +305,7 @@ namespace GustosApp.API.Controllers
 
         [Authorize]
         [HttpGet("restaurantes/{grupoId}")]
-        [ProducesResponseType(typeof(IEnumerable<RestauranteDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IEnumerable<RestauranteDTO>), StatusCodes.Status200OK)]
         public async Task<IActionResult> RecomendarRestauranteGrupo(Guid grupoId,
             [FromQuery(Name = "near.lat")] double? lat = -34.641812775271,
             [FromQuery(Name = "near.lng")] double? lng = -58.56990230458638,
@@ -321,7 +325,7 @@ namespace GustosApp.API.Controllers
             var recomendados = _sugerirGustos.Handle(preferencias, restaurantes, top, ct);
 
             // Mapear al DTO
-            var response = _mapper.Map<List<RestauranteDto>>(recomendados);
+            var response = _mapper.Map<List<RestauranteDTO>>(recomendados);
 
             return Ok(response);
         }

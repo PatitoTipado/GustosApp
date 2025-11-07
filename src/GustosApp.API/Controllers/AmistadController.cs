@@ -6,7 +6,8 @@ using AutoMapper;
 
 using GustosApp.API.DTO;
 using GustosApp.Application.Interfaces;
-using GustosApp.Application.UseCases;
+using GustosApp.Application.UseCases.AmistadUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 using Microsoft.AspNetCore.Authorization;

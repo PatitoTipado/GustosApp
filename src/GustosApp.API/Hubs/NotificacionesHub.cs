@@ -2,8 +2,9 @@
 using AutoMapper;
 using Azure.Core;
 using GustosApp.API.DTO;
-using GustosApp.Application.Tests.mocks;
-using GustosApp.Application.UseCases;
+using GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases;
+using GustosApp.Application.UseCases.NotificacionUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 using Microsoft.AspNetCore.SignalR;

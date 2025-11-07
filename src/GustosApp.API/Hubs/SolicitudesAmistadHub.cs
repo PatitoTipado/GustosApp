@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using GustosApp.API.DTO;
-using GustosApp.Application.UseCases;
+using GustosApp.Application.UseCases.AmistadUseCases;
 using GustosApp.Domain.Model;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;

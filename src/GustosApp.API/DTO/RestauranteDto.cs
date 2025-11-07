@@ -2,14 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using GustosApp.API.DTO;
 using GustosApp.Application.DTO;
 using GustosApp.Domain.Model;
 
+
 namespace GustosApp.API.DTO
 {
-    public class RestauranteDto
+
+
+    public class RestauranteDTO
     {
         public Guid Id { get; set; }
         public string PropietarioUid { get; set; } = string.Empty;
@@ -33,12 +37,13 @@ namespace GustosApp.API.DTO
         public ICollection<GustoDto> GustosQueSirve { get; set; }
         public ICollection<RestriccionResponse> RestriccionesQueRespeta { get; set; }
         public double Score { get; set; }
-        public string? Tipo { get;  set; }
+        public string? Tipo { get; set; }
+
 
 
 
         // --- CONSTRUCTOR 1: Vacío (Requerido por serializadores/mapeadores) ---
-        public RestauranteDto()
+        public RestauranteDTO()
         {
             // Inicializar colecciones para evitar NullReferenceException
             PropietarioUid = string.Empty;
@@ -52,7 +57,7 @@ namespace GustosApp.API.DTO
         }
 
         // --- CONSTRUCTOR 2: Completo (Usado para el mapeo con Score) ---
-        public RestauranteDto(
+        public RestauranteDTO(
             Guid id, string propietarioUid, string nombre, string direccion, double latitud,
             double longitud, object? horarios, DateTime creadoUtc, DateTime actualizadoUtc,
             string? primaryType, IReadOnlyList<string>? types, string? imagenUrl, decimal? valoracion, List<string> platos,
@@ -77,6 +82,69 @@ namespace GustosApp.API.DTO
             RestriccionesQueRespeta = restriccionesQueRespeta ?? new List<RestriccionResponse>();
             Score = score;
         }
+
+    }
+                public class RestauranteImagenDto
+        {
+            public Guid Id { get; set; }
+            public string Tipo { get; set; } = string.Empty; // perfil|principal|interior|comida|menu
+            public string Url { get; set; } = string.Empty;
+            public int? Orden { get; set; }
+            public DateTime FechaCreacionUtc { get; set; }
+            public string? MiniaturaUrl { get; set; }
+        }
+
+        public class RestauranteListadoDto
+        {
+            public Guid Id { get; set; }
+            public string PlaceId { get; set; } = string.Empty; // Google Places ID
+            public string Nombre { get; set; } = string.Empty;
+            public string? Direccion { get; set; }
+            public double Latitud { get; set; }
+            public double Longitud { get; set; }
+            public string? ImagenUrl { get; set; }
+
+            public double? Rating { get; set; }
+            public int? CantidadResenas { get; set; }
+
+            // v1 New fields
+            public string? PrimaryType { get; set; }
+            public List<string>? Types { get; set; }
+            public string? PriceLevel { get; set; }
+            public bool? OpenNow { get; set; }
+
+            // serves (subset)
+            public bool? Delivery { get; set; }
+            public bool? Takeout { get; set; }
+            public bool? DineIn { get; set; }
+            public bool? ServesVegetarianFood { get; set; }
+            public bool? ServesCoffee { get; set; }
+            public bool? ServesBeer { get; set; }
+            public bool? ServesWine { get; set; }
+        }
+
+
+        public class RestauranteMenuDto
+        {
+            public Guid Id { get; set; }
+            public Guid RestauranteId { get; set; }
+            public string Moneda { get; set; } = "ARS";
+            public int Version { get; set; } = 1;
+            public DateTime FechaActualizacionUtc { get; set; }
+
+            public JsonElement? Menu { get; set; }
+            public string? MenuRaw { get; set; }
+        }
+
+    public class ImagenesResponse
+    {
+        public int Total { get; set; }
+        public int Skip { get; set; }
+        public int Take { get; set; }
+        public List<RestauranteImagenDto> Items { get; set; } = new();
     }
 }
+
+
+
 

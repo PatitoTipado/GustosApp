@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using GustosApp.API.DTO;
 using GustosApp.Application.DTO;
-using GustosApp.Application.UseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;

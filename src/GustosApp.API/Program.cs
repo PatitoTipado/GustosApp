@@ -6,7 +6,6 @@ using GustosApp.API.Hubs.Services;
 using GustosApp.API.Mapping;
 using GustosApp.API.Middleware;
 using GustosApp.Application.Interfaces;
-using GustosApp.Application.Tests.mocks;
 using GustosApp.Application.UseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Infraestructure;
@@ -18,12 +17,23 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using GustosApp.Infraestructure.Ocr;
 using GustosApp.Infraestructure.Parsing;
-using GustosApp.Infraestructure.Files;      
+using GustosApp.Infraestructure.Files;
 
 // Usar System.Text.Json para manejar el secreto de Firebase
 using System.Text.Json;
 
 using System.Text.Json;
+using GustosApp.Application.UseCases.GrupoUseCases;
+using GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases;
+using GustosApp.Application.UseCases.AmistadUseCases;
+using GustosApp.Application.UseCases.RestauranteUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases;
+using GustosApp.Application.UseCases.GrupoUseCases.ChatGrupoUseCases;
+using GustosApp.Application.UseCases.NotificacionUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
+
 
 var builder = WebApplication.CreateBuilder(args);
 

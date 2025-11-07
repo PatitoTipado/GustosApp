@@ -3,10 +3,9 @@ using GustosApp.Application.Interfaces;
 using Microsoft.AspNetCore.Http;
 using AutoMapper;
 using GustosApp.API.DTO;
-using GustosApp.Application.DTO;
+
 using GustosApp.Application.DTOs.Restaurantes;
 using GustosApp.Application.Services;
-using GustosApp.Application.UseCases;
 using GustosApp.Domain.Model;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,6 +19,8 @@ using Microsoft.AspNetCore.Http;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using GustosApp.Application.UseCases.RestauranteUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
 
 
 // Controlador para restaurantes que se registran en la app por un usuario y restaurantes traidos de Places v1
@@ -148,7 +149,7 @@ namespace GustosApp.API.Controllers
 
             var recommendations = _sugerirGustos.Handle(preferencias, res, top, ct);
 
-            var response = recommendations.Select(r => new RestauranteDto
+            var response = recommendations.Select(r => new RestauranteDTO
             {
                 Id = r.Id,
                 PropietarioUid = r.PropietarioUid,

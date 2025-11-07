@@ -18,7 +18,7 @@ namespace GustosApp.Application.UseCases
             _miembroGrupoRepository = miembroGrupoRepository;
         }
 
-        public async Task<bool> HandleAsync(string firebaseUid, Guid grupoId, Guid usuarioIdARemover, CancellationToken cancellationToken = default)
+        public async Task<bool> HandleAsync(string firebaseUid, Guid grupoId, string username, CancellationToken cancellationToken = default)
         {
             // obtener quien realiza la acción
             var usuarioActor = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid, cancellationToken);
@@ -34,7 +34,7 @@ namespace GustosApp.Application.UseCases
                 throw new UnauthorizedAccessException("Solo los administradores pueden eliminar miembros");
 
             // buscar el miembro a remover
-            var miembro = await _miembroGrupoRepository.GetByGrupoYUsuarioAsync(grupoId, usuarioIdARemover, cancellationToken);
+            var miembro = await _miembroGrupoRepository.GetByGrupoYUsuarioAsync(grupoId, username, cancellationToken);
             if (miembro == null || !miembro.Activo)
                 throw new ArgumentException("El usuario no es miembro activo del grupo");
 

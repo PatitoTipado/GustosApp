@@ -25,15 +25,15 @@ namespace GustosApp.API.Controllers
         public async Task<IActionResult> CrearNotificacion([FromBody] CrearNotificacionRequest request)
         {
             await _crearNotificacion.HandleAsync(
-         request.UsuarioDestinoId,         
-         request.TipoNotificacion,         
-         request.nombreUsuario ?? string.Empty,           
-         request.nombreGrupo ?? string.Empty, 
-         CancellationToken.None            
+         request.UsuarioDestinoId,
+         request.TipoNotificacion,
+         request.nombreUsuario ?? string.Empty,
+         request.nombreGrupo ?? string.Empty,
+         CancellationToken.None
          );
             return Ok("Notificacion creada");
         }
-
+        /*
         [HttpGet("{usuarioId:guid}")]
         public async Task<IActionResult> ObtenerNotificaciones(Guid usuarioId, CancellationToken ct)
         {
@@ -51,5 +51,6 @@ namespace GustosApp.API.Controllers
             await _marcarNotificion.HandleAsync(usuarioId, ct);
             return NoContent();
         }
+    }*/
     }
 }

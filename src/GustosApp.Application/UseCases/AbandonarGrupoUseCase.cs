@@ -32,7 +32,7 @@ namespace GustosApp.Application.UseCases
                 throw new ArgumentException("Grupo no encontrado");
 
             // Verificar que el usuario es miembro del grupo
-            var miembro = await _miembroGrupoRepository.GetByGrupoYUsuarioAsync(grupoId, usuario.Id, cancellationToken);
+            var miembro = await _miembroGrupoRepository.GetByGrupoYUsuarioAsync(grupoId, usuario.IdUsuario, cancellationToken);
             if (miembro == null || !miembro.Activo)
                 throw new ArgumentException("No eres miembro de este grupo");
 

@@ -20,28 +20,17 @@ namespace GustosApp.Application.UseCases
             _usuarios = usuarios;
         }
 
-        public async Task<List<CondicionMedicaResponse>> HandleAsync(string uidFirebase,CancellationToken ct = default)
+        public async Task<(IEnumerable<CondicionMedica> Todas, IEnumerable<Guid> Seleccionadas)>
+            HandleAsync(string firebaseUid, CancellationToken ct = default)
         {
-            var usuario = await _usuarios.GetByFirebaseUidAsync(uidFirebase, ct)
-                      ?? throw new InvalidOperationException("Usuario no encontrado.");
+            var usuario = await _usuarios.GetByFirebaseUidAsync(firebaseUid, ct)
+                ?? throw new InvalidOperationException("Usuario no encontrado.");
 
-            var todas= await _condicion.GetAllAsync(ct);
+            var todas = await _condicion.GetAllAsync(ct);
+            var seleccionadas = usuario.CondicionesMedicas?.Select(c => c.Id).ToHashSet()
+                                ?? new HashSet<Guid>();
 
-            var seleccionadas = usuario.CondicionesMedicas?
-                .Select(c => c.Id)
-                .ToHashSet() ?? new HashSet<Guid>();
-
-
-            var resultado = todas.Select(r => new CondicionMedicaResponse
-            {
-                Id = r.Id,
-                Nombre = r.Nombre,
-                Seleccionado = seleccionadas.Contains(r.Id)
-            }).ToList();
-
-
-
-            return resultado;
+            return (todas, seleccionadas);
         }
     }
 }

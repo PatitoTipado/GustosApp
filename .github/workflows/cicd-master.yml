@@ -9,5 +9,5 @@ jobs:
   call-base:
     uses: ./.github/workflows/cicd-gustoapp.yml
     with:
-      run-deploy: true     # acá sí queremos deploy
+      run-docker: true     # acá sí queremos deploy
     secrets: inherit

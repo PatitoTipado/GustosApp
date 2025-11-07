@@ -4,64 +4,53 @@ name: Build and deploy ASP.Net Core app to Azure Web App - GustosApp
 on:
   workflow_call:   # <- clave: habilita que otros workflows lo llamen
     inputs:
-      run-deploy:
-        description: "Run deploy step?"
+      run-docker:
+        description: "Run docker step?"
         required: false
         type: boolean
         default: false
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Set up .NET Core
+      - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.x'
 
-      - name: Limpiar Caché de Build y Forzar Restauración
+      - name: Clean and restore
         run: |
           dotnet clean
           dotnet restore
-          echo "¡Caché de NuGet y build local limpiado!"
 
-      - name: Build with dotnet
+      - name: Build project
         run: dotnet build --configuration Release
 
       - name: Run tests
         run: dotnet test --configuration Release --no-build
 
-      - name: dotnet publish
-        run: dotnet publish -c Release -r win-x64 --self-contained false -o "${{env.DOTNET_ROOT}}/myapp"
-
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
-        with:
-          name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
-
-
-  deploy:
-    if: ${{ inputs.run-deploy }}   # <- se ejecuta solo si el caller manda true
-    runs-on: windows-latest
+  docker:
+    runs-on: ubuntu-latest
     needs: build
-    
     steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: .net-app
-      
-      - name: Deploy to Azure Web App
-        id: deploy-to-webapp
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: 'GustosApp'
-          slot-name: 'Production'
-          package: .
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_C0BDDA535B47414FA3CBA60BE8DC2FD5 }}
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure Container Registry
+        run: |
+          echo "${{ secrets.AZURE_REGISTRY_PASSWORD }}" | docker login ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }} -u ${{ secrets.AZURE_REGISTRY_USERNAME }} --password-stdin
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}/gustosapp:latest .
+
+      - name: Push image to ACR
+        run: |
+          docker push ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}/gustosapp:latest

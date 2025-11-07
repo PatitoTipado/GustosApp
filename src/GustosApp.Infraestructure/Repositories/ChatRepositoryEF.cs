@@ -11,7 +11,7 @@ namespace GustosApp.Infraestructure.Repositories
 
         public ChatRepositoryEF(GustosDbContext context) => _context = context;
 
-        public async Task<IEnumerable<ChatMessage>> GetMessagesByGrupoIdAsync(Guid grupoId, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<ChatMensaje>> GetMessagesByGrupoIdAsync(Guid grupoId, CancellationToken cancellationToken = default)
         {
             return await _context.ChatMessages
             .Where(m => m.GrupoId == grupoId)
@@ -22,7 +22,7 @@ namespace GustosApp.Infraestructure.Repositories
 
         }
 
-        public async Task<ChatMessage> AddMessageAsync(ChatMessage message, CancellationToken cancellationToken = default)
+        public async Task<ChatMensaje> AddMessageAsync(ChatMensaje message, CancellationToken cancellationToken = default)
         {
             _context.ChatMessages.Add(message);
             await _context.SaveChangesAsync(cancellationToken);

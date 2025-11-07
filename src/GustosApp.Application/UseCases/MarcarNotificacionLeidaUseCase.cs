@@ -1,4 +1,5 @@
 ﻿using GustosApp.Application.Interfaces;
+using GustosApp.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,9 @@ namespace GustosApp.Application.UseCases
 
         public async Task HandleAsync(Guid notificacionId, CancellationToken ct)
         {
+            if (notificacionId == Guid.Empty)
+                throw new ArgumentException("El ID de notificación no puede ser vacío.");
+
             await _repository.MarcarComoLeidaAsync(notificacionId, ct);
         }
 

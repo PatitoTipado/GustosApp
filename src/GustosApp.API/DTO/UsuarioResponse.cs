@@ -10,6 +10,7 @@
     public string Apellido { get; set; } = string.Empty;
     public string Username { get; set; } = string.Empty;
     public string? FotoPerfilUrl { get; set; }
+    public string Plan { get; set; } = "Free";
 }
 
 }

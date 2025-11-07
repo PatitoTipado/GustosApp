@@ -17,13 +17,28 @@ namespace GustosApp.Application.UseCases
             _usuarioRepository = usuarioRepository;
         }
 
-        public async Task<Usuario> HandleAsync(string uid, CancellationToken ct)
+        /// <summary>
+        /// Obtiene un usuario según FirebaseUid, username o Guid Id (según el parámetro disponible)
+        /// </summary>
+        public async Task<Usuario> HandleAsync(
+            string? FirebaseUid = null,
+            string? Username = null,
+            Guid? id = null,
+            CancellationToken ct = default)
         {
-            var usuario = await _usuarioRepository.GetByFirebaseUidAsync(uid, ct);
-            if (usuario == null)
+            Usuario? usuario = null;
+
+            if (!string.IsNullOrWhiteSpace(FirebaseUid))
             {
-                throw new Exception("Usuario no encontrado");
+                usuario = await _usuarioRepository.GetByFirebaseUidAsync(FirebaseUid, ct);
             }
+            else if (!string.IsNullOrWhiteSpace(Username))
+            {
+                usuario = await _usuarioRepository.GetByUsernameAsync(Username, ct);
+            }
+
+            if (usuario == null)
+                throw new Exception("Usuario no encontrado");
 
             return usuario;
         }

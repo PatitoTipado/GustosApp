@@ -20,7 +20,7 @@ namespace GustosApp.Application.UseCases
             _grupoRepository = grupoRepository;
         }
 
-        public async Task<IEnumerable<ChatMessage>> HandleAsync(string firebaseUid, Guid grupoId, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<ChatMensaje>> HandleAsync(string firebaseUid, Guid grupoId, CancellationToken cancellationToken = default)
         {
             var grupo = await _grupoRepository.GetByIdAsync(grupoId, cancellationToken);
             if (grupo == null)
@@ -52,7 +52,7 @@ namespace GustosApp.Application.UseCases
                 _grupoRepository = grupoRepository;
             }
 
-            public async Task<ChatMessage> HandleAsync( string firebaseUid,Guid grupoId,string mensaje
+            public async Task<ChatMensaje> HandleAsync( string firebaseUid,Guid grupoId,string mensaje
                 ,CancellationToken cancellationToken = default)
             {
                
@@ -74,7 +74,7 @@ namespace GustosApp.Application.UseCases
                 if (string.IsNullOrWhiteSpace(mensaje))
                     throw new ArgumentException("El mensaje no puede estar vacío.");
 
-                var chat = new ChatMessage
+                var chat = new ChatMensaje
                 {
                     Id = Guid.NewGuid(),
                     GrupoId = grupoId,

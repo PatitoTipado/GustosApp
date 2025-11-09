@@ -16,44 +16,47 @@ namespace GustosApp.Application.Tests
         [Fact]
         public async Task CrearValoracion()
         {
-            var repoMock = new Mock<IValoracionUsuarioRepository>();
+            var repoMock = new Mock<IOpinionRestauranteRepository>();
             repoMock.Setup(r => r.ExisteValoracionAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
                     .ReturnsAsync(false);
 
-            var useCase = new CrearValoracionUsuarioUseCase(repoMock.Object);
+            var useCase = new CrearOpinionRestaurante(repoMock.Object);
             var usuarioId = Guid.NewGuid();
             var restauranteId = Guid.NewGuid();
+            var titulo = "Buen restaurante";
+            var img = "";
+            await useCase.HandleAsync(usuarioId, restauranteId, 5, "Excelente servicio",titulo,img, CancellationToken.None);
 
-            await useCase.HandleAsync(usuarioId, restauranteId, 5, "Excelente servicio", CancellationToken.None);
-
-            repoMock.Verify(r => r.CrearAsync(It.Is<Valoracion>(
+            repoMock.Verify(r => r.CrearAsync(It.Is<OpinionRestaurante>(
                 v => v.UsuarioId == usuarioId &&
                 v.RestauranteId == restauranteId &&
-                v.ValoracionUsuario == 5
+                v.Valoracion == 5
                 ), It.IsAny<CancellationToken>()), Times.Once);
         }
 
-     [Fact]
+       
+
+        [Fact]
      public async Task NoPermitirValoracionDuplicada()
         {
-            var repoMock = new Mock<IValoracionUsuarioRepository>();
+            var repoMock = new Mock<IOpinionRestauranteRepository>();
             repoMock.Setup(r => r.ExisteValoracionAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(true);
 
-            var useCase = new CrearValoracionUsuarioUseCase(repoMock.Object);
+            var useCase = new CrearOpinionRestaurante(repoMock.Object);
 
             await Assert.ThrowsAsync<ArgumentException>(() =>
-            useCase.HandleAsync(Guid.NewGuid(), Guid.NewGuid(), 4, "Ya valoro", CancellationToken.None));
+            useCase.HandleAsync(Guid.NewGuid(), Guid.NewGuid(), 4, "Ya valoro","Buen restaurante","", CancellationToken.None));
         }
 
         [Fact]
         public async Task NoPermitirValoracionFueraDelRango()
         {
-            var repoMock = new Mock<IValoracionUsuarioRepository>();
-            var useCase = new CrearValoracionUsuarioUseCase(repoMock.Object);
+            var repoMock = new Mock<IOpinionRestauranteRepository>();
+            var useCase = new CrearOpinionRestaurante(repoMock.Object);
 
             await Assert.ThrowsAsync<ArgumentException>(() => 
-            useCase.HandleAsync(Guid.NewGuid(),Guid.NewGuid(),6,"Invalid",CancellationToken.None));
+            useCase.HandleAsync(Guid.NewGuid(),Guid.NewGuid(),6,"Buen restaurante","img","Invalid",CancellationToken.None));
         }
     }
 }

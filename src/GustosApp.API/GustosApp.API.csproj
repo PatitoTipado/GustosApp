@@ -49,5 +49,9 @@
   </Content>
 </ItemGroup>
 
+	<ItemGroup>
+	  <Compile Include="..\GustosApp.Domain\Model\ReseñaRestaurante.cs" Link="ReseñaRestaurante.cs" />
+	</ItemGroup>
+
 
 </Project>

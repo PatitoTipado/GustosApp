@@ -43,7 +43,10 @@ public class GustosDbContext : DbContext
 
     public DbSet<UsuarioRestauranteVisitado> UsuarioRestauranteVisitados { get; set; }
 
-    public DbSet<Valoracion> Valoraciones { get; set; }
+    //public DbSet<Valoracion> Valoraciones { get; set; }
+
+    public DbSet<OpinionRestaurante> OpinionesRestaurante { get; set; }
+
     public GustosDbContext(DbContextOptions<GustosDbContext> options)
     : base(options) { }
 
@@ -288,7 +291,8 @@ public class GustosDbContext : DbContext
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
-        modelBuilder.Entity<Valoracion>(entity =>
+
+        /*modelBuilder.Entity<Valoracion>(entity =>
         {
             entity.ToTable("ValoracionUsuario"); 
             entity.HasKey(v => v.Id);
@@ -311,8 +315,35 @@ public class GustosDbContext : DbContext
 
             entity.HasIndex(v => new { v.UsuarioId, v.RestauranteId })
                 .IsUnique();
-        });
+        });*/
+        modelBuilder.Entity<OpinionRestaurante>(entity => // Cambiar Valoracion por OpinionRestaurante
+        {
+            entity.ToTable("OpinionRestaurante"); 
+            entity.HasKey(v => v.Id);
+            entity.Property(v => v.Valoracion) 
+                .HasColumnName("Valoracion")
+                .IsRequired();
 
+            entity.Property(v => v.Opinion) 
+                .HasMaxLength(500); 
+
+            entity.Property(v => v.Titulo) 
+                .HasMaxLength(255); 
+
+            entity.Property(v => v.Img); 
+            entity.HasOne(v => v.Usuario)
+                .WithMany()
+                .HasForeignKey(v => v.UsuarioId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(v => v.Restaurante)
+                .WithMany()
+                .HasForeignKey(v => v.RestauranteId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(v => new { v.UsuarioId, v.RestauranteId })
+                .IsUnique();
+        });
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(GustosDbContext).Assembly);
 

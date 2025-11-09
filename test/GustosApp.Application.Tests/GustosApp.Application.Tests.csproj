@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\GustosApp.Application\GustosApp.Application.csproj" />
     <ProjectReference Include="..\..\src\GustosApp.Domain\GustosApp.Domain.csproj" />
+	  
   </ItemGroup>
 
   <ItemGroup>

@@ -1,5 +1,7 @@
 ﻿
 
+using GustosApp.Domain.Model;
+
 namespace GustosApp.API.DTO
 {
     public class NotificacionDTO
@@ -15,6 +17,17 @@ namespace GustosApp.API.DTO
         public bool Leida { get; set; } = false;
 
         public DateTime FechaCreacion { get; set; }
+    }
+
+    public class CrearNotificacionRequest
+    {
+        public Guid UsuarioDestinoId { get; set; }
+        public string Mensaje { get; set; } = string.Empty;
+        public TipoNotificacion TipoNotificacion { get; set; }
+        public string nombreUsuario { get; set; } = string.Empty;
+        public string? nombreGrupo { get; set; } // opcional
+
+
     }
 }
 

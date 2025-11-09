@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using GustosApp.API.DTO;
 using GustosApp.Application.Interfaces;
-using GustosApp.Application.UseCases;
+using GustosApp.Application.UseCases.RestauranteUseCases;
 using GustosApp.Domain.Model;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading;

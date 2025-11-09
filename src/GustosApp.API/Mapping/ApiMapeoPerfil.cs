@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 
 using GustosApp.API.DTO;
-using GustosApp.Application.DTO;
+
 using GustosApp.Domain.Model;
 
 namespace GustosApp.API.Mapping
@@ -108,7 +108,7 @@ namespace GustosApp.API.Mapping
             CreateMap<ChatMensaje, ChatMensajeResponse>();
 
 
-            CreateMap<Restaurante, RestauranteDto>()
+            CreateMap<Restaurante, RestauranteDTO>()
             .ForMember(dest => dest.Latitud, opt => opt.MapFrom(src => src.Latitud))
             .ForMember(dest => dest.Longitud, opt => opt.MapFrom(src => src.Longitud))
             .ForMember(dest => dest.Score, opt => opt.MapFrom(src => src.Score))

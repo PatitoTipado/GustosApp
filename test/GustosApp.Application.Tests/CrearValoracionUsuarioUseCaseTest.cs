@@ -1,5 +1,6 @@
 ﻿using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases;
+using GustosApp.Application.UseCases.RestauranteUseCases;
 using GustosApp.Domain.Model;
 using Moq;
 using System;

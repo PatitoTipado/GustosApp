@@ -33,6 +33,7 @@ using GustosApp.Application.UseCases.NotificacionUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
+using GustosApp.API.Background;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -94,6 +95,11 @@ builder.Services.AddSingleton<IEmbeddingService>(sp =>
 
 // Autorización explícita 
 builder.Services.AddAuthorization();
+
+
+// hosted service para notificaciones
+builder.Services.AddHostedService<NotificacionesBackgroundService>();
+
 
 // Almacenamiento de archivos local (wwwroot/uploads)
 builder.Services.AddSingleton<IAlmacenamientoArchivos>(sp =>

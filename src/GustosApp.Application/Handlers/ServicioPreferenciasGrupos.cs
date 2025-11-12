@@ -1,5 +1,6 @@
 ﻿using GustosApp.Application.Services;
 using GustosApp.Application.UseCases;
+using GustosApp.Application.UseCases.GrupoUseCases;
 
 namespace GustosApp.Application.Handlers
 {

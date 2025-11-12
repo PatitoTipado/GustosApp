@@ -5,14 +5,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using Moq;
 using Xunit;
-using GustosApp.Application.UseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 using GustosApp.Application.Tests.mocks;
+using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
 
 
-  
-    public class GuardarGustosUseCaseTests
+
+public class GuardarGustosUseCaseTests
     {
         private readonly Mock<IUsuarioRepository> _usuarioRepoMock;
         private readonly Mock<IGustoRepository> _gustoRepoMock;

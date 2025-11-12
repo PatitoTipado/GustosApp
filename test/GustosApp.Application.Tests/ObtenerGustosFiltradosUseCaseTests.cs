@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using GustosApp.Application.UseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 using GustosApp.Application.DTO;
 using Moq;
 using Xunit;
+using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
 
 namespace GustosApp.Application.Tests.UseCases
 {

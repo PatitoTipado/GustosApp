@@ -27,12 +27,14 @@ namespace GustosApp.Application.UseCases
         public async Task<bool> Handle(Guid grupoId, Guid usuarioId, string firebaseUid)
         {
             var esAdmin = await _grupoRepository.UsuarioEsAdministradorAsync(grupoId, usuarioId);
+
             var usuarioObtenido = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid);
-            var esMiembro = await _grupoRepository.UsuarioEsMiembroAsync(grupoId, usuarioId);
+
+            var esMiembro = await _grupoRepository.UsuarioEsMiembroAsync(grupoId, firebaseUid);
             if (!esAdmin || (usuarioObtenido!=null && usuarioObtenido.Id.Equals(usuarioId) && esMiembro))
                 throw new UnauthorizedAccessException("No tienes permisos para desactivar al usuario no sos el admin");
 
-            var miembro= _miembroGrupoRepository.GetByGrupoYUsuarioAsync(grupoId, usuarioId);
+            var miembro= _miembroGrupoRepository.GetByGrupoYUsuarioAsync(grupoId, firebaseUid);
 
             miembro.Result.AbandonarGrupo();
 

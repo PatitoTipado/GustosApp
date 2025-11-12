@@ -6,7 +6,6 @@ using GustosApp.API.Hubs.Services;
 using GustosApp.API.Mapping;
 using GustosApp.API.Middleware;
 using GustosApp.Application.Interfaces;
-using GustosApp.Application.Tests.mocks;
 using GustosApp.Application.UseCases;
 using GustosApp.Application.Handlers;
 using GustosApp.Domain.Interfaces;
@@ -19,11 +18,24 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using GustosApp.Infraestructure.Ocr;
 using GustosApp.Infraestructure.Parsing;
-using GustosApp.Infraestructure.Files;      
+using GustosApp.Infraestructure.Files;
 
 // Usar System.Text.Json para manejar el secreto de Firebase
 using System.Text.Json;
 using GustosApp.Application.Services;
+
+using System.Text.Json;
+using GustosApp.Application.UseCases.GrupoUseCases;
+using GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases;
+using GustosApp.Application.UseCases.AmistadUseCases;
+using GustosApp.Application.UseCases.RestauranteUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases;
+using GustosApp.Application.UseCases.GrupoUseCases.ChatGrupoUseCases;
+using GustosApp.Application.UseCases.NotificacionUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -137,6 +149,10 @@ builder.Services.AddScoped<INotificacionRepository, NotificacionRepositoryEF>();
 builder.Services.AddScoped<INotificacionRealtimeService, SignalRNotificacionRealtimeService>();
 builder.Services.AddScoped<ISolicitudAmistadRealtimeService, SignalRSolicitudAmistadRealtimeService>();
 
+builder.Services.AddScoped<IValoracionUsuarioRepository, ValoracionUsuarioRepositoryEF>();
+builder.Services.AddScoped<ActualizarValoracionRestauranteUseCase>();
+
+
 // Chat repository
 builder.Services.AddScoped<GustosApp.Domain.Interfaces.IChatRepository, GustosApp.Infraestructure.Repositories.ChatRepositoryEF>();
 builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
@@ -196,8 +212,9 @@ builder.Services.AddScoped<ObtenerGustosSeleccionadosPorUsuarioYParaFiltrarUseCa
 builder.Services.AddScoped<BuscarUsuariosUseCase>();
 builder.Services.AddScoped<ConfirmarAmistadEntreUsuarios>();
 builder.Services.AddScoped<VerificarSiMiembroEstaEnGrupoUseCase>();
+builder.Services.AddScoped<ObtenerRestaurantesAleatoriosGrupoUseCase>();
 
-
+builder.Services.AddScoped<CrearValoracionUsuarioUseCase>();
 
 // Para notificaciones en tiempo real
 builder.Services.AddSignalR();
@@ -256,7 +273,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 
-     builder.Services.AddSignalR();
+builder.Services.AddSignalR();
 
 // =====================
 //    CORS
@@ -272,7 +289,7 @@ builder.Services.AddCors(options =>
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
-    
+
     // Política más permisiva para desarrollo
     options.AddPolicy("AllowAll", policy =>
     {

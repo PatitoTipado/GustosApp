@@ -43,6 +43,7 @@ public class GustosDbContext : DbContext
 
     public DbSet<UsuarioRestauranteVisitado> UsuarioRestauranteVisitados { get; set; }
 
+    public DbSet<Valoracion> Valoraciones { get; set; }
     public GustosDbContext(DbContextOptions<GustosDbContext> options)
     : base(options) { }
 
@@ -294,6 +295,30 @@ public class GustosDbContext : DbContext
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
+        modelBuilder.Entity<Valoracion>(entity =>
+        {
+            entity.ToTable("ValoracionUsuario"); 
+            entity.HasKey(v => v.Id);
+            entity.Property(v => v.ValoracionUsuario)
+                .HasColumnName("Valoracion")
+                .IsRequired();
+
+            entity.Property(v => v.Comentario)
+                .HasMaxLength(500);
+
+            entity.HasOne(v => v.Usuario)
+                .WithMany()
+                .HasForeignKey(v => v.UsuarioId)
+                .OnDelete(DeleteBehavior.Cascade); 
+
+            entity.HasOne(v => v.Restaurante)
+                .WithMany()
+                .HasForeignKey(v => v.RestauranteId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(v => new { v.UsuarioId, v.RestauranteId })
+                .IsUnique();
+        });
 
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(GustosDbContext).Assembly);

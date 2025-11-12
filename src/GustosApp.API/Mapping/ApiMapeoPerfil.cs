@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 
 using GustosApp.API.DTO;
-using GustosApp.Application.DTO;
+
 using GustosApp.Domain.Model;
 
 namespace GustosApp.API.Mapping
@@ -43,6 +43,12 @@ namespace GustosApp.API.Mapping
                 .ForMember(dest => dest.CondicionesMedicas, opt => opt.MapFrom
                 (src => src.CondicionesMedicas.Select(c => c.Nombre).ToList()));
 
+            CreateMap<Valoracion, CrearValoracionResponse>()
+                .ForMember(dest => dest.UsuarioNombre, opt => opt.MapFrom(src => src.Usuario!.Nombre))
+                .ForMember(dest => dest.UsuarioApellido, opt => opt.MapFrom(src => src.Usuario!.Apellido))
+                .ForMember(dest => dest.RestauranteNombre, opt => opt.MapFrom(src => src.Restaurante!.NombreNormalizado))
+                .ForMember(dest => dest.RestauranteLatitud, opt => opt.MapFrom(src => src.Restaurante!.Latitud))
+                .ForMember(dest => dest.RestauranteLongitud, opt => opt.MapFrom(src => src.Restaurante!.Longitud));
 
             CreateMap<Notificacion, NotificacionDTO>()
            .ForMember(dest => dest.Tipo,
@@ -102,7 +108,7 @@ namespace GustosApp.API.Mapping
             CreateMap<ChatMensaje, ChatMensajeResponse>();
 
 
-            CreateMap<Restaurante, RestauranteDto>()
+            CreateMap<Restaurante, RestauranteDTO>()
             .ForMember(dest => dest.Latitud, opt => opt.MapFrom(src => src.Latitud))
             .ForMember(dest => dest.Longitud, opt => opt.MapFrom(src => src.Longitud))
             .ForMember(dest => dest.Score, opt => opt.MapFrom(src => src.Score))

@@ -1,11 +1,12 @@
 ﻿using GustosApp.API.DTO;
-using GustosApp.Application.Tests.mocks;
-using GustosApp.Application.UseCases;
+using GustosApp.Application.UseCases.NotificacionUseCases;
 using GustosApp.Domain.Model;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GustosApp.API.Controllers
 {
+    [ApiController]
+    [Route("api/[controller]")]
     public class NotificacionController : Controller
     {
         private readonly CrearNotificacionUseCase _crearNotificacion;

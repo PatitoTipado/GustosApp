@@ -12,5 +12,6 @@ namespace GustosApp.Domain.Interfaces
         Task<bool> AgregarGustosAlGrupo(Guid grupoId, List<Gusto> gustos,Guid idMiembro);
         Task<bool> EliminarGustosAlGrupo(Guid grupoId, List<Gusto> gustos,Guid miembroGrupoId);
         Task<List<string>> ObtenerGustosDelGrupo(Guid grupoId);
+        Task<List<Guid>> ObtenerGustosIdsDelGrupo(Guid grupoId);
     }
 }

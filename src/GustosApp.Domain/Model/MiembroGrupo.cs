@@ -14,8 +14,8 @@ namespace GustosApp.Domain.Model
         public DateTime FechaUnion { get; private set; } = DateTime.UtcNow;
         public bool Activo { get; private set; } = true;
         public bool EsAdministrador { get; private set; }
-        public bool afectarRecomendacion { get; set; } = true;
         public ICollection<GrupoGusto> GustosSeleccionados { get; set; } = new List<GrupoGusto>();
+        public bool afectarRecomendacion { get; set; } = true;
 
         // Navegación
         public Grupo Grupo { get; set; }

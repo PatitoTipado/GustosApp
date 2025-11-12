@@ -26,7 +26,9 @@ namespace GustosApp.Application.Tests
             var restauranteId = Guid.NewGuid();
             var titulo = "Buen restaurante";
             var img = "";
-            await useCase.HandleAsync(usuarioId, restauranteId, 5, "Excelente servicio",titulo,img, CancellationToken.None);
+            DateTime fechaVisita = new DateTime(2024, 6, 15);
+
+            await useCase.HandleAsync(usuarioId, restauranteId, 5, "Excelente servicio",titulo,img, fechaVisita, CancellationToken.None);
 
             repoMock.Verify(r => r.CrearAsync(It.Is<OpinionRestaurante>(
                 v => v.UsuarioId == usuarioId &&
@@ -46,18 +48,22 @@ namespace GustosApp.Application.Tests
 
             var useCase = new CrearOpinionRestaurante(repoMock.Object);
 
+            DateTime fechaVisita = new DateTime(2024, 6, 15);
+
             await Assert.ThrowsAsync<ArgumentException>(() =>
-            useCase.HandleAsync(Guid.NewGuid(), Guid.NewGuid(), 4, "Ya valoro","Buen restaurante","", CancellationToken.None));
+            useCase.HandleAsync(Guid.NewGuid(), Guid.NewGuid(), 4, "Ya valoro","Buen restaurante","", fechaVisita, CancellationToken.None));
         }
 
         [Fact]
         public async Task NoPermitirValoracionFueraDelRango()
         {
+            DateTime fechaVisita = new DateTime(2024, 6, 15);
+
             var repoMock = new Mock<IOpinionRestauranteRepository>();
             var useCase = new CrearOpinionRestaurante(repoMock.Object);
 
             await Assert.ThrowsAsync<ArgumentException>(() => 
-            useCase.HandleAsync(Guid.NewGuid(),Guid.NewGuid(),6,"Buen restaurante","img","Invalid",CancellationToken.None));
+            useCase.HandleAsync(Guid.NewGuid(),Guid.NewGuid(),6,"Buen restaurante","img","Invalid", fechaVisita, CancellationToken.None));
         }
     }
 }

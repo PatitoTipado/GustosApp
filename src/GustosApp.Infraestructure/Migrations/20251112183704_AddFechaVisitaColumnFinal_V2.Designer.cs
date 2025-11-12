@@ -4,6 +4,7 @@ using GustosApp.Infraestructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GustosApp.Infraestructure.Migrations
 {
     [DbContext(typeof(GustosDbContext))]
-    partial class GustosDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251112183704_AddFechaVisitaColumnFinal_V2")]
+    partial class AddFechaVisitaColumnFinal_V2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1593,8 +1596,8 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Property<string>("FechaTexto")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("FechaVisita")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("FechaVisita")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Img")
                         .HasColumnType("nvarchar(max)");

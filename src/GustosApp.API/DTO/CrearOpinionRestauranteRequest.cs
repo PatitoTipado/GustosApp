@@ -1,4 +1,6 @@
-﻿namespace GustosApp.API.DTO
+﻿using System.Text.Json.Serialization;
+
+namespace GustosApp.API.DTO
 {
     public class CrearOpinionRestauranteRequest
     {
@@ -8,5 +10,6 @@
         public string? Opinion { get; set; }
         public string? Titulo { get; set; }
         public string? Img { get; set; }
+        public DateTime FechaVisita { get; set; }
     }
 }

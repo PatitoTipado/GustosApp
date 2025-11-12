@@ -19,11 +19,15 @@ namespace GustosApp.Domain.Model
 
         public string? Titulo { get; set; }
 
-        public string? Img { get; set; } 
-
+        public string? Img { get; set; }
+        public DateTime FechaVisita { get; set; }
         public DateTime FechaCreacion { get; set; }
         public Usuario? Usuario { get; set; }
         public Restaurante? Restaurante { get; set; }
+
+        // Para mapear Reseñas de Google Places API
+        public string? Autor { get; set; }
+        public string? FechaTexto { get; set; }
 
         public OpinionRestaurante(Guid usuarioId, Guid restauranteId, int valoracion, string? opinion = null, string? titulo = null,string? img = null)
         {

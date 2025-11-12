@@ -36,6 +36,7 @@ namespace GustosApp.API.Controllers
                 request.Opinion,
                 request.Titulo,
                 request.Img,
+                request.FechaVisita,
                 ct
                 );
 

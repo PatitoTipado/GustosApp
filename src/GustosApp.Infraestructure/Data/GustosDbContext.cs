@@ -28,7 +28,7 @@ public class GustosDbContext : DbContext
     public DbSet<RestauranteEspecialidad> RestauranteEspecialidades { get; set; }
     public DbSet<Restaurante> Restaurantes { get; set; }
 
-    public DbSet<ReseñaRestaurante> ReseñasRestaurantes { get; set; }
+    //public DbSet<ReseñaRestaurante> ReseñasRestaurantes { get; set; }
 
     public DbSet<Tag> Tags { get; set; }
 
@@ -291,32 +291,7 @@ public class GustosDbContext : DbContext
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
-
-        /*modelBuilder.Entity<Valoracion>(entity =>
-        {
-            entity.ToTable("ValoracionUsuario"); 
-            entity.HasKey(v => v.Id);
-            entity.Property(v => v.ValoracionUsuario)
-                .HasColumnName("Valoracion")
-                .IsRequired();
-
-            entity.Property(v => v.Comentario)
-                .HasMaxLength(500);
-
-            entity.HasOne(v => v.Usuario)
-                .WithMany()
-                .HasForeignKey(v => v.UsuarioId)
-                .OnDelete(DeleteBehavior.Cascade); 
-
-            entity.HasOne(v => v.Restaurante)
-                .WithMany()
-                .HasForeignKey(v => v.RestauranteId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasIndex(v => new { v.UsuarioId, v.RestauranteId })
-                .IsUnique();
-        });*/
-        modelBuilder.Entity<OpinionRestaurante>(entity => // Cambiar Valoracion por OpinionRestaurante
+        modelBuilder.Entity<OpinionRestaurante>(entity => 
         {
             entity.ToTable("OpinionRestaurante"); 
             entity.HasKey(v => v.Id);
@@ -337,7 +312,7 @@ public class GustosDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne(v => v.Restaurante)
-                .WithMany()
+                .WithMany(r => r.Reviews)
                 .HasForeignKey(v => v.RestauranteId)
                 .OnDelete(DeleteBehavior.Cascade);
 

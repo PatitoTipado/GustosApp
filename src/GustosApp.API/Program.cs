@@ -21,8 +21,6 @@ using GustosApp.Infraestructure.Files;
 
 // Usar System.Text.Json para manejar el secreto de Firebase
 using System.Text.Json;
-
-using System.Text.Json;
 using GustosApp.Application.UseCases.GrupoUseCases;
 using GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases;
 using GustosApp.Application.UseCases.AmistadUseCases;
@@ -143,6 +141,7 @@ builder.Services.AddDbContext<GustosDbContext>(options =>
 //   Repositorios
 // =====================
 builder.Services.AddScoped<IFileStorageService, FirebaseStorageService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepositoryEF>();
 builder.Services.AddScoped<IRestriccionRepository, RestriccionRepositoryEF>();
 builder.Services.AddScoped<ICondicionMedicaRepository, CondicionMedicaRepositoryEF>();

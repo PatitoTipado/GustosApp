@@ -71,11 +71,11 @@ public class NotificacionesInteligentesService
                     FechaCreacion = DateTime.UtcNow
                 }).ToList();
 
-                // 1️⃣ Guardar todas las notificaciones en paralelo
+                //  Guardar todas las notificaciones en paralelo
                 var guardarTasks = notificaciones.Select(n => _notificaciones.crearAsync(n, ct));
                 await Task.WhenAll(guardarTasks);
 
-                // 2️⃣ Enviar SignalR y Email en paralelo
+                // Enviar SignalR y Email en paralelo
                 var envioTasks = notificaciones.Select(async n =>
                 {
                     // Notificación en tiempo real

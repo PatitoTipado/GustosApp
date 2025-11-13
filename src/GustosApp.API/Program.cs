@@ -21,7 +21,6 @@ using GustosApp.Infraestructure.Files;
 
 // Usar System.Text.Json para manejar el secreto de Firebase
 using System.Text.Json;
-
 using GustosApp.Application.UseCases.GrupoUseCases;
 using GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases;
 using GustosApp.Application.UseCases.AmistadUseCases;
@@ -32,6 +31,9 @@ using GustosApp.Application.UseCases.NotificacionUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
+using GustosApp.API.Background;
+using GustosApp.Application.Services;
+using GustosApp.Infraestructure.Services;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -94,6 +96,11 @@ builder.Services.AddSingleton<IEmbeddingService>(sp =>
 // Autorización explícita 
 builder.Services.AddAuthorization();
 
+
+// hosted service para notificaciones
+builder.Services.AddHostedService<NotificacionesBackgroundService>();
+
+
 // Almacenamiento de archivos local (wwwroot/uploads)
 builder.Services.AddSingleton<IAlmacenamientoArchivos>(sp =>
 {
@@ -133,6 +140,8 @@ builder.Services.AddDbContext<GustosDbContext>(options =>
 // =====================
 //   Repositorios
 // =====================
+builder.Services.AddScoped<IFileStorageService, FirebaseStorageService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepositoryEF>();
 builder.Services.AddScoped<IRestriccionRepository, RestriccionRepositoryEF>();
 builder.Services.AddScoped<ICondicionMedicaRepository, CondicionMedicaRepositoryEF>();
@@ -208,6 +217,7 @@ builder.Services.AddScoped<VerificarSiMiembroEstaEnGrupoUseCase>();
 builder.Services.AddScoped<ObtenerRestaurantesAleatoriosGrupoUseCase>();
 
 builder.Services.AddScoped<CrearOpinionRestaurante>();
+builder.Services.AddScoped<NotificacionesInteligentesService>();
 
 // Para notificaciones en tiempo real
 builder.Services.AddSignalR();

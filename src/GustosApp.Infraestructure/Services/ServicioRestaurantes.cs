@@ -1,6 +1,6 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using GustosApp.Application.DTOs.Restaurantes;
-using GustosApp.Application.Services;
+using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 using GustosApp.Infraestructure.Extrerno.GooglePlacesModel;

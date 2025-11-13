@@ -18,7 +18,7 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases
             _usuarioRepo = usuarioRepo;
         }
 
-        public async Task<UsuarioPreferencias> HandleAsync(string firebaseUid, CancellationToken ct = default, List<string> gustos = null)
+        public virtual async Task<UsuarioPreferencias> HandleAsync(string firebaseUid, CancellationToken ct = default, List<string> gustos = null)
         {
 
             var usuario = await _usuarioRepo.GetByFirebaseUidAsync(firebaseUid, ct)

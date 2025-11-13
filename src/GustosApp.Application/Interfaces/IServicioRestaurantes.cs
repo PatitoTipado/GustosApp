@@ -5,7 +5,7 @@ using GustosApp.Application.DTO;
 using GustosApp.Application.DTOs.Restaurantes;
 using GustosApp.Domain.Model;
 
-namespace GustosApp.Application.Services
+namespace GustosApp.Application.Interfaces
 {
     public interface IServicioRestaurantes
     {

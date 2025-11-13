@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Storage.V1;
-using GustosApp.Application.Services;
+using GustosApp.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 
 namespace GustosApp.Infraestructure.Services

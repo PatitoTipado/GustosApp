@@ -13,7 +13,7 @@ public class NotificacionesInteligentesService
     private readonly INotificacionRepository _notificaciones;
     private readonly INotificacionRealtimeService _realtime;
     private readonly SugerirGustosUseCase _sugerirGustos;
-
+    private readonly IEmailService _emailService;
     private readonly ObtenerGustosUseCase _obtenerGustos;
     private readonly ILogger<NotificacionesInteligentesService> _logger;
 
@@ -24,6 +24,7 @@ public class NotificacionesInteligentesService
         INotificacionRealtimeService realtime,
         ObtenerGustosUseCase obtenerGustos,
         SugerirGustosUseCase sugerirGustos,
+        IEmailService emailService,
         ILogger<NotificacionesInteligentesService> logger)
     {
         _usuarios = usuarios;
@@ -32,6 +33,7 @@ public class NotificacionesInteligentesService
         _realtime = realtime;
         _sugerirGustos = sugerirGustos;
         _obtenerGustos = obtenerGustos;
+        _emailService = emailService;
         _logger = logger;
     }
 
@@ -69,13 +71,35 @@ public class NotificacionesInteligentesService
                     FechaCreacion = DateTime.UtcNow
                 }).ToList();
 
-                // Guardar todas las notificaciones
-                await Task.WhenAll(notificaciones.Select(n => _notificaciones.crearAsync(n, ct)));
+                // 1️⃣ Guardar todas las notificaciones en paralelo
+                var guardarTasks = notificaciones.Select(n => _notificaciones.crearAsync(n, ct));
+                await Task.WhenAll(guardarTasks);
 
-                // Enviar todas en paralelo
-                var envioTasks = notificaciones.Select(n =>
-                    _realtime.EnviarNotificacionAsync(usuario.FirebaseUid, n.Titulo, n.Mensaje, "Recomendacion", ct)
-                );
+                // 2️⃣ Enviar SignalR y Email en paralelo
+                var envioTasks = notificaciones.Select(async n =>
+                {
+                    // Notificación en tiempo real
+                    await _realtime.EnviarNotificacionAsync(
+                        usuario.FirebaseUid,
+                        n.Titulo,
+                        n.Mensaje,
+                        "Recomendacion",
+                        ct);
+
+                    // Email HTML
+                    var cuerpoHtml = $@"
+                    <h2>🍽️ Recomendación para vos</h2>
+                    <p>Hola {usuario.Nombre},</p>
+                    <p>{n.Mensaje}</p>
+                    <p><a href='https://gustosapp.com/restaurantes'>Ver más restaurantes recomendados</a></p>
+                    <hr/>
+                    <small>Este mensaje fue generado automáticamente por GustosApp</small>
+                ";
+
+                    // Se lanza en paralelo para no bloquear
+                    _ = Task.Run(() => _emailService.EnviarEmailAsync(usuario.Email, n.Titulo, cuerpoHtml, ct));
+                });
+
                 await Task.WhenAll(envioTasks);
 
                 totalNotificaciones += notificaciones.Count;
@@ -90,7 +114,6 @@ public class NotificacionesInteligentesService
 
         _logger.LogInformation("Finalizó la generación de recomendaciones. Total enviadas: {total}", totalNotificaciones);
     }
-
 
     /*  //  2. Re-engagement (usuarios inactivos)
       public async Task GenerarReengagementAsync(CancellationToken ct = default)

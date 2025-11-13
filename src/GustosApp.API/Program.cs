@@ -34,6 +34,8 @@ using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
 using GustosApp.API.Background;
+using GustosApp.Application.Services;
+using GustosApp.Infraestructure.Services;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -140,6 +142,7 @@ builder.Services.AddDbContext<GustosDbContext>(options =>
 // =====================
 //   Repositorios
 // =====================
+builder.Services.AddScoped<IFileStorageService, FirebaseStorageService>();
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepositoryEF>();
 builder.Services.AddScoped<IRestriccionRepository, RestriccionRepositoryEF>();
 builder.Services.AddScoped<ICondicionMedicaRepository, CondicionMedicaRepositoryEF>();

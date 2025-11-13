@@ -60,7 +60,7 @@ public class NotificacionesInteligentesService
                 if (recomendaciones == null || !recomendaciones.Any())
                     continue;
 
-                var notificaciones = recomendaciones.Take(2).Select(rest => new Notificacion
+                var notificaciones = recomendaciones.Take(1).Select(rest => new Notificacion
                 {
                     UsuarioDestinoId = usuario.Id,
                     Titulo = "Recomendación personalizada 🍽️",
@@ -92,7 +92,7 @@ public class NotificacionesInteligentesService
     }
 
 
-    /*  // 🔹 2. Re-engagement (usuarios inactivos)
+    /*  //  2. Re-engagement (usuarios inactivos)
       public async Task GenerarReengagementAsync(CancellationToken ct = default)
       {
           var usuarios = await _usuarios.ObtenerInactivosAsync(diasSinActividad: 5, ct);
@@ -113,7 +113,7 @@ public class NotificacionesInteligentesService
           }
       }
 
-      // 🔹 3. Actividad social
+      //  3. Actividad social
       public async Task GenerarActividadSocialAsync(EventoSocial evento, CancellationToken ct = default)
       {
           foreach (var usuario in evento.Destinatarios)

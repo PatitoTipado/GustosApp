@@ -149,13 +149,12 @@ builder.Services.AddScoped<IGustoRepository, GustoRepositoryEF>();
 builder.Services.AddScoped<IGrupoRepository, GrupoRepositoryEF>();
 builder.Services.AddScoped<IMiembroGrupoRepository, MiembroGrupoRepositoryEF>();
 builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepositoryEF>();
-builder.Services.AddScoped<IReseñaRepository, ReseñaRepositoryEF>();
 builder.Services.AddScoped<IGustosGrupoRepository, GustosGrupoRepositoryEF>();
 builder.Services.AddScoped<INotificacionRepository, NotificacionRepositoryEF>();
 builder.Services.AddScoped<INotificacionRealtimeService, SignalRNotificacionRealtimeService>();
 builder.Services.AddScoped<ISolicitudAmistadRealtimeService, SignalRSolicitudAmistadRealtimeService>();
 
-builder.Services.AddScoped<IValoracionUsuarioRepository, ValoracionUsuarioRepositoryEF>();
+builder.Services.AddScoped<IOpinionRestauranteRepository, OpinionRestauranteRepositoryEF>();
 builder.Services.AddScoped<ActualizarValoracionRestauranteUseCase>();
 
 
@@ -217,7 +216,7 @@ builder.Services.AddScoped<ConfirmarAmistadEntreUsuarios>();
 builder.Services.AddScoped<VerificarSiMiembroEstaEnGrupoUseCase>();
 builder.Services.AddScoped<ObtenerRestaurantesAleatoriosGrupoUseCase>();
 
-builder.Services.AddScoped<CrearValoracionUsuarioUseCase>();
+builder.Services.AddScoped<CrearOpinionRestaurante>();
 
 // Para notificaciones en tiempo real
 builder.Services.AddSignalR();

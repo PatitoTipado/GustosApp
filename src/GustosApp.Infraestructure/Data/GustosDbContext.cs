@@ -28,7 +28,7 @@ public class GustosDbContext : DbContext
     public DbSet<RestauranteEspecialidad> RestauranteEspecialidades { get; set; }
     public DbSet<Restaurante> Restaurantes { get; set; }
 
-    public DbSet<ReseñaRestaurante> ReseñasRestaurantes { get; set; }
+    //public DbSet<ReseñaRestaurante> ReseñasRestaurantes { get; set; }
 
     public DbSet<Tag> Tags { get; set; }
 
@@ -43,7 +43,10 @@ public class GustosDbContext : DbContext
 
     public DbSet<UsuarioRestauranteVisitado> UsuarioRestauranteVisitados { get; set; }
 
-    public DbSet<Valoracion> Valoraciones { get; set; }
+    //public DbSet<Valoracion> Valoraciones { get; set; }
+
+    public DbSet<OpinionRestaurante> OpinionesRestaurante { get; set; }
+
     public GustosDbContext(DbContextOptions<GustosDbContext> options)
     : base(options) { }
 
@@ -288,31 +291,34 @@ public class GustosDbContext : DbContext
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
-        modelBuilder.Entity<Valoracion>(entity =>
+        modelBuilder.Entity<OpinionRestaurante>(entity => 
         {
-            entity.ToTable("ValoracionUsuario"); 
+            entity.ToTable("OpinionRestaurante"); 
             entity.HasKey(v => v.Id);
-            entity.Property(v => v.ValoracionUsuario)
+            entity.Property(v => v.Valoracion) 
                 .HasColumnName("Valoracion")
                 .IsRequired();
 
-            entity.Property(v => v.Comentario)
-                .HasMaxLength(500);
+            entity.Property(v => v.Opinion) 
+                .HasMaxLength(500); 
 
+            entity.Property(v => v.Titulo) 
+                .HasMaxLength(255); 
+
+            entity.Property(v => v.Img); 
             entity.HasOne(v => v.Usuario)
                 .WithMany()
                 .HasForeignKey(v => v.UsuarioId)
-                .OnDelete(DeleteBehavior.Cascade); 
+                .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne(v => v.Restaurante)
-                .WithMany()
+                .WithMany(r => r.Reviews)
                 .HasForeignKey(v => v.RestauranteId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(v => new { v.UsuarioId, v.RestauranteId })
                 .IsUnique();
         });
-
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(GustosDbContext).Assembly);
 

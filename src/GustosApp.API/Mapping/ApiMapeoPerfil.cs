@@ -43,7 +43,7 @@ namespace GustosApp.API.Mapping
                 .ForMember(dest => dest.CondicionesMedicas, opt => opt.MapFrom
                 (src => src.CondicionesMedicas.Select(c => c.Nombre).ToList()));
 
-            CreateMap<Valoracion, CrearValoracionResponse>()
+            CreateMap<OpinionRestaurante, CrearOpinionRestauranteResponse>()
                 .ForMember(dest => dest.UsuarioNombre, opt => opt.MapFrom(src => src.Usuario!.Nombre))
                 .ForMember(dest => dest.UsuarioApellido, opt => opt.MapFrom(src => src.Usuario!.Apellido))
                 .ForMember(dest => dest.RestauranteNombre, opt => opt.MapFrom(src => src.Restaurante!.NombreNormalizado))

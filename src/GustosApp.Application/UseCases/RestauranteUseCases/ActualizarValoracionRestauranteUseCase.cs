@@ -11,17 +11,17 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
     public class ActualizarValoracionRestauranteUseCase
     {
         private readonly IRestauranteRepository _restauranteRepository;
-        private readonly IValoracionUsuarioRepository _valoracionUsuarioRepository;
+        private readonly IOpinionRestauranteRepository _opinionRestauranteRepository;
 
-        public ActualizarValoracionRestauranteUseCase(IRestauranteRepository restauranteRepository, IValoracionUsuarioRepository valoracionUsuarioRepository)
+        public ActualizarValoracionRestauranteUseCase(IRestauranteRepository restauranteRepository, IOpinionRestauranteRepository opinionRestauranteRepository)
         {
             _restauranteRepository = restauranteRepository;
-            _valoracionUsuarioRepository = valoracionUsuarioRepository;
+            _opinionRestauranteRepository = opinionRestauranteRepository;
         }
 
         public async Task HandleAsync(Guid restauranteId, CancellationToken cancellationToken)
         {
-            var valoraciones = await _valoracionUsuarioRepository.ObtenerPorRestauranteAsync(restauranteId, cancellationToken);
+            var valoraciones = await _opinionRestauranteRepository.ObtenerPorRestauranteAsync(restauranteId, cancellationToken);
 
             if (!valoraciones.Any())
             {
@@ -29,7 +29,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
                 return;
             }
 
-            double promedio = valoraciones.Average(v => (double)v.ValoracionUsuario);
+            double promedio = valoraciones.Average(v => (double)v.Valoracion);
             await _restauranteRepository.ActualizarValoracionAsync(restauranteId, promedio, cancellationToken);
 
         }

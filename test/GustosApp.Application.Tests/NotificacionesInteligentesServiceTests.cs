@@ -21,7 +21,8 @@ using GustosApp.Application.Tests.mocks;
             var mockUsuarios = new Mock<IUsuarioRepository>();
             var mockRestaurantes = new Mock<IRestauranteRepository>();
             var mockNotificaciones = new Mock<INotificacionRepository>();
-            var mockRealtime = new Mock<INotificacionRealtimeService>();
+            var mockEmailService = new Mock<IEmailService>();
+        var mockRealtime = new Mock<INotificacionRealtimeService>();
             var logger = new Mock<ILogger<NotificacionesInteligentesService>>();
 
             var usuario = new Usuario
@@ -44,6 +45,7 @@ using GustosApp.Application.Tests.mocks;
                 mockRealtime.Object,
                 obtenerGustosFake,
                 sugerirGustosFake,
+                mockEmailService.Object,
                 logger.Object
             );
 
@@ -70,7 +72,8 @@ using GustosApp.Application.Tests.mocks;
             var mockUsuarios = new Mock<IUsuarioRepository>();
             var mockRestaurantes = new Mock<IRestauranteRepository>();
             var mockNotificaciones = new Mock<INotificacionRepository>();
-            var mockRealtime = new Mock<INotificacionRealtimeService>();
+            var mockEmailService = new Mock<IEmailService>();
+        var mockRealtime = new Mock<INotificacionRealtimeService>();
             var logger = new Mock<ILogger<NotificacionesInteligentesService>>();
 
             var usuario = new Usuario
@@ -93,6 +96,7 @@ using GustosApp.Application.Tests.mocks;
                 mockRealtime.Object,
                 obtenerGustosFake,
                 sugerirGustosFake,
+                mockEmailService.Object,
                 logger.Object
             );
 
@@ -112,7 +116,8 @@ using GustosApp.Application.Tests.mocks;
             var mockUsuarios = new Mock<IUsuarioRepository>();
             var mockRestaurantes = new Mock<IRestauranteRepository>();
             var mockNotificaciones = new Mock<INotificacionRepository>();
-            var mockRealtime = new Mock<INotificacionRealtimeService>();
+            var mockEmailService = new Mock<IEmailService>();
+        var mockRealtime = new Mock<INotificacionRealtimeService>();
             var logger = new Mock<ILogger<NotificacionesInteligentesService>>();
 
             var usuario1 = new Usuario { Id = Guid.NewGuid(), FirebaseUid = "abc123", Gustos = new List<Gusto> { new Gusto { Nombre = "Pizza" } } };
@@ -132,6 +137,7 @@ using GustosApp.Application.Tests.mocks;
                 mockRealtime.Object,
                 obtenerGustosThrowFake,
                 sugerirGustosFake,
+                mockEmailService.Object,
                 logger.Object
             );
 

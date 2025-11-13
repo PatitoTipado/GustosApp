@@ -1,7 +1,7 @@
 using AutoMapper;
 using GustosApp.API.DTO;
 using GustosApp.Application.DTO;
-using GustosApp.Application.Services;
+using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases;
 using GustosApp.Application.UseCases.GrupoUseCases;
 using GustosApp.Application.UseCases.GrupoUseCases.ChatGrupoUseCases;

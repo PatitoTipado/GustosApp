@@ -217,6 +217,7 @@ builder.Services.AddScoped<VerificarSiMiembroEstaEnGrupoUseCase>();
 builder.Services.AddScoped<ObtenerRestaurantesAleatoriosGrupoUseCase>();
 
 builder.Services.AddScoped<CrearOpinionRestaurante>();
+builder.Services.AddScoped<NotificacionesInteligentesService>();
 
 // Para notificaciones en tiempo real
 builder.Services.AddSignalR();

@@ -107,6 +107,6 @@ namespace GustosApp.Domain.Model
 
 
         public ICollection<UsuarioRestauranteVisitado> Visitados { get; set; } = new List<UsuarioRestauranteVisitado>();
-
+        //public object Reviews { get; set; }
     }
 }

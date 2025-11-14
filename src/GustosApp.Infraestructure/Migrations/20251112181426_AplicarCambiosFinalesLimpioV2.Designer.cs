@@ -4,6 +4,7 @@ using GustosApp.Infraestructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GustosApp.Infraestructure.Migrations
 {
     [DbContext(typeof(GustosDbContext))]
-    partial class GustosDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251112181426_AplicarCambiosFinalesLimpioV2")]
+    partial class AplicarCambiosFinalesLimpioV2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1081,16 +1084,11 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Property<Guid>("GustoId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("MiembroId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("Id");
 
                     b.HasIndex("GrupoId");
 
                     b.HasIndex("GustoId");
-
-                    b.HasIndex("MiembroId");
 
                     b.ToTable("GrupoGustos");
                 });
@@ -1531,9 +1529,6 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Property<Guid>("UsuarioId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<bool>("afectarRecomendacion")
-                        .HasColumnType("bit");
-
                     b.HasKey("Id");
 
                     b.HasIndex("UsuarioId");
@@ -1601,8 +1596,8 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Property<string>("FechaTexto")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("FechaVisita")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("FechaVisita")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Img")
                         .HasColumnType("nvarchar(max)");
@@ -2413,17 +2408,9 @@ namespace GustosApp.Infraestructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("GustosApp.Domain.Model.MiembroGrupo", "Miembro")
-                        .WithMany("GustosSeleccionados")
-                        .HasForeignKey("MiembroId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("Grupo");
 
                     b.Navigation("Gusto");
-
-                    b.Navigation("Miembro");
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.InvitacionGrupo", b =>
@@ -2652,11 +2639,6 @@ namespace GustosApp.Infraestructure.Migrations
             modelBuilder.Entity("GustosApp.Domain.Model.InvitacionGrupo", b =>
                 {
                     b.Navigation("Notificacion");
-                });
-
-            modelBuilder.Entity("GustosApp.Domain.Model.MiembroGrupo", b =>
-                {
-                    b.Navigation("GustosSeleccionados");
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.Restaurante", b =>

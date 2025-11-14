@@ -1,6 +1,7 @@
 using AutoMapper;
 using GustosApp.API.DTO;
 using GustosApp.Application.DTO;
+using GustosApp.Application.Interfaces;
 using GustosApp.Application.Handlers;
 using GustosApp.Application.Services;
 using GustosApp.Application.UseCases;
@@ -336,7 +337,7 @@ namespace GustosApp.API.Controllers
             var response = new
             {
                 Success = ok,
-                Mensaje = "Miembro Desactivado Correctamente"
+                Mensaje = "Miembro activado Correctamente"
             };
 
             return Ok(response);

@@ -34,6 +34,9 @@ using GustosApp.Application.UseCases.NotificacionUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
+using GustosApp.API.Background;
+using GustosApp.Application.Services;
+using GustosApp.Infraestructure.Services;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -96,6 +99,11 @@ builder.Services.AddSingleton<IEmbeddingService>(sp =>
 // Autorización explícita 
 builder.Services.AddAuthorization();
 
+
+// hosted service para notificaciones
+builder.Services.AddHostedService<NotificacionesBackgroundService>();
+
+
 // Almacenamiento de archivos local (wwwroot/uploads)
 builder.Services.AddSingleton<IAlmacenamientoArchivos>(sp =>
 {
@@ -135,6 +143,8 @@ builder.Services.AddDbContext<GustosDbContext>(options =>
 // =====================
 //   Repositorios
 // =====================
+builder.Services.AddScoped<IFileStorageService, FirebaseStorageService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepositoryEF>();
 builder.Services.AddScoped<IRestriccionRepository, RestriccionRepositoryEF>();
 builder.Services.AddScoped<ICondicionMedicaRepository, CondicionMedicaRepositoryEF>();
@@ -142,13 +152,12 @@ builder.Services.AddScoped<IGustoRepository, GustoRepositoryEF>();
 builder.Services.AddScoped<IGrupoRepository, GrupoRepositoryEF>();
 builder.Services.AddScoped<IMiembroGrupoRepository, MiembroGrupoRepositoryEF>();
 builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepositoryEF>();
-builder.Services.AddScoped<IReseñaRepository, ReseñaRepositoryEF>();
 builder.Services.AddScoped<IGustosGrupoRepository, GustosGrupoRepositoryEF>();
 builder.Services.AddScoped<INotificacionRepository, NotificacionRepositoryEF>();
 builder.Services.AddScoped<INotificacionRealtimeService, SignalRNotificacionRealtimeService>();
 builder.Services.AddScoped<ISolicitudAmistadRealtimeService, SignalRSolicitudAmistadRealtimeService>();
 
-builder.Services.AddScoped<IValoracionUsuarioRepository, ValoracionUsuarioRepositoryEF>();
+builder.Services.AddScoped<IOpinionRestauranteRepository, OpinionRestauranteRepositoryEF>();
 builder.Services.AddScoped<ActualizarValoracionRestauranteUseCase>();
 
 
@@ -214,6 +223,9 @@ builder.Services.AddScoped<VerificarSiMiembroEstaEnGrupoUseCase>();
 builder.Services.AddScoped<ObtenerRestaurantesAleatoriosGrupoUseCase>();
 builder.Services.AddScoped<ActivarMiembroDeGrupoUseCase>();
 builder.Services.AddScoped<CrearValoracionUsuarioUseCase>();
+
+builder.Services.AddScoped<CrearOpinionRestaurante>();
+builder.Services.AddScoped<NotificacionesInteligentesService>();
 
 // Para notificaciones en tiempo real
 builder.Services.AddSignalR();

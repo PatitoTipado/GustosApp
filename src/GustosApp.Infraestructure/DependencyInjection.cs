@@ -1,4 +1,4 @@
-using GustosApp.Application.Services;
+using GustosApp.Application.Interfaces;
 using GustosApp.Infraestructure.Services;
 using GustosApp.Domain.Interfaces;
 using Microsoft.Extensions.DependencyInjection;

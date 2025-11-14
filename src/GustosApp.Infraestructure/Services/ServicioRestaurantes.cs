@@ -1,6 +1,6 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using GustosApp.Application.DTOs.Restaurantes;
-using GustosApp.Application.Services;
+using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 using GustosApp.Infraestructure.Extrerno.GooglePlacesModel;
@@ -373,7 +373,8 @@ namespace GustosApp.Infraestructure.Services
                     Categoria = details.PrimaryType ?? "restaurant",
                     UltimaActualizacion = DateTime.UtcNow,
                     ImagenUrl = GetPhotoUrl(details.Photos?.FirstOrDefault()?.Name, apiKey),
-                    Reviews = new List<ReseñaRestaurante>()
+                    // Reviews = new List<ReseñaRestaurante>()
+                    Reviews = new List<OpinionRestaurante>() 
                 };
 
                 await _repo.AddAsync(existente, ct);
@@ -396,7 +397,7 @@ namespace GustosApp.Infraestructure.Services
             // Procesar reseñas (si hay)
             if (details.Reviews is { Count: > 0 })
             {
-                var reseñas = details.Reviews.Select(r => new ReseñaRestaurante
+                /*var reseñas = details.Reviews.Select(r => new ReseñaRestaurante
                 {
                     Id = Guid.NewGuid(),
                     RestauranteId = existente.Id,
@@ -405,15 +406,31 @@ namespace GustosApp.Infraestructure.Services
                     Rating = r.Rating,
                     Fecha = r.RelativePublishTimeDescription ?? "",
                     Foto = r.AuthorAttribution?.PhotoUri
+                }).ToList();*/
+
+                var reseñas = details.Reviews.Select(r => new OpinionRestaurante(
+                    usuarioId: Guid.Empty, 
+                    restauranteId: existente.Id,
+                    valoracion: (int)(r.Rating == 0.0 ? 1 : r.Rating),
+                    titulo: r.AuthorAttribution?.DisplayName ?? "Reseña Google",
+                    img: r.AuthorAttribution?.PhotoUri 
+                )
+                {
+                 FechaCreacion = DateTime.UtcNow,
+                 Autor = r.AuthorAttribution?.DisplayName ?? "Anónimo",
+                 FechaTexto = r.RelativePublishTimeDescription
                 }).ToList();
 
                 // Evitar duplicar reseñas
-                var idsExistentes = existente.Reviews?.Select(x => x.Texto)?.ToHashSet() ?? new HashSet<string>();
-                var nuevas = reseñas.Where(r => !idsExistentes.Contains(r.Texto)).ToList();
+                //var idsExistentes = existente.Reviews?.Select(x => x.Texto)?.ToHashSet() ?? new HashSet<string>();
+                //var nuevas = reseñas.Where(r => !idsExistentes.Contains(r.Texto)).ToList();
+                var idsExistentes = existente.Reviews?.Select(x => x.Opinion)?.ToHashSet() ?? new HashSet<string>();
+                var nuevas = reseñas.Where(r => !idsExistentes.Contains(r.Opinion)).ToList();
 
                 if (nuevas.Any())
                 {
-                    await _db.ReseñasRestaurantes.AddRangeAsync(nuevas, ct);
+                    // await _db.ReseñasRestaurantes.AddRangeAsync(nuevas, ct);
+                    await _db.OpinionesRestaurante.AddRangeAsync(nuevas, ct);
                     await _db.SaveChangesAsync(ct);
                     existente.Reviews = nuevas;
                 }

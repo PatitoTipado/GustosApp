@@ -4,6 +4,7 @@
 		<TargetFramework>net8.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<UserSecretsId>d3d147a9-431a-41e7-9f79-92b39478dccf</UserSecretsId>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -39,8 +40,11 @@
 		<ProjectReference Include="..\GustosApp.Infraestructure\GustosApp.Infraestructure.csproj" />
 	</ItemGroup>
 
+
 	<ItemGroup>
-	  <Folder Include="NewFolder\" />
+		<None Update="secrets\firebase-key.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -48,6 +52,10 @@
     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </Content>
 </ItemGroup>
+
+	<ItemGroup>
+	  <Compile Include="..\GustosApp.Domain\Model\ReseñaRestaurante.cs" Link="ReseñaRestaurante.cs" />
+	</ItemGroup>
 
 
 </Project>

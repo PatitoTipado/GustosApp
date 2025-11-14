@@ -11,6 +11,7 @@ namespace GustosApp.Domain.Model
         SolicitudAmistad = 0,
         InvitacionGrupo = 1,
         RecordatorioEvento = 2,
-        MensajeNuevo = 3
+        MensajeNuevo = 3,
+        Recomendacion=4 
     }
 }

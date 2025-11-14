@@ -17,15 +17,15 @@ namespace GustosApp.Application.Tests
         [Fact]
         public async Task PromedioDeValoraciones()
         {
-            var repoValoracion = new Mock<IValoracionUsuarioRepository>();
+            var repoValoracion = new Mock<IOpinionRestauranteRepository>();
             var repoRestaurante = new Mock<IRestauranteRepository>();
 
             var restauranteId = Guid.NewGuid();
-            var valoraciones = new List<Valoracion>
+            var valoraciones = new List<OpinionRestaurante>
             {
-                new Valoracion(Guid.NewGuid(), restauranteId, 3),
-                new Valoracion(Guid.NewGuid(), restauranteId, 4),
-                new Valoracion(Guid.NewGuid(), restauranteId, 5)
+                new OpinionRestaurante(Guid.NewGuid(), restauranteId, 3),
+                new OpinionRestaurante(Guid.NewGuid(), restauranteId, 4),
+                new OpinionRestaurante(Guid.NewGuid(), restauranteId, 5)
             };
 
             repoValoracion.Setup(r => r.ObtenerPorRestauranteAsync(restauranteId, It.IsAny<CancellationToken>()))

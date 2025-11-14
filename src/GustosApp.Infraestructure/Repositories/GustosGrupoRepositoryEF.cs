@@ -75,7 +75,7 @@ namespace GustosApp.Infraestructure.Repositories
                     mg => mg.GrupoId,
                     (gg, mg) => new { gg, mg }
                 )
-                .Where(x => x.mg.afectarRecomendacion) // solo miembros activos
+                .Where(x => x.mg.afectarRecomendacion) 
                 .Join(
                     _context.Gustos,
                     x => x.gg.GustoId,

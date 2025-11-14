@@ -9,15 +9,23 @@ namespace GustosApp.Application.Handlers
         private readonly ActualizarGustosAGrupoUseCase _actualizarGustosGrupoUseCase;
         private readonly EliminarGustosGrupoUseCase _eliminarGustosGrupoUseCase;
         private readonly DesactivarMiembroDeGrupoUseCase _desacivarMiembroDeGrupoUseCase;
+        private readonly ActivarMiembroDeGrupoUseCase _activarMiembroDelGrupoUseCase;
 
         public ServicioPreferenciasGrupos(
             ActualizarGustosAGrupoUseCase actualizarGustosGrupoUseCase,
             EliminarGustosGrupoUseCase eliminarGustosGrupoUseCase,
-            DesactivarMiembroDeGrupoUseCase desacivarMiembroDeGrupoUseCase)
+            DesactivarMiembroDeGrupoUseCase desacivarMiembroDeGrupoUseCase,
+            ActivarMiembroDeGrupoUseCase activarMiembroDeGrupoUseCase)
         {
             _actualizarGustosGrupoUseCase = actualizarGustosGrupoUseCase;
             _eliminarGustosGrupoUseCase = eliminarGustosGrupoUseCase;
             _desacivarMiembroDeGrupoUseCase = desacivarMiembroDeGrupoUseCase;
+            _activarMiembroDelGrupoUseCase = activarMiembroDeGrupoUseCase;
+        }
+
+        public Task<bool> ActivarMiembro(Guid grupoId, Guid usuarioId, string firebaseUid)
+        {
+            return _activarMiembroDelGrupoUseCase.Handle(grupoId, usuarioId, firebaseUid);
         }
 
         public Task<bool> ActualizarGustosDeGrupo(List<string> gustosDeUsuario, Guid grupoId, string firebaseUid)

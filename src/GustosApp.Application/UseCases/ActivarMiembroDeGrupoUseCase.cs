@@ -1,20 +1,19 @@
 ﻿using GustosApp.Domain.Interfaces;
-using GustosApp.Domain.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace GustosApp.Application.UseCases
 {
-    public class DesactivarMiembroDeGrupoUseCase
+    public class ActivarMiembroDeGrupoUseCase
     {
+
         private IGrupoRepository _grupoRepository;
         private IUsuarioRepository _usuarioRepository;
         private IMiembroGrupoRepository _miembroGrupoRepository;
-        public DesactivarMiembroDeGrupoUseCase(
+        public ActivarMiembroDeGrupoUseCase(
             IGrupoRepository grupo,
             IUsuarioRepository usuarioRepository,
             IMiembroGrupoRepository miembroGrupoRepository)
@@ -26,10 +25,9 @@ namespace GustosApp.Application.UseCases
 
         public async Task<bool> Handle(Guid grupoId, Guid usuarioId, string firebaseUid)
         {
-
             var usuarioSolicitante = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid);
             var usuarioObtenido = await _usuarioRepository.GetByIdAsync(usuarioId);
-            if (usuarioSolicitante== null || usuarioObtenido == null)
+            if (usuarioSolicitante == null || usuarioObtenido == null)
             {
                 throw new UnauthorizedAccessException("no existe el usuario");
             }
@@ -38,11 +36,11 @@ namespace GustosApp.Application.UseCases
 
             var esMiembro = await _grupoRepository.UsuarioEsMiembroAsync(grupoId, firebaseUid);
 
-            if (!esAdmin ||(!(usuarioObtenido.Id.Equals(usuarioId)) && esMiembro))
+            if (!esAdmin || (!(usuarioObtenido.Id.Equals(usuarioId)) && esMiembro))
                 throw new UnauthorizedAccessException("No tienes permisos para desactivar al usuario");
 
             //cambiar el estado del usuario en el grupo
-            return await _miembroGrupoRepository.DesactivarMiembroDeGrupo(grupoId, usuarioObtenido.Id);
+            return await _miembroGrupoRepository.ActivarMiembro(grupoId, usuarioObtenido.Id);
         }
     }
 }

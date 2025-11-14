@@ -307,6 +307,43 @@ namespace GustosApp.API.Controllers
         }
 
         [Authorize]
+        [HttpPut("desactivarMiembro")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> DesactivarMiembro(Guid grupoId,Guid UsuarioId)
+        {
+            var firebaseUid = GetFirebaseUid();
+            var ok = await _servicioPreferenciasGrupos.DesactivarMiembroDeGrupo(grupoId, UsuarioId, firebaseUid);
+
+            var response = new 
+            {
+                Success = ok,
+                Mensaje = "Miembro Desactivado Correctamente"
+            };
+
+            return Ok(response);
+        }
+
+        [Authorize]
+        [HttpPut("activarMiembro")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> ActivarMiembro(Guid grupoId, Guid UsuarioId)
+        {
+            var firebaseUid = GetFirebaseUid();
+            var ok = await _servicioPreferenciasGrupos.ActivarMiembro(grupoId, UsuarioId, firebaseUid);
+
+            var response = new
+            {
+                Success = ok,
+                Mensaje = "Miembro Desactivado Correctamente"
+            };
+
+            return Ok(response);
+        }
+
+
+        [Authorize]
         [HttpGet("restaurantes/{grupoId}")]
         [ProducesResponseType(typeof(IEnumerable<RestauranteDTO>), StatusCodes.Status200OK)]
         public async Task<IActionResult> RecomendarRestauranteGrupo(Guid grupoId,

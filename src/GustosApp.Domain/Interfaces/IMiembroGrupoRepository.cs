@@ -14,5 +14,7 @@ namespace GustosApp.Domain.Interfaces
         Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default);
         Task<bool> UsuarioEsMiembroActivoAsync(Guid grupoId, Guid usuarioId, CancellationToken cancellationToken = default);
         Task<int> ContarMiembrosActivosAsync(Guid grupoId, CancellationToken cancellationToken = default);
+        Task<bool> DesactivarMiembroDeGrupo(Guid idGrupo, Guid idUsuario);
+        Task<bool> ActivarMiembro(Guid idGrupo, Guid idUsuario);
     }
 }

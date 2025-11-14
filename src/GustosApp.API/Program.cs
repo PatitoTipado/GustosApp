@@ -212,7 +212,7 @@ builder.Services.AddScoped<BuscarUsuariosUseCase>();
 builder.Services.AddScoped<ConfirmarAmistadEntreUsuarios>();
 builder.Services.AddScoped<VerificarSiMiembroEstaEnGrupoUseCase>();
 builder.Services.AddScoped<ObtenerRestaurantesAleatoriosGrupoUseCase>();
-
+builder.Services.AddScoped<ActivarMiembroDeGrupoUseCase>();
 builder.Services.AddScoped<CrearValoracionUsuarioUseCase>();
 
 // Para notificaciones en tiempo real

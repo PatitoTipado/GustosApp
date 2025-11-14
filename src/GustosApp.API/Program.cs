@@ -7,6 +7,7 @@ using GustosApp.API.Mapping;
 using GustosApp.API.Middleware;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases;
+using GustosApp.Application.Handlers;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Infraestructure;
 using GustosApp.Infraestructure.ML;
@@ -21,6 +22,8 @@ using GustosApp.Infraestructure.Files;
 
 // Usar System.Text.Json para manejar el secreto de Firebase
 using System.Text.Json;
+using GustosApp.Application.Services;
+
 using GustosApp.Application.UseCases.GrupoUseCases;
 using GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases;
 using GustosApp.Application.UseCases.AmistadUseCases;
@@ -207,6 +210,9 @@ builder.Services.AddScoped<ObtenerChatGrupoUseCase>();
 builder.Services.AddScoped<EnviarMensajeGrupoUseCase>();
 builder.Services.AddScoped<ActualizarGustosAGrupoUseCase>();
 builder.Services.AddScoped<ObtenerPreferenciasGruposUseCase>();
+builder.Services.AddScoped<EliminarGustosGrupoUseCase>();
+builder.Services.AddScoped<DesactivarMiembroDeGrupoUseCase>();
+builder.Services.AddScoped<IServicioPreferenciasGrupos,ServicioPreferenciasGrupos>();
 builder.Services.AddScoped<EliminarNotificacionUseCase>();
 builder.Services.AddScoped<ObtenerGustosPaginacionUseCase>();
 builder.Services.AddScoped<BuscarGustoPorCoincidenciaUseCase>();
@@ -215,6 +221,7 @@ builder.Services.AddScoped<BuscarUsuariosUseCase>();
 builder.Services.AddScoped<ConfirmarAmistadEntreUsuarios>();
 builder.Services.AddScoped<VerificarSiMiembroEstaEnGrupoUseCase>();
 builder.Services.AddScoped<ObtenerRestaurantesAleatoriosGrupoUseCase>();
+builder.Services.AddScoped<ActivarMiembroDeGrupoUseCase>();
 
 builder.Services.AddScoped<CrearOpinionRestaurante>();
 builder.Services.AddScoped<NotificacionesInteligentesService>();

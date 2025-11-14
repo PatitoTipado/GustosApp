@@ -16,5 +16,9 @@ namespace GustosApp.Domain.Model
         public Guid GustoId { get; set; } // Debe coincidir con el tipo de Gusto.Id
 
         public Gusto Gusto { get; set; }
+
+        public Guid MiembroId { get; set; } // Debe coincidir con el tipo de MiembroGrupo.Id
+
+        public MiembroGrupo Miembro { get; set; }
     }
 }

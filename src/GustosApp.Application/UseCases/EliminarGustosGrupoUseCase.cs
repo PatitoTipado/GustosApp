@@ -1,5 +1,4 @@
-﻿using GustosApp.Application.DTO;
-using GustosApp.Domain.Interfaces;
+﻿using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 using System;
 using System.Collections.Generic;
@@ -7,9 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GustosApp.Application.UseCases.GrupoUseCases
+namespace GustosApp.Application.UseCases
 {
-    public class ActualizarGustosAGrupoUseCase
+    public class EliminarGustosGrupoUseCase
     {
         private IGrupoRepository _grupoRepository;
         private IGustoRepository _gustoRepository;
@@ -17,7 +16,7 @@ namespace GustosApp.Application.UseCases.GrupoUseCases
         private IUsuarioRepository _usuarioRepository;
         private IMiembroGrupoRepository _miembroGrupoRepository;
 
-        public ActualizarGustosAGrupoUseCase(
+        public EliminarGustosGrupoUseCase(
             IGrupoRepository grupoRepository,
             IGustoRepository gustoRepository,
             IGustosGrupoRepository gustosGrupoRepository,
@@ -31,9 +30,9 @@ namespace GustosApp.Application.UseCases.GrupoUseCases
             _miembroGrupoRepository = miembroGrupoRepository;
         }
 
-        public Task<bool> Handle(List<string>gustosDeUsuario, Guid grupoId,string firebaseUid)
+        public Task<bool> Handle(List<string> gustosDeUsuario, Guid grupoId,string firebaseUid)
         {
-            //in first place we should validate that user is member of the group
+            //primero validamos que exista el grupo -> todos estos false los cambiare por exeptions despues
 
             var miembroGrupo = _usuarioRepository.GetByFirebaseUidAsync(firebaseUid).Result;
 
@@ -42,14 +41,12 @@ namespace GustosApp.Application.UseCases.GrupoUseCases
                 throw new UnauthorizedAccessException("El usuario no existe.");
             }
 
-            //in second place francia
-
             if (!_grupoRepository.ExistsAsync(grupoId).Result)
             {
                 throw new KeyNotFoundException("el grupo no existe.");
             }
 
-            if (!(_miembroGrupoRepository.UsuarioEsMiembroActivoAsync(grupoId,miembroGrupo.Id).Result))
+            if (!(_miembroGrupoRepository.UsuarioEsMiembroActivoAsync(grupoId, miembroGrupo.Id).Result))
             {
                 throw new UnauthorizedAccessException("El miembro no es un usuario activo (expulsado)");
             }
@@ -63,7 +60,7 @@ namespace GustosApp.Application.UseCases.GrupoUseCases
                 throw new KeyNotFoundException("No existen los gustos mencionados.");
             }
 
-            return _gustosGrupoRepository.AgregarGustosAlGrupo(grupoId,gustos, miembroGrupo.Id);
+            return _gustosGrupoRepository.EliminarGustosAlGrupo(grupoId, gustos,miembroGrupo.Id);
         }
     }
 }

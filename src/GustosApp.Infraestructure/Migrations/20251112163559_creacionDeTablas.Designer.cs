@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GustosApp.Infraestructure.Migrations
 {
     [DbContext(typeof(GustosDbContext))]
-    [Migration("20251107174259_AddCreacionDeTablas")]
-    partial class AddCreacionDeTablas
+    [Migration("20251112163559_creacionDeTablas")]
+    partial class creacionDeTablas
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1084,11 +1084,16 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Property<Guid>("GustoId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("MiembroId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
                     b.HasIndex("GrupoId");
 
                     b.HasIndex("GustoId");
+
+                    b.HasIndex("MiembroId");
 
                     b.ToTable("GrupoGustos");
                 });
@@ -1528,6 +1533,9 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.Property<Guid>("UsuarioId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("afectarRecomendacion")
+                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 
@@ -2426,9 +2434,17 @@ namespace GustosApp.Infraestructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("GustosApp.Domain.Model.MiembroGrupo", "Miembro")
+                        .WithMany("GustosSeleccionados")
+                        .HasForeignKey("MiembroId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Grupo");
 
                     b.Navigation("Gusto");
+
+                    b.Navigation("Miembro");
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.InvitacionGrupo", b =>
@@ -2666,6 +2682,11 @@ namespace GustosApp.Infraestructure.Migrations
             modelBuilder.Entity("GustosApp.Domain.Model.InvitacionGrupo", b =>
                 {
                     b.Navigation("Notificacion");
+                });
+
+            modelBuilder.Entity("GustosApp.Domain.Model.MiembroGrupo", b =>
+                {
+                    b.Navigation("GustosSeleccionados");
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.Restaurante", b =>

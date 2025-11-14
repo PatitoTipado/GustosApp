@@ -64,7 +64,7 @@ namespace GustosApp.Application.UseCases.GrupoUseCases
             // Agregar al usuario como miembro del grupo
             var miembro = new MiembroGrupo(grupo.Id, usuario.Id, false);
             await _miembroGrupoRepository.CreateAsync(miembro, cancellationToken);
-            await _gustosGrupoRepository.AgregarGustosAlGrupo(grupo.Id, usuario.Gustos.ToList());
+            await _gustosGrupoRepository.AgregarGustosAlGrupo(grupo.Id, usuario.Gustos.ToList(), miembro.Id);
 
             // Obtener el grupo completo con relaciones
             var grupoCompleto = await _grupoRepository.GetByIdAsync(grupo.Id, cancellationToken);

@@ -2,6 +2,7 @@ using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 using GustosApp.Infraestructure;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace GustosApp.Infraestructure.Repositories
 {
@@ -88,6 +89,41 @@ namespace GustosApp.Infraestructure.Repositories
         {
             return await _context.MiembrosGrupos
                 .CountAsync(m => m.GrupoId == grupoId && m.Activo, cancellationToken);
+        }
+
+        public async Task<bool> DesactivarMiembroDeGrupo(Guid idGrupo, Guid idUsuario)
+        {
+            // Obtener miembro
+            MiembroGrupo? miembro = _context.MiembrosGrupos
+                .FirstOrDefault(m => m.GrupoId == idGrupo && m.UsuarioId == idUsuario && m.Activo);
+
+            if (miembro == null)
+            {
+                throw new UnauthorizedAccessException("El usuario no está activo en el grupo o no existe");
+            }
+
+            miembro.afectarRecomendacion = false;
+
+            await UpdateAsync(miembro);
+
+            return true;
+        }
+
+        public async Task<bool> ActivarMiembro(Guid idGrupo, Guid idUsuario)
+        {
+            MiembroGrupo? miembro = _context.MiembrosGrupos
+                .FirstOrDefault(m => m.GrupoId == idGrupo && m.UsuarioId == idUsuario && m.Activo);
+
+            if (miembro == null)
+            {
+                throw new UnauthorizedAccessException("El usuario no está activo en el grupo o no existe");
+            }
+
+            miembro.afectarRecomendacion = true;
+
+            await UpdateAsync(miembro);
+
+            return true;
         }
     }
 }

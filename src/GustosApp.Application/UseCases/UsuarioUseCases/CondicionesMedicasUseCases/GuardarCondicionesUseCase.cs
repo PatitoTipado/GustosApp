@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using GustosApp.Application.DTO;
+using GustosApp.Application.Interfaces;
+using GustosApp.Application.Services;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 
@@ -13,50 +15,89 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCa
     {
         private readonly ICondicionMedicaRepository _condiciones;
         private readonly IUsuarioRepository _user;
+        private readonly ICacheService _cache;
+        private readonly IRegistroPasoService _registroPasoService;
 
-        public GuardarCondicionesUseCase(ICondicionMedicaRepository condiciones, IUsuarioRepository user)
+        public GuardarCondicionesUseCase(ICondicionMedicaRepository condiciones,
+            IUsuarioRepository user,ICacheService cache, IRegistroPasoService registroPasoService)
         {
             _condiciones = condiciones;
             _user = user;
+            _cache = cache;
+            _registroPasoService = registroPasoService;
         }
 
-        public async Task<List<string>> HandleAsync(string uid, List<Guid> ids, bool skip, CancellationToken ct)
+        public async Task<List<string>> HandleAsync(
+      string uid,
+      List<Guid> ids,
+      bool skip,
+      CancellationToken ct)
         {
-            if (skip)
-                return new List<string>();
-
             var usuario = await _user.GetByFirebaseUidAsync(uid, ct)
                           ?? throw new InvalidOperationException("Usuario no encontrado.");
 
-            // Obtener actuales y nuevas
+           
+            if (skip)
+            {
+                usuario.CondicionesMedicas.Clear();
+
+                await _registroPasoService.AplicarPasoAsync(
+                    usuario,
+                    RegistroPaso.Condiciones,
+                    $"registro:{uid}:condiciones",
+                    null,
+                    ct
+                );
+
+                return new List<string>();
+            }
+
+          
+            var entidadesValidas = await _condiciones.GetByIdsAsync(ids, ct);
+            if (entidadesValidas.Count != ids.Count)
+                throw new ArgumentException("Una o más condiciones médicas no existen.");
+
+            //Determinar cambios 
             var actuales = usuario.CondicionesMedicas.Select(c => c.Id).ToHashSet();
             var nuevas = ids.ToHashSet();
 
             var paraAgregar = nuevas.Except(actuales).ToList();
             var paraQuitar = actuales.Except(nuevas).ToList();
 
-            //  Quitar condiciones desmarcadas
-            var paraEliminar = usuario.CondicionesMedicas
-                .Where(c => paraQuitar.Contains(c.Id))
-                .ToList();
-            foreach (var condicion in paraEliminar)
-                usuario.CondicionesMedicas.Remove(condicion);
+            bool huboCambios = false;
 
-            //  Agregar nuevas condiciones
-            if (paraAgregar.Any())
+            // Quitar
+            foreach (var c in usuario.CondicionesMedicas.Where(x => paraQuitar.Contains(x.Id)).ToList())
             {
-                var nuevasEntidades = await _condiciones.GetByIdsAsync(paraAgregar, ct);
-                foreach (var condicion in nuevasEntidades)
-                    usuario.CondicionesMedicas.Add(condicion);
+                usuario.CondicionesMedicas.Remove(c);
+                huboCambios = true;
             }
 
-            //  Revalidar compatibilidad
+            // Agregar
+            foreach (var c in entidadesValidas.Where(x => paraAgregar.Contains(x.Id)))
+            {
+                usuario.CondicionesMedicas.Add(c);
+                huboCambios = true;
+            }
+
+            if (!huboCambios)
+                return new List<string>();
+
+         
             var gustosRemovidos = usuario.ValidarCompatibilidad();
 
-            usuario.AvanzarPaso(RegistroPaso.Gustos);
-            await _user.SaveChangesAsync(ct);
+         
+            await _registroPasoService.AplicarPasoAsync(
+                usuario,
+                RegistroPaso.Gustos,
+                $"registro:{uid}:condiciones",
+                ids,
+                ct
+            );
 
             return gustosRemovidos;
         }
+
     }
 }
+

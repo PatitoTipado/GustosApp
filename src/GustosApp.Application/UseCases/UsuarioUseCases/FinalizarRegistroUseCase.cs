@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 
@@ -11,10 +12,12 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases
     public class FinalizarRegistroUseCase
     {
         private readonly IUsuarioRepository _usuarioRepo;
+        private readonly ICacheService _cache;
 
-        public FinalizarRegistroUseCase(IUsuarioRepository usuarioRepo)
+        public FinalizarRegistroUseCase(IUsuarioRepository usuarioRepo, ICacheService cache)
         {
             _usuarioRepo = usuarioRepo;
+            _cache = cache;
         }
 
         public async Task HandleAsync(string uid, CancellationToken ct)
@@ -52,6 +55,12 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases
             usuario.AvanzarPaso(RegistroPaso.Finalizado);
 
             await _usuarioRepo.SaveChangesAsync(ct);
+
+
+            await _cache.DeleteAsync($"registro:{uid}:restricciones");
+            await _cache.DeleteAsync($"registro:{uid}:condiciones");
+            await _cache.DeleteAsync($"registro:{uid}:gustos");
+            await _cache.DeleteAsync($"registro:{uid}:estado");
         }
     }
 }

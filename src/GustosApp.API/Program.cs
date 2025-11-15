@@ -19,6 +19,8 @@ using Microsoft.OpenApi.Models;
 using GustosApp.Infraestructure.Ocr;
 using GustosApp.Infraestructure.Parsing;
 using GustosApp.Infraestructure.Files;
+using StackExchange.Redis;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
 
 // Usar System.Text.Json para manejar el secreto de Firebase
 using System.Text.Json;
@@ -37,6 +39,8 @@ using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
 using GustosApp.API.Background;
 using GustosApp.Application.Services;
 using GustosApp.Infraestructure.Services;
+using StackExchange.Redis;
+using Microsoft.AspNetCore.Authorization;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -123,6 +127,21 @@ builder.Services.AddSingleton<IOcrService>(sp =>
 });
 builder.Services.AddSingleton<IMenuParser, SimpleMenuParser>();
 
+//Autorizacion para acceder a ciertas rutas si el registro del usuario no esta completo
+builder.Services.AddAuthorization(opt =>
+{
+    opt.AddPolicy("RegistroIncompleto", p =>
+        p.Requirements.Add(new RegistroIncompletoRequirement()));
+});
+
+
+
+//REDIS
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var config = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+    return ConnectionMultiplexer.Connect(config);
+});
 
 // =====================
 //    Controllers / JSON
@@ -134,6 +153,12 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
+//REDIS
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+});
+
 // =====================
 //   EF Core / SQL Server
 // =====================
@@ -143,6 +168,8 @@ builder.Services.AddDbContext<GustosDbContext>(options =>
 // =====================
 //   Repositorios
 // =====================
+builder.Services.AddScoped<IRegistroPasoService, RegistroPasoService>();
+builder.Services.AddScoped<ICacheService, RedisCacheService>();
 builder.Services.AddScoped<IFileStorageService, FirebaseStorageService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepositoryEF>();
@@ -159,6 +186,7 @@ builder.Services.AddScoped<ISolicitudAmistadRealtimeService, SignalRSolicitudAmi
 
 builder.Services.AddScoped<IOpinionRestauranteRepository, OpinionRestauranteRepositoryEF>();
 builder.Services.AddScoped<ActualizarValoracionRestauranteUseCase>();
+builder.Services.AddScoped<IAuthorizationHandler, RegistroIncompletoHandler>();
 
 
 // Chat repository

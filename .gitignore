@@ -2,7 +2,13 @@
 .vs/
 bin/
 obj/
-/src/GustosApp.API/appsettings.Development.json
+
+appsettings.Development.json
+appsettings.*.local.json
+*/appsettings.Development.json
+**/appsettings.Development.json
+
+
 /src/GustosApp.API/secrets/
 
 

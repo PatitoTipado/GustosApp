@@ -2,6 +2,8 @@ using AutoMapper;
 using GustosApp.API.DTO;
 using GustosApp.Application.DTO;
 using GustosApp.Application.Interfaces;
+using GustosApp.Application.Handlers;
+using GustosApp.Application.Services;
 using GustosApp.Application.UseCases;
 using GustosApp.Application.UseCases.GrupoUseCases;
 using GustosApp.Application.UseCases.GrupoUseCases.ChatGrupoUseCases;
@@ -31,11 +33,12 @@ namespace GustosApp.API.Controllers
         private readonly ObtenerChatGrupoUseCase _obtenerChatGrupoUseCase;
         private readonly ObtenerGrupoDetalleUseCase _obtenerGrupoDetalleUseCase;
         private readonly RemoverMiembroGrupoUseCase _removerMiembroUseCase;
-        private ActualizarGustosAGrupoUseCase _actualizarGustosGrupoUseCase;
         private readonly IServicioRestaurantes _servicio;
         private readonly ObtenerPreferenciasGruposUseCase _obtenerPreferenciasGrupos;
         private readonly SugerirGustosSobreUnRadioUseCase _sugerirGustos;
         private readonly VerificarSiMiembroEstaEnGrupoUseCase _verificacionMiembroGrupo;
+        private readonly IServicioPreferenciasGrupos _servicioPreferenciasGrupos;
+        private readonly EnviarMensajeGrupoUseCase _enviarMensajeGrupoUseCase;
         private readonly IMapper _mapper;
         private readonly ObtenerRestaurantesAleatoriosGrupoUseCase _obtenerRestaurantesAleatorios;
 
@@ -52,11 +55,12 @@ namespace GustosApp.API.Controllers
             RemoverMiembroGrupoUseCase removerMiembroUseCase,
             ObtenerChatGrupoUseCase obtenerChatGrupoUseCase,
             EnviarMensajeGrupoUseCase enviarMensajeGrupoUseCase,
-            ActualizarGustosAGrupoUseCase actualizarGustosAGrupoUseCase,
             IServicioRestaurantes servicio,
             SugerirGustosSobreUnRadioUseCase sugerirGustos,
             ObtenerPreferenciasGruposUseCase obtenerGustos,
+            IServicioPreferenciasGrupos servicioPreferenciasGrupos,
             VerificarSiMiembroEstaEnGrupoUseCase verificacionMiembroGrupo,
+            ActualizarGustosAGrupoUseCase actualizarGustosAGrupoUseCase,
             IMapper mapper,
             ObtenerRestaurantesAleatoriosGrupoUseCase obtenerRestaurantesAleatorios
             )
@@ -73,13 +77,14 @@ namespace GustosApp.API.Controllers
             _obtenerGrupoDetalleUseCase = obtenerGrupoDetalleUseCase;
             _removerMiembroUseCase = removerMiembroUseCase;
             _obtenerChatGrupoUseCase = obtenerChatGrupoUseCase;
-            _actualizarGustosGrupoUseCase = actualizarGustosAGrupoUseCase;
+            _enviarMensajeGrupoUseCase = enviarMensajeGrupoUseCase;
             _obtenerPreferenciasGrupos = obtenerGustos;
             _sugerirGustos = sugerirGustos;
             _verificacionMiembroGrupo = verificacionMiembroGrupo;
             _mapper = mapper;
             _obtenerRestaurantesAleatorios = obtenerRestaurantesAleatorios;
 
+            _servicioPreferenciasGrupos = servicioPreferenciasGrupos;
         }
         [Authorize]
         [HttpPost("crear")]
@@ -235,15 +240,14 @@ namespace GustosApp.API.Controllers
         public async Task<IActionResult> ObtenerChat(string grupoId, CancellationToken ct)
         {
            
-                var firebaseUid = GetFirebaseUid();
-                if (!Guid.TryParse(grupoId, out var gid)) return BadRequest("El id de grupo no es un GUID válido");
+            var firebaseUid = GetFirebaseUid();
+            if (!Guid.TryParse(grupoId, out var gid)) return BadRequest("El id de grupo no es un GUID válido");
                
             var msgs = await _obtenerChatGrupoUseCase.HandleAsync(firebaseUid, gid, ct);
 
-                var response = _mapper.Map<IEnumerable<ChatMensajeResponse>>(msgs);
+            var response = _mapper.Map<IEnumerable<ChatMensajeResponse>>(msgs);
 
-                 return Ok(response);
-          
+            return Ok(response);
         }
         [Authorize]
         [HttpGet("{grupoId}")]
@@ -293,7 +297,7 @@ namespace GustosApp.API.Controllers
         public async Task<IActionResult> agregarGustoDeGrupo(Guid grupoId,List<string> gustos)
         {
             var firebaseUid = GetFirebaseUid();
-            var ok = await _actualizarGustosGrupoUseCase.Handle(gustos,grupoId);
+            var ok = await _servicioPreferenciasGrupos.ActualizarGustosDeGrupo(gustos,grupoId,firebaseUid);
 
             var response = new ActualizarGustosGrupoResponse
             {
@@ -302,6 +306,43 @@ namespace GustosApp.API.Controllers
             };
             return Ok(response);
         }
+
+        [Authorize]
+        [HttpPut("desactivarMiembro")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> DesactivarMiembro(Guid grupoId,Guid UsuarioId)
+        {
+            var firebaseUid = GetFirebaseUid();
+            var ok = await _servicioPreferenciasGrupos.DesactivarMiembroDeGrupo(grupoId, UsuarioId, firebaseUid);
+
+            var response = new 
+            {
+                Success = ok,
+                Mensaje = "Miembro Desactivado Correctamente"
+            };
+
+            return Ok(response);
+        }
+
+        [Authorize]
+        [HttpPut("activarMiembro")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> ActivarMiembro(Guid grupoId, Guid UsuarioId)
+        {
+            var firebaseUid = GetFirebaseUid();
+            var ok = await _servicioPreferenciasGrupos.ActivarMiembro(grupoId, UsuarioId, firebaseUid);
+
+            var response = new
+            {
+                Success = ok,
+                Mensaje = "Miembro activado Correctamente"
+            };
+
+            return Ok(response);
+        }
+
 
         [Authorize]
         [HttpGet("restaurantes/{grupoId}")]

@@ -34,7 +34,7 @@ namespace GustosApp.Domain.Model
         public ICollection<Restriccion> Restricciones { get; set; } = new List<Restriccion>();
         public ICollection<CondicionMedica> CondicionesMedicas { get; set; } = new List<CondicionMedica>();
 
-        public RegistroPaso PasoActual { get; private set; } = RegistroPaso.Ninguno;
+        public RegistroPaso PasoActual { get;  set; } = RegistroPaso.Ninguno;
 
         // Relaciones con grupos
         public ICollection<Grupo> GruposAdministrados { get; set; } = new List<Grupo>();
@@ -105,6 +105,10 @@ namespace GustosApp.Domain.Model
             return gustosIncompatibles.Select(g => g.Nombre).ToList();
         }
 
+        public void SetPaso(RegistroPaso paso)
+        {
+            PasoActual = paso;
+        }
 
         public ICollection<UsuarioRestauranteVisitado> Visitados { get; set; } = new List<UsuarioRestauranteVisitado>();
         //public object Reviews { get; set; }

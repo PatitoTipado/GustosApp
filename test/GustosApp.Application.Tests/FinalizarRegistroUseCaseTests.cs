@@ -1,173 +1,264 @@
-﻿using System;
+﻿using Moq;
+using Xunit;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases.UsuarioUseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
-using Moq;
 
-namespace GustosApp.Application.Tests
+public class FinalizarRegistroUseCaseTests
 {
-    public class FinalizarRegistroUseCaseTests
+    private readonly Mock<IUsuarioRepository> _usuarioRepo;
+    private readonly Mock<ICacheService> _cache;
+    private readonly FinalizarRegistroUseCase _useCase;
+
+    public FinalizarRegistroUseCaseTests()
     {
-        private readonly Mock<IUsuarioRepository> _usuarioRepoMock;
-        private readonly FinalizarRegistroUseCase _useCase;
+        _usuarioRepo = new Mock<IUsuarioRepository>();
+        _cache = new Mock<ICacheService>();
 
+        _useCase = new FinalizarRegistroUseCase(_usuarioRepo.Object, _cache.Object);
+    }
 
-        public FinalizarRegistroUseCaseTests()
+    private Usuario CrearUsuario(
+        List<Gusto>? gustos = null,
+        List<Restriccion>? restricciones = null,
+        List<CondicionMedica>? condiciones = null)
+    {
+        return new Usuario
         {
-            _usuarioRepoMock = new Mock<IUsuarioRepository>();
-            _useCase = new FinalizarRegistroUseCase(_usuarioRepoMock.Object);
-        }
-        [Fact]
-        public async Task HandleAsync_DeberiaLanzarExcepcionSiUsuarioNoExiste()
-        {
-            // Arrange
-            var uid = "uid_inexistente";
-            var ct = CancellationToken.None;
+            FirebaseUid = "uid123",
+            Gustos = gustos ?? new List<Gusto>(),
+            Restricciones = restricciones ?? new List<Restriccion>(),
+            CondicionesMedicas = condiciones ?? new List<CondicionMedica>(),
+        };
+    }
 
 
-            _usuarioRepoMock.Setup(r => r.GetByFirebaseUidAsync(uid, ct))
-                    .ReturnsAsync((Usuario?)null);
+    [Fact]
+    public async Task HandleAsync_UsuarioNoExiste_DeberiaLanzarExcepcion()
+    {
+        _usuarioRepo.Setup(r => r.GetByFirebaseUidAsync("uid123", It.IsAny<CancellationToken>()))
+                    .ReturnsAsync((Usuario)null);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _useCase.HandleAsync(uid, ct));
-        }
+        await Assert.ThrowsAsync<Exception>(() =>
+            _useCase.HandleAsync("uid123", CancellationToken.None)
+        );
+    }
 
+   
+    [Fact]
+    public async Task HandleAsync_SinGustos_DeberiaLanzarExcepcion()
+    {
+        var usuario = CrearUsuario(gustos: new List<Gusto>());
 
-        [Fact]
-        public async Task HandleAsync_DeberiaFallarSiUsuarioNoTieneGustos()
-        {
-            // Arrange
-            var uid = "firebase_123";
-            var usuario = new Usuario(uid, "mail@mail.com", "Juan", "Pérez", "USR1");
-
-
-            _usuarioRepoMock.Setup(r => r.GetByFirebaseUidAsync(uid, It.IsAny<CancellationToken>()))
+        _usuarioRepo.Setup(r => r.GetByFirebaseUidAsync("uid123", It.IsAny<CancellationToken>()))
                     .ReturnsAsync(usuario);
 
-            // Act & Assert
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _useCase.HandleAsync(uid, CancellationToken.None));
-            Assert.Contains("Debe seleccionar al menos un gusto", ex.Message);
-        }
-
-        [Fact]
-        public async Task HandleAsync_DeberiaFinalizarSiTodoEsCompatible()
-        {
-            // Arrange
-            var uid = "firebase_ok";
-            var ct = CancellationToken.None;
-
-            // Tags
-            var tagFruta = new Tag { Nombre = "Fruta" };
-            var tagVegetal = new Tag { Nombre = "Vegetal" };
-
-            // Gustos (todos aptos)
-            var gusto1 = new Gusto { Nombre = "Ensalada", Tags = new List<Tag> { tagVegetal } };
-            var gusto2 = new Gusto { Nombre = "Ensalada de frutas", Tags = new List<Tag> { tagFruta } };
-
-            var usuario = new Usuario(uid, "ok@mail.com", "Ana", "García", "USR2");
-
-            usuario.Gustos = new List<Gusto> { gusto1, gusto2 };
-
-            _usuarioRepoMock.Setup(r => r.GetByFirebaseUidAsync(uid, ct)).ReturnsAsync(usuario);
-            _usuarioRepoMock.Setup(r => r.SaveChangesAsync(ct)).Returns(Task.CompletedTask);
-
-            // Act
-            await _useCase.HandleAsync(uid, ct);
-
-            // Assert
-            _usuarioRepoMock.Verify(r => r.SaveChangesAsync(ct), Times.Once);
-            Assert.Equal(RegistroPaso.Finalizado, usuario.PasoActual);
-        }
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _useCase.HandleAsync("uid123", CancellationToken.None)
+        );
+    }
 
 
-        [Fact]
-        public async Task HandleAsync_DeberiaFallarSiHayGustoIncompatibleConRestricciones()
-        {
-            // Arrange
-            var uid = "firebase_restriccion";
-            var ct = CancellationToken.None;
-
-            var tagGluten = new Tag { Nombre = "Gluten" };
-            var gustoPizza = new Gusto { Nombre = "Pizza", Tags = new List<Tag> { tagGluten } };
-
-            var restriccion = new Restriccion
+    [Fact]
+    public async Task HandleAsync_GustoIncompatibleConRestricciones_DeberiaLanzarExcepcion()
+    {
+        var usuario = CrearUsuario(
+            gustos: new List<Gusto>
             {
-                Nombre = "Sin gluten",
-                TagsProhibidos = new List<Tag> { tagGluten }
-            };
-
-            var usuario = new Usuario(uid, "mail@mail.com", "Pedro", "López", "USR3");
-            usuario.Gustos.Add(gustoPizza);
-            usuario.Restricciones.Add(restriccion);
-
-            _usuarioRepoMock.Setup(r => r.GetByFirebaseUidAsync(uid, ct)).ReturnsAsync(usuario);
-
-            // Act & Assert
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _useCase.HandleAsync(uid, ct));
-            Assert.Contains("incompatibles con tus restricciones", ex.Message);
-        }
-
-        [Fact]
-        public async Task HandleAsync_DeberiaFallarSiHayGustoIncompatibleConCondicionesMedicas()
-        {
-            // Arrange
-            var uid = "firebase_condicion";
-            var ct = CancellationToken.None;
-
-            var tagAzucar = new Tag { Nombre = "Azúcar" };
-            var gustoHelado = new Gusto { Nombre = "Helado", Tags = new List<Tag> { tagAzucar } };
-
-            var diabetes = new CondicionMedica
+                new Gusto
+                {
+                    Nombre = "Pizza Gluten",
+                    Tags = new List<Tag> { new Tag { Nombre = "gluten" } }
+                }
+            },
+            restricciones: new List<Restriccion>
             {
-                Nombre = "Diabetes",
-                TagsCriticos = new List<Tag> { tagAzucar }
-            };
+                new Restriccion
+                {
+                    TagsProhibidos = new List<Tag>
+                    {
+                        new Tag { Nombre = "gluten" }
+                    }
+                }
+            }
+        );
 
-            var usuario = new Usuario(uid, "mail@mail.com", "Lucía", "Martínez", "USR4");
-            usuario.Gustos.Add(gustoHelado);
-            usuario.CondicionesMedicas.Add(diabetes);
+        _usuarioRepo.Setup(r => r.GetByFirebaseUidAsync("uid123", It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(usuario);
 
-            _usuarioRepoMock.Setup(r => r.GetByFirebaseUidAsync(uid, ct)).ReturnsAsync(usuario);
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _useCase.HandleAsync("uid123", CancellationToken.None)
+        );
 
-            // Act & Assert
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _useCase.HandleAsync(uid, ct));
-            Assert.Contains("incompatibles", ex.Message);
-            Assert.Contains("Helado", ex.Message);
-        }
-        [Fact]
-        public async Task HandleAsync_DeberiaDetectarMultiplesConflictos()
-        {
-            // Arrange
-            var uid = "firebase_multi";
-            var ct = CancellationToken.None;
+        Assert.Contains("Pizza Gluten", ex.Message);
+    }
 
-            var tagGluten = new Tag { Nombre = "Gluten" };
-            var tagAzucar = new Tag { Nombre = "Azúcar" };
+    
+    [Fact]
+    public async Task HandleAsync_GustoIncompatibleConCondiciones_DeberiaLanzarExcepcion()
+    {
+        var usuario = CrearUsuario(
+            gustos: new List<Gusto>
+            {
+                new Gusto
+                {
+                    Nombre = "Helado Lactosa",
+                    Tags = new List<Tag> { new Tag { Nombre = "lactosa" } }
+                }
+            },
+            condiciones: new List<CondicionMedica>
+            {
+                new CondicionMedica
+                {
+                    TagsCriticos = new List<Tag>
+                    {
+                        new Tag { Nombre = "lactosa" }
+                    }
+                }
+            }
+        );
 
-            var gustoPizza = new Gusto { Nombre = "Pizza", Tags = new List<Tag> { tagGluten } };
-            var gustoHelado = new Gusto { Nombre = "Helado", Tags = new List<Tag> { tagAzucar } };
+        _usuarioRepo.Setup(r => r.GetByFirebaseUidAsync("uid123",
+                It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(usuario);
 
-            var sinGluten = new Restriccion { Nombre = "Sin gluten", TagsProhibidos = new List<Tag> { tagGluten } };
-            var diabetes = new CondicionMedica { Nombre = "Diabetes", TagsCriticos = new List<Tag> { tagAzucar } };
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _useCase.HandleAsync("uid123", CancellationToken.None)
+        );
 
-            var usuario = new Usuario(uid, "mail@mail.com", "María", "Santos", "USR5");
+        Assert.Contains("Helado Lactosa", ex.Message);
+    }
 
-            usuario.Gustos = new List<Gusto> { gustoPizza, gustoHelado };
+    
+    [Fact]
+    public async Task HandleAsync_GustoIncompatibleConAmbos_DeberiaLanzarExcepcion()
+    {
+        var usuario = CrearUsuario(
+            gustos: new List<Gusto>
+            {
+                new Gusto
+                {
+                    Nombre = "Chocolate Cacahuate",
+                    Tags = new List<Tag> { new Tag { Nombre = "mani" } }
+                }
+            },
+            restricciones: new List<Restriccion>
+            {
+                new Restriccion
+                {
+                    TagsProhibidos = new List<Tag> { new Tag { Nombre = "MANI" } }
+                }
+            },
+            condiciones: new List<CondicionMedica>
+            {
+                new CondicionMedica
+                {
+                    TagsCriticos = new List<Tag> { new Tag { Nombre = "mani" } }
+                }
+            }
+        );
 
-            usuario.Restricciones.Add(sinGluten);
-            usuario.CondicionesMedicas.Add(diabetes);
+        _usuarioRepo.Setup(r => r.GetByFirebaseUidAsync("uid123",
+                It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(usuario);
 
-            _usuarioRepoMock.Setup(r => r.GetByFirebaseUidAsync(uid, ct)).ReturnsAsync(usuario);
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _useCase.HandleAsync("uid123", CancellationToken.None)
+        );
 
-            // Act & Assert
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _useCase.HandleAsync(uid, ct));
-            Assert.Contains("Pizza", ex.Message);
-            Assert.Contains("Helado", ex.Message);
-        }
+        Assert.Contains("Chocolate Cacahuate", ex.Message);
+    }
 
+   
+    [Fact]
+    public async Task HandleAsync_TodoValido_DeberiaFinalizarRegistro()
+    {
+        var usuario = CrearUsuario(
+            gustos: new List<Gusto>
+            {
+                new Gusto
+                {
+                    Nombre = "Sushi",
+                    Tags = new List<Tag> { new Tag { Nombre = "pescado" } }
+                }
+            }
+        );
+
+        _usuarioRepo.Setup(r => r.GetByFirebaseUidAsync("uid123", It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(usuario);
+
+        await _useCase.HandleAsync("uid123", CancellationToken.None);
+
+        Assert.Equal(RegistroPaso.Finalizado, usuario.PasoActual);
+
+        _usuarioRepo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+
+    [Fact]
+    public async Task HandleAsync_TodoValido_DeberiaEliminarCache()
+    {
+        var usuario = CrearUsuario(
+            gustos: new List<Gusto>
+            {
+                new Gusto
+                {
+                    Nombre = "Hamburguesa",
+                    Tags = new List<Tag> { new Tag { Nombre = "carne" } }
+                }
+            }
+        );
+
+        _usuarioRepo.Setup(r => r.GetByFirebaseUidAsync("uid123", It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(usuario);
+
+        await _useCase.HandleAsync("uid123", CancellationToken.None);
+
+        _cache.Verify(c => c.DeleteAsync("registro:uid123:restricciones"), Times.Once);
+        _cache.Verify(c => c.DeleteAsync("registro:uid123:condiciones"), Times.Once);
+        _cache.Verify(c => c.DeleteAsync("registro:uid123:gustos"), Times.Once);
+        _cache.Verify(c => c.DeleteAsync("registro:uid123:estado"), Times.Once);
+    }
+
+
+    [Fact]
+    public async Task HandleAsync_TagsCaseInsensitive_DeberiaDetectarConflicto()
+    {
+        var usuario = CrearUsuario(
+            gustos: new List<Gusto>
+            {
+                new Gusto
+                {
+                    Nombre = "Almendrado",
+                    Tags = new List<Tag> { new Tag { Nombre = "MANI" } }
+                }
+            },
+            restricciones: new List<Restriccion>
+            {
+                new Restriccion
+                {
+                    TagsProhibidos = new List<Tag>
+                    {
+                        new Tag { Nombre = "mani" }
+                    }
+                }
+            }
+        );
+
+        _usuarioRepo.Setup(r => r.GetByFirebaseUidAsync("uid123",
+                It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(usuario);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _useCase.HandleAsync("uid123", CancellationToken.None)
+        );
+
+        Assert.Contains("Almendrado", ex.Message);
     }
 }

@@ -25,42 +25,45 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases
             var usuario = await _usuarioRepo.GetByFirebaseUidAsync(uid, ct)
                 ?? throw new Exception("Usuario no encontrado.");
 
-            if (!usuario.Gustos.Any())
-                throw new InvalidOperationException("Debe seleccionar al menos un gusto.");
+            
+            if (usuario.Gustos.Count < 3)
+                throw new InvalidOperationException("Debes seleccionar al menos 3 gustos para completar el registro.");
 
-
-            var tagsRestricciones = usuario.Restricciones
-                .SelectMany(r => r.TagsProhibidos.Select(t => t.NombreNormalizado))
-                .ToHashSet();
-
+            
             var tagsProhibidos = usuario.Restricciones
-             .SelectMany(r => r.TagsProhibidos.Select(t => t.NombreNormalizado))
-             .Concat(usuario.CondicionesMedicas.SelectMany(c => c.TagsCriticos.Select(t => t.NombreNormalizado)))
-              .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-
+                .SelectMany(r => r.TagsProhibidos.Select(t => t.NombreNormalizado))
+                .Concat(usuario.CondicionesMedicas
+                    .SelectMany(c => c.TagsCriticos.Select(t => t.NombreNormalizado)))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             var gustosInvalidos = usuario.Gustos
                 .Where(g => g.Tags.Any(t => tagsProhibidos.Contains(t.NombreNormalizado)))
                 .ToList();
 
-
             if (gustosInvalidos.Any())
             {
                 throw new InvalidOperationException(
-                    $"No se puede finalizar: algunos gustos son incompatibles con tus restricciones: {string.Join(", ", gustosInvalidos.Select(g => g.Nombre))}");
+                    "Algunos gustos son incompatibles con tus restricciones: " +
+                    string.Join(", ", gustosInvalidos.Select(g => g.Nombre))
+                );
             }
 
+          
+            if (!usuario.RegistroInicialCompleto)
+            {
+                usuario.RegistroInicialCompleto = true;
+            }
 
-            usuario.AvanzarPaso(RegistroPaso.Finalizado);
-
+            
             await _usuarioRepo.SaveChangesAsync(ct);
 
+            
+            await _cache.DeleteAsync($"registro:{uid}:gustosTemp");
+            await _cache.DeleteAsync($"registro:{uid}:restriccionesTemp");
+            await _cache.DeleteAsync($"registro:{uid}:condicionesTemp");
 
-            await _cache.DeleteAsync($"registro:{uid}:restricciones");
-            await _cache.DeleteAsync($"registro:{uid}:condiciones");
-            await _cache.DeleteAsync($"registro:{uid}:gustos");
-            await _cache.DeleteAsync($"registro:{uid}:estado");
+           
+            await _cache.SetAsync($"registro:{uid}:inicialCompleto", true, TimeSpan.FromHours(12));
         }
     }
 }

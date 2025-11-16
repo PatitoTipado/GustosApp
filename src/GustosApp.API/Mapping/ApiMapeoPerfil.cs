@@ -35,13 +35,22 @@ namespace GustosApp.API.Mapping
            .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Nombre))
            .ForMember(dest => dest.Seleccionado, opt => opt.Ignore());
 
-            CreateMap<Usuario, UsuarioResumenResponse>()
-                .ForMember(dest => dest.Gustos, opt => opt.MapFrom
-                (src => src.Gustos.Select(g => g.Nombre).ToList()))
-                .ForMember(dest => dest.Restricciones, opt => opt.MapFrom
-                (src => src.Restricciones.Select(r => r.Nombre).ToList()))
-                .ForMember(dest => dest.CondicionesMedicas, opt => opt.MapFrom
-                (src => src.CondicionesMedicas.Select(c => c.Nombre).ToList()));
+        CreateMap<Usuario, UsuarioResumenResponse>()
+            .ForMember(dest => dest.Restricciones, opt => opt.MapFrom(src => src.Restricciones))
+            .ForMember(dest => dest.CondicionesMedicas, opt => opt.MapFrom(src => src.CondicionesMedicas))
+            .ForMember(dest => dest.Gustos, opt => opt.MapFrom(src => src.Gustos));
+
+        CreateMap<Restriccion, ItemResumen>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Nombre));
+
+        CreateMap<CondicionMedica, ItemResumen>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Nombre));
+
+        CreateMap<Gusto, ItemResumen>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Nombre));
 
             CreateMap<OpinionRestaurante, CrearOpinionRestauranteResponse>()
                 .ForMember(dest => dest.UsuarioNombre, opt => opt.MapFrom(src => src.Usuario!.Nombre))
@@ -122,6 +131,9 @@ namespace GustosApp.API.Mapping
 
             CreateMap<Gusto, GustoDto>()
             .ForMember(dest => dest.Seleccionado, opt => opt.Ignore());
+
+
+        
 
         }
     }

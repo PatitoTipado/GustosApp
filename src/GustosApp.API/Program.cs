@@ -136,12 +136,15 @@ builder.Services.AddAuthorization(opt =>
 
 
 
+
 //REDIS
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
     var config = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
     return ConnectionMultiplexer.Connect(config);
 });
+
+
 
 // =====================
 //    Controllers / JSON
@@ -168,7 +171,7 @@ builder.Services.AddDbContext<GustosDbContext>(options =>
 // =====================
 //   Repositorios
 // =====================
-builder.Services.AddScoped<IRegistroPasoService, RegistroPasoService>();
+builder.Services.AddScoped<IAuthorizationHandler, RegistroIncompletoHandler>();
 builder.Services.AddScoped<ICacheService, RedisCacheService>();
 builder.Services.AddScoped<IFileStorageService, FirebaseStorageService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
@@ -186,7 +189,6 @@ builder.Services.AddScoped<ISolicitudAmistadRealtimeService, SignalRSolicitudAmi
 
 builder.Services.AddScoped<IOpinionRestauranteRepository, OpinionRestauranteRepositoryEF>();
 builder.Services.AddScoped<ActualizarValoracionRestauranteUseCase>();
-builder.Services.AddScoped<IAuthorizationHandler, RegistroIncompletoHandler>();
 
 
 // Chat repository
@@ -253,6 +255,7 @@ builder.Services.AddScoped<ActivarMiembroDeGrupoUseCase>();
 
 builder.Services.AddScoped<CrearOpinionRestaurante>();
 builder.Services.AddScoped<NotificacionesInteligentesService>();
+
 
 // Para notificaciones en tiempo real
 builder.Services.AddSignalR();

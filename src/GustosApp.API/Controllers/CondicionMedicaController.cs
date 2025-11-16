@@ -2,6 +2,7 @@
 using AutoMapper;
 using GustosApp.API.DTO;
 using GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCases;
+using GustosApp.Domain.Model;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,17 +12,22 @@ namespace GustosApp.API.Controllers
 {
     [Route("[controller]")]
     [ApiController]
-    public class CondicionMedicaController : ControllerBase
+    public class CondicionMedicaController : BaseApiController
     {
 
+        private readonly GuardarCondicionesUseCase _saveCond;
         private readonly ObtenerCondicionesMedicasUseCase _obtenerCondicionesMed;
         private readonly IMapper _mapper;
 
-        public CondicionMedicaController(ObtenerCondicionesMedicasUseCase obtenerCondicionesMed,
+        public CondicionMedicaController(
+            GuardarCondicionesUseCase saveCond,
+            ObtenerCondicionesMedicasUseCase obtenerCondicionesMed,
             IMapper mapper)
         {
+            _saveCond = saveCond;
             _obtenerCondicionesMed = obtenerCondicionesMed;
             _mapper = mapper;
+          
         }
 
         // GET: api/<ValuesController>
@@ -44,16 +50,26 @@ namespace GustosApp.API.Controllers
             return Ok(response);
         }
 
-        private string GetFirebaseUid()
+        [Authorize]
+        [HttpPut("condiciones")]
+        [ProducesResponseType(typeof(GuardarCondicionesResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GuardarCondiciones([FromBody] GuardarIdsRequest req, CancellationToken ct)
         {
-            var firebaseUid = User.FindFirst("user_id")?.Value
-                            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                            ?? User.FindFirst("sub")?.Value;
+            var uid = GetFirebaseUid();
+            var condiciones = await _saveCond.HandleAsync(uid, req.Ids, req.Skip, ModoPreferencias.Edicion, ct);
 
-            if (string.IsNullOrWhiteSpace(firebaseUid))
-                throw new UnauthorizedAccessException("No se encontró el UID de Firebase en el token.");
+            var response = new GuardarCondicionesResponse
+            {
+                Mensaje = "Condiciones médicas guardadas correctamente",
+                GustosRemovidos = condiciones
+            };
 
-            return firebaseUid;
+
+            return Ok(response);
+
         }
+        
     }
 }

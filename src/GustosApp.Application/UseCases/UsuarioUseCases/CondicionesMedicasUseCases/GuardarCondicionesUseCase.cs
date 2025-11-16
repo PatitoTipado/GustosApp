@@ -13,91 +13,118 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCa
 {
     public class GuardarCondicionesUseCase
     {
-        private readonly ICondicionMedicaRepository _condiciones;
         private readonly IUsuarioRepository _user;
+        private readonly ICondicionMedicaRepository _condiciones;
         private readonly ICacheService _cache;
-        private readonly IRegistroPasoService _registroPasoService;
 
-        public GuardarCondicionesUseCase(ICondicionMedicaRepository condiciones,
-            IUsuarioRepository user,ICacheService cache, IRegistroPasoService registroPasoService)
+        public GuardarCondicionesUseCase(
+            IUsuarioRepository user,
+            ICondicionMedicaRepository condiciones,
+            ICacheService cache)
         {
-            _condiciones = condiciones;
             _user = user;
+            _condiciones = condiciones;
             _cache = cache;
-            _registroPasoService = registroPasoService;
         }
 
         public async Task<List<string>> HandleAsync(
-      string uid,
-      List<Guid> ids,
-      bool skip,
-      CancellationToken ct)
+            string uid,
+            List<Guid> ids,
+            bool skip,
+            ModoPreferencias modo,
+            CancellationToken ct)
         {
             var usuario = await _user.GetByFirebaseUidAsync(uid, ct)
-                          ?? throw new InvalidOperationException("Usuario no encontrado.");
+                ?? throw new InvalidOperationException("Usuario no encontrado.");
 
-           
+            //
+            // SKIP → vaciar todas las condiciones
+            //
             if (skip)
             {
                 usuario.CondicionesMedicas.Clear();
+                await _user.SaveChangesAsync(ct);
 
-                await _registroPasoService.AplicarPasoAsync(
-                    usuario,
-                    RegistroPaso.Condiciones,
-                    $"registro:{uid}:condiciones",
-                    null,
-                    ct
-                );
+                // Guardar en redis SOLO si es registro
+                if (modo == ModoPreferencias.Registro)
+                {
+                    await _cache.SetAsync(
+                        $"registro:{uid}:condiciones",
+                        new List<Guid>(),
+                        TimeSpan.FromHours(12)
+                    );
+                }
 
-                return new List<string>();
+                return usuario.ValidarCompatibilidad();
             }
 
-          
+            //
+            //  Validar entidades enviadas
+            //
             var entidadesValidas = await _condiciones.GetByIdsAsync(ids, ct);
             if (entidadesValidas.Count != ids.Count)
                 throw new ArgumentException("Una o más condiciones médicas no existen.");
 
-            //Determinar cambios 
+            //
+            // Determinar cambios
+            //
             var actuales = usuario.CondicionesMedicas.Select(c => c.Id).ToHashSet();
             var nuevas = ids.ToHashSet();
 
             var paraAgregar = nuevas.Except(actuales).ToList();
             var paraQuitar = actuales.Except(nuevas).ToList();
 
-            bool huboCambios = false;
+            bool huboCambios = paraAgregar.Any() || paraQuitar.Any();
 
-            // Quitar
-            foreach (var c in usuario.CondicionesMedicas.Where(x => paraQuitar.Contains(x.Id)).ToList())
-            {
-                usuario.CondicionesMedicas.Remove(c);
-                huboCambios = true;
-            }
-
-            // Agregar
-            foreach (var c in entidadesValidas.Where(x => paraAgregar.Contains(x.Id)))
-            {
-                usuario.CondicionesMedicas.Add(c);
-                huboCambios = true;
-            }
-
+            //
+            //  Si no hubo cambios → solo actualizar Redis si es registro
+            //
             if (!huboCambios)
+            {
+                if (modo == ModoPreferencias.Registro)
+                {
+                    await _cache.SetAsync(
+                        $"registro:{uid}:condiciones",
+                        ids,
+                        TimeSpan.FromHours(12)
+                    );
+                }
+
                 return new List<string>();
+            }
 
-         
-            var gustosRemovidos = usuario.ValidarCompatibilidad();
+            //
+            // Aplicar cambios EN DB
+            //
 
-         
-            await _registroPasoService.AplicarPasoAsync(
-                usuario,
-                RegistroPaso.Gustos,
-                $"registro:{uid}:condiciones",
-                ids,
-                ct
-            );
+            // Quitar condiciones
+            foreach (var c in usuario.CondicionesMedicas.Where(x => paraQuitar.Contains(x.Id)).ToList())
+                usuario.CondicionesMedicas.Remove(c);
 
-            return gustosRemovidos;
+            // Agregar condiciones
+            foreach (var c in entidadesValidas.Where(x => paraAgregar.Contains(x.Id)))
+                usuario.CondicionesMedicas.Add(c);
+
+            await _user.SaveChangesAsync(ct);
+
+            //
+            // 6Guardar en Redis SOLO si es registro
+            //
+            if (modo == ModoPreferencias.Registro)
+            {
+                await _cache.SetAsync(
+                    $"registro:{uid}:condiciones",
+                    ids,
+                    TimeSpan.FromHours(12)
+                );
+            }
+
+            //
+            //  Validar compatibilidad (gustos removidos)
+            //
+            return usuario.ValidarCompatibilidad();
         }
-
     }
+
 }
 

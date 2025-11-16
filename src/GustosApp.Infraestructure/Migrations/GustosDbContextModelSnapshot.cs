@@ -2126,11 +2126,11 @@ namespace GustosApp.Infraestructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("PasoActual")
-                        .HasColumnType("int");
-
                     b.Property<int>("Plan")
                         .HasColumnType("int");
+
+                    b.Property<bool>("RegistroInicialCompleto")
+                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 

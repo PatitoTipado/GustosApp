@@ -1,224 +1,255 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Moq;
-using Xunit;
-using FluentAssertions;
-using GustosApp.Domain.Interfaces;
-using GustosApp.Domain.Model;
-using GustosApp.Application.Tests.mocks;
-using GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCases;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
 
-
+using GustosApp.Domain.Interfaces;
+using GustosApp.Domain.Model;
+using Moq;
+using Xunit;
 
 public class GuardarRestriccionesUseCaseTests
 {
-    private readonly Mock<IUsuarioRepository> _userRepo;
-    private readonly Mock<IRestriccionRepository> _restriccionesRepo;
-    private readonly Mock<IRegistroPasoService> _pasoService;
-    private readonly Mock<ICacheService> _cache;
+    private readonly Mock<IUsuarioRepository> _userMock;
+    private readonly Mock<IRestriccionRepository> _restriccionMock;
+    private readonly Mock<ICacheService> _cacheMock;
     private readonly GuardarRestriccionesUseCase _useCase;
+    private readonly CancellationToken _ct = CancellationToken.None;
 
     public GuardarRestriccionesUseCaseTests()
     {
-        _userRepo = new Mock<IUsuarioRepository>();
-        _restriccionesRepo = new Mock<IRestriccionRepository>();
-        _pasoService = new Mock<IRegistroPasoService>();
-        _cache = new Mock<ICacheService>();
+        _userMock = new Mock<IUsuarioRepository>();
+        _restriccionMock = new Mock<IRestriccionRepository>();
+        _cacheMock = new Mock<ICacheService>();
 
         _useCase = new GuardarRestriccionesUseCase(
-            _userRepo.Object,
-            _restriccionesRepo.Object,
-            _cache.Object,
-             _pasoService.Object
+            _userMock.Object,
+            _restriccionMock.Object,
+            _cacheMock.Object
         );
     }
 
-    private Usuario CrearUsuarioConRestricciones(params Guid[] ids)
+    private Usuario CrearUsuarioBase(string uid)
     {
         return new Usuario
         {
-            Id = Guid.NewGuid(),
-            FirebaseUid = "test-uid",
-            PasoActual = RegistroPaso.Restricciones,
-            Restricciones = ids.Select(id => new Restriccion { Id = id, Nombre = $"R-{id}" }).ToList()
+            FirebaseUid = uid,
+            Email = "test@user.com",
+            Nombre = "Test",
+            Apellido = "User",
+            IdUsuario = "usr1",
+            Gustos = new List<Gusto>(),
+            Restricciones = new List<Restriccion>(),
+            CondicionesMedicas = new List<CondicionMedica>()
         };
     }
 
-    
     [Fact]
-    public async Task HandleAsync_UsuarioNoExiste_ThrowInvalidOperation()
+    public async Task HandleAsync_SkipTrue_LimpiaRestricciones_YGuardaCacheEnRegistro()
     {
-        _userRepo.Setup(x => x.GetByFirebaseUidAsync("abc", It.IsAny<CancellationToken>()))
-                 .ReturnsAsync((Usuario)null);
+        // Arrange
+        var uid = "uid-test";
+        var usuario = CrearUsuarioBase(uid);
 
-        Func<Task> act = async () => await _useCase.HandleAsync("abc", new List<Guid>(), false, default);
+        usuario.Restricciones.Add(new Restriccion { Id = Guid.NewGuid(), Nombre = "Sin gluten" });
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("Usuario no encontrado.");
-    }
+        _userMock
+            .Setup(r => r.GetByFirebaseUidAsync(uid, _ct))
+            .ReturnsAsync(usuario);
 
-    [Fact]
-    public async Task HandleAsync_SkipTrue_LimpiaRestriccionesYAplicaPaso()
-    {
-        var u = CrearUsuarioConRestricciones(Guid.NewGuid());
-
-        _userRepo.Setup(x => x.GetByFirebaseUidAsync("uid", It.IsAny<CancellationToken>()))
-                 .ReturnsAsync(u);
-
-        var result = await _useCase.HandleAsync("uid", new List<Guid>(), true, default);
-
-        u.Restricciones.Should().BeEmpty();
-
-        _pasoService.Verify(x =>
-            x.AplicarPasoAsync(
-                u,
-                RegistroPaso.Restricciones,
-                "registro:uid:restricciones",
-                null,
-                It.IsAny<CancellationToken>()
-            ),
-            Times.Once
+        // Act
+        var result = await _useCase.HandleAsync(
+            uid,
+            new List<Guid> { Guid.NewGuid() }, // no importa, porque skip = true
+            skip: true,
+            modo: ModoPreferencias.Registro,
+            ct: _ct
         );
 
-        result.Should().BeEmpty();
+        // Assert
+        Assert.Empty(usuario.Restricciones);          // se limpiaron
+        _userMock.Verify(r => r.SaveChangesAsync(_ct), Times.Once);
+
+        // cache de registro actualizado con lista vacía
+        _cacheMock.Verify(c => c.SetAsync(
+            $"registro:{uid}:restricciones",
+            It.Is<List<Guid>>(l => l.Count == 0),
+            It.IsAny<TimeSpan>()),
+            Times.Once
+        );
     }
 
-   
     [Fact]
-    public async Task HandleAsync_IdsInvalidos_ThrowArgumentException()
+    public async Task HandleAsync_IdsInvalidos_LanzaArgumentException()
     {
-        var u = CrearUsuarioConRestricciones(Guid.NewGuid());
+        // Arrange
+        var uid = "uid-test";
+        var usuario = CrearUsuarioBase(uid);
 
         var ids = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
 
-        _userRepo.Setup(x => x.GetByFirebaseUidAsync("uid", It.IsAny<CancellationToken>()))
-                 .ReturnsAsync(u);
+        _userMock
+            .Setup(r => r.GetByFirebaseUidAsync(uid, _ct))
+            .ReturnsAsync(usuario);
 
-        // Solo existe 1 restricción → mismatch
-        _restriccionesRepo.Setup(x => x.GetRestriccionesByIdsAsync(ids, It.IsAny<CancellationToken>()))
-                          .ReturnsAsync(new List<Restriccion> { new Restriccion { Id = ids[0] } });
-
-        Func<Task> act = async () => await _useCase.HandleAsync("uid", ids, false, default);
-
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithMessage("Una o más restricciones no existen.");
-    }
-
-  
-    [Fact]
-    public async Task HandleAsync_SinCambios_NoAplicaPasoYDevuelveVacio()
-    {
-        var id = Guid.NewGuid();
-        var u = CrearUsuarioConRestricciones(id);
-
-        _userRepo.Setup(x => x.GetByFirebaseUidAsync("uid", It.IsAny<CancellationToken>()))
-                 .ReturnsAsync(u);
-
-        _restriccionesRepo.Setup(x => x.GetRestriccionesByIdsAsync(new List<Guid> { id }, It.IsAny<CancellationToken>()))
-                          .ReturnsAsync(new List<Restriccion> { new Restriccion { Id = id } });
-
-        var result = await _useCase.HandleAsync("uid", new List<Guid> { id }, false, default);
-
-        result.Should().BeEmpty();
-
-        _pasoService.Verify(x =>
-            x.AplicarPasoAsync(It.IsAny<Usuario>(), It.IsAny<RegistroPaso>(), It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()),
-            Times.Never
-        );
-    }
-
-  
-    [Fact]
-    public async Task HandleAsync_AgregarNuevas_ActualizaUsuarioYAplicaPaso()
-    {
-        var idExistente = Guid.NewGuid();
-        var idNuevo = Guid.NewGuid();
-
-        var u = CrearUsuarioConRestricciones(idExistente);
-
-        _userRepo.Setup(x => x.GetByFirebaseUidAsync("uid", It.IsAny<CancellationToken>()))
-                 .ReturnsAsync(u);
-
-        _restriccionesRepo.Setup(x => x.GetRestriccionesByIdsAsync(
-            It.Is<List<Guid>>(l => l.Contains(idExistente) && l.Contains(idNuevo)),
-            It.IsAny<CancellationToken>()))
+        // Devuelvo menos entidades de las pedidas → mismatch
+        _restriccionMock
+            .Setup(r => r.GetRestriccionesByIdsAsync(ids, _ct))
             .ReturnsAsync(new List<Restriccion>
             {
-                new Restriccion { Id = idExistente },
-                new Restriccion { Id = idNuevo }
+                new Restriccion { Id = ids[0], Nombre = "Sin gluten" }
             });
 
-        var result = await _useCase.HandleAsync("uid", new List<Guid> { idExistente, idNuevo }, false, default);
+        // Act + Assert
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            _useCase.HandleAsync(uid, ids, skip: false, modo: ModoPreferencias.Registro, ct: _ct));
+    }
 
-        u.Restricciones.Should().HaveCount(2);
-        u.Restricciones.Any(r => r.Id == idNuevo).Should().BeTrue();
+    [Fact]
+    public async Task HandleAsync_SinCambios_ModoRegistro_SoloCache_NoSaveChanges()
+    {
+        // Arrange
+        var uid = "uid-test";
+        var r1Id = Guid.NewGuid();
+        var r2Id = Guid.NewGuid();
 
-        _pasoService.Verify(x =>
-            x.AplicarPasoAsync(
-                u,
-                RegistroPaso.Condiciones,
-                "registro:uid:restricciones",
-                It.IsAny<List<Guid>>(),
-                It.IsAny<CancellationToken>()
-            ),
+        var usuario = CrearUsuarioBase(uid);
+        usuario.Restricciones = new List<Restriccion>
+        {
+            new Restriccion { Id = r1Id, Nombre = "Sin gluten" },
+            new Restriccion { Id = r2Id, Nombre = "Sin lactosa" }
+        };
+
+        var ids = new List<Guid> { r1Id, r2Id }; // exactamente las mismas
+
+        _userMock
+            .Setup(r => r.GetByFirebaseUidAsync(uid, _ct))
+            .ReturnsAsync(usuario);
+
+        _restriccionMock
+            .Setup(r => r.GetRestriccionesByIdsAsync(ids, _ct))
+            .ReturnsAsync(usuario.Restricciones.ToList());
+
+        // Act
+        var result = await _useCase.HandleAsync(
+            uid,
+            ids,
+            skip: false,
+            modo: ModoPreferencias.Registro,
+            ct: _ct
+        );
+
+        // Assert: sin cambios → lista vacía
+        Assert.Empty(result);
+
+        // No se llamó a SaveChanges
+        _userMock.Verify(r => r.SaveChangesAsync(_ct), Times.Never);
+
+        // Pero sí se cacheó en registro
+        _cacheMock.Verify(c => c.SetAsync(
+            $"registro:{uid}:restricciones",
+            It.Is<List<Guid>>(l => l.Count == 2 && l.Contains(r1Id) && l.Contains(r2Id)),
+            It.IsAny<TimeSpan>()),
             Times.Once
         );
     }
 
-  
     [Fact]
-    public async Task HandleAsync_QuitarRestricciones_UsuarioActualizado()
+    public async Task HandleAsync_AgregaYQuita_Correctamente()
     {
-        var id1 = Guid.NewGuid();
-        var id2 = Guid.NewGuid();
+        // Arrange
+        var uid = "uid-test";
+        var r1Id = Guid.NewGuid(); // ya está
+        var r2Id = Guid.NewGuid(); // se quita
+        var r3Id = Guid.NewGuid(); // se agrega
 
-        var usuario = CrearUsuarioConRestricciones(id1, id2);
+        var usuario = CrearUsuarioBase(uid);
 
-        _userRepo.Setup(x => x.GetByFirebaseUidAsync("uid", default))
-                 .ReturnsAsync(usuario);
+        usuario.Restricciones = new List<Restriccion>
+        {
+            new Restriccion { Id = r1Id, Nombre = "Sin gluten" },
+            new Restriccion { Id = r2Id, Nombre = "Sin lactosa" }
+        };
 
-        _restriccionesRepo.Setup(x => x.GetRestriccionesByIdsAsync(
-            It.Is<List<Guid>>(l => l.SequenceEqual(new List<Guid> { id1 })),
-            default))
-        .ReturnsAsync(new List<Restriccion> { new Restriccion { Id = id1 } });
+        var ids = new List<Guid> { r1Id, r3Id }; // r2 sale, r3 entra
 
-        await _useCase.HandleAsync("uid", new List<Guid> { id1 }, false, default);
+        var r1 = usuario.Restricciones.First(x => x.Id == r1Id);
+        var r3 = new Restriccion { Id = r3Id, Nombre = "Sin sal" };
 
-        usuario.Restricciones.Should().HaveCount(1);
-        usuario.Restricciones.Any(r => r.Id == id2).Should().BeFalse();
+        _userMock
+            .Setup(r => r.GetByFirebaseUidAsync(uid, _ct))
+            .ReturnsAsync(usuario);
+
+        _restriccionMock
+            .Setup(r => r.GetRestriccionesByIdsAsync(ids, _ct))
+            .ReturnsAsync(new List<Restriccion> { r1, r3 });
+
+        // Act
+        var result = await _useCase.HandleAsync(
+            uid,
+            ids,
+            skip: false,
+            modo: ModoPreferencias.Registro,
+            ct: _ct
+        );
+
+        // Assert
+        _userMock.Verify(r => r.SaveChangesAsync(_ct), Times.Once);
+
+        Assert.Contains(usuario.Restricciones, r => r.Id == r1Id);
+        Assert.Contains(usuario.Restricciones, r => r.Id == r3Id);
+        Assert.DoesNotContain(usuario.Restricciones, r => r.Id == r2Id);
     }
 
- 
-
     [Fact]
-    public async Task HandleAsync_CompatibilidadDevuelveValores_UseCaseRetornaLista()
+    public async Task HandleAsync_Cambios_DevuelveGustosIncompatibles()
     {
-        var id = Guid.NewGuid();
+        // Arrange
+        var uid = "uid-test";
 
-    
-        var usuarioMock = new Mock<Usuario>();
-        usuarioMock.SetupAllProperties(); 
-        usuarioMock.Object.FirebaseUid = "uid";
-        usuarioMock.Object.Restricciones = new List<Restriccion>();
-        usuarioMock.Object.Gustos = new List<Gusto>();
+        var tagAzucar = new Tag { Id = Guid.NewGuid(), Nombre = "Azucar" };
 
-     
-        usuarioMock
-            .Setup(u => u.ValidarCompatibilidad())
-            .Returns(new List<string> { "Gusto1", "Gusto2" });
+        var gustoPizza = new Gusto
+        {
+            Id = Guid.NewGuid(),
+            Nombre = "Pizza",
+            Tags = new List<Tag> { tagAzucar }
+        };
 
-        _userRepo.Setup(r => r.GetByFirebaseUidAsync("uid", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(usuarioMock.Object);
+        var usuario = CrearUsuarioBase(uid);
+        usuario.Gustos.Add(gustoPizza);
 
-        _restriccionesRepo
-            .Setup(r => r.GetRestriccionesByIdsAsync(It.IsAny<List<Guid>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<Restriccion> { new Restriccion { Id = id } });
+        var restriccionDiabetes = new Restriccion
+        {
+            Id = Guid.NewGuid(),
+            Nombre = "Diabetes",
+            TagsProhibidos = new List<Tag> { tagAzucar }
+        };
 
-        var result = await _useCase.HandleAsync("uid", new List<Guid> { id }, false, default);
+        var ids = new List<Guid> { restriccionDiabetes.Id };
 
-        result.Should().Contain(new[] { "Gusto1", "Gusto2" });
+        _userMock
+            .Setup(r => r.GetByFirebaseUidAsync(uid, _ct))
+            .ReturnsAsync(usuario);
+
+        _restriccionMock
+            .Setup(r => r.GetRestriccionesByIdsAsync(ids, _ct))
+            .ReturnsAsync(new List<Restriccion> { restriccionDiabetes });
+
+        // Act
+        var result = await _useCase.HandleAsync(
+            uid,
+            ids,
+            skip: false,
+            modo: ModoPreferencias.Registro,
+            ct: _ct
+        );
+
+        // Assert: Pizza debe ser incompatible y removida
+        Assert.Contains("Pizza", result);
+        Assert.DoesNotContain(usuario.Gustos, g => g.Nombre == "Pizza");
     }
 }

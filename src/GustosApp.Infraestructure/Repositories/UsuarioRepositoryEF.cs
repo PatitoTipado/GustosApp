@@ -13,23 +13,30 @@ namespace GustosApp.Infraestructure.Repositories
         public async Task<Usuario?> GetByFirebaseUidAsync(string firebaseUid, CancellationToken ct = default)
         {
             return await _db.Usuarios
-         .Include(u => u.Gustos)
-             .ThenInclude(g => g.Tags)
-         .Include(u => u.Restricciones)
-             .ThenInclude(r => r.TagsProhibidos)
-         .Include(u => u.CondicionesMedicas)
-             .ThenInclude(c => c.TagsCriticos)
-         .FirstOrDefaultAsync(u => u.FirebaseUid == firebaseUid, ct);
+               
+                .Include(u => u.Gustos)
+                    .ThenInclude(g => g.Tags)
+                .Include(u => u.Restricciones)
+                    .ThenInclude(r => r.TagsProhibidos)
+                .Include(u => u.CondicionesMedicas)
+                    .ThenInclude(c => c.TagsCriticos)
+                .Include(u => u.Visitados)
+                .FirstOrDefaultAsync(u => u.FirebaseUid == firebaseUid, ct);
         }
+
+
 
         public Task<Usuario?> GetByEmailAsync(string email, CancellationToken ct = default)
             => _db.Usuarios.FirstOrDefaultAsync(u => u.Email == email, ct);
 
         public Task<Usuario?> GetByUsernameAsync(string username, CancellationToken ct = default)
-            => _db.Usuarios
-                .Include(u => u.Gustos)
-                .Include(u => u.Visitados)
-                .FirstOrDefaultAsync(u => u.IdUsuario == username, ct);
+     => _db.Usuarios
+         .Include(u => u.Gustos)
+         .Include(u => u.Restricciones)
+         .Include(u => u.CondicionesMedicas)
+         .Include(u => u.Visitados)
+         .FirstOrDefaultAsync(u => u.IdUsuario == username, ct);
+
 
         public async Task<IEnumerable<Usuario>> GetAllAsync(int limit = 100, CancellationToken ct = default)
         {

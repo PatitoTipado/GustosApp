@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 namespace GustosApp.Domain.Model
 {
 
-    public enum RegistroPaso { Ninguno = 0, Restricciones = 1, Condiciones = 2, Gustos = 3, Verificacion = 4, Finalizado = 5 }
     
     public enum PlanUsuario { Free = 0, Plus = 1 }
     public class Usuario
@@ -28,13 +27,16 @@ namespace GustosApp.Domain.Model
         public string? FotoPerfilUrl { get;  set; }
         public DateTime FechaRegistro { get;  set; } = DateTime.UtcNow;
         public bool Activo { get;  set; } = true;
+
+        public bool RegistroInicialCompleto { get; set; }
+
         public PlanUsuario Plan { get; set; } = PlanUsuario.Free;
+
 
         public ICollection<Gusto> Gustos { get; set; } = new List<Gusto>();
         public ICollection<Restriccion> Restricciones { get; set; } = new List<Restriccion>();
         public ICollection<CondicionMedica> CondicionesMedicas { get; set; } = new List<CondicionMedica>();
 
-        public RegistroPaso PasoActual { get;  set; } = RegistroPaso.Ninguno;
 
         // Relaciones con grupos
         public ICollection<Grupo> GruposAdministrados { get; set; } = new List<Grupo>();
@@ -43,12 +45,6 @@ namespace GustosApp.Domain.Model
         public ICollection<InvitacionGrupo> InvitacionesEnviadas { get; set; } = new List<InvitacionGrupo>();
         public ICollection<Notificacion> Notificaciones { get; set; } = new List<Notificacion>();
 
-
-        public void AvanzarPaso(RegistroPaso paso)
-        {
-            if ((int)paso >= (int)PasoActual) PasoActual = paso;
-        }
-        
         public bool EsPremium() => Plan == PlanUsuario.Plus;
         
         public void ActualizarAPlan(PlanUsuario nuevoPlan)
@@ -68,6 +64,7 @@ namespace GustosApp.Domain.Model
             IdUsuario = idUsuario ?? throw new ArgumentNullException(nameof(nombre));
             FotoPerfilUrl = fotoPerfilUrl;
         }
+     
         public virtual  List<string> ValidarCompatibilidad()
         {
             var gustosIncompatibles = new List<Gusto>();
@@ -104,12 +101,6 @@ namespace GustosApp.Domain.Model
 
             return gustosIncompatibles.Select(g => g.Nombre).ToList();
         }
-
-        public void SetPaso(RegistroPaso paso)
-        {
-            PasoActual = paso;
-        }
-
         public ICollection<UsuarioRestauranteVisitado> Visitados { get; set; } = new List<UsuarioRestauranteVisitado>();
         //public object Reviews { get; set; }
     }

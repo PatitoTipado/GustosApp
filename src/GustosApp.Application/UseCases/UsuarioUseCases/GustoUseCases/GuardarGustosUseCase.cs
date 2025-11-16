@@ -14,85 +14,121 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases
         private readonly IUsuarioRepository _userRepository;
         private readonly IGustoRepository _gustoRepository;
         private readonly ICacheService _cache;
-        private readonly IRegistroPasoService _registroPasoService;
 
-        public GuardarGustosUseCase(IUsuarioRepository userRepository,
-            IGustoRepository gustoRepository, ICacheService cache,
-            IRegistroPasoService registroPasoService)
+        public GuardarGustosUseCase(
+            IUsuarioRepository userRepository,
+            IGustoRepository gustoRepository,
+            ICacheService cache)
         {
             _userRepository = userRepository;
             _gustoRepository = gustoRepository;
             _cache = cache;
-            _registroPasoService = registroPasoService;
         }
-        public async Task<List<string>> HandleAsync(string uid, List<Guid> ids, CancellationToken ct)
+
+        public async Task<List<string>> HandleAsync(
+            string uid,
+            List<Guid> ids,
+            ModoPreferencias modo,
+            CancellationToken ct)
         {
             var usuario = await _userRepository.GetByFirebaseUidAsync(uid, ct)
-                           ?? throw new Exception("Usuario no encontrado.");
+                ?? throw new InvalidOperationException("Usuario no encontrado.");
 
-            // Caso: usuario borra todo → resetear paso
+            //
+            // Caso: usuario borra todo → borrar gustos
+            //
             if (ids == null || ids.Count == 0)
             {
                 usuario.Gustos.Clear();
+                await _userRepository.SaveChangesAsync(ct);
 
-                usuario.SetPaso(RegistroPaso.Gustos);
-
-                await _registroPasoService.AplicarPasoAsync(
-                    usuario,
-                    RegistroPaso.Gustos,
-                    $"registro:{uid}:gustos",
-                    null,
-                    ct
-                );
+                // Guardar en redis SOLO si es registro
+                if (modo == ModoPreferencias.Registro)
+                {
+                    await _cache.SetAsync(
+                        $"registro:{uid}:gustos",
+                        new List<Guid>(),
+                        TimeSpan.FromHours(12)
+                    );
+                }
 
                 return new List<string>();
             }
 
+            //
+            //  Validar mínimo 3 gustos
+            //
             if (ids.Count < 3)
                 throw new ArgumentException("Debe seleccionar al menos 3 gustos.");
 
-            // Validación estricta
+            //
+            //  Validación estricta: todos deben existir
+            //
             var gustosValidos = await _gustoRepository.GetByIdsAsync(ids, ct);
             if (gustosValidos.Count != ids.Count)
                 throw new ArgumentException("Uno o más gustos no existen.");
 
-            // Comparar
+            //
+            // Comparar actuales vs nuevas
+            //
             var actuales = usuario.Gustos.Select(g => g.Id).ToHashSet();
             var nuevas = ids.ToHashSet();
 
             var paraAgregar = nuevas.Except(actuales).ToList();
             var paraQuitar = actuales.Except(nuevas).ToList();
 
-            bool huboCambios = false;
+            bool huboCambios = paraAgregar.Any() || paraQuitar.Any();
+
+            //
+            //  Si no hubo cambios → cachear en registro y terminar
+            //
+            if (!huboCambios)
+            {
+                if (modo == ModoPreferencias.Registro)
+                {
+                    await _cache.SetAsync(
+                        $"registro:{uid}:gustos",
+                        ids,
+                        TimeSpan.FromHours(12)
+                    );
+                }
+
+                return new List<string>();
+            }
+
+            //
+            //  Aplicar cambios en DB (tu lógica original)
+            //
 
             // Quitar
             foreach (var g in usuario.Gustos.Where(x => paraQuitar.Contains(x.Id)).ToList())
-            {
                 usuario.Gustos.Remove(g);
-                huboCambios = true;
-            }
 
             // Agregar
             foreach (var g in gustosValidos.Where(x => paraAgregar.Contains(x.Id)))
-            {
                 usuario.Gustos.Add(g);
-                huboCambios = true;
+
+            await _userRepository.SaveChangesAsync(ct);
+
+            //
+            // 7Cache SOLO en registro
+            //
+            if (modo == ModoPreferencias.Registro)
+            {
+                await _cache.SetAsync(
+                    $"registro:{uid}:gustos",
+                    ids,
+                    TimeSpan.FromHours(12)
+                );
             }
 
-            if (!huboCambios)
-                return new List<string>();
-
+            //
+            // Validar compatibilidad (tu lógica original)
+            //
             var conflictos = usuario.ValidarCompatibilidad();
-
-            await _registroPasoService.AplicarPasoAsync(
-                usuario,
-                RegistroPaso.Verificacion,
-                $"registro:{uid}:gustos",
-                ids,
-                ct
-            );
 
             return conflictos;
         }
     }
-    }
+
+}

@@ -46,19 +46,19 @@ namespace GustosApp.API.DTO
 
     public class UsuarioResumenResponse
     {
-
-        public string Nombre { get; set; } = null!;
+        public string Nombre { get; set; }
         public string? Apellido { get; set; }
 
-        public List<string> Gustos { get; set; } = new();
-        public List<string> Restricciones { get; set; } = new();
-        public List<string> CondicionesMedicas { get; set; } = new();
-
-        public RegistroPaso PasoActual { get; set; }
-
+        public List<ItemResumen> Restricciones { get; set; } = new();
+        public List<ItemResumen> CondicionesMedicas { get; set; } = new();
+        public List<ItemResumen> Gustos { get; set; } = new();
     }
 
-
+    public class ItemResumen
+    {
+        public Guid Id { get; set; }
+        public string Nombre { get; set; }
+    }
 
 
 

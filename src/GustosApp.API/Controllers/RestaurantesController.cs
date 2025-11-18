@@ -21,6 +21,11 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using GustosApp.Application.UseCases.RestauranteUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases;
+using Microsoft.AspNetCore.Http.HttpResults;
+using System.Security.Cryptography;
+using GustosApp.Domain.Model.@enum;
+using GustosApp.Domain.Common;
 
 
 // Controlador para restaurantes que se registran en la app por un usuario y restaurantes traidos de Places v1
@@ -29,17 +34,19 @@ namespace GustosApp.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class RestaurantesController : ControllerBase
+    public class RestaurantesController : BaseApiController
     {
         private readonly IServicioRestaurantes _servicio;
-        private readonly ObtenerGustosUseCase _obtenerGustos;
         private readonly SugerirGustosSobreUnRadioUseCase _sugerirGustos;
         private readonly BuscarRestaurantesCercanosUseCase _buscarRestaurantes;
         private readonly ActualizarDetallesRestauranteUseCase _obtenerDetalles;
+        private readonly ConstruirPreferenciasUseCase _construirPreferencias;
         private readonly IAlmacenamientoArchivos _fileStorage;
         private readonly GustosApp.Infraestructure.GustosDbContext _db;
         private readonly IOcrService _ocr;
         private readonly IMenuParser _menuParser;
+        private readonly ICacheService _cache;
+
         private IMapper _mapper;
 
 
@@ -47,25 +54,26 @@ namespace GustosApp.API.Controllers
         public RestaurantesController(
      IServicioRestaurantes servicio,
      SugerirGustosSobreUnRadioUseCase sugerirGustos,
-     ObtenerGustosUseCase obtenerGustos,
      BuscarRestaurantesCercanosUseCase buscarRestaurantes,
+     ConstruirPreferenciasUseCase construirPreferencias,
      ActualizarDetallesRestauranteUseCase obtenerDetalles,
      IAlmacenamientoArchivos fileStorage,
      GustosApp.Infraestructure.GustosDbContext db,
+        ICacheService cache,
      IOcrService ocr,
      IMenuParser menuParser,
      IMapper mapper)
         {
             _servicio = servicio;
-            _obtenerGustos = obtenerGustos;
             _sugerirGustos = sugerirGustos;
             _buscarRestaurantes = buscarRestaurantes;
+            _construirPreferencias = construirPreferencias;
             _obtenerDetalles = obtenerDetalles;
             _fileStorage = fileStorage;
             _db = db;
             _fileStorage = fileStorage;
+            _cache = cache;
             _mapper = mapper;
-
             _ocr = ocr;
             _menuParser = menuParser;
 
@@ -112,87 +120,96 @@ namespace GustosApp.API.Controllers
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> Get(
-            [FromQuery] List<string>? gustos,
-            CancellationToken ct,
-            string? tipoDeRestaurante,
-            [FromQuery]double rating,
-            [FromQuery(Name = "near.lat")] double? lat = -34.641812775271,
-            [FromQuery(Name = "near.lng")] double? lng = -58.56990230458638,
-            [FromQuery(Name = "radiusMeters")] int? radius = 1000,
-            [FromQuery] int top = 10
-        )
+      [FromQuery] List<string>? gustos,
+       [FromQuery] string? amigoUsername,
+      CancellationToken ct,
+     [FromQuery] string? tipoDeRestaurante,
+      [FromQuery] double rating,
+      [FromQuery(Name = "near.lat")] double? lat,
+      [FromQuery(Name = "near.lng")] double? lng,
+      [FromQuery(Name = "radiusMeters")] int? radius = 3000,
+      [FromQuery] int top = 10
+  )
         {
+            
+            var firebaseUid = GetFirebaseUid();
+
+            // Filtrar restaurantes cercanos
             var res = await _servicio.BuscarAsync(
+                rating: rating,
                 tipo: tipoDeRestaurante,
                 plato: "",
                 lat: lat,
                 lng: lng,
-                radioMetros: radius,
-                rating: rating
+                radioMetros: radius
+              );
+           
+
+
+            await _cache.SetAsync(
+             $"usuario:{firebaseUid}:location",
+             new UserLocation
+             (
+                lat ?? 0,
+                lng ?? 0,
+                radius ?? 3000,
+                DateTime.UtcNow
+             ),
+              TimeSpan.FromMinutes(10));
+
+            var preferencias = await _construirPreferencias.HandleAsync(
+                firebaseUid,
+                amigoUsername: amigoUsername,
+                grupoId: null,
+                gustosDelFiltro: gustos,
+                ct);
+
+            //  Algoritmo combinado
+            var recommendations = await _sugerirGustos.Handle(
+                preferencias,
+                res,
+                top,
+                ct
             );
 
-            Console.WriteLine(res.ToList().Count());
-            Console.WriteLine(res.ToList().Count());
-            Console.WriteLine(res.ToList().Count());
+            // DTO
+            var response = _mapper.Map<List<RestauranteDTO>>(recommendations);
 
-
-            var firebaseUid = User.FindFirst("user_id")?.Value
-            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-            ?? User.FindFirst("sub")?.Value;
-
-            if (string.IsNullOrWhiteSpace(firebaseUid))
-            {
-                return Unauthorized(new { message = "No se encontr el UID de Firebase en el token." });
-            }
-
-            var preferencias = await _obtenerGustos.HandleAsync(firebaseUid, ct, gustos);
-
-            var recommendations = _sugerirGustos.Handle(preferencias, res, top, ct);
-
-            var response = recommendations.Select(r => new RestauranteDTO
-            {
-                Id = r.Id,
-                PropietarioUid = r.PropietarioUid,
-                Nombre = r.Nombre,
-                Direccion = r.Direccion,
-                Latitud = r.Latitud,
-                Longitud = r.Longitud,
-                ImagenUrl = r.ImagenUrl,
-                Rating = r.Rating ?? 0,
-                Valoracion = r.Valoracion,
-                Tipo = r.TypesJson,
-                GustosQueSirve = r.GustosQueSirve
-             .Select(g => new GustoDto(g.Id, g.Nombre, g.ImagenUrl))
-             .ToList(),
-                RestriccionesQueRespeta = r.RestriccionesQueRespeta
-             .Select(re => new RestriccionResponse(re.Id, re.Nombre))
-             .ToList(),
-                Score = r.Score
-            }).ToList();
 
             return Ok(new
             {
                 total = response.Count,
                 recomendaciones = response
             });
+
         }
 
 
+        [Authorize]
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
         {
+            var uid= GetFirebaseUid();
+
             var restaurante = await _servicio.ObtenerAsync(id);
 
             if (restaurante == null)
                 return NotFound("Restaurante no encontrado");
 
 
-            if (restaurante.PlaceId!=null && (restaurante.Reviews == null || !restaurante.Reviews.Any()))
+            if (restaurante.PlaceId != null && (restaurante.Reviews == null || !restaurante.Reviews.Any()))
             {
                 var actualizado = await _servicio.ObtenerResenasDesdeGooglePlaces(restaurante.PlaceId, ct);
                 if (actualizado is not null)
-                    restaurante = actualizado;
+                 restaurante = actualizado;
+
             }
+
+            // Ordenar reseñas: locales primero, google después
+            restaurante.Reviews = restaurante.Reviews
+                .OrderBy(o => o.EsImportada)  // false = locales primero
+                .ThenByDescending(o => o.FechaCreacion)
+                .ToList();
 
             return Ok(restaurante);
         }

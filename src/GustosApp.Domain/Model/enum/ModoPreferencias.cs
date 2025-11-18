@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GustosApp.Domain.Model
+namespace GustosApp.Domain.Model.@enum
 {
     public enum ModoPreferencias
     {

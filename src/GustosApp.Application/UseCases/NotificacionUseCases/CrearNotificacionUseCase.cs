@@ -1,6 +1,7 @@
 ﻿using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
+using GustosApp.Domain.Model.@enum;
 using System;
 using System.Collections.Generic;
 using System.Linq;

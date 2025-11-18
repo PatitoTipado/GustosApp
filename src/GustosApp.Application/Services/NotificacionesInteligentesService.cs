@@ -12,7 +12,7 @@ public class NotificacionesInteligentesService
     private readonly IRestauranteRepository _restaurantes;
     private readonly INotificacionRepository _notificaciones;
     private readonly INotificacionRealtimeService _realtime;
-    private readonly SugerirGustosUseCase _sugerirGustos;
+    private readonly SugerirGustosSobreUnRadioUseCase _sugerirGustos;
     private readonly IEmailService _emailService;
     private readonly ObtenerGustosUseCase _obtenerGustos;
     private readonly ILogger<NotificacionesInteligentesService> _logger;
@@ -23,7 +23,7 @@ public class NotificacionesInteligentesService
         INotificacionRepository notificaciones,
         INotificacionRealtimeService realtime,
         ObtenerGustosUseCase obtenerGustos,
-        SugerirGustosUseCase sugerirGustos,
+        SugerirGustosSobreUnRadioUseCase sugerirGustos,
         IEmailService emailService,
         ILogger<NotificacionesInteligentesService> logger)
     {
@@ -38,7 +38,7 @@ public class NotificacionesInteligentesService
     }
 
     // 1. Recomendaciones personalizadas
-    public async Task GenerarRecomendacionesPersonalizadasAsync(CancellationToken ct = default)
+   /* public async Task GenerarRecomendacionesPersonalizadasAsync(CancellationToken ct = default)
     {
         var usuarios = await _usuarios.GetAllAsync(limit: 100, ct);
         _logger.LogInformation("Iniciando generación de recomendaciones para {count} usuarios", usuarios.Count());

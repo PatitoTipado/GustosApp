@@ -7,7 +7,7 @@ using GustosApp.Application.DTO;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.Services;
 using GustosApp.Domain.Interfaces;
-using GustosApp.Domain.Model;
+using GustosApp.Domain.Model.@enum;
 
 namespace GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases
 {

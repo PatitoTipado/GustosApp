@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Application.DTO;
 using System.Security.Claims;
-using GustosApp.Domain.Model;
+using GustosApp.Domain.Model.@enum;
 
 namespace GustosApp.API.Controllers
 {

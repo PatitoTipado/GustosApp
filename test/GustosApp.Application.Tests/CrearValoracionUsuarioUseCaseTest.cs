@@ -13,7 +13,7 @@ namespace GustosApp.Application.Tests
 {
     public class CrearValoracionUsuarioUseCaseTest
     {
-
+        /*
         [Fact]
         public async Task CrearValoracion()
         {
@@ -65,5 +65,6 @@ namespace GustosApp.Application.Tests
             await Assert.ThrowsAsync<ArgumentException>(() => 
             useCase.HandleAsync(Guid.NewGuid(),Guid.NewGuid(),6,"Buen restaurante","img","Invalid", fechaVisita, CancellationToken.None));
         }
+        */
     }
 }

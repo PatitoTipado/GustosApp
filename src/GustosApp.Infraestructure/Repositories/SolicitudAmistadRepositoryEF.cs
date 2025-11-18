@@ -1,5 +1,6 @@
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
+using GustosApp.Domain.Model.@enum;
 using GustosApp.Infraestructure;
 using Microsoft.EntityFrameworkCore;
 

@@ -19,19 +19,19 @@ namespace GustosApp.Infraestructure.Repositories
         }
         public async Task CrearAsync(OpinionRestaurante opinionRestaurante, CancellationToken cancellationToken)
         {
-            await _context.OpinionesRestaurante.AddAsync(opinionRestaurante, cancellationToken);
+            await _context.OpinionesRestaurantes.AddAsync(opinionRestaurante, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<bool> ExisteValoracionAsync(Guid usuarioId, Guid restauranteId, CancellationToken cancellationToken)
         {
-            return await _context.OpinionesRestaurante
+            return await _context.OpinionesRestaurantes
                             .AnyAsync(v => v.UsuarioId == usuarioId && v.RestauranteId == restauranteId);
         }
 
         public async Task<List<OpinionRestaurante>> ObtenerPorUsuarioAsync(Guid usuarioId, CancellationToken cancellationToken)
          {
-             return await _context.OpinionesRestaurante
+             return await _context.OpinionesRestaurantes
                             .Where(n => n.UsuarioId == usuarioId)
                             .Include(v => v.Restaurante)
                             .Include(v => v.Usuario) 
@@ -40,7 +40,7 @@ namespace GustosApp.Infraestructure.Repositories
 
         public async Task<List<OpinionRestaurante>> ObtenerPorRestauranteAsync(Guid restauranteId, CancellationToken cancellationToken)
         {
-            return await _context.OpinionesRestaurante
+            return await _context.OpinionesRestaurantes
                 .Where(v => v.RestauranteId == restauranteId)
                 .ToListAsync(cancellationToken);
         }

@@ -14,13 +14,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Text.Json;
+using GustosApp.Application.UseCases.UsuarioUseCases;
 
 namespace GustosApp.API.Controllers
 {
     [Route("[controller]")]
     [ApiController]
     [Authorize]
-    public class GrupoController : ControllerBase
+    public class GrupoController : BaseApiController
     {
         private readonly CrearGrupoUseCase _crearGrupoUseCase;
         private readonly InvitarUsuarioGrupoUseCase _invitarUsuarioUseCase;
@@ -41,6 +42,7 @@ namespace GustosApp.API.Controllers
         private readonly EnviarMensajeGrupoUseCase _enviarMensajeGrupoUseCase;
         private readonly IMapper _mapper;
         private readonly ObtenerRestaurantesAleatoriosGrupoUseCase _obtenerRestaurantesAleatorios;
+        private readonly ConstruirPreferenciasUseCase _construirPreferencias;
 
         public GrupoController(
             CrearGrupoUseCase crearGrupoUseCase,
@@ -62,7 +64,9 @@ namespace GustosApp.API.Controllers
             VerificarSiMiembroEstaEnGrupoUseCase verificacionMiembroGrupo,
             ActualizarGustosAGrupoUseCase actualizarGustosAGrupoUseCase,
             IMapper mapper,
-            ObtenerRestaurantesAleatoriosGrupoUseCase obtenerRestaurantesAleatorios
+            ObtenerRestaurantesAleatoriosGrupoUseCase obtenerRestaurantesAleatorios,
+           ConstruirPreferenciasUseCase construirPreferencias
+
             )
         {
             _servicio = servicio;
@@ -83,8 +87,9 @@ namespace GustosApp.API.Controllers
             _verificacionMiembroGrupo = verificacionMiembroGrupo;
             _mapper = mapper;
             _obtenerRestaurantesAleatorios = obtenerRestaurantesAleatorios;
-
+            _construirPreferencias = construirPreferencias;
             _servicioPreferenciasGrupos = servicioPreferenciasGrupos;
+
         }
         [Authorize]
         [HttpPost("crear")]
@@ -359,28 +364,25 @@ namespace GustosApp.API.Controllers
             // Buscar restaurantes desde la infraestructura
             var restaurantes = await _servicio.BuscarAsync(0,"", "", lat, lng, radius);
 
+
             // Obtener preferencias del grupo
-            var preferencias = await _obtenerPreferenciasGrupos.HandleAsync(grupoId, ct);
+            var preferencias = await _construirPreferencias.HandleAsync(
+            firebaseUid,
+            null,
+             grupoId,
+             null,
+             ct);
+
 
             // Obtener recomendaciones
-            var recomendados = _sugerirGustos.Handle(preferencias, restaurantes, top, ct);
+            var recomendados = await _sugerirGustos.Handle(preferencias, restaurantes, top, ct);
 
             // Mapear al DTO
             var response = _mapper.Map<List<RestauranteDTO>>(recomendados);
 
             return Ok(response);
         }
-        private string GetFirebaseUid()
-        {
-            var firebaseUid = User.FindFirst("user_id")?.Value
-                            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                            ?? User.FindFirst("sub")?.Value;
-
-            if (string.IsNullOrWhiteSpace(firebaseUid))
-                throw new UnauthorizedAccessException("No se encontró el UID de Firebase en el token.");
-
-            return firebaseUid;
-        }
+      
 
         /// <summary>
         /// Obtiene restaurantes aleatorios basados en las preferencias del grupo

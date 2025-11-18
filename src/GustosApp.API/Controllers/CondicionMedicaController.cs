@@ -2,7 +2,7 @@
 using AutoMapper;
 using GustosApp.API.DTO;
 using GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCases;
-using GustosApp.Domain.Model;
+using GustosApp.Domain.Model.@enum;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

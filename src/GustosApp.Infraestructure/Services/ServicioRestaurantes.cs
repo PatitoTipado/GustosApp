@@ -3,10 +3,11 @@ using GustosApp.Application.DTOs.Restaurantes;
 using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
+using GustosApp.Domain.Model.@enum;
 using GustosApp.Infraestructure.Extrerno.GooglePlacesModel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-﻿using System.Net.Http.Json;
+using System.Net.Http.Json;
 using System.Text.Json;
 using static System.Net.WebRequestMethods;
 
@@ -32,69 +33,61 @@ namespace GustosApp.Infraestructure.Services
             => (nombre ?? string.Empty).Trim().ToLowerInvariant();
 
         public async Task<List<Restaurante>> BuscarAsync(
-            double rating,
-            string? tipo,
-            string? plato,
-            double? lat = null,
-            double? lng = null,
-            int? radioMetros = null
-            )
+     double rating,
+     string? tipo,
+     string? plato,
+     double? lat = null,
+     double? lng = null,
+     int? radioMetros = null)
         {
-            var lista = await _db.Restaurantes
+            IQueryable<Restaurante> query = _db.Restaurantes
                 .AsNoTracking()
-                .Include(r => r.Platos)
                 .Include(r => r.GustosQueSirve)
                 .Include(r => r.RestriccionesQueRespeta)
-                .AsSplitQuery()
-                .ToListAsync();
+                .Include(r => r.Platos);
 
-            // 2️⃣ Filtro por tipo
+            // 1️⃣ FILTRAR POR TIPO DIRECTO EN SQL (si se puede mejorar después)
             if (!string.IsNullOrWhiteSpace(tipo))
             {
-                var t = tipo.Trim();
-                lista = lista
-                    .Where(r =>r.TypesJson != null && r.TypesJson.ToLower().Contains($"\"{t}\""))
-                    .ToList();
+                var t = tipo.Trim().ToLower();
+                query = query.Where(r =>
+                    r.TypesJson != null &&
+                    EF.Functions.Like(r.TypesJson.ToLower(), $"%\"{t}\"%"));
             }
 
-            // 3️⃣ Filtro geográfico y por rating
+            // 2️⃣ FILTRO GEOGRÁFICO USANDO SQL
             if (lat.HasValue && lng.HasValue && radioMetros.HasValue && radioMetros.Value > 0)
             {
-                var latVal = lat.Value;
-                var lngVal = lng.Value;
-                var radioMetrosVal = radioMetros.Value;
+                double latVal = lat.Value;
+                double lngVal = lng.Value;
 
-                var degLat = radioMetrosVal / 111_000.0;
-                var degLng = radioMetrosVal / (111_000.0 * Math.Cos(latVal * Math.PI / 180.0));
+                double degLat = radioMetros.Value / 111_000.0;
+                double degLng = radioMetros.Value / (111_000.0 * Math.Cos(latVal * Math.PI / 180.0));
 
-                var minLat = latVal - degLat;
-                var maxLat = latVal + degLat;
-                var minLng = lngVal - degLng;
-                var maxLng = lngVal + degLng;
+                double minLat = latVal - degLat;
+                double maxLat = latVal + degLat;
+                double minLng = lngVal - degLng;
+                double maxLng = lngVal + degLng;
 
-                lista = lista
-                    .Where(r =>
-                        r.Latitud >= minLat && r.Latitud <= maxLat &&
-                        r.Longitud >= minLng && r.Longitud <= maxLng &&
-                        (r.Rating >= rating)
-                    )
-                    .OrderBy(r => Math.Abs(r.Latitud - latVal) + Math.Abs(r.Longitud - lngVal))
-                    .Take(200)
-                    .ToList();
+                query = query.Where(r =>
+                    r.Latitud >= minLat && r.Latitud <= maxLat &&
+                    r.Longitud >= minLng && r.Longitud <= maxLng &&
+                    r.Rating >= rating);
+
+                // Orden + Take también en SQL
+                query = query.OrderBy(r =>
+                    Math.Abs(r.Latitud - latVal) + Math.Abs(r.Longitud - lngVal))
+                    .Take(200);
             }
             else
             {
-                // Si no hay coordenadas, filtra sólo por rating y nombre
-                lista = lista
-                    .Where(r =>(r.Rating.HasValue && r.Rating.Value >= rating))
+                query = query.Where(r => r.Rating >= rating)
                     .OrderBy(r => r.NombreNormalizado)
-                    .Take(1000)
-                    .ToList();
+                    .Take(1000);
             }
 
-            return lista;
+            return await query.ToListAsync();
         }
-
 
 
 
@@ -170,10 +163,16 @@ namespace GustosApp.Infraestructure.Services
         public async Task<Restaurante?> ObtenerAsync(Guid id)
         {
             var r = await _db.Restaurantes
-                .Include(x => x.Platos)
-                .FirstOrDefaultAsync(x => x.Id == id);
-            return r is null ? null : r;
+                .Include(r => r.Reviews)               
+                    .ThenInclude(o => o.Usuario)        
+                .Include(r => r.Reviews)
+                    .ThenInclude(o => o.Fotos)         
+                .Include(r => r.Platos)
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            return r;
         }
+
 
         public async Task<Restaurante?> ObtenerPorPropietarioAsync(string propietarioUid)
         {
@@ -326,14 +325,12 @@ namespace GustosApp.Infraestructure.Services
             var apiKey = _config["GooglePlaces:ApiKey"]
                 ?? throw new InvalidOperationException("Falta GooglePlaces:ApiKey");
 
-            // Campos a solicitar (optimizados)
             var fieldMask = string.Join(",",
                 "id,displayName,primaryType,types,priceLevel,rating,userRatingCount,",
                 "formattedAddress,internationalPhoneNumber,websiteUri,location,photos.name,",
                 "currentOpeningHours,reviews"
             );
 
-            // Forzar idioma español en la respuesta
             var url = $"https://places.googleapis.com/v1/places/{Uri.EscapeDataString(placeId)}?languageCode=es";
 
             using var req = new HttpRequestMessage(HttpMethod.Get, url);
@@ -353,7 +350,7 @@ namespace GustosApp.Infraestructure.Services
                 return await _repo.GetByPlaceIdAsync(placeId, ct)
                     ?? new Restaurante { PlaceId = placeId, Nombre = "(sin datos)" };
 
-            //  Buscar restaurante existente
+            // Buscar restaurante existente
             var existente = await _repo.GetByPlaceIdAsync(placeId, ct);
 
             if (existente is null)
@@ -373,15 +370,14 @@ namespace GustosApp.Infraestructure.Services
                     Categoria = details.PrimaryType ?? "restaurant",
                     UltimaActualizacion = DateTime.UtcNow,
                     ImagenUrl = GetPhotoUrl(details.Photos?.FirstOrDefault()?.Name, apiKey),
-                    // Reviews = new List<ReseñaRestaurante>()
-                    Reviews = new List<OpinionRestaurante>() 
+                    Reviews = new List<OpinionRestaurante>()
                 };
 
                 await _repo.AddAsync(existente, ct);
             }
             else
             {
-                //  Actualizar campos básicos si ya existe
+                // Actualizar información básica del restaurante
                 existente.Nombre = details.DisplayName?.Text ?? existente.Nombre;
                 existente.Direccion = details.FormattedAddress ?? existente.Direccion;
                 existente.Latitud = details.Location?.Latitude ?? existente.Latitud;
@@ -394,45 +390,46 @@ namespace GustosApp.Infraestructure.Services
                 existente.UltimaActualizacion = DateTime.UtcNow;
             }
 
-            // Procesar reseñas (si hay)
+            // Procesar opiniones desde Google
             if (details.Reviews is { Count: > 0 })
             {
-                /*var reseñas = details.Reviews.Select(r => new ReseñaRestaurante
+                var opiniones = details.Reviews.Select(r => new OpinionRestaurante
                 {
                     Id = Guid.NewGuid(),
                     RestauranteId = existente.Id,
-                    Autor = r.AuthorAttribution?.DisplayName ?? "Anónimo",
-                    Texto = r.Text?.Text ?? "",
-                    Rating = r.Rating,
-                    Fecha = r.RelativePublishTimeDescription ?? "",
-                    Foto = r.AuthorAttribution?.PhotoUri
-                }).ToList();*/
-
-                var reseñas = details.Reviews.Select(r => new OpinionRestaurante(
-                    usuarioId: Guid.Empty, 
-                    restauranteId: existente.Id,
-                    valoracion: (int)(r.Rating == 0.0 ? 1 : r.Rating),
-                    titulo: r.AuthorAttribution?.DisplayName ?? "Reseña Google",
-                    img: r.AuthorAttribution?.PhotoUri 
-                )
-                {
-                 FechaCreacion = DateTime.UtcNow,
-                 Autor = r.AuthorAttribution?.DisplayName ?? "Anónimo",
-                 FechaTexto = r.RelativePublishTimeDescription
+                    UsuarioId = null, // no aplica para Google
+                    AutorExterno = r.AuthorAttribution?.DisplayName ?? "Anónimo",
+                    FuenteExterna = "GooglePlaces",
+                    ImagenAutorExterno = r.AuthorAttribution?.PhotoUri,
+                    Valoracion = r.Rating ,
+                    Titulo = "Opinión desde Google",
+                    Opinion = r.Text?.Text ?? "",
+                    EsImportada = true,
+                    FechaCreacion = DateTime.UtcNow
                 }).ToList();
 
-                // Evitar duplicar reseñas
-                //var idsExistentes = existente.Reviews?.Select(x => x.Texto)?.ToHashSet() ?? new HashSet<string>();
-                //var nuevas = reseñas.Where(r => !idsExistentes.Contains(r.Texto)).ToList();
-                var idsExistentes = existente.Reviews?.Select(x => x.Opinion)?.ToHashSet() ?? new HashSet<string>();
-                var nuevas = reseñas.Where(r => !idsExistentes.Contains(r.Opinion)).ToList();
+                // Evitar duplicados (comparando texto + autor)
+                var existentes = await _db.OpinionesRestaurantes
+                    .Where(x => x.RestauranteId == existente.Id && x.EsImportada)
+                    .Select(x => new { x.AutorExterno, x.Opinion })
+                    .ToListAsync(ct);
+
+                var nuevas = opiniones
+                    .Where(o => !existentes.Any(e =>
+                        string.Equals(e.AutorExterno, o.AutorExterno, StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(e.Opinion, o.Opinion, StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
 
                 if (nuevas.Any())
                 {
-                    // await _db.ReseñasRestaurantes.AddRangeAsync(nuevas, ct);
-                    await _db.OpinionesRestaurante.AddRangeAsync(nuevas, ct);
+                    await _db.OpinionesRestaurantes.AddRangeAsync(nuevas, ct);
                     await _db.SaveChangesAsync(ct);
-                    existente.Reviews = nuevas;
+
+                   
+                    foreach (var nueva in nuevas)
+                    {
+                        existente.Reviews.Add(nueva);
+                    }
                 }
             }
 
@@ -445,5 +442,7 @@ namespace GustosApp.Infraestructure.Services
             if (string.IsNullOrWhiteSpace(fotoName)) return null;
             return $"https://places.googleapis.com/v1/{Uri.EscapeDataString(fotoName)}/media?maxWidthPx=800&key={apiKey}";
         }
+
+        
     }
 }

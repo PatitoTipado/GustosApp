@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GustosApp.Domain.Model.@enum;
 
 namespace GustosApp.Domain.Model
 {
- 
+
     public class Notificacion
     {
         public Guid Id { get; set; } = Guid.NewGuid();

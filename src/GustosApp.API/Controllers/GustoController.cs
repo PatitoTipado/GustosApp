@@ -3,7 +3,7 @@ using GustosApp.API.DTO;
 using GustosApp.Application.DTO;
 using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
-using GustosApp.Domain.Model;
+using GustosApp.Domain.Model.@enum;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;

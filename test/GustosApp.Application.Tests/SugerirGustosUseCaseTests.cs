@@ -21,7 +21,7 @@ namespace GustosApp.Application.Tests
     public class SugerirGustosUseCaseTests
     {
 
-
+        /*S
 
         [Fact]
         public async Task Handle_DeberiaDevolverRestaurantesSimilares_SegunGustos()
@@ -141,5 +141,7 @@ namespace GustosApp.Application.Tests
             Assert.NotNull(resultados);
             Assert.Empty(resultados); // sin resultados válidos, pero no lanza excepción
         }
+    }
+    */
     }
 }

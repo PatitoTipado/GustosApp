@@ -21,6 +21,7 @@ using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCases;
 using GustosApp.Application.Interfaces;
+using GustosApp.Domain.Model.@enum;
 
 namespace GustosApp.API.Controllers
 {

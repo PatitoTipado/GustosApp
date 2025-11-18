@@ -4,8 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using GustosApp.Application.DTO;
+using GustosApp.Domain.Common;
 using GustosApp.Domain.Interfaces;
-using GustosApp.Domain.Model;
 
 namespace GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases
 {

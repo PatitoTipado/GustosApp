@@ -10,38 +10,40 @@ namespace GustosApp.Domain.Model
     {
         public Guid Id { get; set; }
 
-        public Guid UsuarioId { get; set; }
         public Guid RestauranteId { get; set; }
+        public Restaurante Restaurante { get; set; } = null!;
 
-        public int Valoracion { get; set; }
-
-        public string? Opinion { get; set; } 
-
-        public string? Titulo { get; set; }
-
-        public string? Img { get; set; }
-        public DateTime FechaVisita { get; set; }
-        public DateTime FechaCreacion { get; set; }
+        //  Guarda los datos del user app
+        public Guid? UsuarioId { get; set; }
         public Usuario? Usuario { get; set; }
-        public Restaurante? Restaurante { get; set; }
 
-        // Para mapear Reseñas de Google Places API
-        public string? Autor { get; set; }
-        public string? FechaTexto { get; set; }
+        //  Si la opinion es externa se guarda los datos estos
+        public string? AutorExterno { get; set; }
+        public string? FuenteExterna { get; set; }
+        public string? ImagenAutorExterno { get; set; }
 
-        public OpinionRestaurante(Guid usuarioId, Guid restauranteId, int valoracion, string? opinion = null, string? titulo = null,string? img = null)
-        {
-            UsuarioId = usuarioId;
-            RestauranteId = restauranteId;
-            Opinion = opinion ?? string.Empty;
-            Titulo = titulo ?? string.Empty;
-            Img = img ?? string.Empty;
+      
+        public double Valoracion { get; set; }
 
-            if (valoracion < 1 || valoracion > 5)
-            {
-                throw new ArgumentException("La valoración debe estar entre 1 y 5 estrellas.");
-            }
-            Valoracion = valoracion;
-        }
+    
+        public DateTime? FechaVisita { get; set; }
+
+     
+        public string? Titulo { get; set; }
+        public string? Opinion { get; set; }
+
+     
+        public List<OpinionFoto> Fotos { get; set; } = new();
+
+      
+        public string? MotivoVisita { get; set; }  // Ej: "Negocio", "Pareja", "Familia", "Amigos", "Solo"
+        public string? MesAnioVisita { get; set; } 
+
+        // Metadatos
+        public bool EsImportada { get; set; } = false;
+        public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+
+
+
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using GustosApp.Domain.Model.@enum;
 
 namespace GustosApp.Domain.Model
 {

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GustosApp.Domain.Model
+namespace GustosApp.Domain.Model.@enum
 {
     public enum TipoNotificacion
     {
@@ -12,6 +12,6 @@ namespace GustosApp.Domain.Model
         InvitacionGrupo = 1,
         RecordatorioEvento = 2,
         MensajeNuevo = 3,
-        Recomendacion=4 
+        Recomendacion = 4
     }
 }

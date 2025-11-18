@@ -24,6 +24,8 @@ using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases;
 using Microsoft.AspNetCore.Http.HttpResults;
 using System.Security.Cryptography;
+using GustosApp.Domain.Model.@enum;
+using GustosApp.Domain.Common;
 
 
 // Controlador para restaurantes que se registran en la app por un usuario y restaurantes traidos de Places v1
@@ -181,24 +183,33 @@ namespace GustosApp.API.Controllers
             });
 
         }
-        
 
 
+        [Authorize]
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
         {
+            var uid= GetFirebaseUid();
+
             var restaurante = await _servicio.ObtenerAsync(id);
 
             if (restaurante == null)
                 return NotFound("Restaurante no encontrado");
 
 
-            if (restaurante.PlaceId!=null && (restaurante.Reviews == null || !restaurante.Reviews.Any()))
+            if (restaurante.PlaceId != null && (restaurante.Reviews == null || !restaurante.Reviews.Any()))
             {
                 var actualizado = await _servicio.ObtenerResenasDesdeGooglePlaces(restaurante.PlaceId, ct);
                 if (actualizado is not null)
-                    restaurante = actualizado;
+                 restaurante = actualizado;
+
             }
+
+            // Ordenar reseñas: locales primero, google después
+            restaurante.Reviews = restaurante.Reviews
+                .OrderBy(o => o.EsImportada)  // false = locales primero
+                .ThenByDescending(o => o.FechaCreacion)
+                .ToList();
 
             return Ok(restaurante);
         }

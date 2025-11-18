@@ -1,4 +1,4 @@
-namespace GustosApp.Domain.Model
+namespace GustosApp.Domain.Model.@enum
 {
     public enum PlatoComida
     {

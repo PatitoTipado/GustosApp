@@ -8,8 +8,8 @@ using GustosApp.Application.DTO.PlacesV1;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases.RestauranteUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases;
+using GustosApp.Domain.Common;
 using GustosApp.Domain.Interfaces;
-using GustosApp.Domain.Model;
 
 namespace GustosApp.Application.UseCases.NotificacionUseCases
 {

@@ -3,12 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GustosApp.Domain.Model.@enum;
 
 namespace GustosApp.Domain.Model
 {
-
-    
-    public enum PlanUsuario { Free = 0, Plus = 1 }
     public class Usuario
     {
     

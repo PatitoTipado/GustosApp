@@ -2,6 +2,7 @@
 using GustosApp.API.DTO;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases.RestauranteUseCases;
+using GustosApp.Domain.Common;
 using GustosApp.Domain.Model;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading;
@@ -10,15 +11,15 @@ namespace GustosApp.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class OpinionRestauranteController : Controller
+    public class OpinionRestauranteController : BaseApiController
     {
 
-        private readonly CrearOpinionRestaurante _crearValoracionUsuarioUseCase;
+        private readonly CrearOpinionRestauranteUseCase _crearValoracionUsuarioUseCase;
         private readonly IOpinionRestauranteRepository _opinionRestauranteRepository;
         private readonly ActualizarValoracionRestauranteUseCase _actualizarValoracionRestauranteUseCase;
         private readonly IMapper _mapper;
 
-        public OpinionRestauranteController(CrearOpinionRestaurante crearValoracionUsuarioUseCase, IOpinionRestauranteRepository valoracionUsuarioRepository,IMapper  mapper, ActualizarValoracionRestauranteUseCase actualizarValoracionRestauranteUseCase)
+        public OpinionRestauranteController(CrearOpinionRestauranteUseCase crearValoracionUsuarioUseCase, IOpinionRestauranteRepository valoracionUsuarioRepository,IMapper  mapper, ActualizarValoracionRestauranteUseCase actualizarValoracionRestauranteUseCase)
         {
             _crearValoracionUsuarioUseCase = crearValoracionUsuarioUseCase;
             _opinionRestauranteRepository = valoracionUsuarioRepository;
@@ -27,16 +28,28 @@ namespace GustosApp.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CrearValoracion([FromBody] CrearOpinionRestauranteRequest request,CancellationToken ct)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> CrearValoracion([FromForm] CrearOpinionRestauranteRequest request,CancellationToken ct)
         {
+
+            var uid= GetFirebaseUid();
+
+            var files = request.Imagenes?.Select(img => new FileUpload
+            {
+                FileName = img.FileName,
+                Content = img.OpenReadStream(),
+                ContentType = img.ContentType
+            }).ToList();
+
             await _crearValoracionUsuarioUseCase.HandleAsync(
-                request.UsuarioId,
+                uid,
                 request.RestauranteId,
                 request.Valoracion,
                 request.Opinion,
                 request.Titulo,
-                request.Img,
-                request.FechaVisita,
+                files,
+                request.MotivoVisita,
+                request.FechaVisita ?? DateTime.Now,
                 ct
                 );
 

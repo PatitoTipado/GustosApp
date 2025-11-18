@@ -1,6 +1,6 @@
 using FluentValidation;
 using GustosApp.Application.DTOs.Restaurantes;
-using GustosApp.Domain.Model;
+using GustosApp.Domain.Model.@enum;
 using System;
 
 namespace GustosApp.Application.Validations.Restaurantes

@@ -8,6 +8,7 @@ using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
 
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
+using GustosApp.Domain.Model.@enum;
 using Moq;
 using Xunit;
 

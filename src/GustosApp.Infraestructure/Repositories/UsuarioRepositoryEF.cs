@@ -52,7 +52,7 @@ namespace GustosApp.Infraestructure.Repositories
         public Task SaveChangesAsync(CancellationToken ct = default)
             => _db.SaveChangesAsync(ct);
 
-        public async Task UpdatePlanAsync(string firebaseUid, PlanUsuario plan, CancellationToken ct = default)
+        public async Task UpdatePlanAsync(string firebaseUid, Domain.Model.@enum.PlanUsuario plan, CancellationToken ct = default)
         {
             var usuario = await _db.Usuarios
                 .FirstOrDefaultAsync(u => u.FirebaseUid == firebaseUid, ct);

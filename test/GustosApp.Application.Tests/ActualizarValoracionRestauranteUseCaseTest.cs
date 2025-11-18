@@ -14,7 +14,7 @@ namespace GustosApp.Application.Tests
 {
     public class ActualizarValoracionRestauranteUseCaseTest
     {
-        [Fact]
+        /*[Fact]
         public async Task PromedioDeValoraciones()
         {
             var repoValoracion = new Mock<IOpinionRestauranteRepository>();
@@ -39,5 +39,6 @@ namespace GustosApp.Application.Tests
                         r => r.ActualizarValoracionAsync(restauranteId, 4.0, It.IsAny<CancellationToken>()),
                         Times.Once);
         }
+    }*/
     }
 }

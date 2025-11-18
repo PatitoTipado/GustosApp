@@ -1,6 +1,4 @@
-﻿
-
-using GustosApp.Domain.Model;
+﻿using GustosApp.Domain.Model.@enum;
 
 namespace GustosApp.API.DTO
 {

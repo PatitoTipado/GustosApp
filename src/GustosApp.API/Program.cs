@@ -244,7 +244,7 @@ builder.Services.AddScoped<VerificarSiMiembroEstaEnGrupoUseCase>();
 builder.Services.AddScoped<ObtenerRestaurantesAleatoriosGrupoUseCase>();
 builder.Services.AddScoped<ActivarMiembroDeGrupoUseCase>();
 builder.Services.AddScoped<EnviarRecomendacionesUsuariosActivosUseCase>();
-builder.Services.AddScoped<CrearOpinionRestaurante>();
+builder.Services.AddScoped<CrearOpinionRestauranteUseCase>();
 builder.Services.AddScoped<NotificacionesInteligentesService>();
 
 

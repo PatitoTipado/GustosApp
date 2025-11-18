@@ -1,6 +1,6 @@
 ﻿using GustosApp.Application.DTO;
+using GustosApp.Domain.Common;
 using GustosApp.Domain.Interfaces;
-using GustosApp.Domain.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;

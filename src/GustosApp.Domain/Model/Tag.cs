@@ -1,4 +1,6 @@
-﻿namespace GustosApp.Domain.Model
+﻿using GustosApp.Domain.Model.@enum;
+
+namespace GustosApp.Domain.Model
 {
     public class Tag
     {
@@ -12,12 +14,5 @@
 
 
         
-    }
-
-    public enum TipoTag
-    {
-        Ingrediente = 1,
-        Nutriente = 2,
-        Categoria = 3
     }
 }

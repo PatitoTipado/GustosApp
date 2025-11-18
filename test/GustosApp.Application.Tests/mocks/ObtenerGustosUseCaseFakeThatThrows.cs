@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
-using GustosApp.Domain.Model;
+using GustosApp.Domain.Common;
 
 namespace GustosApp.Application.Tests.mocks
 {

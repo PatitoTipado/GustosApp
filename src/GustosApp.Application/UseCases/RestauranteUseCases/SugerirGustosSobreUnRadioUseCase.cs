@@ -4,116 +4,108 @@ using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Common;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
+using Microsoft.Extensions.Logging;
 
 namespace GustosApp.Application.UseCases.RestauranteUseCases
 {
     public class SugerirGustosSobreUnRadioUseCase
     {
         private readonly IEmbeddingService _embeddingService;
-        private readonly IRestauranteRepository _restaurantRepo;
+        private readonly ILogger<SugerirGustosSobreUnRadioUseCase> _logger;
 
-        private const double UmbralMinimo = 0.1;
-        private const double FactorPenalizacion = 0.1;
+        private const double UmbralMinimo = 0.05;
+        private const double FactorPenalizacion = 0.15;
 
-        public SugerirGustosSobreUnRadioUseCase(IEmbeddingService embeddingService, IRestauranteRepository restaurantRepo)
+        public SugerirGustosSobreUnRadioUseCase(
+            IEmbeddingService embeddingService,
+            ILogger<SugerirGustosSobreUnRadioUseCase> logger)
         {
             _embeddingService = embeddingService;
-            _restaurantRepo = restaurantRepo;
+            _logger = logger;
         }
 
-        public List<Restaurante> Handle(UsuarioPreferencias preferencias, List<Restaurante> restaurantesFiltrados,
-            int maxResults = 10, CancellationToken ct = default)
+        public async Task<List<Restaurante>> Handle(
+            UsuarioPreferencias usuario,
+            List<Restaurante> restaurantesCercanos,
+            int maxResults = 10,
+            CancellationToken ct = default)
         {
-            List<Restaurante> restaurantes = filtrarRestaurante(
-                preferencias.Gustos,
-                preferencias.Restricciones,
-                restaurantesFiltrados,
-                ct);
-
-            var resultados = new List<(Restaurante restaurante, double score)>();
-            var userEmb = _embeddingService.GetEmbedding(string.Join(" ", preferencias.Gustos));
-
-            foreach (var rest in restaurantes)
-            {
-                double maxScoreBase = 0;
-
-                foreach (var especialidad in rest.GustosQueSirve)
-                {
-                    var baseEmb = _embeddingService.GetEmbedding(especialidad.Nombre);
-                    double scoreSimilitud = CosineSimilarity.Coseno(userEmb, baseEmb);
-
-                    if (scoreSimilitud > maxScoreBase)
-                        maxScoreBase = scoreSimilitud;
-                }
-
-                double penalizacion = 0;
-                foreach (var gusto in preferencias.Gustos)
-                {
-                    if (!rest.GustosQueSirve.Any(e =>
-                        e.Nombre != null &&
-                        e.Nombre.ToLower().Contains(gusto.ToLower())))
-                    {
-                        penalizacion += FactorPenalizacion;
-                    }
-                }
-
-                double scoreFinal = maxScoreBase * (1 - penalizacion);
-                if (scoreFinal >= UmbralMinimo)
-                    resultados.Add((rest, scoreFinal));
-            }
-
-            // Ordenar, limitar y devolver entidades del dominio
-            var recomendacionesOrdenadas = resultados
-                .OrderByDescending(x => x.score)
-                .Take(maxResults)
-                .Select(x =>
-                {
-                    x.restaurante.Score = x.score; // si agregás Score como propiedad temporal en la entidad
-                    return x.restaurante;
-                })
-                .ToList();
-
-            return recomendacionesOrdenadas;
-        }
-        private List<Restaurante> filtrarRestaurante(List<string> gustos, List<string> restricciones,
-                List<Restaurante> restaurantes, CancellationToken ct)
-        {
-            if (restaurantes == null || !restaurantes.Any())
+            if (usuario == null || usuario.Gustos == null || !usuario.Gustos.Any())
                 return new List<Restaurante>();
 
-            var gustosNormalizados = gustos?.Select(g => g.ToLower()).ToList() ?? new();
-            var restriccionesNormalizadas = restricciones?.Select(r => r.ToLower()).ToList() ?? new();
+            if (restaurantesCercanos == null || !restaurantesCercanos.Any())
+                return new List<Restaurante>();
 
-            var puntuaciones = new Dictionary<Restaurante, int>();
+            var embCache = new Dictionary<string, float[]>();
 
-            foreach (var r in restaurantes)
+            float[] GetEmbedding(string text)
             {
-                bool esRestringido = restriccionesNormalizadas.Any() &&
-                                     r.RestriccionesQueRespeta.Any(res =>
-                                         restriccionesNormalizadas.Contains(res.Nombre.ToLower()));
+                if (string.IsNullOrWhiteSpace(text))
+                    return new float[768];
 
-                if (esRestringido)
-                    continue;
+                if (embCache.TryGetValue(text, out var cached))
+                    return cached;
 
-                int puntuacion = 0;
-
-                if (gustosNormalizados.Any())
+                try
                 {
-                    puntuacion = r.GustosQueSirve.Count(g =>
-                        gustosNormalizados.Contains(g.Nombre.ToLower()));
-
-                    if (puntuacion > 0)
-                        puntuaciones.Add(r, puntuacion);
+                    var emb = _embeddingService.GetEmbedding(text);
+                    embCache[text] = emb;
+                    return emb;
                 }
-                else
+                catch
                 {
-                    puntuaciones.Add(r, 0);
+                    var empty = new float[768];
+                    embCache[text] = empty;
+                    return empty;
                 }
             }
 
-            return puntuaciones
-                .OrderByDescending(kvp => kvp.Value)
-                .Select(kvp => kvp.Key)
+            // embedding único del usuario
+            var userEmbedding = GetEmbedding(string.Join(" ", usuario.Gustos));
+
+            var resultados = new List<(Restaurante rest, double score)>();
+
+            foreach (var rest in restaurantesCercanos)
+            {
+                double maxSimilitud = 0;
+
+                var especialidades = rest.GustosQueSirve ?? new List<Gusto>();
+
+                // 1similitud por embeddings
+                foreach (var esp in especialidades)
+                {
+                    if (string.IsNullOrWhiteSpace(esp.Nombre)) continue;
+
+                    var embEsp = GetEmbedding(esp.Nombre);
+                    var similitud = CosineSimilarity.Coseno(userEmbedding, embEsp);
+
+                    if (similitud > maxSimilitud)
+                        maxSimilitud = similitud;
+                }
+
+                // penalización por gustos faltantes
+                int gustosNoCoinciden = usuario.Gustos.Count(g =>
+                    !especialidades.Any(e =>
+                        e.Nombre != null &&
+                        e.Nombre.Contains(g, StringComparison.OrdinalIgnoreCase)));
+
+                double penalizacion = (gustosNoCoinciden * FactorPenalizacion) / usuario.Gustos.Count;
+
+                double scoreFinal = maxSimilitud * (1 - penalizacion);
+
+                if (scoreFinal >= UmbralMinimo)
+                {
+                    rest.Score = scoreFinal;
+                    resultados.Add((rest, scoreFinal));
+                }
+            }
+
+            return resultados
+                .GroupBy(x => x.rest.Id)
+                .Select(g => g.First())
+                .OrderByDescending(x => x.score)
+                .Take(maxResults)
+                .Select(x => x.rest)
                 .ToList();
         }
     }

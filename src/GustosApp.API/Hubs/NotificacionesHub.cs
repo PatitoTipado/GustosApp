@@ -2,11 +2,13 @@
 using AutoMapper;
 using Azure.Core;
 using GustosApp.API.DTO;
+using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases;
 using GustosApp.Application.UseCases.NotificacionUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
+using GustosApp.Infraestructure.Services;
 using Microsoft.AspNetCore.SignalR;
 
 namespace GustosApp.API.Hubs
@@ -21,6 +23,8 @@ namespace GustosApp.API.Hubs
         private readonly AceptarInvitacionGrupoUseCase _aceptarInvitacionGrupo;
         private readonly ObtenerNotificacionUsuarioUseCase _obtenerNotificacion;
         private readonly IMapper _mapper;
+        private readonly IUsuariosActivosService _usuariosActivos;
+
 
         public NotificacionesHub(
                 ObtenerNotificacionesUsuarioUseCase obtenerNotificaciones,
@@ -29,7 +33,7 @@ namespace GustosApp.API.Hubs
                 ObtenerUsuarioUseCase obtenerUsuario,
                 AceptarInvitacionGrupoUseCase aceptar,
                 ObtenerNotificacionUsuarioUseCase obtenerNotificacion,
-                IMapper mapper)
+                IMapper mapper, IUsuariosActivosService usuariosActivos)
         {
             _obtenerNotificaciones = obtenerNotificaciones;
             _marcarLeida = marcarLeida;
@@ -38,6 +42,7 @@ namespace GustosApp.API.Hubs
             _aceptarInvitacionGrupo = aceptar;
             _obtenerNotificacion = obtenerNotificacion;
             _mapper = mapper;
+            _usuariosActivos = usuariosActivos;
         }
 
         // Se ejecuta al conectarse un usuario
@@ -47,8 +52,11 @@ namespace GustosApp.API.Hubs
             var firebaseUid = Context.User?.FindFirst("user_id")?.Value;
             if (firebaseUid == null) return;
 
+
             var usuario = await _obtenerUsuario.HandleAsync(FirebaseUid :firebaseUid, ct:CancellationToken.None);
             if (usuario == null) return;
+
+            _usuariosActivos.UsuarioConectado(firebaseUid);
 
             var notificaciones = await _obtenerNotificaciones.HandleAsync(usuario.Id, CancellationToken.None);
 
@@ -116,6 +124,15 @@ namespace GustosApp.API.Hubs
 
            
             await Clients.Caller.SendAsync("NotificacionEliminada", notificacionId);
+        }
+        public override Task OnDisconnectedAsync(Exception? ex)
+        {
+            var uid = Context.User?.FindFirst("user_id")?.Value;
+            if (uid != null)
+            {
+                _usuariosActivos.UsuarioDesconectado(uid);
+            }
+            return base.OnDisconnectedAsync(ex);
         }
     }
 }

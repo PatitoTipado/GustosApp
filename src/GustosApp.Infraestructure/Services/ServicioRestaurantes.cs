@@ -32,69 +32,61 @@ namespace GustosApp.Infraestructure.Services
             => (nombre ?? string.Empty).Trim().ToLowerInvariant();
 
         public async Task<List<Restaurante>> BuscarAsync(
-            double rating,
-            string? tipo,
-            string? plato,
-            double? lat = null,
-            double? lng = null,
-            int? radioMetros = null
-            )
+     double rating,
+     string? tipo,
+     string? plato,
+     double? lat = null,
+     double? lng = null,
+     int? radioMetros = null)
         {
-            var lista = await _db.Restaurantes
+            IQueryable<Restaurante> query = _db.Restaurantes
                 .AsNoTracking()
-                .Include(r => r.Platos)
                 .Include(r => r.GustosQueSirve)
                 .Include(r => r.RestriccionesQueRespeta)
-                .AsSplitQuery()
-                .ToListAsync();
+                .Include(r => r.Platos);
 
-            // 2️⃣ Filtro por tipo
+            // 1️⃣ FILTRAR POR TIPO DIRECTO EN SQL (si se puede mejorar después)
             if (!string.IsNullOrWhiteSpace(tipo))
             {
-                var t = tipo.Trim();
-                lista = lista
-                    .Where(r =>r.TypesJson != null && r.TypesJson.ToLower().Contains($"\"{t}\""))
-                    .ToList();
+                var t = tipo.Trim().ToLower();
+                query = query.Where(r =>
+                    r.TypesJson != null &&
+                    EF.Functions.Like(r.TypesJson.ToLower(), $"%\"{t}\"%"));
             }
 
-            // 3️⃣ Filtro geográfico y por rating
+            // 2️⃣ FILTRO GEOGRÁFICO USANDO SQL
             if (lat.HasValue && lng.HasValue && radioMetros.HasValue && radioMetros.Value > 0)
             {
-                var latVal = lat.Value;
-                var lngVal = lng.Value;
-                var radioMetrosVal = radioMetros.Value;
+                double latVal = lat.Value;
+                double lngVal = lng.Value;
 
-                var degLat = radioMetrosVal / 111_000.0;
-                var degLng = radioMetrosVal / (111_000.0 * Math.Cos(latVal * Math.PI / 180.0));
+                double degLat = radioMetros.Value / 111_000.0;
+                double degLng = radioMetros.Value / (111_000.0 * Math.Cos(latVal * Math.PI / 180.0));
 
-                var minLat = latVal - degLat;
-                var maxLat = latVal + degLat;
-                var minLng = lngVal - degLng;
-                var maxLng = lngVal + degLng;
+                double minLat = latVal - degLat;
+                double maxLat = latVal + degLat;
+                double minLng = lngVal - degLng;
+                double maxLng = lngVal + degLng;
 
-                lista = lista
-                    .Where(r =>
-                        r.Latitud >= minLat && r.Latitud <= maxLat &&
-                        r.Longitud >= minLng && r.Longitud <= maxLng &&
-                        (r.Rating >= rating)
-                    )
-                    .OrderBy(r => Math.Abs(r.Latitud - latVal) + Math.Abs(r.Longitud - lngVal))
-                    .Take(200)
-                    .ToList();
+                query = query.Where(r =>
+                    r.Latitud >= minLat && r.Latitud <= maxLat &&
+                    r.Longitud >= minLng && r.Longitud <= maxLng &&
+                    r.Rating >= rating);
+
+                // Orden + Take también en SQL
+                query = query.OrderBy(r =>
+                    Math.Abs(r.Latitud - latVal) + Math.Abs(r.Longitud - lngVal))
+                    .Take(200);
             }
             else
             {
-                // Si no hay coordenadas, filtra sólo por rating y nombre
-                lista = lista
-                    .Where(r =>(r.Rating.HasValue && r.Rating.Value >= rating))
+                query = query.Where(r => r.Rating >= rating)
                     .OrderBy(r => r.NombreNormalizado)
-                    .Take(1000)
-                    .ToList();
+                    .Take(1000);
             }
 
-            return lista;
+            return await query.ToListAsync();
         }
-
 
 
 

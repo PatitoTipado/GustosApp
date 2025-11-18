@@ -26,6 +26,7 @@ namespace GustosApp.Application.UseCases.AmistadUseCases
             var solicitudAmistad = await _solicitudAmistadRepository.
                 GetAmistadEntreUsuariosAsync(idActual, idOtroUsuario, ct);
 
+          
 
             return solicitudAmistad;
         }

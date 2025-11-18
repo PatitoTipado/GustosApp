@@ -20,12 +20,7 @@ using GustosApp.Infraestructure.Ocr;
 using GustosApp.Infraestructure.Parsing;
 using GustosApp.Infraestructure.Files;
 using StackExchange.Redis;
-using Microsoft.Extensions.Caching.StackExchangeRedis;
-
-// Usar System.Text.Json para manejar el secreto de Firebase
-using System.Text.Json;
 using GustosApp.Application.Services;
-
 using GustosApp.Application.UseCases.GrupoUseCases;
 using GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases;
 using GustosApp.Application.UseCases.AmistadUseCases;
@@ -36,10 +31,7 @@ using GustosApp.Application.UseCases.NotificacionUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
-using GustosApp.API.Background;
-using GustosApp.Application.Services;
 using GustosApp.Infraestructure.Services;
-using StackExchange.Redis;
 using Microsoft.AspNetCore.Authorization;
 
 
@@ -104,8 +96,7 @@ builder.Services.AddSingleton<IEmbeddingService>(sp =>
 builder.Services.AddAuthorization();
 
 
-// hosted service para notificaciones
-builder.Services.AddHostedService<NotificacionesBackgroundService>();
+
 
 
 // Almacenamiento de archivos local (wwwroot/uploads)
@@ -186,13 +177,13 @@ builder.Services.AddScoped<IGustosGrupoRepository, GustosGrupoRepositoryEF>();
 builder.Services.AddScoped<INotificacionRepository, NotificacionRepositoryEF>();
 builder.Services.AddScoped<INotificacionRealtimeService, SignalRNotificacionRealtimeService>();
 builder.Services.AddScoped<ISolicitudAmistadRealtimeService, SignalRSolicitudAmistadRealtimeService>();
-
+builder.Services.AddScoped<IUsuariosActivosService, UsuariosActivosService>();
 builder.Services.AddScoped<IOpinionRestauranteRepository, OpinionRestauranteRepositoryEF>();
 builder.Services.AddScoped<ActualizarValoracionRestauranteUseCase>();
 
 
 // Chat repository
-builder.Services.AddScoped<GustosApp.Domain.Interfaces.IChatRepository, GustosApp.Infraestructure.Repositories.ChatRepositoryEF>();
+builder.Services.AddScoped<IChatRepository,ChatRepositoryEF>();
 builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
 
 // =====================
@@ -217,8 +208,6 @@ builder.Services.AddScoped<GuardarRestriccionesUseCase>();
 builder.Services.AddScoped<ObtenerGustosFiltradosUseCase>();
 builder.Services.AddScoped<ObtenerResumenRegistroUseCase>();
 builder.Services.AddScoped<FinalizarRegistroUseCase>();
-builder.Services.AddScoped<SugerirGustosUseCase>();
-builder.Services.AddScoped<SugerirGustosUseCase>();
 builder.Services.AddScoped<BuscarRestaurantesCercanosUseCase>();
 builder.Services.AddScoped<ActualizarDetallesRestauranteUseCase>();
 builder.Services.AddScoped<RemoverMiembroGrupoUseCase>();
@@ -227,8 +216,10 @@ builder.Services.AddScoped<CrearNotificacionUseCase>();
 builder.Services.AddScoped<ObtenerNotificacionesUsuarioUseCase>();
 builder.Services.AddScoped<ObtenerNotificacionUsuarioUseCase>();
 builder.Services.AddScoped<MarcarNotificacionLeidaUseCase>();
+builder.Services.AddScoped<ConstruirPreferenciasUseCase>();
+
 // UseCases y repositorios de amistad
-builder.Services.AddScoped<GustosApp.Domain.Interfaces.ISolicitudAmistadRepository, GustosApp.Infraestructure.Repositories.SolicitudAmistadRepositoryEF>();
+builder.Services.AddScoped<ISolicitudAmistadRepository, SolicitudAmistadRepositoryEF>();
 builder.Services.AddScoped<EnviarSolicitudAmistadUseCase>();
 builder.Services.AddScoped<ObtenerSolicitudesPendientesUseCase>();
 builder.Services.AddScoped<AceptarSolicitudUseCase>();
@@ -252,7 +243,7 @@ builder.Services.AddScoped<ConfirmarAmistadEntreUsuarios>();
 builder.Services.AddScoped<VerificarSiMiembroEstaEnGrupoUseCase>();
 builder.Services.AddScoped<ObtenerRestaurantesAleatoriosGrupoUseCase>();
 builder.Services.AddScoped<ActivarMiembroDeGrupoUseCase>();
-
+builder.Services.AddScoped<EnviarRecomendacionesUsuariosActivosUseCase>();
 builder.Services.AddScoped<CrearOpinionRestaurante>();
 builder.Services.AddScoped<NotificacionesInteligentesService>();
 

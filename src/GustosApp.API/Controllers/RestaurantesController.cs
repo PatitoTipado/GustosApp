@@ -1,26 +1,26 @@
-using System.IO;
-using GustosApp.Application.Interfaces;
-using Microsoft.AspNetCore.Http;
 using AutoMapper;
 using GustosApp.API.DTO;
-
 using GustosApp.Application.DTOs.Restaurantes;
+using GustosApp.Application.Interfaces;
 using GustosApp.Application.Services;
-using GustosApp.Domain.Model;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Http;
-using System.IO;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using GustosApp.Application.UseCases.RestauranteUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
+using GustosApp.Domain.Model;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.IO;
+using System.Linq;
+using System.Security.Claims;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 
 // Controlador para restaurantes que se registran en la app por un usuario y restaurantes traidos de Places v1
@@ -36,6 +36,7 @@ namespace GustosApp.API.Controllers
         private readonly SugerirGustosSobreUnRadioUseCase _sugerirGustos;
         private readonly BuscarRestaurantesCercanosUseCase _buscarRestaurantes;
         private readonly ActualizarDetallesRestauranteUseCase _obtenerDetalles;
+        private readonly BuscarRestaurantesUseCase _buscarRestaurante;
         private readonly IAlmacenamientoArchivos _fileStorage;
         private readonly GustosApp.Infraestructure.GustosDbContext _db;
         private readonly IOcrService _ocr;
@@ -54,7 +55,7 @@ namespace GustosApp.API.Controllers
      GustosApp.Infraestructure.GustosDbContext db,
      IOcrService ocr,
      IMenuParser menuParser,
-     IMapper mapper)
+     IMapper mapper, BuscarRestaurantesUseCase buscarRestaurante)
         {
             _servicio = servicio;
             _obtenerGustos = obtenerGustos;
@@ -68,6 +69,7 @@ namespace GustosApp.API.Controllers
 
             _ocr = ocr;
             _menuParser = menuParser;
+            _buscarRestaurante = buscarRestaurante;
 
         }
         [Authorize]
@@ -115,7 +117,7 @@ namespace GustosApp.API.Controllers
             [FromQuery] List<string>? gustos,
             CancellationToken ct,
             string? tipoDeRestaurante,
-            [FromQuery]double rating,
+            [FromQuery] double rating,
             [FromQuery(Name = "near.lat")] double? lat = -34.641812775271,
             [FromQuery(Name = "near.lng")] double? lng = -58.56990230458638,
             [FromQuery(Name = "radiusMeters")] int? radius = 1000,
@@ -187,7 +189,7 @@ namespace GustosApp.API.Controllers
                 return NotFound("Restaurante no encontrado");
 
 
-            if (restaurante.PlaceId!=null && (restaurante.Reviews == null || !restaurante.Reviews.Any()))
+            if (restaurante.PlaceId != null && (restaurante.Reviews == null || !restaurante.Reviews.Any()))
             {
                 var actualizado = await _servicio.ObtenerResenasDesdeGooglePlaces(restaurante.PlaceId, ct);
                 if (actualizado is not null)
@@ -655,6 +657,26 @@ namespace GustosApp.API.Controllers
                     return Enum.TryParse<TipoImagenRestaurante>(tipo, true, out value);
             }
         }
+
+        [HttpGet("buscar")]
+        public async Task<IActionResult> Buscar([FromQuery] string texto, CancellationToken ct)
+        {
+            var restaurantes = await _buscarRestaurante.HandleAsync(texto, ct);
+
+            var dto = restaurantes.Select(r => new RestauranteResponse
+            {
+                Id = r.Id,
+                Nombre = r.Nombre,
+                Categoria = r.Categoria,
+                Rating = r.Rating,
+                Direccion = r.Direccion,
+                ImagenUrl = r.ImagenUrl
+            }).ToList();
+
+            return Ok(dto);
+        }
+
+
     }
 
 }

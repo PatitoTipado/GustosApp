@@ -189,11 +189,11 @@ builder.Services.AddScoped<ISolicitudAmistadRealtimeService, SignalRSolicitudAmi
 
 builder.Services.AddScoped<IOpinionRestauranteRepository, OpinionRestauranteRepositoryEF>();
 builder.Services.AddScoped<ActualizarValoracionRestauranteUseCase>();
+builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
 
 
 // Chat repository
 builder.Services.AddScoped<GustosApp.Domain.Interfaces.IChatRepository, GustosApp.Infraestructure.Repositories.ChatRepositoryEF>();
-builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
 
 // =====================
 //    UseCases existentes
@@ -255,6 +255,7 @@ builder.Services.AddScoped<ActivarMiembroDeGrupoUseCase>();
 
 builder.Services.AddScoped<CrearOpinionRestaurante>();
 builder.Services.AddScoped<NotificacionesInteligentesService>();
+builder.Services.AddScoped<BuscarRestaurantesUseCase>();
 
 
 // Para notificaciones en tiempo real

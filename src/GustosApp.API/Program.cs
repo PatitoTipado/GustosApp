@@ -190,6 +190,7 @@ builder.Services.AddScoped<ISolicitudAmistadRealtimeService, SignalRSolicitudAmi
 builder.Services.AddScoped<IOpinionRestauranteRepository, OpinionRestauranteRepositoryEF>();
 builder.Services.AddScoped<ActualizarValoracionRestauranteUseCase>();
 builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
+builder.Services.AddScoped<IUsuarioRestauranteFavoritoRepository, UsuarioRestauranteFavoritoEF>();
 
 
 // Chat repository
@@ -256,6 +257,7 @@ builder.Services.AddScoped<ActivarMiembroDeGrupoUseCase>();
 builder.Services.AddScoped<CrearOpinionRestaurante>();
 builder.Services.AddScoped<NotificacionesInteligentesService>();
 builder.Services.AddScoped<BuscarRestaurantesUseCase>();
+builder.Services.AddScoped<AgregarUsuarioRestauranteFavoritoUseCase>();
 
 
 // Para notificaciones en tiempo real

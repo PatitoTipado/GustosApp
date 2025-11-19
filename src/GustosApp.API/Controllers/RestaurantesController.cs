@@ -4,6 +4,7 @@ using GustosApp.Application.DTOs.Restaurantes;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.Services;
 using GustosApp.Application.UseCases.RestauranteUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
 using GustosApp.Domain.Model;
 using Microsoft.AspNetCore.Authorization;
@@ -42,7 +43,7 @@ namespace GustosApp.API.Controllers
         private readonly IOcrService _ocr;
         private readonly IMenuParser _menuParser;
         private IMapper _mapper;
-
+        private readonly AgregarUsuarioRestauranteFavoritoUseCase _agregarFavoritoUseCase;
 
 
         public RestaurantesController(
@@ -55,7 +56,7 @@ namespace GustosApp.API.Controllers
      GustosApp.Infraestructure.GustosDbContext db,
      IOcrService ocr,
      IMenuParser menuParser,
-     IMapper mapper, BuscarRestaurantesUseCase buscarRestaurante)
+     IMapper mapper, BuscarRestaurantesUseCase buscarRestaurante, AgregarUsuarioRestauranteFavoritoUseCase agregarUsuarioRestauranteFavoritoUseCase)
         {
             _servicio = servicio;
             _obtenerGustos = obtenerGustos;
@@ -70,7 +71,7 @@ namespace GustosApp.API.Controllers
             _ocr = ocr;
             _menuParser = menuParser;
             _buscarRestaurante = buscarRestaurante;
-
+            _agregarFavoritoUseCase = agregarUsuarioRestauranteFavoritoUseCase;
         }
         [Authorize]
 
@@ -676,6 +677,13 @@ namespace GustosApp.API.Controllers
             return Ok(dto);
         }
 
+        [HttpPost("{restauranteId}/favorito")]
+        public async Task<IActionResult> AgregarFavorito(Guid restauranteId)
+        {
+            var firebaseUid = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            await _agregarFavoritoUseCase.HandleAsync(firebaseUid, restauranteId);
+            return Ok();
+        }
 
     }
 

@@ -102,6 +102,6 @@ namespace GustosApp.Domain.Model
             return gustosIncompatibles.Select(g => g.Nombre).ToList();
         }
         public ICollection<UsuarioRestauranteVisitado> Visitados { get; set; } = new List<UsuarioRestauranteVisitado>();
-        //public object Reviews { get; set; }
+        public ICollection<UsuarioRestauranteFavorito> RestaurantesFavoritos { get; set; } = new List<UsuarioRestauranteFavorito>();
     }
 }

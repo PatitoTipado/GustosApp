@@ -3,8 +3,6 @@ using GustosApp.Application.Interfaces;
 using Microsoft.AspNetCore.Http;
 using AutoMapper;
 using GustosApp.API.DTO;
-
-using GustosApp.Application.DTOs.Restaurantes;
 using GustosApp.Application.Services;
 using GustosApp.Domain.Model;
 using Microsoft.AspNetCore.Authorization;
@@ -26,6 +24,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using System.Security.Cryptography;
 using GustosApp.Domain.Model.@enum;
 using GustosApp.Domain.Common;
+using GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestauranteUseCases;
 
 
 // Controlador para restaurantes que se registran en la app por un usuario y restaurantes traidos de Places v1
@@ -37,11 +36,14 @@ namespace GustosApp.API.Controllers
     public class RestaurantesController : BaseApiController
     {
         private readonly IServicioRestaurantes _servicio;
+        private readonly ObtenerUsuarioUseCase _obtenerUsuario;
         private readonly SugerirGustosSobreUnRadioUseCase _sugerirGustos;
         private readonly BuscarRestaurantesCercanosUseCase _buscarRestaurantes;
         private readonly ActualizarDetallesRestauranteUseCase _obtenerDetalles;
         private readonly ConstruirPreferenciasUseCase _construirPreferencias;
+        private readonly CrearSolicitudRestauranteUseCase _solicitudesRestaurantes;
         private readonly IAlmacenamientoArchivos _fileStorage;
+        private readonly IFileStorageService _firebase;
         private readonly GustosApp.Infraestructure.GustosDbContext _db;
         private readonly IOcrService _ocr;
         private readonly IMenuParser _menuParser;
@@ -53,23 +55,29 @@ namespace GustosApp.API.Controllers
 
         public RestaurantesController(
      IServicioRestaurantes servicio,
+      ObtenerUsuarioUseCase obtenerUsuario,
      SugerirGustosSobreUnRadioUseCase sugerirGustos,
      BuscarRestaurantesCercanosUseCase buscarRestaurantes,
      ConstruirPreferenciasUseCase construirPreferencias,
      ActualizarDetallesRestauranteUseCase obtenerDetalles,
      IAlmacenamientoArchivos fileStorage,
-     GustosApp.Infraestructure.GustosDbContext db,
+      IFileStorageService firebase,
+      CrearSolicitudRestauranteUseCase solicitudesRestaurantes,
+        GustosApp.Infraestructure.GustosDbContext db,
         ICacheService cache,
      IOcrService ocr,
      IMenuParser menuParser,
      IMapper mapper)
         {
             _servicio = servicio;
+            _obtenerUsuario = obtenerUsuario;
             _sugerirGustos = sugerirGustos;
             _buscarRestaurantes = buscarRestaurantes;
             _construirPreferencias = construirPreferencias;
+            _solicitudesRestaurantes = solicitudesRestaurantes;
             _obtenerDetalles = obtenerDetalles;
             _fileStorage = fileStorage;
+            _firebase = firebase;
             _db = db;
             _fileStorage = fileStorage;
             _cache = cache;
@@ -214,6 +222,7 @@ namespace GustosApp.API.Controllers
             return Ok(restaurante);
         }
 
+       /* [Obsolete]
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> Post([FromBody] CrearRestauranteDto dto, CancellationToken ct)
@@ -290,6 +299,27 @@ namespace GustosApp.API.Controllers
             });
         }
 
+        */
+
+        [HttpPost]
+        [Authorize]
+        [RequestSizeLimit(50 * 1024 * 1024)]
+        public async Task<IActionResult> CrearSolicitud(
+         [FromForm] CrearRestauranteDto dto,
+             CancellationToken ct)
+        {
+            var uid = GetFirebaseUid();
+            var usuario = await _obtenerUsuario.HandleAsync(FirebaseUid: uid, ct: ct);
+
+            if (usuario.Rol != RolUsuario.Usuario)
+                return BadRequest("Ya hiciste una solicitud o sos dueño de un restaurante.");
+
+            SolicitudRestaurante solicitud = await CrearSolicitud(dto, usuario, ct);
+
+            return Ok(solicitud);
+        }
+
+      
 
         [HttpPut("{id:guid}")]
         [Authorize]
@@ -317,7 +347,7 @@ namespace GustosApp.API.Controllers
             return ok ? NoContent() : NotFound();
         }
 
-        [Authorize]
+       /* [Authorize]
         [HttpPost("{id:guid}/imagenes/{tipo}")]
         public async Task<IActionResult> SubirImagen(Guid id, string tipo, IFormFile archivo, CancellationToken ct)
         {
@@ -359,7 +389,8 @@ namespace GustosApp.API.Controllers
 
             return Created(url, new { mensaje = "Imagen subida", url });
         }
-
+       */
+       /*
         [Authorize]
         [HttpPost("{id:guid}/menu/manual")]
         [Consumes("application/json")]
@@ -425,8 +456,8 @@ namespace GustosApp.API.Controllers
             }
             return Ok(new { mensaje = "Menú actualizado", version = existente.Version });
         }
-
-
+       */
+        /*
         [Authorize]
         [HttpPost("{id:guid}/menu/ocr")]
         [Consumes("multipart/form-data")]
@@ -520,8 +551,8 @@ namespace GustosApp.API.Controllers
                 foreach (var s in ocrStreams) s.Dispose();
             }
         }
-
-
+        */
+        /*
         // ---------------------------------------------
         // GET /api/Restaurantes/{id}/imagenes?tipo=perfil|principal|interior|comida|menu&skip=0&take=20&miniatura=true
         // ---------------------------------------------
@@ -583,6 +614,8 @@ namespace GustosApp.API.Controllers
                 Items = data
             });
         }
+        
+        
 
         // ---------------------------------------------
         // GET /api/Restaurantes/{id}/imagenes/{imagenId}
@@ -608,13 +641,14 @@ namespace GustosApp.API.Controllers
                 Orden = img.Orden,
                 FechaCreacionUtc = img.FechaCreacionUtc,
                 MiniaturaUrl = (miniatura && img.Tipo == TipoImagenRestaurante.Perfil)
-                    ? img.Url /* o tu convención de thumbs */
+                    ? img.Url /* o tu convención de thumbs
                     : null
             };
 
             return Ok(dto);
         }
-
+*/
+        /*
         // ---------------------------------------------
         // GET /api/Restaurantes/{id}/menu
         // ---------------------------------------------
@@ -672,7 +706,108 @@ namespace GustosApp.API.Controllers
                     return Enum.TryParse<TipoImagenRestaurante>(tipo, true, out value);
             }
         }
-    }
+        */
+        private async Task<SolicitudRestaurante> CrearSolicitud(CrearRestauranteDto dto, Usuario usuario, CancellationToken ct)
+        {
+            var solicitud = new SolicitudRestaurante
+            {
+                UsuarioId = usuario.Id,
+                Nombre = dto.Nombre,
+                Direccion = dto.Direccion,
+                Latitud = dto.Latitud,
+                Longitud = dto.Longitud,
+                PrimaryType = dto.PrimaryType,
+                TypesJson = dto.TypesComoJson ?? "[]",
+                HorariosJson = dto.HorariosComoJson,
+                Platos = dto.Platos ?? new(),
+                GustosIds = dto.GustosQueSirveIds ?? new(),
+                RestriccionesIds = dto.RestriccionesQueRespetaIds ?? new()
+            };
 
-}
+            // ===== SUBIR IMÁGENES A FIREBASE =====
+
+            solicitud.Imagenes = new List<SolicitudRestauranteImagen>();
+
+            // Imagen destacada (tipo 0)
+            if (dto.ImagenDestacada != null)
+            {
+                using var ms = dto.ImagenDestacada.OpenReadStream();
+                var url = await _firebase.UploadFileAsync(ms, dto.ImagenDestacada.FileName, "solicitudes");
+
+                solicitud.Imagenes.Add(new SolicitudRestauranteImagen
+                {
+                    Tipo = TipoImagenSolicitud.Destacada,
+                    Url = url
+                });
+            }
+
+            // Interior (tipo 1)
+            if (dto.ImagenesInterior != null)
+            {
+                foreach (var archivo in dto.ImagenesInterior)
+                {
+                    using var ms = archivo.OpenReadStream();
+                    var url = await _firebase.UploadFileAsync(ms, archivo.FileName, "solicitudes");
+
+                    solicitud.Imagenes.Add(new SolicitudRestauranteImagen
+                    {
+                        Tipo = TipoImagenSolicitud.Interior,
+                        Url = url
+                    });
+                }
+            }
+
+            // Comidas (tipo 2)
+            if (dto.ImagenesComidas != null)
+            {
+                foreach (var archivo in dto.ImagenesComidas)
+                {
+                    using var ms = archivo.OpenReadStream();
+                    var url = await _firebase.UploadFileAsync(ms, archivo.FileName, "solicitudes");
+
+                    solicitud.Imagenes.Add(new SolicitudRestauranteImagen
+                    {
+                        Tipo = TipoImagenSolicitud.Comida,
+                        Url = url
+                    });
+                }
+            }
+
+            // Menú (tipo 3)
+            if (dto.ImagenMenu != null)
+            {
+                using var ms = dto.ImagenMenu.OpenReadStream();
+                var url = await _firebase.UploadFileAsync(ms, dto.ImagenMenu.FileName, "solicitudes");
+
+                solicitud.Imagenes.Add(new SolicitudRestauranteImagen
+                {
+                    Tipo = TipoImagenSolicitud.Menu,
+                    Url = url
+                });
+            }
+
+            // Logo (tipo 4)
+            if (dto.Logo != null)
+            {
+                using var ms = dto.Logo.OpenReadStream();
+                var url = await _firebase.UploadFileAsync(ms, dto.Logo.FileName, "solicitudes");
+
+                solicitud.Imagenes.Add(new SolicitudRestauranteImagen
+                {
+                    Tipo = TipoImagenSolicitud.Logo,
+                    Url = url
+                });
+            }
+       
+
+            // ===== GUARDAR SOLICITUD =====
+            await _solicitudesRestaurantes.HandleAsync(usuario.FirebaseUid,solicitud.Nombre,
+                solicitud.Direccion, solicitud.Latitud, solicitud.Longitud, solicitud.PrimaryType,
+                solicitud.TypesJson, solicitud.HorariosJson, solicitud.GustosIds,solicitud.RestriccionesIds,
+                solicitud.Platos,solicitud.Imagenes, ct);
+            return solicitud;
+        }
+    }
+    
+        }
 

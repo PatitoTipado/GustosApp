@@ -15,7 +15,13 @@ namespace GustosApp.Domain.Model
     public class Restaurante
     {
         public Guid Id { get; set; }
-        public string PropietarioUid { get; set; } = string.Empty; // Firebase uid del dueño
+        // deprecated pero mantenido por compatibilidad
+         public string PropietarioUid { get; set; } = string.Empty;
+
+        //Nuevo
+        public Guid? DuenoId { get; set; }
+        public Usuario? Dueno { get; set; }
+
         public string Nombre { get; set; } = string.Empty;
         public string NombreNormalizado { get; set; } = string.Empty;
         public string Direccion { get; set; } = string.Empty;

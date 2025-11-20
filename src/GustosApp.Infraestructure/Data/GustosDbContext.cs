@@ -28,6 +28,8 @@ public class GustosDbContext : DbContext
     public DbSet<RestauranteEspecialidad> RestauranteEspecialidades { get; set; }
     public DbSet<Restaurante> Restaurantes { get; set; }
 
+    public DbSet<SolicitudRestaurante> SolicitudesRestaurantes { get; set; }
+
     //public DbSet<ReseñaRestaurante> ReseñasRestaurantes { get; set; }
 
     public DbSet<Tag> Tags { get; set; }
@@ -60,13 +62,34 @@ public class GustosDbContext : DbContext
         modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.RestauranteImagenConfiguration());
         modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.RestauranteMenuConfiguration());
 
+
+      
+        modelBuilder.Entity<SolicitudRestaurante>()
+       .HasOne(s => s.Usuario)
+       .WithMany(u => u.SolicitudesRestaurantes)
+       .HasForeignKey(s => s.UsuarioId)
+       .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<SolicitudRestauranteImagen>()
+          .HasOne(i => i.Solicitud)
+           .WithMany(s => s.Imagenes)
+           .HasForeignKey(i => i.SolicitudId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         modelBuilder.Entity<Restaurante>()
               .Ignore(r => r.Score)
-            .HasMany(r => r.Reviews)
+                .HasMany(r => r.Reviews)
                 .WithOne()
                 .HasForeignKey(r => r.RestauranteId)
 
                 .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Restaurante>()
+            .HasOne(r => r.Dueno)
+            .WithMany(u => u.Restaurantes)
+            .HasForeignKey(r => r.DuenoId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // Relaciones muchos a muchos
         modelBuilder.Entity<Usuario>()
             .HasMany(u => u.Gustos)

@@ -94,7 +94,7 @@ namespace GustosApp.API.DTO
         public string UsuarioUsername { get; set; } = string.Empty;
         public DateTime FechaUnion { get; set; }
         public bool EsAdministrador { get; set; }
-
+        public bool afectarRecomendacion { get; set; }
         public MiembroGrupoResponse() { }
 
         public MiembroGrupoResponse(
@@ -105,7 +105,8 @@ namespace GustosApp.API.DTO
             string usuarioEmail,
             string usuarioUsername,
             DateTime fechaUnion,
-            bool esAdministrador)
+            bool esAdministrador,
+            bool afectarRecomendacion)
         {
             Id = id;
             UsuarioId = usuarioId;
@@ -115,6 +116,7 @@ namespace GustosApp.API.DTO
             UsuarioUsername = usuarioUsername;
             FechaUnion = fechaUnion;
             EsAdministrador = esAdministrador;
+            this.afectarRecomendacion = afectarRecomendacion;
         }
     }
 

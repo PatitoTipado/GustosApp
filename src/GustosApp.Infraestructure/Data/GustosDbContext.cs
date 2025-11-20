@@ -47,6 +47,8 @@ public class GustosDbContext : DbContext
 
     public DbSet<OpinionRestaurante> OpinionesRestaurantes { get; set; }
     public DbSet<OpinionFoto> OpinionesFotos { get; set; }
+    public DbSet<OpinionRestaurante> OpinionesRestaurante { get; set; }
+    public DbSet<UsuarioRestauranteFavorito> UsuarioRestauranteFavoritos { get; set; }
 
     public GustosDbContext(DbContextOptions<GustosDbContext> options)
     : base(options) { }
@@ -265,6 +267,20 @@ public class GustosDbContext : DbContext
             .HasMany(r => r.RestriccionesQueRespeta)
             .WithMany(p => p.Restaurantes)
             .UsingEntity(j => j.ToTable("RestauranteRestricciones"));
+
+        modelBuilder.Entity<UsuarioRestauranteFavorito>()
+            .HasIndex(f => new { f.UsuarioId, f.RestauranteId })
+            .IsUnique(); // Evita duplicados
+
+        modelBuilder.Entity<UsuarioRestauranteFavorito>()
+            .HasOne(f => f.Usuario)
+            .WithMany(u => u.RestaurantesFavoritos)
+            .HasForeignKey(f => f.UsuarioId);
+
+        modelBuilder.Entity<UsuarioRestauranteFavorito>()
+            .HasOne(f => f.Restaurante)
+            .WithMany()
+            .HasForeignKey(f => f.RestauranteId);
 
         modelBuilder.Entity<Notificacion>(entity =>
         {

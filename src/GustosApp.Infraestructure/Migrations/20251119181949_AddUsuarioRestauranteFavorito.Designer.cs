@@ -4,6 +4,7 @@ using GustosApp.Infraestructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GustosApp.Infraestructure.Migrations
 {
     [DbContext(typeof(GustosDbContext))]
-    partial class GustosDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251119181949_AddUsuarioRestauranteFavorito")]
+    partial class AddUsuarioRestauranteFavorito
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1586,81 +1589,53 @@ namespace GustosApp.Infraestructure.Migrations
                     b.ToTable("Notificaciones", (string)null);
                 });
 
-            modelBuilder.Entity("GustosApp.Domain.Model.OpinionFoto", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("FechaSubida")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("OpinionRestauranteId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OpinionRestauranteId");
-
-                    b.ToTable("OpinionesFotos");
-                });
-
             modelBuilder.Entity("GustosApp.Domain.Model.OpinionRestaurante", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("AutorExterno")
+                    b.Property<string>("Autor")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("EsImportada")
-                        .HasColumnType("bit");
 
                     b.Property<DateTime>("FechaCreacion")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("FechaVisita")
+                    b.Property<string>("FechaTexto")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("FechaVisita")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("FuenteExterna")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ImagenAutorExterno")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("MesAnioVisita")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("MotivoVisita")
+                    b.Property<string>("Img")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Opinion")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<Guid>("RestauranteId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Titulo")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
-                    b.Property<Guid?>("UsuarioId")
+                    b.Property<Guid>("UsuarioId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<double>("Valoracion")
-                        .HasColumnType("float");
+                    b.Property<int>("Valoracion")
+                        .HasColumnType("int")
+                        .HasColumnName("Valoracion");
 
                     b.HasKey("Id");
 
                     b.HasIndex("RestauranteId");
 
-                    b.HasIndex("UsuarioId");
+                    b.HasIndex("UsuarioId", "RestauranteId")
+                        .IsUnique();
 
-                    b.ToTable("OpinionesRestaurantes");
+                    b.ToTable("OpinionRestaurante", (string)null);
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.Restaurante", b =>
@@ -2545,17 +2520,6 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Navigation("UsuarioDestino");
                 });
 
-            modelBuilder.Entity("GustosApp.Domain.Model.OpinionFoto", b =>
-                {
-                    b.HasOne("GustosApp.Domain.Model.OpinionRestaurante", "Opinion")
-                        .WithMany("Fotos")
-                        .HasForeignKey("OpinionRestauranteId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Opinion");
-                });
-
             modelBuilder.Entity("GustosApp.Domain.Model.OpinionRestaurante", b =>
                 {
                     b.HasOne("GustosApp.Domain.Model.Restaurante", "Restaurante")
@@ -2567,7 +2531,8 @@ namespace GustosApp.Infraestructure.Migrations
                     b.HasOne("GustosApp.Domain.Model.Usuario", "Usuario")
                         .WithMany()
                         .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Restaurante");
 
@@ -2741,11 +2706,6 @@ namespace GustosApp.Infraestructure.Migrations
             modelBuilder.Entity("GustosApp.Domain.Model.MiembroGrupo", b =>
                 {
                     b.Navigation("GustosSeleccionados");
-                });
-
-            modelBuilder.Entity("GustosApp.Domain.Model.OpinionRestaurante", b =>
-                {
-                    b.Navigation("Fotos");
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.Restaurante", b =>

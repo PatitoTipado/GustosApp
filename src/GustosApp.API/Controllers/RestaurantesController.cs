@@ -1,22 +1,23 @@
-using System.IO;
-using GustosApp.Application.Interfaces;
-using Microsoft.AspNetCore.Http;
 using AutoMapper;
 using GustosApp.API.DTO;
-
 using GustosApp.Application.DTOs.Restaurantes;
+using GustosApp.Application.Interfaces;
 using GustosApp.Application.Services;
+using GustosApp.Application.UseCases.RestauranteUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
 using GustosApp.Domain.Model;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO;
 using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Http;
-using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using GustosApp.Application.UseCases.RestauranteUseCases;
@@ -26,6 +27,8 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using System.Security.Cryptography;
 using GustosApp.Domain.Model.@enum;
 using GustosApp.Domain.Common;
+using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 
 // Controlador para restaurantes que se registran en la app por un usuario y restaurantes traidos de Places v1
@@ -41,6 +44,7 @@ namespace GustosApp.API.Controllers
         private readonly BuscarRestaurantesCercanosUseCase _buscarRestaurantes;
         private readonly ActualizarDetallesRestauranteUseCase _obtenerDetalles;
         private readonly ConstruirPreferenciasUseCase _construirPreferencias;
+        private readonly BuscarRestaurantesUseCase _buscarRestaurante;
         private readonly IAlmacenamientoArchivos _fileStorage;
         private readonly GustosApp.Infraestructure.GustosDbContext _db;
         private readonly IOcrService _ocr;
@@ -48,7 +52,7 @@ namespace GustosApp.API.Controllers
         private readonly ICacheService _cache;
 
         private IMapper _mapper;
-
+        private readonly AgregarUsuarioRestauranteFavoritoUseCase _agregarFavoritoUseCase;
 
 
         public RestaurantesController(
@@ -62,7 +66,7 @@ namespace GustosApp.API.Controllers
         ICacheService cache,
      IOcrService ocr,
      IMenuParser menuParser,
-     IMapper mapper)
+     IMapper mapper, BuscarRestaurantesUseCase buscarRestaurante, AgregarUsuarioRestauranteFavoritoUseCase agregarUsuarioRestauranteFavoritoUseCase)
         {
             _servicio = servicio;
             _sugerirGustos = sugerirGustos;
@@ -76,7 +80,8 @@ namespace GustosApp.API.Controllers
             _mapper = mapper;
             _ocr = ocr;
             _menuParser = menuParser;
-
+            _buscarRestaurante = buscarRestaurante;
+            _agregarFavoritoUseCase = agregarUsuarioRestauranteFavoritoUseCase;
         }
         [Authorize]
 
@@ -672,6 +677,33 @@ namespace GustosApp.API.Controllers
                     return Enum.TryParse<TipoImagenRestaurante>(tipo, true, out value);
             }
         }
+
+        [HttpGet("buscar")]
+        public async Task<IActionResult> Buscar([FromQuery] string texto, CancellationToken ct)
+        {
+            var restaurantes = await _buscarRestaurante.HandleAsync(texto, ct);
+
+            var dto = restaurantes.Select(r => new RestauranteResponse
+            {
+                Id = r.Id,
+                Nombre = r.Nombre,
+                Categoria = r.Categoria,
+                Rating = r.Rating,
+                Direccion = r.Direccion,
+                ImagenUrl = r.ImagenUrl
+            }).ToList();
+
+            return Ok(dto);
+        }
+
+        [HttpPost("{restauranteId}/favorito")]
+        public async Task<IActionResult> AgregarFavorito(Guid restauranteId)
+        {
+            var firebaseUid = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            await _agregarFavoritoUseCase.HandleAsync(firebaseUid, restauranteId);
+            return Ok();
+        }
+
     }
 
 }

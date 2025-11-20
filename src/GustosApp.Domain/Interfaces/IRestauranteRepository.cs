@@ -22,5 +22,6 @@ namespace GustosApp.Domain.Interfaces
             TimeSpan? maxAge = null,
             CancellationToken ct = default);
         Task ActualizarValoracionAsync(Guid restauranteId, double promedio, CancellationToken cancellationToken);
+        Task<List<Restaurante>> BuscarPorTextoAsync(string texto, CancellationToken ct = default);
     }
 }

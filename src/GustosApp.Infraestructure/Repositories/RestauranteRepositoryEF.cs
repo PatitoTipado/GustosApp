@@ -145,6 +145,37 @@ namespace GustosApp.Infraestructure.Repositories
             return restaurantes;
         }
 
+        public async Task<List<Restaurante>> BuscarPorTextoAsync(string texto, CancellationToken ct = default)
+        {
+            texto = texto.ToLower();
+
+            var restaurantes = await _db.Restaurantes
+                .AsNoTracking()
+                .Where(r =>
+                    r.Nombre.ToLower().Contains(texto) ||
+                    r.NombreNormalizado.ToLower().Contains(texto) ||
+                    r.Categoria.ToLower().Contains(texto)
+                )
+                .ToListAsync(ct);
+
+            // Ordenamiento por rating y coincidencia de texto
+            var restaurantesOrdenados = restaurantes
+                .Select(r => new
+                {
+                    Restaurante = r,
+                    Prioridad = r.Nombre.ToLower().Contains(texto) ? 3 :
+                                r.NombreNormalizado.ToLower().Contains(texto) ? 2 :
+                                r.Categoria.ToLower().Contains(texto) ? 1 : 0
+                })
+                .OrderByDescending(x => x.Restaurante.Rating) // primero rating
+                .ThenByDescending(x => x.Prioridad)          // luego coincidencia de texto
+                .Select(x => x.Restaurante)
+                .ToList();
+
+            return restaurantesOrdenados;
+        }
+
+
         public async Task<Restaurante?> GetByIdAsync(Guid id, CancellationToken ct)
         {
             return await _db.Restaurantes.FirstOrDefaultAsync(r => r.Id == id);

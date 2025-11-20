@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GustosApp.Application.UseCases
+namespace GustosApp.Application.UseCases.GrupoUseCases
 {
     public class EliminarGustosGrupoUseCase
     {
@@ -46,7 +46,7 @@ namespace GustosApp.Application.UseCases
                 throw new KeyNotFoundException("el grupo no existe.");
             }
 
-            if (!(_miembroGrupoRepository.UsuarioEsMiembroActivoAsync(grupoId, miembroGrupo.Id).Result))
+            if (!_miembroGrupoRepository.UsuarioEsMiembroActivoAsync(grupoId, miembroGrupo.Id).Result)
             {
                 throw new UnauthorizedAccessException("El miembro no es un usuario activo (expulsado)");
             }

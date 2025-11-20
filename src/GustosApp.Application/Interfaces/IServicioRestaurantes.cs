@@ -2,14 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using GustosApp.Application.DTO;
-using GustosApp.Application.DTOs.Restaurantes;
 using GustosApp.Domain.Model;
 
 namespace GustosApp.Application.Interfaces
 {
     public interface IServicioRestaurantes
     {
-        Task<Restaurante> CrearAsync(string propietarioUid, CrearRestauranteDto dto);
+       // Task<Restaurante> CrearAsync(string propietarioUid, CrearRestauranteDto dto);
         Task<Restaurante?> ObtenerAsync(Guid id);
         Task<Restaurante?> ObtenerPorPropietarioAsync(string propietarioUid);
         Task<Restaurante?> ActualizarAsync(Guid id, string solicitanteUid, bool esAdmin, ActualizarRestauranteDto dto);

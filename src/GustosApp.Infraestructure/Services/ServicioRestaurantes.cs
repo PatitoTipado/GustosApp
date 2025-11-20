@@ -1,5 +1,5 @@
 ﻿using Google.Protobuf.WellKnownTypes;
-using GustosApp.Application.DTOs.Restaurantes;
+
 using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System.Net.Http.Json;
 using System.Text.Json;
-using static System.Net.WebRequestMethods;
+
 
 namespace GustosApp.Infraestructure.Services
 {
@@ -91,7 +91,7 @@ namespace GustosApp.Infraestructure.Services
 
 
 
-        public async Task<Restaurante> CrearAsync(string propietarioUid, CrearRestauranteDto dto)
+       /* public async Task<Restaurante> CrearAsync(string propietarioUid, CrearRestauranteDto dto)
         {
             var nombreNorm = NormalizarNombre(dto.Nombre);
             var nombreEnUso = await _db.Restaurantes.AsNoTracking()
@@ -160,6 +160,7 @@ namespace GustosApp.Infraestructure.Services
             return entidad;
         }
 
+        */
         public async Task<Restaurante?> ObtenerAsync(Guid id)
         {
             var r = await _db.Restaurantes

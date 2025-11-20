@@ -1,6 +1,7 @@
 ﻿using GustosApp.Application.UseCases.UsuarioUseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
+using GustosApp.Domain.Model.@enum;
 using Moq;
 using System;
 using System.Collections.Generic;

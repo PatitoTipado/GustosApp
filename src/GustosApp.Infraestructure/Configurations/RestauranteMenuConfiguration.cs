@@ -19,6 +19,9 @@ namespace GustosApp.Infraestructure.Configurations
              .OnDelete(DeleteBehavior.Cascade);
 
             b.HasIndex(x => x.RestauranteId).HasDatabaseName("IX_RestMenu_RestauranteId");
+
+            b.Property(x => x.Version).IsRequired();
+            b.Property(x => x.FechaActualizacionUtc).IsRequired();
         }
     }
 }

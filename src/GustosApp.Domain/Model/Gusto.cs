@@ -18,6 +18,10 @@ namespace GustosApp.Domain.Model
         public ICollection <Restaurante> restaurantes { get; set; } = new List<Restaurante>();
 
         public ICollection<GrupoGusto> GruposRelacionados { get; set; } = new List<GrupoGusto>();
+  
+    
+    
+    
     }
 
    

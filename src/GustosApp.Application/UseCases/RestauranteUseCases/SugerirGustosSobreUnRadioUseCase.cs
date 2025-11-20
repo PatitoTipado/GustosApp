@@ -1,5 +1,4 @@
-﻿using GustosApp.Application.DTO;
-using GustosApp.Application.DTOs.Restaurantes;
+﻿
 using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Common;
 using GustosApp.Domain.Interfaces;

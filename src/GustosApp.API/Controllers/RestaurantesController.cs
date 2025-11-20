@@ -1,6 +1,6 @@
 using AutoMapper;
 using GustosApp.API.DTO;
-using GustosApp.Application.DTOs.Restaurantes;
+
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.Services;
 using GustosApp.Application.UseCases.RestauranteUseCases;
@@ -20,9 +20,6 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using GustosApp.Application.UseCases.RestauranteUseCases;
-using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
-using GustosApp.Application.UseCases.UsuarioUseCases;
 using Microsoft.AspNetCore.Http.HttpResults;
 using System.Security.Cryptography;
 using GustosApp.Domain.Model.@enum;

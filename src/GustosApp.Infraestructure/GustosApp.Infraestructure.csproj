@@ -32,6 +32,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.17.0" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.17.0" />
+    <PackageReference Include="Microsoft.Owin.Security.Google" Version="4.2.3" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
     <PackageReference Include="StackExchange.Redis" Version="2.9.32" />
     <PackageReference Include="System.Numerics.Tensors" Version="9.0.0" />

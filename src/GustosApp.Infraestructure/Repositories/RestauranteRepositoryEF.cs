@@ -175,7 +175,11 @@ namespace GustosApp.Infraestructure.Repositories
             return restaurantesOrdenados;
         }
 
-
+        public async Task<Restaurante?> GetByFirebaseUidAsync(string firebaseUid, CancellationToken ct = default)
+        {
+            return await _db.Restaurantes
+        .FirstOrDefaultAsync(r => r.PropietarioUid == firebaseUid, ct);
+        }
     }
 }
 

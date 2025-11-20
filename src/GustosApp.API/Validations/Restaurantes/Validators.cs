@@ -32,11 +32,11 @@ namespace GustosApp.Application.Validations.Restaurantes
             // ===========================
             // COORDENADAS
             // ===========================
-            RuleFor(x => x.Latitud)
+            RuleFor(x => x.Lat)
                 .NotNull().WithMessage("Latitud requerida.")
                 .InclusiveBetween(-90, 90);
 
-            RuleFor(x => x.Longitud)
+            RuleFor(x => x.Lng)
                 .NotNull().WithMessage("Longitud requerida.")
                 .InclusiveBetween(-180, 180);
 
@@ -52,18 +52,10 @@ namespace GustosApp.Application.Validations.Restaurantes
             // ===========================
             // TYPES (lista)
             // ===========================
-            RuleForEach(x => x.TypesComoJson)
+            RuleForEach(x => x.TypesJson)
                 .NotEmpty();
 
-            // ===========================
-            // PLATOS (si vienen)
-            // ===========================
-            When(x => x.Platos != null && x.Platos.Any(), () =>
-            {
-                RuleForEach(x => x.Platos)
-                    .NotEmpty()
-                    .MaximumLength(100);
-            });
+     
 
             // ===========================
             // GUSTOS / RESTRICCIONES

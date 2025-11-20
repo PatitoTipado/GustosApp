@@ -4,7 +4,6 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using FluentAssertions;
 using GustosApp.API.Controllers;
-using GustosApp.Application.DTOs.Restaurantes;
 using GustosApp.Application.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

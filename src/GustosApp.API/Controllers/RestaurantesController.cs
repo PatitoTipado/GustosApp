@@ -139,7 +139,7 @@ namespace GustosApp.API.Controllers
       [FromQuery] int top = 10
   )
         {
-            
+
             var firebaseUid = GetFirebaseUid();
 
             // Filtrar restaurantes cercanos
@@ -151,7 +151,7 @@ namespace GustosApp.API.Controllers
                 lng: lng,
                 radioMetros: radius
               );
-           
+
 
 
             await _cache.SetAsync(
@@ -197,7 +197,7 @@ namespace GustosApp.API.Controllers
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
         {
-            var uid= GetFirebaseUid();
+            var uid = GetFirebaseUid();
 
             var restaurante = await _servicio.ObtenerAsync(id);
 
@@ -209,7 +209,7 @@ namespace GustosApp.API.Controllers
             {
                 var actualizado = await _servicio.ObtenerResenasDesdeGooglePlaces(restaurante.PlaceId, ct);
                 if (actualizado is not null)
-                 restaurante = actualizado;
+                    restaurante = actualizado;
 
             }
 
@@ -222,84 +222,84 @@ namespace GustosApp.API.Controllers
             return Ok(restaurante);
         }
 
-       /* [Obsolete]
-        [HttpPost]
-        [Authorize]
-        public async Task<IActionResult> Post([FromBody] CrearRestauranteDto dto, CancellationToken ct)
-        {
-            var uid = User.FindFirst("user_id")?.Value
-                      ?? User.FindFirst("sub")?.Value
-                      ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrWhiteSpace(uid)) return Unauthorized();
+        /* [Obsolete]
+         [HttpPost]
+         [Authorize]
+         public async Task<IActionResult> Post([FromBody] CrearRestauranteDto dto, CancellationToken ct)
+         {
+             var uid = User.FindFirst("user_id")?.Value
+                       ?? User.FindFirst("sub")?.Value
+                       ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+             if (string.IsNullOrWhiteSpace(uid)) return Unauthorized();
 
-            var (lat, lng) = dto.Coordenadas;
-            dto.Latitud = lat;
-            dto.Longitud = lng;
+             var (lat, lng) = dto.Coordenadas;
+             dto.Latitud = lat;
+             dto.Longitud = lng;
 
-            if (dto.Horarios is null)
-            {
-                var json = dto.HorariosComoJson;
-                if (!string.IsNullOrWhiteSpace(json))
-                {
-                    dto.Horarios = JsonSerializer.Deserialize<JsonElement>(json);
-                }
-            }
+             if (dto.Horarios is null)
+             {
+                 var json = dto.HorariosComoJson;
+                 if (!string.IsNullOrWhiteSpace(json))
+                 {
+                     dto.Horarios = JsonSerializer.Deserialize<JsonElement>(json);
+                 }
+             }
 
-            var creado = await _servicio.CrearAsync(uid, dto);
+             var creado = await _servicio.CrearAsync(uid, dto);
 
-            var restaurante = await _db.Restaurantes
-                .Include(r => r.GustosQueSirve)
-                .Include(r => r.RestriccionesQueRespeta)
-                .FirstOrDefaultAsync(r => r.Id == creado.Id, ct);
+             var restaurante = await _db.Restaurantes
+                 .Include(r => r.GustosQueSirve)
+                 .Include(r => r.RestriccionesQueRespeta)
+                 .FirstOrDefaultAsync(r => r.Id == creado.Id, ct);
 
-            if (restaurante is null)
-                return CreatedAtAction(nameof(GetById), new { id = creado.Id }, creado);
+             if (restaurante is null)
+                 return CreatedAtAction(nameof(GetById), new { id = creado.Id }, creado);
 
-            if (dto.GustosQueSirveIds is { Count: > 0 })
-            {
-                var gustos = await _db.Gustos
-                    .Where(g => dto.GustosQueSirveIds!.Contains(g.Id))
-                    .ToListAsync(ct);
+             if (dto.GustosQueSirveIds is { Count: > 0 })
+             {
+                 var gustos = await _db.Gustos
+                     .Where(g => dto.GustosQueSirveIds!.Contains(g.Id))
+                     .ToListAsync(ct);
 
-                foreach (var g in gustos)
-                {
-                    if (!restaurante.GustosQueSirve.Any(x => x.Id == g.Id))
-                        restaurante.GustosQueSirve.Add(g);
-                }
-            }
+                 foreach (var g in gustos)
+                 {
+                     if (!restaurante.GustosQueSirve.Any(x => x.Id == g.Id))
+                         restaurante.GustosQueSirve.Add(g);
+                 }
+             }
 
-            if (dto.RestriccionesQueRespetaIds is { Count: > 0 })
-            {
-                var restricciones = await _db.Restricciones
-                    .Where(r => dto.RestriccionesQueRespetaIds!.Contains(r.Id))
-                    .ToListAsync(ct);
+             if (dto.RestriccionesQueRespetaIds is { Count: > 0 })
+             {
+                 var restricciones = await _db.Restricciones
+                     .Where(r => dto.RestriccionesQueRespetaIds!.Contains(r.Id))
+                     .ToListAsync(ct);
 
-                foreach (var r in restricciones)
-                {
-                    if (!restaurante.RestriccionesQueRespeta.Any(x => x.Id == r.Id))
-                        restaurante.RestriccionesQueRespeta.Add(r);
-                }
-            }
+                 foreach (var r in restricciones)
+                 {
+                     if (!restaurante.RestriccionesQueRespeta.Any(x => x.Id == r.Id))
+                         restaurante.RestriccionesQueRespeta.Add(r);
+                 }
+             }
 
-            await _db.SaveChangesAsync(ct);
+             await _db.SaveChangesAsync(ct);
 
 
-            return CreatedAtAction(nameof(GetById), new { id = creado.Id }, new
-            {
-                creado.Id,
-                creado.Nombre,
-                creado.Direccion,
-                creado.Latitud,
-                creado.Longitud,
-                PrimaryType = creado.PrimaryType,
-                Types = creado.TypesJson,
-                creado.ImagenUrl,
-                GustosVinculados = dto.GustosQueSirveIds,
-                RestriccionesVinculadas = dto.RestriccionesQueRespetaIds
-            });
-        }
+             return CreatedAtAction(nameof(GetById), new { id = creado.Id }, new
+             {
+                 creado.Id,
+                 creado.Nombre,
+                 creado.Direccion,
+                 creado.Latitud,
+                 creado.Longitud,
+                 PrimaryType = creado.PrimaryType,
+                 Types = creado.TypesJson,
+                 creado.ImagenUrl,
+                 GustosVinculados = dto.GustosQueSirveIds,
+                 RestriccionesVinculadas = dto.RestriccionesQueRespetaIds
+             });
+         }
 
-        */
+         */
 
         [HttpPost]
         [Authorize]
@@ -314,13 +314,33 @@ namespace GustosApp.API.Controllers
             if (usuario.Rol != RolUsuario.Usuario)
                 return BadRequest("Ya hiciste una solicitud o sos dueño de un restaurante.");
 
-            SolicitudRestaurante solicitud = await CrearSolicitud(dto, usuario, ct);
+            var imagenes = new List<SolicitudRestauranteImagen>();
 
-            return Ok(solicitud);
+            if (dto.ImagenDestacada != null)
+                imagenes.Add(await SubirImagenAsync(dto.ImagenDestacada, TipoImagenSolicitud.Destacada));
+
+            if (dto.ImagenesInterior != null)
+                foreach (var file in dto.ImagenesInterior)
+                    imagenes.Add(await SubirImagenAsync(file, TipoImagenSolicitud.Interior));
+
+            if (dto.ImagenesComidas != null)
+                foreach (var file in dto.ImagenesComidas)
+                    imagenes.Add(await SubirImagenAsync(file, TipoImagenSolicitud.Comida));
+
+            if (dto.ImagenMenu != null)
+                imagenes.Add(await SubirImagenAsync(dto.ImagenMenu, TipoImagenSolicitud.Menu));
+
+            if (dto.Logo != null)
+                imagenes.Add(await SubirImagenAsync(dto.Logo, TipoImagenSolicitud.Logo));
+
+
+            var response = await _solicitudesRestaurantes.HandleAsync(uid, dto.Nombre, dto.Direccion,
+                dto.Lng, dto.Lng, dto.PrimaryType, dto.TypesJson, dto.HorariosJson, dto.GustosQueSirveIds,
+                dto.RestriccionesQueRespetaIds, imagenes, ct);
+
+            return Ok(response);
         }
-
-      
-
+       
         [HttpPut("{id:guid}")]
         [Authorize]
         public async Task<IActionResult> Put(Guid id, [FromBody] ActualizarRestauranteDto dto)
@@ -347,116 +367,116 @@ namespace GustosApp.API.Controllers
             return ok ? NoContent() : NotFound();
         }
 
-       /* [Authorize]
-        [HttpPost("{id:guid}/imagenes/{tipo}")]
-        public async Task<IActionResult> SubirImagen(Guid id, string tipo, IFormFile archivo, CancellationToken ct)
-        {
-            if (archivo == null || archivo.Length == 0)
-                return BadRequest(new { mensaje = "Archivo requerido" });
+        /* [Authorize]
+         [HttpPost("{id:guid}/imagenes/{tipo}")]
+         public async Task<IActionResult> SubirImagen(Guid id, string tipo, IFormFile archivo, CancellationToken ct)
+         {
+             if (archivo == null || archivo.Length == 0)
+                 return BadRequest(new { mensaje = "Archivo requerido" });
 
-            var (ok, uid) = await CheckOwnerAsync(id, User, ct);
-            if (!ok) return Forbid();
+             var (ok, uid) = await CheckOwnerAsync(id, User, ct);
+             if (!ok) return Forbid();
 
-            if (!Enum.TryParse<TipoImagenRestaurante>(
-                tipo.Replace("-", "", StringComparison.OrdinalIgnoreCase), ignoreCase: true, out var tipoImg))
-            {
-                tipo = tipo.ToLowerInvariant();
-                if (tipo == "perfil") tipoImg = TipoImagenRestaurante.Perfil;
-                else if (tipo == "principal") tipoImg = TipoImagenRestaurante.Principal;
-                else if (tipo == "interior") tipoImg = TipoImagenRestaurante.Interior;
-                else if (tipo == "comida") tipoImg = TipoImagenRestaurante.Comida;
-                else return BadRequest(new { mensaje = "Tipo de imagen inválido" });
-            }
+             if (!Enum.TryParse<TipoImagenRestaurante>(
+                 tipo.Replace("-", "", StringComparison.OrdinalIgnoreCase), ignoreCase: true, out var tipoImg))
+             {
+                 tipo = tipo.ToLowerInvariant();
+                 if (tipo == "perfil") tipoImg = TipoImagenRestaurante.Perfil;
+                 else if (tipo == "principal") tipoImg = TipoImagenRestaurante.Principal;
+                 else if (tipo == "interior") tipoImg = TipoImagenRestaurante.Interior;
+                 else if (tipo == "comida") tipoImg = TipoImagenRestaurante.Comida;
+                 else return BadRequest(new { mensaje = "Tipo de imagen inválido" });
+             }
 
-            if (!(archivo.ContentType?.StartsWith("image/") ?? false))
-                return BadRequest(new { mensaje = "Tipo de archivo no soportado" });
+             if (!(archivo.ContentType?.StartsWith("image/") ?? false))
+                 return BadRequest(new { mensaje = "Tipo de archivo no soportado" });
 
-            var ext = Path.GetExtension(archivo.FileName);
-            var fileName = $"{Guid.NewGuid():N}{ext}";
-            var rutaRel = Path.Combine(id.ToString(), tipoImg.ToString().ToLowerInvariant(), fileName);
-            using var s = archivo.OpenReadStream();
-            var url = await _fileStorage.SubirAsync(s, rutaRel, ct);
+             var ext = Path.GetExtension(archivo.FileName);
+             var fileName = $"{Guid.NewGuid():N}{ext}";
+             var rutaRel = Path.Combine(id.ToString(), tipoImg.ToString().ToLowerInvariant(), fileName);
+             using var s = archivo.OpenReadStream();
+             var url = await _fileStorage.SubirAsync(s, rutaRel, ct);
 
-            var reg = new RestauranteImagen
-            {
-                RestauranteId = id,
-                Tipo = tipoImg,
-                Url = url,
-                FechaCreacionUtc = DateTime.UtcNow
-            };
-            _db.Set<RestauranteImagen>().Add(reg);
-            await _db.SaveChangesAsync(ct);
+             var reg = new RestauranteImagen
+             {
+                 RestauranteId = id,
+                 Tipo = tipoImg,
+                 Url = url,
+                 FechaCreacionUtc = DateTime.UtcNow
+             };
+             _db.Set<RestauranteImagen>().Add(reg);
+             await _db.SaveChangesAsync(ct);
 
-            return Created(url, new { mensaje = "Imagen subida", url });
-        }
-       */
-       /*
-        [Authorize]
-        [HttpPost("{id:guid}/menu/manual")]
-        [Consumes("application/json")]
-        public async Task<IActionResult> GuardarMenuManual(Guid id, [FromBody] object menu, CancellationToken ct)
-        {
-            var (ok, uid) = await CheckOwnerAsync(id, User, ct);
-            if (!ok) return Forbid();
+             return Created(url, new { mensaje = "Imagen subida", url });
+         }
+        */
+        /*
+         [Authorize]
+         [HttpPost("{id:guid}/menu/manual")]
+         [Consumes("application/json")]
+         public async Task<IActionResult> GuardarMenuManual(Guid id, [FromBody] object menu, CancellationToken ct)
+         {
+             var (ok, uid) = await CheckOwnerAsync(id, User, ct);
+             if (!ok) return Forbid();
 
-            if (menu is null) return BadRequest(new { mensaje = "menu requerido" });
+             if (menu is null) return BadRequest(new { mensaje = "menu requerido" });
 
-            // Validación real del JSON y default de moneda
-            using var doc = System.Text.Json.JsonDocument.Parse(JsonSerializer.Serialize(menu));
-            var root = doc.RootElement;
+             // Validación real del JSON y default de moneda
+             using var doc = System.Text.Json.JsonDocument.Parse(JsonSerializer.Serialize(menu));
+             var root = doc.RootElement;
 
-            if (!root.TryGetProperty("categorias", out var categorias) || categorias.ValueKind != JsonValueKind.Array)
-                return BadRequest(new { mensaje = "El menú debe contener 'categorias' como arreglo." });
+             if (!root.TryGetProperty("categorias", out var categorias) || categorias.ValueKind != JsonValueKind.Array)
+                 return BadRequest(new { mensaje = "El menú debe contener 'categorias' como arreglo." });
 
-            var moneda = root.TryGetProperty("moneda", out var monedaEl) && monedaEl.ValueKind == JsonValueKind.String
-                ? monedaEl.GetString()
-                : "ARS";
+             var moneda = root.TryGetProperty("moneda", out var monedaEl) && monedaEl.ValueKind == JsonValueKind.String
+                 ? monedaEl.GetString()
+                 : "ARS";
 
-            var json = JsonSerializer.Serialize(root, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-            });
+             var json = JsonSerializer.Serialize(root, new JsonSerializerOptions
+             {
+                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+             });
 
-            var repo = _db.Set<RestauranteMenu>();
-            var existente = await repo.FirstOrDefaultAsync(m => m.RestauranteId == id, ct);
+             var repo = _db.Set<RestauranteMenu>();
+             var existente = await repo.FirstOrDefaultAsync(m => m.RestauranteId == id, ct);
 
-            var created = false;
-            if (existente == null)
-            {
-                existente = new RestauranteMenu
-                {
-                    RestauranteId = id,
-                    Moneda = moneda ?? "ARS",
-                    Json = json,
-                    Version = 1,
-                    FechaActualizacionUtc = DateTime.UtcNow
-                };
-                repo.Add(existente);
-                created = true;
-            }
-            else
-            {
-                existente.Moneda = moneda ?? existente.Moneda;
-                existente.Json = json;
-                existente.Version += 1;
-                existente.FechaActualizacionUtc = DateTime.UtcNow;
-            }
+             var created = false;
+             if (existente == null)
+             {
+                 existente = new RestauranteMenu
+                 {
+                     RestauranteId = id,
+                     Moneda = moneda ?? "ARS",
+                     Json = json,
+                     Version = 1,
+                     FechaActualizacionUtc = DateTime.UtcNow
+                 };
+                 repo.Add(existente);
+                 created = true;
+             }
+             else
+             {
+                 existente.Moneda = moneda ?? existente.Moneda;
+                 existente.Json = json;
+                 existente.Version += 1;
+                 existente.FechaActualizacionUtc = DateTime.UtcNow;
+             }
 
-            await _db.SaveChangesAsync(ct);
+             await _db.SaveChangesAsync(ct);
 
-            if (created)
-            {
+             if (created)
+             {
 
-                return CreatedAtAction(nameof(GetMenu), new { id }, new
-                {
-                    mensaje = "Menú creado",
-                    version = existente.Version
-                });
-            }
-            return Ok(new { mensaje = "Menú actualizado", version = existente.Version });
-        }
-       */
+                 return CreatedAtAction(nameof(GetMenu), new { id }, new
+                 {
+                     mensaje = "Menú creado",
+                     version = existente.Version
+                 });
+             }
+             return Ok(new { mensaje = "Menú actualizado", version = existente.Version });
+         }
+        */
         /*
         [Authorize]
         [HttpPost("{id:guid}/menu/ocr")]
@@ -707,107 +727,20 @@ namespace GustosApp.API.Controllers
             }
         }
         */
-        private async Task<SolicitudRestaurante> CrearSolicitud(CrearRestauranteDto dto, Usuario usuario, CancellationToken ct)
+
+        private async Task<SolicitudRestauranteImagen> SubirImagenAsync(IFormFile archivo, TipoImagenSolicitud tipo)
         {
-            var solicitud = new SolicitudRestaurante
+            using var stream = archivo.OpenReadStream();
+            var url = await _firebase.UploadFileAsync(stream, archivo.FileName, "solicitudes");
+
+            return new SolicitudRestauranteImagen
             {
-                UsuarioId = usuario.Id,
-                Nombre = dto.Nombre,
-                Direccion = dto.Direccion,
-                Latitud = dto.Latitud,
-                Longitud = dto.Longitud,
-                PrimaryType = dto.PrimaryType,
-                TypesJson = dto.TypesComoJson ?? "[]",
-                HorariosJson = dto.HorariosComoJson,
-                Platos = dto.Platos ?? new(),
-                GustosIds = dto.GustosQueSirveIds ?? new(),
-                RestriccionesIds = dto.RestriccionesQueRespetaIds ?? new()
+                Tipo = tipo,
+                Url = url
             };
-
-            // ===== SUBIR IMÁGENES A FIREBASE =====
-
-            solicitud.Imagenes = new List<SolicitudRestauranteImagen>();
-
-            // Imagen destacada (tipo 0)
-            if (dto.ImagenDestacada != null)
-            {
-                using var ms = dto.ImagenDestacada.OpenReadStream();
-                var url = await _firebase.UploadFileAsync(ms, dto.ImagenDestacada.FileName, "solicitudes");
-
-                solicitud.Imagenes.Add(new SolicitudRestauranteImagen
-                {
-                    Tipo = TipoImagenSolicitud.Destacada,
-                    Url = url
-                });
-            }
-
-            // Interior (tipo 1)
-            if (dto.ImagenesInterior != null)
-            {
-                foreach (var archivo in dto.ImagenesInterior)
-                {
-                    using var ms = archivo.OpenReadStream();
-                    var url = await _firebase.UploadFileAsync(ms, archivo.FileName, "solicitudes");
-
-                    solicitud.Imagenes.Add(new SolicitudRestauranteImagen
-                    {
-                        Tipo = TipoImagenSolicitud.Interior,
-                        Url = url
-                    });
-                }
-            }
-
-            // Comidas (tipo 2)
-            if (dto.ImagenesComidas != null)
-            {
-                foreach (var archivo in dto.ImagenesComidas)
-                {
-                    using var ms = archivo.OpenReadStream();
-                    var url = await _firebase.UploadFileAsync(ms, archivo.FileName, "solicitudes");
-
-                    solicitud.Imagenes.Add(new SolicitudRestauranteImagen
-                    {
-                        Tipo = TipoImagenSolicitud.Comida,
-                        Url = url
-                    });
-                }
-            }
-
-            // Menú (tipo 3)
-            if (dto.ImagenMenu != null)
-            {
-                using var ms = dto.ImagenMenu.OpenReadStream();
-                var url = await _firebase.UploadFileAsync(ms, dto.ImagenMenu.FileName, "solicitudes");
-
-                solicitud.Imagenes.Add(new SolicitudRestauranteImagen
-                {
-                    Tipo = TipoImagenSolicitud.Menu,
-                    Url = url
-                });
-            }
-
-            // Logo (tipo 4)
-            if (dto.Logo != null)
-            {
-                using var ms = dto.Logo.OpenReadStream();
-                var url = await _firebase.UploadFileAsync(ms, dto.Logo.FileName, "solicitudes");
-
-                solicitud.Imagenes.Add(new SolicitudRestauranteImagen
-                {
-                    Tipo = TipoImagenSolicitud.Logo,
-                    Url = url
-                });
-            }
-       
-
-            // ===== GUARDAR SOLICITUD =====
-            await _solicitudesRestaurantes.HandleAsync(usuario.FirebaseUid,solicitud.Nombre,
-                solicitud.Direccion, solicitud.Latitud, solicitud.Longitud, solicitud.PrimaryType,
-                solicitud.TypesJson, solicitud.HorariosJson, solicitud.GustosIds,solicitud.RestriccionesIds,
-                solicitud.Platos,solicitud.Imagenes, ct);
-            return solicitud;
         }
     }
     
+
         }
 

@@ -14,7 +14,7 @@ namespace GustosApp.Infraestructure.Configurations
             b.Property(x => x.Tipo).HasConversion<int>().IsRequired();
 
             b.HasOne(x => x.Restaurante)
-             .WithMany() // no navegar desde Restaurante para no tocar contrato actual
+            .WithMany(r => r.Imagenes)
              .HasForeignKey(x => x.RestauranteId)
              .OnDelete(DeleteBehavior.Cascade);
 

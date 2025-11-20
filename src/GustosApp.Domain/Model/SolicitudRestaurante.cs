@@ -31,15 +31,18 @@ namespace GustosApp.Domain.Model
         public string? MotivoRechazo { get; set; }
 
         // Campos de negocio
-        public List<string> Platos { get; set; } = new();     // Platos cargados por el usuario
-        public List<Guid> GustosIds { get; set; } = new();    // IDs que luego se convertirán en relaciones
-        public List<Guid> RestriccionesIds { get; set; } = new();
+        public List<Guid> GustosIds { get; set; } = new List<Guid>();
+        public List<Guid> RestriccionesIds { get; set; } = new List<Guid>();
+
+        public ICollection<Gusto> Gustos { get; set; } = new List <Gusto>();
+        public ICollection<Restriccion> Restricciones { get; set; } =new List <Restriccion>();
+
 
         // Estado de la solicitud
         public EstadoSolicitudRestaurante Estado { get; set; } = EstadoSolicitudRestaurante.Pendiente;
 
         // Fecha de creación
-        public DateTime Fecha { get; set; } = DateTime.UtcNow;
+        public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
 
         // Imágenes asociadas a esta solicitud
         public ICollection<SolicitudRestauranteImagen> Imagenes { get; set; }

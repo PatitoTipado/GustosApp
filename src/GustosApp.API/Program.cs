@@ -160,6 +160,7 @@ builder.Services.AddStackExchangeRedisCache(options =>
 builder.Services.AddDbContext<GustosDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+
 // =====================
 //   Repositorios
 // =====================
@@ -181,6 +182,7 @@ builder.Services.AddScoped<ISolicitudAmistadRealtimeService, SignalRSolicitudAmi
 builder.Services.AddScoped<IUsuariosActivosService, UsuariosActivosService>();
 builder.Services.AddScoped<IOpinionRestauranteRepository, OpinionRestauranteRepositoryEF>();
 builder.Services.AddScoped<ISolicitudRestauranteRepository, SolicitudRestauranteRepositoryEF>();
+builder.Services.AddScoped<IRestauranteMenuRepository, RestauranteMenuRepositoryEF>();
 
 
 // Chat repository
@@ -220,6 +222,9 @@ builder.Services.AddScoped<MarcarNotificacionLeidaUseCase>();
 builder.Services.AddScoped<ConstruirPreferenciasUseCase>();
 builder.Services.AddScoped<ActualizarValoracionRestauranteUseCase>();
 builder.Services.AddScoped<CrearSolicitudRestauranteUseCase>();
+builder.Services.AddScoped<AprobarSolicitudRestauranteUseCase>();
+builder.Services.AddScoped<ObtenerSolicitudesRestaurantesPendientesUseCase>();
+builder.Services.AddScoped<ObtenerSolicitudRestaurantesPorIdUseCase>();
 
 
 
@@ -366,6 +371,7 @@ app.UseCors(MyAllowSpecificOrigins);
 
 app.UseMiddleware<ManejadorErrorMiddleware>();
 app.UseAuthentication();
+app.UseMiddleware<RolesMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();

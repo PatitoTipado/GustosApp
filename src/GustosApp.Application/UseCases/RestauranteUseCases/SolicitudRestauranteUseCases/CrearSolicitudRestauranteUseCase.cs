@@ -6,65 +6,82 @@ using System.Threading.Tasks;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model.@enum;
 using GustosApp.Domain.Model;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestauranteUseCases
 {
     public class CrearSolicitudRestauranteUseCase
     {
         private readonly ISolicitudRestauranteRepository _solicitudes;
+        private readonly IGustoRepository _gustos;
+        private readonly IRestriccionRepository _restricciones;
         private readonly IUsuarioRepository _usuarios;
 
         public CrearSolicitudRestauranteUseCase(
             ISolicitudRestauranteRepository solicitudes,
+             IRestriccionRepository restricciones, IGustoRepository gustos,
             IUsuarioRepository usuarios)
         {
             _solicitudes = solicitudes;
             _usuarios = usuarios;
+            _gustos = gustos;
+            _restricciones = restricciones;
         }
 
-        public async Task<Guid> HandleAsync(string firebaseUid,string Nombre, string Direccion,
-            double? Latitud, double? Longitud, string? PrimaryType, string? TypesJson,
-            string? HorariosJson, List<Guid>? GustosIds, List<Guid>? RestriccionesIds,
-            List<string>? Platos,IEnumerable<SolicitudRestauranteImagen> Imagenes,
-            CancellationToken ct = default)
+        public async Task<Guid> HandleAsync(
+     string firebaseUid,
+     string nombre,
+     string direccion,
+     double? latitud,
+     double? longitud,
+     string? primaryType,
+     string? typesJson,
+     string? horariosJson,
+     List<Guid>? gustosIds,
+     List<Guid>? restriccionesIds,
+     List<SolicitudRestauranteImagen> imagenes,
+     CancellationToken ct = default)
         {
+            // 1) Obtener usuario
             var usuario = await _usuarios.GetByFirebaseUidAsync(firebaseUid, ct);
             if (usuario == null)
                 throw new Exception("Usuario no encontrado");
 
+            // 2) Validar rol
             if (usuario.Rol != RolUsuario.Usuario)
-                throw new Exception("Ya tenés una solicitud pendiente o sos dueño.");
+                throw new Exception("Ya tenés una solicitud pendiente o ya sos dueño de un restaurante.");
 
+            // 3) Crear la solicitud
             var solicitud = new SolicitudRestaurante
             {
                 UsuarioId = usuario.Id,
-                Nombre = Nombre,
-                Direccion = Direccion,
-                Latitud = Latitud,
-                Longitud = Longitud,
-                PrimaryType = PrimaryType,
-                TypesJson = TypesJson ?? "[]",
-                HorariosJson = HorariosJson,
-                GustosIds = GustosIds ?? new(),
-                RestriccionesIds = RestriccionesIds ?? new(),
-                Platos = Platos ?? new(),
-                Imagenes = Imagenes.Select(im => new SolicitudRestauranteImagen
-                {
-                    Tipo = im.Tipo,
-                    Url = im.Url
-                }).ToList()
+                Nombre = nombre.Trim(),
+                Direccion = direccion.Trim(),
+                Latitud = latitud,
+                Longitud = longitud,
+                PrimaryType = primaryType,
+                TypesJson = typesJson ?? "[]",
+                HorariosJson = horariosJson,
+                GustosIds = gustosIds ?? new List<Guid>(),
+                RestriccionesIds = restriccionesIds ?? new List<Guid>(),
+                Imagenes = imagenes ?? new List<SolicitudRestauranteImagen>(),
+                FechaCreacion = DateTime.UtcNow,
+                Estado = EstadoSolicitudRestaurante.Pendiente
             };
 
-            // Guardar la solicitud
+            solicitud.Gustos = await _gustos.GetByIdsAsync(gustosIds,ct);
+            solicitud.Restricciones = await _restricciones.GetRestriccionesByIdsAsync(restriccionesIds,ct);
+
             await _solicitudes.AddAsync(solicitud, ct);
 
-            // Cambiar el rol del usuario
+            
             usuario.Rol = RolUsuario.PendienteRestaurante;
-
             await _usuarios.UpdateAsync(usuario, ct);
 
+      
             return solicitud.Id;
         }
+
     }
 
-}
+    }

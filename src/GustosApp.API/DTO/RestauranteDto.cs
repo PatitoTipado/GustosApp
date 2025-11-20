@@ -150,9 +150,6 @@ namespace GustosApp.API.DTO
         public string Nombre { get; set; } = default!;
         public string Direccion { get; set; } = default!;
 
-        public double? Latitud { get; set; }
-        public double? Longitud { get; set; }
-
         [JsonPropertyName("lat")]
         public double? Lat { get; set; }
 
@@ -168,9 +165,16 @@ namespace GustosApp.API.DTO
         public List<string>? Types { get; set; }
 
         [JsonIgnore]
-        public string TypesComoJson =>
-            JsonSerializer.Serialize(Types ?? new List<string>(),
-                new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        public string TypesJson =>
+            Types is null ? "[]" :
+            JsonSerializer.Serialize(
+                Types.Select(t => t.Trim().ToLowerInvariant()),
+                new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }
+            );
+
+        [JsonIgnore]
+        public string? HorariosJson =>
+            Horarios?.GetRawText(); //  ORO. No hace doble serialización.
 
         [JsonPropertyName("gustosQueSirveIds")]
         public List<Guid>? GustosQueSirveIds { get; set; }
@@ -178,36 +182,15 @@ namespace GustosApp.API.DTO
         [JsonPropertyName("restriccionesQueRespetaIds")]
         public List<Guid>? RestriccionesQueRespetaIds { get; set; }
 
-        public List<string>? Platos { get; set; }
-
-        public string? ImagenUrl { get; set; }
-
-        public double? Valoracion { get; set; }
-
-        [JsonIgnore]
-        public (double? lat, double? lng) Coordenadas => (Lat ?? Latitud, Lng ?? Longitud);
-
-        [JsonIgnore]
-        public string? HorariosComoJson
-        {
-            get
-            {
-                if (Horarios is null) return null;
-                return JsonSerializer.Serialize(Horarios, new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                });
-            }
-        }
+        // Imágenes
         public IFormFile? ImagenDestacada { get; set; }
         public List<IFormFile>? ImagenesInterior { get; set; }
         public List<IFormFile>? ImagenesComidas { get; set; }
         public IFormFile? ImagenMenu { get; set; }
         public IFormFile? Logo { get; set; }
-
     }
 
-  
+
 }
 
 

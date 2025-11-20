@@ -11,6 +11,7 @@ using System.Reflection.Emit;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using Tokenizers.HuggingFace.Decoders;
 using GustosApp.Domain.Model.@enum;
+using GustosApp.Application.Interfaces;
 
 public class GustosDbContext : DbContext
 {
@@ -42,6 +43,8 @@ public class GustosDbContext : DbContext
 
     public DbSet<RestauranteImagen> RestauranteImagenes { get; set; }
     public DbSet<RestauranteMenu> RestauranteMenus { get; set; }
+    public DbSet<SolicitudRestauranteImagen> SolicitudRestauranteImagenes { get; set; }
+
 
     public DbSet<UsuarioRestauranteVisitado> UsuarioRestauranteVisitados { get; set; }
 
@@ -63,12 +66,36 @@ public class GustosDbContext : DbContext
         modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.RestauranteMenuConfiguration());
 
 
-      
+
+        modelBuilder.Entity<SolicitudRestaurante>()
+    .HasIndex(s => s.Estado);
+
+        modelBuilder.Entity<SolicitudRestaurante>()
+            .Property(s => s.Nombre)
+            .HasMaxLength(150)
+            .IsRequired();
+
+        modelBuilder.Entity<SolicitudRestaurante>()
+            .Property(s => s.PrimaryType)
+            .HasMaxLength(80)
+            .IsRequired();
+
         modelBuilder.Entity<SolicitudRestaurante>()
        .HasOne(s => s.Usuario)
        .WithMany(u => u.SolicitudesRestaurantes)
        .HasForeignKey(s => s.UsuarioId)
        .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<SolicitudRestaurante>()
+            .HasMany(s => s.Gustos)
+            .WithMany()
+            .UsingEntity(j => j.ToTable("SolicitudRestaurante_Gustos"));
+
+        modelBuilder.Entity<SolicitudRestaurante>()
+            .HasMany(s => s.Restricciones)
+            .WithMany()
+            .UsingEntity(j => j.ToTable("SolicitudRestaurante_Restricciones"));
+
 
         modelBuilder.Entity<SolicitudRestauranteImagen>()
           .HasOne(i => i.Solicitud)
@@ -76,8 +103,12 @@ public class GustosDbContext : DbContext
            .HasForeignKey(i => i.SolicitudId)
             .OnDelete(DeleteBehavior.Cascade);
 
+
         modelBuilder.Entity<Restaurante>()
-              .Ignore(r => r.Score)
+        .Ignore(r => r.Score);
+
+
+        modelBuilder.Entity<Restaurante>()
                 .HasMany(r => r.Reviews)
                 .WithOne()
                 .HasForeignKey(r => r.RestauranteId)
@@ -89,6 +120,17 @@ public class GustosDbContext : DbContext
             .WithMany(u => u.Restaurantes)
             .HasForeignKey(r => r.DuenoId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Restaurante>()
+             .HasMany(r => r.GustosQueSirve)
+             .WithMany(g => g.restaurantes)
+             .UsingEntity(j => j.ToTable("RestauranteGustos"));
+
+        modelBuilder.Entity<Restaurante>()
+            .HasMany(r => r.RestriccionesQueRespeta)
+            .WithMany(p => p.Restaurantes)
+            .UsingEntity(j => j.ToTable("RestauranteRestricciones"));
+
 
         // Relaciones muchos a muchos
         modelBuilder.Entity<Usuario>()
@@ -126,11 +168,7 @@ public class GustosDbContext : DbContext
            .HasIndex(u => u.IdUsuario)
            .IsUnique();
 
-        modelBuilder.Entity<Usuario>()
-            .HasMany(u => u.Restricciones)
-            .WithMany(r => r.Usuarios)
-            .UsingEntity(j => j.ToTable("UsuarioRestricciones"));
-
+       
         // Gusto ↔ Tag
         modelBuilder.Entity<Gusto>()
             .HasMany(g => g.Tags)
@@ -279,15 +317,7 @@ public class GustosDbContext : DbContext
             .Property(c => c.Mensaje)
             .IsRequired();
 
-        modelBuilder.Entity<Restaurante>()
-            .HasMany(r => r.GustosQueSirve)
-            .WithMany(g => g.restaurantes)
-            .UsingEntity(j => j.ToTable("RestauranteGustos"));
-
-        modelBuilder.Entity<Restaurante>()
-            .HasMany(r => r.RestriccionesQueRespeta)
-            .WithMany(p => p.Restaurantes)
-            .UsingEntity(j => j.ToTable("RestauranteRestricciones"));
+        
 
         modelBuilder.Entity<Notificacion>(entity =>
         {

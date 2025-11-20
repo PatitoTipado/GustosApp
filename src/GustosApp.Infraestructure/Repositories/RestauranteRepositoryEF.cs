@@ -145,6 +145,17 @@ namespace GustosApp.Infraestructure.Repositories
             return restaurantes;
         }
 
+        public async Task<Restaurante?> GetByIdAsync(Guid id, CancellationToken ct)
+        {
+            return await _db.Restaurantes.FirstOrDefaultAsync(r => r.Id == id);
+
+        }
+
+        public Task UpdateAsync(Restaurante restaurante, CancellationToken ct)
+        {
+          _db.Restaurantes.Update(restaurante);
+            return _db.SaveChangesAsync(ct);
+        }
     }
 }
 

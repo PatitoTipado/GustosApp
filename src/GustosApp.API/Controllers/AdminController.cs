@@ -23,12 +23,12 @@ namespace GustosApp.API.Controllers
         private readonly ObtenerSolicitudesPorTipoUseCase _getPorTipo;
         private readonly IMapper _mapper;
 
-         public AdminController(AprobarSolicitudRestauranteUseCase aprobarSolicitud,
-            ObtenerSolicitudesRestaurantesPendientesUseCase getPendientes,
-            ObtenerSolicitudRestaurantesPorIdUseCase getDetalle,
-            RechazarSolicitudRestauranteUseCase rechazarSolicitud ,
-            ObtenerSolicitudesPorTipoUseCase getPorTipo,
-             IMapper mapper)
+        public AdminController(AprobarSolicitudRestauranteUseCase aprobarSolicitud,
+           ObtenerSolicitudesRestaurantesPendientesUseCase getPendientes,
+           ObtenerSolicitudRestaurantesPorIdUseCase getDetalle,
+           RechazarSolicitudRestauranteUseCase rechazarSolicitud,
+           ObtenerSolicitudesPorTipoUseCase getPorTipo,
+            IMapper mapper)
         {
             _aprobarSolicitud = aprobarSolicitud;
             _getPendientes = getPendientes;
@@ -38,14 +38,14 @@ namespace GustosApp.API.Controllers
             _mapper = mapper;
         }
 
-        
+        /*
         [HttpGet("pendientes")]
         public async Task<IActionResult> GetPendientes(CancellationToken ct)
         {
             var result = await _getPendientes.HandleAsync(ct);
             var response = _mapper.Map<List<SolicitudRestaurantePendienteDto>>(result);
             return Ok(response);
-        }
+        }*/
 
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetDetalle(Guid id, CancellationToken ct)
@@ -66,6 +66,7 @@ namespace GustosApp.API.Controllers
 
         }
 
+        [HttpDelete("{id:guid}")]
         public async Task<IActionResult> RechazarSolicitud(Guid id,
             [FromBody] string motivoRechazo,
             CancellationToken ct)

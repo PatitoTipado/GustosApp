@@ -194,6 +194,7 @@ builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
 builder.Services.AddScoped<IUsuarioRestauranteFavoritoRepository, UsuarioRestauranteFavoritoEF>();
 builder.Services.AddScoped<ISolicitudRestauranteRepository, SolicitudRestauranteRepositoryEF>();
 builder.Services.AddScoped<IRestauranteMenuRepository, RestauranteMenuRepositoryEF>();
+builder.Services.AddScoped<IFirebaseAuthService, FirebaseAuthService>();
 
 
 // Chat repository
@@ -386,8 +387,13 @@ app.UseCors(MyAllowSpecificOrigins);
 
 app.UseMiddleware<ManejadorErrorMiddleware>();
 app.UseAuthentication();
-app.UseMiddleware<RolesMiddleware>();
+app.UseMiddleware<RolesMiddleware>(); 
+
+
 app.UseAuthorization();
+
+app.UseMiddleware<BloqueoPorRolMiddleware>();
+
 
 app.MapControllers();
 app.MapHub<ChatHub>("/chatHub");

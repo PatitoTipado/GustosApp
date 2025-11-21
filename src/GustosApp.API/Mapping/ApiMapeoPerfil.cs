@@ -145,7 +145,9 @@ namespace GustosApp.API.Mapping
             .Where(i => i.Tipo == TipoImagenSolicitud.Logo)
             .Select(i => i.Url)
             .FirstOrDefault() 
-             ));
+
+             ))
+                .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado));
             CreateMap<SolicitudRestaurante, SolicitudRestauranteDetalleDto>()
 
                 .ForMember(dest => dest.UsuarioId,

@@ -21,10 +21,6 @@ namespace GustosApp.Domain.Model
         public double? Latitud { get; set; }
         public double? Longitud { get; set; }
 
-        // Clasificación (Google Places / tipos)
-        public string? PrimaryType { get; set; }
-        public string TypesJson { get; set; } = "[]";
-
         // Horarios enviados del front (JSON)
         public string? HorariosJson { get; set; }
 

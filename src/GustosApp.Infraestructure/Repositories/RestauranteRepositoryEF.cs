@@ -18,11 +18,19 @@ namespace GustosApp.Infraestructure.Repositories
         public async Task<Restaurante?> GetByPlaceIdAsync(string placeId, CancellationToken ct = default)
             => await _db.Restaurantes.AsNoTracking().FirstOrDefaultAsync(r => r.PlaceId == placeId, ct);
 
+        public async Task<Restaurante?> GetRestauranteByIdAsync(Guid id, CancellationToken ct = default)
+            => await _db.Restaurantes.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id, ct);
+
         public async Task AddAsync(Restaurante r, CancellationToken ct = default)
             => await _db.Restaurantes.AddAsync(r, ct);
 
         public Task SaveChangesAsync(CancellationToken ct = default)
             => _db.SaveChangesAsync(ct);
+        public Task UpdateAsync(Restaurante restaurante, CancellationToken ct)
+        {
+            _db.Restaurantes.Update(restaurante);
+            return Task.CompletedTask;
+        }
 
         public async Task<List<Restaurante>> GetNearbyAsync(
     double lat,
@@ -167,26 +175,33 @@ namespace GustosApp.Infraestructure.Repositories
                                 r.NombreNormalizado.ToLower().Contains(texto) ? 2 :
                                 r.Categoria.ToLower().Contains(texto) ? 1 : 0
                 })
-                .OrderByDescending(x => x.Restaurante.Rating) // primero rating
-                .ThenByDescending(x => x.Prioridad)          // luego coincidencia de texto
+                .OrderByDescending(x => x.Restaurante.Rating) 
+                .ThenByDescending(x => x.Prioridad)          
                 .Select(x => x.Restaurante)
                 .ToList();
 
             return restaurantesOrdenados;
         }
 
+        public async Task<Restaurante?> GetByFirebaseUidAsync(string firebaseUid, CancellationToken ct = default)
+        {
+            return await _db.Restaurantes
+        .FirstOrDefaultAsync(r => r.PropietarioUid == firebaseUid, ct);
+        }
 
-        public async Task<Restaurante?> GetByIdAsync(Guid id, CancellationToken ct)
+          public async Task<Restaurante?> GetByIdAsync(Guid id, CancellationToken ct = default)
+          {
+              return await _db.Restaurantes
+                  .FirstOrDefaultAsync(r => r.Id == id, ct);
+          }
+
+       /* public async Task<Restaurante?> GetByIdAsync(Guid id, CancellationToken ct)
         {
             return await _db.Restaurantes.FirstOrDefaultAsync(r => r.Id == id);
 
-        }
+        }*/
 
-        public Task UpdateAsync(Restaurante restaurante, CancellationToken ct)
-        {
-          _db.Restaurantes.Update(restaurante);
-            return _db.SaveChangesAsync(ct);
-        }
+      
     }
 }
 

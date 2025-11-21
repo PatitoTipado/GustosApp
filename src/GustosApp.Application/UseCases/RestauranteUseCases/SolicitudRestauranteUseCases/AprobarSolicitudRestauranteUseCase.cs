@@ -44,33 +44,25 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
             var solicitud = await _solicitudes.GetByIdAsync(solicitudId, ct)
                 ?? throw new Exception("Solicitud no encontrada");
 
-            // 1. Crear restaurante
             var restaurante = await CrearRestauranteDesdeSolicitud(solicitud, ct);
 
-            // 2. Intentar OCR
             await ProcesarMenuOCR(solicitud, restaurante, ct);
 
-            // 3. Actualizar rol usuario
             solicitud.Usuario.Rol = RolUsuario.DuenoRestaurante;
-            await _usuarios.UpdateAsync(solicitud.Usuario, ct);
-
-            // 4. Actualizar solicitud
             solicitud.Estado = EstadoSolicitudRestaurante.Aprobada;
-            await _solicitudes.UpdateAsync(solicitud, ct);
+
+
+            await _restaurantes.SaveChangesAsync(ct);
 
             return restaurante;
         }
 
-        private async Task<Restaurante> CrearRestauranteDesdeSolicitud(
-       SolicitudRestaurante solicitud,
-       CancellationToken ct)
-        {
-            if (solicitud is null)
-                throw new ArgumentNullException(nameof(solicitud));
 
-            // ================
-            // CREAR RESTAURANTE BASE
-            // ================
+
+        private async Task<Restaurante> CrearRestauranteDesdeSolicitud(
+        SolicitudRestaurante solicitud,
+        CancellationToken ct)
+        {
             var restaurante = new Restaurante
             {
                 PropietarioUid= solicitud.UsuarioId.ToString(),
@@ -80,40 +72,22 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
                 Direccion = solicitud.Direccion,
                 Latitud = solicitud.Latitud ?? 0,
                 Longitud = solicitud.Longitud ?? 0,
-                PrimaryType = solicitud.PrimaryType ?? "restaurant",
-                TypesJson = solicitud.TypesJson ?? "[]",
+                PrimaryType = "Restaurante",
+                TypesJson = "",
                 HorariosJson = solicitud.HorariosJson ?? "{}",
                 CreadoUtc = DateTime.UtcNow,
                 ActualizadoUtc = DateTime.UtcNow
             };
 
-            await _restaurantes.AddAsync(restaurante, ct);
+            // Relaciones
+            restaurante.SetGustos(await _gustos.GetByIdsAsync(solicitud.GustosIds, ct));
+            restaurante.SetRestricciones(await _restricciones.GetRestriccionesByIdsAsync(solicitud.RestriccionesIds, ct));
 
-            // ================
-            // RELACIONES: GUSTOS
-            // ================
-            var gustos = await _gustos.GetByIdsAsync(solicitud.GustosIds, ct);
-            restaurante.SetGustos(gustos);
+            // Imagen principal y logo
+            restaurante.ImagenUrl = solicitud.Imagenes.FirstOrDefault(i => i.Tipo == TipoImagenSolicitud.Destacada)?.Url;
+            restaurante.LogoUrl = solicitud.Imagenes.FirstOrDefault(i => i.Tipo == TipoImagenSolicitud.Logo)?.Url;
 
-
-
-            // ================
-            // RELACIONES: RESTRICCIONES
-            // ================
-            var restricciones = await _restricciones.GetRestriccionesByIdsAsync(solicitud.RestriccionesIds, ct);
-            restaurante.SetRestricciones(restricciones);
-
-            // ================
-            // COPIAR IMÁGENES A RESTAURANTE
-            // ================
-            var imgDest = solicitud.Imagenes.FirstOrDefault(i => i.Tipo == TipoImagenSolicitud.Destacada);
-            var imgLogo = solicitud.Imagenes.FirstOrDefault(i => i.Tipo == TipoImagenSolicitud.Logo);
-            var imgMenu = solicitud.Imagenes.FirstOrDefault(i => i.Tipo == TipoImagenSolicitud.Menu);
-
-            restaurante.ImagenUrl = imgDest?.Url;
-            restaurante.LogoUrl = imgLogo?.Url;
-
-            // IMÁGENES INTERIOR + COMIDA (colección)
+            // Imágenes múltiples
             restaurante.Imagenes = solicitud.Imagenes
                 .Where(i => i.Tipo == TipoImagenSolicitud.Interior || i.Tipo == TipoImagenSolicitud.Comida)
                 .Select(i => new RestauranteImagen
@@ -127,21 +101,28 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
                 })
                 .ToList();
 
+            await _restaurantes.AddAsync(restaurante, ct);
 
             return restaurante;
         }
 
 
 
+
         private async Task ProcesarMenuOCR(
-       SolicitudRestaurante solicitud,
-       Restaurante restaurante,
-       CancellationToken ct)
+     SolicitudRestaurante solicitud,
+     Restaurante restaurante,
+     CancellationToken ct)
         {
             var imgMenu = solicitud.Imagenes
                 .FirstOrDefault(i => i.Tipo == TipoImagenSolicitud.Menu);
 
-            if (imgMenu == null || string.IsNullOrWhiteSpace(imgMenu.Url))
+            foreach (var img in solicitud.Imagenes)
+            {
+                Console.WriteLine($"IMG | Tipo={img.Tipo} | Url={img.Url}");
+            }
+
+            if (imgMenu == null)
                 return;
 
             try
@@ -151,10 +132,11 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
                 using var stream = new MemoryStream(bytes);
 
                 var texto = await _ocr.ReconocerTextoAsync(new[] { stream }, "spa+eng", ct);
+
                 if (string.IsNullOrWhiteSpace(texto))
                 {
                     restaurante.MenuProcesado = false;
-                    restaurante.MenuError = "El texto del menú está vacío.";
+                    restaurante.MenuError = "Menú vacío";
                     return;
                 }
 
@@ -164,16 +146,14 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
 
                 if (existente == null)
                 {
-                    var restauranteMenu = new RestauranteMenu
+                    await _menuRepo.AddAsync(new RestauranteMenu
                     {
                         RestauranteId = restaurante.Id,
                         Moneda = "ARS",
                         Json = menuJson,
                         Version = 1,
                         FechaActualizacionUtc = DateTime.UtcNow
-                    };
-
-                    await _menuRepo.AddAsync(restauranteMenu, ct);
+                    }, ct);
                 }
                 else
                 {
@@ -190,14 +170,9 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
             catch (Exception ex)
             {
                 restaurante.MenuProcesado = false;
-                restaurante.MenuError = $"Error al procesar OCR: {ex.Message}";
+                restaurante.MenuError = ex.Message;
             }
-
-            restaurante.ActualizadoUtc = DateTime.UtcNow;
-
-            // ahora delegás el guardado al repositorio de restaurantes
-            await _restaurantes.UpdateAsync(restaurante, ct);
         }
 
     }
-    }
+}

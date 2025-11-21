@@ -42,6 +42,14 @@ namespace GustosApp.Domain.Model
             Descripcion = descripcion;
         }
 
+        public void ActualizarNombre(string nombre)
+        {
+            if (string.IsNullOrWhiteSpace(nombre))
+                throw new ArgumentException("El nombre del grupo no puede estar vacío", nameof(nombre));
+
+            Nombre = nombre;
+        }
+
         public void GenerarCodigoInvitacion()
         {
             CodigoInvitacion = Guid.NewGuid().ToString("N")[..8].ToUpper();

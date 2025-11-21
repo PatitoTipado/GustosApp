@@ -10,7 +10,8 @@ namespace GustosApp.Domain.Model.@enum
     {
         Pendiente = 0,
         Aprobada = 1,
-        Rechazada = 2
+        Rechazada = 2,
+         Todas=3
     }
 
 

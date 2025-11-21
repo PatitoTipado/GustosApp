@@ -16,6 +16,8 @@ namespace GustosApp.Infraestructure.Configurations
             b.HasOne(x => x.Restaurante)
              .WithMany()
              .HasForeignKey(x => x.RestauranteId)
+              .IsRequired()
+
              .OnDelete(DeleteBehavior.Cascade);
 
             b.HasIndex(x => x.RestauranteId).HasDatabaseName("IX_RestMenu_RestauranteId");

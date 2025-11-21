@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace GustosApp.API.Hubs
 {
-    [Authorize]
+    // Removido [Authorize] para permitir conexión y manejar auth manualmente
     public class SolicitudesAmistadHub : Hub
     {
         private readonly AceptarSolicitudUseCase _aceptarSolicitud;
@@ -29,14 +29,27 @@ namespace GustosApp.API.Hubs
 
         public override async Task OnConnectedAsync()
         {
-            var uid = Context.User?.FindFirst("user_id")?.Value;
-            if (uid == null) return;
+            try
+            {
+                var uid = Context.User?.FindFirst("user_id")?.Value;
+                if (string.IsNullOrEmpty(uid))
+                {
+                    Console.WriteLine("⚠️ Usuario conectado a SolicitudesAmistadHub sin user_id");
+                    await base.OnConnectedAsync();
+                    return;
+                }
 
-            var solicitudes = await _obtenerPendientes.HandleAsync(uid, CancellationToken.None);
-            var solicitudesDTO = _mapper.Map<List<SolicitudAmistadResponse>>(solicitudes);
+                var solicitudes = await _obtenerPendientes.HandleAsync(uid, CancellationToken.None);
+                var solicitudesDTO = _mapper.Map<List<SolicitudAmistadResponse>>(solicitudes);
 
-
-            await Clients.Caller.SendAsync("SolicitudesPendientes", solicitudesDTO);
+                await Clients.Caller.SendAsync("SolicitudesPendientes", solicitudesDTO);
+                await base.OnConnectedAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error en OnConnectedAsync SolicitudesAmistadHub: {ex.Message}");
+                await base.OnConnectedAsync();
+            }
         }
 
         public async Task AceptarSolicitud(Guid solicitudId)

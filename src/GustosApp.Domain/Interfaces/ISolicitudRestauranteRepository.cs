@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using GustosApp.Domain.Model;
+using GustosApp.Domain.Model.@enum;
 
 namespace GustosApp.Domain.Interfaces
 {
@@ -13,6 +14,11 @@ namespace GustosApp.Domain.Interfaces
         Task<List<SolicitudRestaurante>> GetPendientesAsync(CancellationToken ct);
         Task AddAsync(SolicitudRestaurante solicitud, CancellationToken ct);
         Task UpdateAsync(SolicitudRestaurante solicitud, CancellationToken ct);
+        Task<IEnumerable<SolicitudRestaurante>> GetAllAsync(CancellationToken ct);
+        Task<IEnumerable<SolicitudRestaurante>> GetByEstadoAsync(
+            EstadoSolicitudRestaurante estado,
+            CancellationToken ct);
+
     }
 
 }

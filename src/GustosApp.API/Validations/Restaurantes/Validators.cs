@@ -40,20 +40,7 @@ namespace GustosApp.Application.Validations.Restaurantes
                 .NotNull().WithMessage("Longitud requerida.")
                 .InclusiveBetween(-180, 180);
 
-            // ===========================
-            // PRIMARY TYPE
-            // ===========================
-            RuleFor(x => x.PrimaryType)
-                .NotEmpty()
-                .MaximumLength(80)
-                .Matches("^[a-z0-9_]+$")
-                .WithMessage("primaryType solo acepta minúsculas, números y '_'. (ej: fast_food)");
-
-            // ===========================
-            // TYPES (lista)
-            // ===========================
-            RuleForEach(x => x.TypesJson)
-                .NotEmpty();
+          
 
      
 

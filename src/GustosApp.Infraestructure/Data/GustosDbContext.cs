@@ -29,6 +29,8 @@ public class GustosDbContext : DbContext
     public DbSet<RestauranteEspecialidad> RestauranteEspecialidades { get; set; }
     public DbSet<Restaurante> Restaurantes { get; set; }
 
+    public DbSet<RestauranteEstadisticas> RestauranteEstadisticas { get; set; }
+
     public DbSet<SolicitudRestaurante> SolicitudesRestaurantes { get; set; }
 
     //public DbSet<ReseñaRestaurante> ReseñasRestaurantes { get; set; }
@@ -52,8 +54,14 @@ public class GustosDbContext : DbContext
 
     public DbSet<OpinionRestaurante> OpinionesRestaurantes { get; set; }
     public DbSet<OpinionFoto> OpinionesFotos { get; set; }
+
+    
+    public DbSet<VotacionGrupo> Votaciones { get; set; }
+    public DbSet<VotoRestaurante> Votos { get; set; }
+
     public DbSet<OpinionRestaurante> OpinionesRestaurante { get; set; }
     public DbSet<UsuarioRestauranteFavorito> UsuarioRestauranteFavoritos { get; set; }
+
 
     public GustosDbContext(DbContextOptions<GustosDbContext> options)
     : base(options) { }
@@ -62,10 +70,14 @@ public class GustosDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.UsuarioRestauranteVisitadoConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.UsuarioRestauranteVisitadoConfiguration());
 
-        modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.RestauranteImagenConfiguration());
-        modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.RestauranteMenuConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.RestauranteImagenConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.RestauranteMenuConfiguration());
+        modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.RestauranteEstadisticasConfiguration());
+
+        modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.VotacionGrupoConfiguration());
+        modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.VotoRestauranteConfiguration());
 
 
 
@@ -77,10 +89,6 @@ public class GustosDbContext : DbContext
             .HasMaxLength(150)
             .IsRequired();
 
-        modelBuilder.Entity<SolicitudRestaurante>()
-            .Property(s => s.PrimaryType)
-            .HasMaxLength(80)
-            .IsRequired();
 
         modelBuilder.Entity<SolicitudRestaurante>()
        .HasOne(s => s.Usuario)

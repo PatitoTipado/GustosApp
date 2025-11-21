@@ -35,6 +35,15 @@ namespace GustosApp.Infraestructure.Repositories
            return await _dbContext.UsuarioRestauranteFavoritos
                 .AnyAsync(x => x.UsuarioId == usuarioId && x.RestauranteId == restauranteId, ct);
         }
+
+        public async Task<int> CountByRestauranteAsync(Guid restauranteId, CancellationToken ct)
+        {
+            return await _dbContext.UsuarioRestauranteFavoritos
+                .Where(x => x.RestauranteId == restauranteId)
+                .Select(x => x.UsuarioId)
+                .Distinct()
+                .CountAsync(ct);
+        }
     }
    
 }

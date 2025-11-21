@@ -48,8 +48,9 @@ namespace GustosApp.Domain.Model
         public bool MenuProcesado { get; set; }
         public string? MenuError { get; set; }
 
-        public ICollection<OpinionRestaurante> Reviews { get; set; } = new List<OpinionRestaurante>();
+        public RestauranteEstadisticas? Estadisticas { get; set; }
 
+        public ICollection<OpinionRestaurante> Reviews { get; set; } = new List<OpinionRestaurante>();
         public ICollection<Gusto> GustosQueSirve { get; set; } = new List<Gusto>();
         public ICollection<Restriccion> RestriccionesQueRespeta { get; set; } = new List<Restriccion>();
 

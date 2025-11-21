@@ -1,6 +1,6 @@
 using AutoMapper;
 using GustosApp.API.DTO;
-
+using GustosApp.Application.DTO;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.Services;
 using GustosApp.Application.UseCases.RestauranteUseCases;
@@ -56,6 +56,11 @@ namespace GustosApp.API.Controllers
         private IMapper _mapper;
         private readonly AgregarUsuarioRestauranteFavoritoUseCase _agregarFavoritoUseCase;
 
+        private readonly RegistrarTop3IndividualRestaurantesUseCase _registrarTop3IndividualUseCase;
+        private readonly RegistrarVisitaPerfilRestauranteUseCase _registrarVisitaPerfilUseCase;
+        private readonly ObtenerMetricasRestauranteUseCase _obtenerMetricasRestauranteUseCase;
+
+
 
         public RestaurantesController(
      IServicioRestaurantes servicio,
@@ -67,12 +72,15 @@ namespace GustosApp.API.Controllers
      IAlmacenamientoArchivos fileStorage,
       IFileStorageService firebase,
       CrearSolicitudRestauranteUseCase solicitudesRestaurantes,
-      ObtenerDatosRegistroRestauranteUseCase getDatosRegistroRestaurante, 
+      ObtenerDatosRegistroRestauranteUseCase getDatosRegistroRestaurante,
         GustosApp.Infraestructure.GustosDbContext db,
         ICacheService cache,
      IOcrService ocr,
      IMenuParser menuParser,
-     IMapper mapper, BuscarRestaurantesUseCase buscarRestaurante, AgregarUsuarioRestauranteFavoritoUseCase agregarUsuarioRestauranteFavoritoUseCase)
+     IMapper mapper, BuscarRestaurantesUseCase buscarRestaurante, AgregarUsuarioRestauranteFavoritoUseCase agregarUsuarioRestauranteFavoritoUseCase,
+      RegistrarTop3IndividualRestaurantesUseCase registrarTop3IndividualUseCase,
+    RegistrarVisitaPerfilRestauranteUseCase registrarVisitaPerfilUseCase,
+    ObtenerMetricasRestauranteUseCase obtenerMetricasRestauranteUseCase)
         {
             _servicio = servicio;
             _obtenerUsuario = obtenerUsuario;
@@ -92,6 +100,9 @@ namespace GustosApp.API.Controllers
             _menuParser = menuParser;
             _buscarRestaurante = buscarRestaurante;
             _agregarFavoritoUseCase = agregarUsuarioRestauranteFavoritoUseCase;
+            _registrarTop3IndividualUseCase = registrarTop3IndividualUseCase;
+            _registrarVisitaPerfilUseCase = registrarVisitaPerfilUseCase;
+            _obtenerMetricasRestauranteUseCase = obtenerMetricasRestauranteUseCase;
         }
         [Authorize]
 
@@ -190,6 +201,16 @@ namespace GustosApp.API.Controllers
             // DTO
             var response = _mapper.Map<List<RestauranteDTO>>(recommendations);
 
+            //registrar cuantos restaurantes salieron en el top 3 individual
+            var top3Ids = response
+                .Take(3)
+                .Select(r => r.Id)
+                .ToList();
+
+            if (top3Ids.Count > 0)
+            {
+                await _registrarTop3IndividualUseCase.HandleAsync(top3Ids, ct);
+            }
 
             return Ok(new
             {
@@ -225,6 +246,12 @@ namespace GustosApp.API.Controllers
                 .OrderBy(o => o.EsImportada)  // false = locales primero
                 .ThenByDescending(o => o.FechaCreacion)
                 .ToList();
+
+            //registrar visita al perfil
+            if (!string.IsNullOrEmpty(uid))
+            {
+                await _registrarVisitaPerfilUseCase.HandleAsync(id, ct);
+            }
 
             return Ok(restaurante);
         }
@@ -356,7 +383,7 @@ namespace GustosApp.API.Controllers
                 foreach (var url in urlsSubidas)
                 {
                     try { await _firebase.DeleteFileAsync(url); }
-                    catch {  }
+                    catch { }
                 }
 
                 return BadRequest(new { error = ex.Message });
@@ -385,7 +412,7 @@ namespace GustosApp.API.Controllers
                 }).ToList()
             };
 
-            return Ok(dto );
+            return Ok(dto);
         }
 
         [HttpPut("{id:guid}")]
@@ -775,7 +802,7 @@ namespace GustosApp.API.Controllers
         }
         */
 
-        private async Task<SolicitudRestauranteImagen> SubirImagenAsync(IFormFile archivo, 
+        private async Task<SolicitudRestauranteImagen> SubirImagenAsync(IFormFile archivo,
             TipoImagenSolicitud tipo, List<string> urlsSubidas)
 
         {
@@ -815,8 +842,17 @@ namespace GustosApp.API.Controllers
             return Ok();
         }
 
-    }
-    
-
+        [HttpGet("{id:guid}/metricas")]
+        public async Task<ActionResult<RestauranteMetricasDashboardResponse>> ObtenerMetricas(
+            Guid id,
+            CancellationToken ct)
+        {
+            var metricas = await _obtenerMetricasRestauranteUseCase.HandleAsync(id, ct);
+            return Ok(metricas);
         }
+
+    }
+
+
+}
 

@@ -32,6 +32,13 @@ namespace GustosApp.API.DTO
         public string Mensaje { get; set; } = string.Empty;
     }
 
+    public class ActualizarNombreGrupoRequest
+    {
+        [Required(ErrorMessage = "El nombre del grupo es requerido")]
+        [StringLength(100, MinimumLength = 1, ErrorMessage = "El nombre debe tener entre 1 y 100 caracteres")]
+        public string Nombre { get; set; } = string.Empty;
+    }
+
     // -------------------------
     // 📦 Grupo principal
     // -------------------------

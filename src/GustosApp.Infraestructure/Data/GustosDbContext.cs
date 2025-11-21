@@ -47,6 +47,9 @@ public class GustosDbContext : DbContext
 
     public DbSet<OpinionRestaurante> OpinionesRestaurantes { get; set; }
     public DbSet<OpinionFoto> OpinionesFotos { get; set; }
+    
+    public DbSet<VotacionGrupo> Votaciones { get; set; }
+    public DbSet<VotoRestaurante> Votos { get; set; }
 
     public GustosDbContext(DbContextOptions<GustosDbContext> options)
     : base(options) { }
@@ -59,6 +62,9 @@ public class GustosDbContext : DbContext
 
         modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.RestauranteImagenConfiguration());
         modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.RestauranteMenuConfiguration());
+        
+        modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.VotacionGrupoConfiguration());
+        modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.VotoRestauranteConfiguration());
 
         modelBuilder.Entity<Restaurante>()
               .Ignore(r => r.Score)

@@ -31,6 +31,7 @@ using GustosApp.Application.UseCases.NotificacionUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
+using GustosApp.Application.UseCases.VotacionUseCases;
 using GustosApp.Infraestructure.Services;
 using Microsoft.AspNetCore.Authorization;
 
@@ -181,6 +182,14 @@ builder.Services.AddScoped<IUsuariosActivosService, UsuariosActivosService>();
 builder.Services.AddScoped<IOpinionRestauranteRepository, OpinionRestauranteRepositoryEF>();
 builder.Services.AddScoped<ActualizarValoracionRestauranteUseCase>();
 
+// Votaciones
+builder.Services.AddScoped<IVotacionRepository, VotacionRepository>();
+builder.Services.AddScoped<IniciarVotacionUseCase>();
+builder.Services.AddScoped<RegistrarVotoUseCase>();
+builder.Services.AddScoped<ObtenerResultadosVotacionUseCase>();
+builder.Services.AddScoped<CerrarVotacionUseCase>();
+builder.Services.AddScoped<SeleccionarGanadorRuletaUseCase>();
+
 
 // Chat repository
 builder.Services.AddScoped<IChatRepository,ChatRepositoryEF>();
@@ -195,6 +204,7 @@ builder.Services.AddScoped<ObtenerCondicionesMedicasUseCase>();
 builder.Services.AddScoped<ObtenerGustosUseCase>();
 builder.Services.AddScoped<ObtenerRestriccionesUseCase>();
 builder.Services.AddScoped<CrearGrupoUseCase>();
+builder.Services.AddScoped<ActualizarNombreGrupoUseCase>();
 builder.Services.AddScoped<InvitarUsuarioGrupoUseCase>();
 builder.Services.AddScoped<UnirseGrupoUseCase>();
 builder.Services.AddScoped<AbandonarGrupoUseCase>();
@@ -249,7 +259,10 @@ builder.Services.AddScoped<NotificacionesInteligentesService>();
 
 
 // Para notificaciones en tiempo real
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = true;
+});
 
 // =====================
 //    Restaurantes (DI)
@@ -304,11 +317,8 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-
-builder.Services.AddSignalR();
-
 // =====================
-//    CORS
+//    CORS
 // =====================
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddCors(options =>
@@ -319,7 +329,8 @@ builder.Services.AddCors(options =>
             policy.WithOrigins("http://localhost:3000", "http://localhost:5174", "https://lois-membranous-glancingly.ngrok-free.dev")
                   .AllowCredentials()
                   .AllowAnyHeader()
-                  .AllowAnyMethod();
+                  .AllowAnyMethod()
+                  .SetIsOriginAllowed(_ => true); // Permitir cualquier origen en desarrollo
         });
 
     // Política más permisiva para desarrollo
@@ -340,7 +351,6 @@ builder.Services.AddAuthorization(options =>
 */
 
 var app = builder.Build();
-app.UseRouting();
 
 // =====================
 //   Pipeline HTTP
@@ -351,11 +361,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// CORS debe ir antes de UseRouting para SignalR
+app.UseCors(MyAllowSpecificOrigins);
+
 app.UseHttpsRedirection();
 
 app.UseStaticFiles(); // Habilitar archivos estáticos
 
-app.UseCors(MyAllowSpecificOrigins);
+app.UseRouting();
 
 
 app.UseMiddleware<ManejadorErrorMiddleware>();

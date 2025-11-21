@@ -48,24 +48,39 @@ namespace GustosApp.API.Hubs
         // Se ejecuta al conectarse un usuario
         public override async Task OnConnectedAsync()
         {
+            try
+            {
+                var firebaseUid = Context.User?.FindFirst("user_id")?.Value;
+                if (string.IsNullOrEmpty(firebaseUid))
+                {
+                    Console.WriteLine("⚠️ Usuario conectado sin firebaseUid");
+                    await base.OnConnectedAsync();
+                    return;
+                }
 
-            var firebaseUid = Context.User?.FindFirst("user_id")?.Value;
-            if (firebaseUid == null) return;
+                var usuario = await _obtenerUsuario.HandleAsync(FirebaseUid: firebaseUid, ct: CancellationToken.None);
+                if (usuario == null)
+                {
+                    Console.WriteLine($"⚠️ No se encontró usuario con firebaseUid: {firebaseUid}");
+                    await base.OnConnectedAsync();
+                    return;
+                }
 
+                _usuariosActivos.UsuarioConectado(firebaseUid);
 
-            var usuario = await _obtenerUsuario.HandleAsync(FirebaseUid :firebaseUid, ct:CancellationToken.None);
-            if (usuario == null) return;
+                var notificaciones = await _obtenerNotificaciones.HandleAsync(usuario.Id, CancellationToken.None);
 
-            _usuariosActivos.UsuarioConectado(firebaseUid);
+                //DTO
+                var notificacionesDTO = _mapper.Map<List<NotificacionDTO>>(notificaciones);
 
-            var notificaciones = await _obtenerNotificaciones.HandleAsync(usuario.Id, CancellationToken.None);
-
-            //DTO
-            var notificacionesDTO = _mapper.Map<List<NotificacionDTO>>(notificaciones);
-
-
-            await Clients.Caller.SendAsync("CargarNotificaciones", notificacionesDTO);
-            await base.OnConnectedAsync();
+                await Clients.Caller.SendAsync("CargarNotificaciones", notificacionesDTO);
+                await base.OnConnectedAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error en OnConnectedAsync NotificacionesHub: {ex.Message}");
+                await base.OnConnectedAsync();
+            }
         }
 
 

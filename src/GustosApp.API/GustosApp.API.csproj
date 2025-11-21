@@ -59,5 +59,12 @@
 	  <Compile Include="..\GustosApp.Domain\Model\ReseñaRestaurante.cs" Link="ReseñaRestaurante.cs" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<Content Update="tessdata\**\*">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+
 
 </Project>

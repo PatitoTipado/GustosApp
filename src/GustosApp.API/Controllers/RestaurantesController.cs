@@ -48,6 +48,7 @@ namespace GustosApp.API.Controllers
         private readonly IAlmacenamientoArchivos _fileStorage;
         private readonly IFileStorageService _firebase;
         private readonly GustosApp.Infraestructure.GustosDbContext _db;
+        private readonly ObtenerDatosRegistroRestauranteUseCase _getDatosRegistroRestaurante;
         private readonly IOcrService _ocr;
         private readonly IMenuParser _menuParser;
         private readonly ICacheService _cache;
@@ -66,6 +67,7 @@ namespace GustosApp.API.Controllers
      IAlmacenamientoArchivos fileStorage,
       IFileStorageService firebase,
       CrearSolicitudRestauranteUseCase solicitudesRestaurantes,
+      ObtenerDatosRegistroRestauranteUseCase getDatosRegistroRestaurante, 
         GustosApp.Infraestructure.GustosDbContext db,
         ICacheService cache,
      IOcrService ocr,
@@ -78,6 +80,7 @@ namespace GustosApp.API.Controllers
             _buscarRestaurantes = buscarRestaurantes;
             _construirPreferencias = construirPreferencias;
             _solicitudesRestaurantes = solicitudesRestaurantes;
+            _getDatosRegistroRestaurante = getDatosRegistroRestaurante;
             _obtenerDetalles = obtenerDetalles;
             _fileStorage = fileStorage;
             _firebase = firebase;
@@ -320,31 +323,71 @@ namespace GustosApp.API.Controllers
 
             var imagenes = new List<SolicitudRestauranteImagen>();
 
-            if (dto.ImagenDestacada != null)
-                imagenes.Add(await SubirImagenAsync(dto.ImagenDestacada, TipoImagenSolicitud.Destacada));
+            var urlsSubidas = new List<string>();
 
-            if (dto.ImagenesInterior != null)
-                foreach (var file in dto.ImagenesInterior)
-                    imagenes.Add(await SubirImagenAsync(file, TipoImagenSolicitud.Interior));
+            try
+            {
+                if (dto.ImagenDestacada != null)
+                    imagenes.Add(await SubirImagenAsync(dto.ImagenDestacada, TipoImagenSolicitud.Destacada, urlsSubidas));
 
-            if (dto.ImagenesComidas != null)
-                foreach (var file in dto.ImagenesComidas)
-                    imagenes.Add(await SubirImagenAsync(file, TipoImagenSolicitud.Comida));
+                if (dto.ImagenesInterior != null)
+                    foreach (var file in dto.ImagenesInterior)
+                        imagenes.Add(await SubirImagenAsync(file, TipoImagenSolicitud.Interior, urlsSubidas));
 
-            if (dto.ImagenMenu != null)
-                imagenes.Add(await SubirImagenAsync(dto.ImagenMenu, TipoImagenSolicitud.Menu));
+                if (dto.ImagenesComidas != null)
+                    foreach (var file in dto.ImagenesComidas)
+                        imagenes.Add(await SubirImagenAsync(file, TipoImagenSolicitud.Comida, urlsSubidas));
 
-            if (dto.Logo != null)
-                imagenes.Add(await SubirImagenAsync(dto.Logo, TipoImagenSolicitud.Logo));
+                if (dto.ImagenMenu != null)
+                    imagenes.Add(await SubirImagenAsync(dto.ImagenMenu, TipoImagenSolicitud.Menu, urlsSubidas));
+
+                if (dto.Logo != null)
+                    imagenes.Add(await SubirImagenAsync(dto.Logo, TipoImagenSolicitud.Logo, urlsSubidas));
 
 
-            var response = await _solicitudesRestaurantes.HandleAsync(uid, dto.Nombre, dto.Direccion,
-                dto.Lng, dto.Lng, dto.PrimaryType, dto.TypesJson, dto.HorariosJson, dto.GustosQueSirveIds,
-                dto.RestriccionesQueRespetaIds, imagenes, ct);
+                var response = await _solicitudesRestaurantes.HandleAsync(uid, dto.Nombre, dto.Direccion,
+                    dto.Lat, dto.Lng, dto.HorariosJson, dto.GustosQueSirveIds,
+                    dto.RestriccionesQueRespetaIds, imagenes, ct);
 
-            return Ok(response);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                foreach (var url in urlsSubidas)
+                {
+                    try { await _firebase.DeleteFileAsync(url); }
+                    catch {  }
+                }
+
+                return BadRequest(new { error = ex.Message });
+            }
         }
-       
+
+        [Authorize]
+        [HttpGet("registro-datos")]
+        public async Task<IActionResult> ObtenerDatosParaRegistro(CancellationToken ct)
+        {
+            var guid = GetFirebaseUid();
+
+            var (gustos, restricciones) = await _getDatosRegistroRestaurante.HandleAsync(ct);
+
+            var dto = new DatosSolicitudRestauranteDto
+            {
+                Gustos = gustos.Select(g => new ItemSimpleDto
+                {
+                    Id = g.Id,
+                    Nombre = g.Nombre
+                }).ToList(),
+                Restricciones = restricciones.Select(r => new ItemSimpleDto
+                {
+                    Id = r.Id,
+                    Nombre = r.Nombre
+                }).ToList()
+            };
+
+            return Ok(dto );
+        }
+
         [HttpPut("{id:guid}")]
         [Authorize]
         public async Task<IActionResult> Put(Guid id, [FromBody] ActualizarRestauranteDto dto)
@@ -732,11 +775,13 @@ namespace GustosApp.API.Controllers
         }
         */
 
-        private async Task<SolicitudRestauranteImagen> SubirImagenAsync(IFormFile archivo, TipoImagenSolicitud tipo)
+        private async Task<SolicitudRestauranteImagen> SubirImagenAsync(IFormFile archivo, 
+            TipoImagenSolicitud tipo, List<string> urlsSubidas)
+
         {
             using var stream = archivo.OpenReadStream();
             var url = await _firebase.UploadFileAsync(stream, archivo.FileName, "solicitudes");
-
+            urlsSubidas.Add(url);
             return new SolicitudRestauranteImagen
             {
                 Tipo = tipo,

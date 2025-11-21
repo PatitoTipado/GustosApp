@@ -140,104 +140,101 @@ namespace GustosApp.API.Mapping
                 .ForMember(dest => dest.Direccion, opt => opt.MapFrom(src => src.Direccion))
                 .ForMember(dest => dest.UsuarioNombre, opt => opt.MapFrom(src => src.Usuario != null ? src.Usuario.Nombre : ""))
                 .ForMember(dest => dest.UsuarioEmail, opt => opt.MapFrom(src => src.Usuario != null ? src.Usuario.Email : ""))
-                .ForMember(dest => dest.FechaCreacionUtc, opt => opt.MapFrom(src => src.FechaCreacion));
+                .ForMember(dest => dest.FechaCreacionUtc, opt => opt.MapFrom(src => src.FechaCreacion))
+                .ForMember(dest => dest.imgLogo,opt => opt.MapFrom(src =>
+                src.Imagenes
+            .Where(i => i.Tipo == TipoImagenSolicitud.Logo)
+            .Select(i => i.Url)
+            .FirstOrDefault() 
 
+             ))
+                .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado));
+            CreateMap<SolicitudRestaurante, SolicitudRestauranteDetalleDto>()
 
-                CreateMap<SolicitudRestaurante, SolicitudRestauranteDetalleDto>()
+                .ForMember(dest => dest.UsuarioId,
+                    opt => opt.MapFrom(src => src.Usuario.Id))
+                .ForMember(dest => dest.UsuarioNombre,
+                    opt => opt.MapFrom(src => $"{src.Usuario.Nombre} {src.Usuario.Apellido}".Trim()))
+                .ForMember(dest => dest.UsuarioEmail,
+                    opt => opt.MapFrom(src => src.Usuario.Email))
 
-                    .ForMember(dest => dest.UsuarioId,
-                        opt => opt.MapFrom(src => src.Usuario.Id))
-                    .ForMember(dest => dest.UsuarioNombre,
-                        opt => opt.MapFrom(src => $"{src.Usuario.Nombre} {src.Usuario.Apellido}".Trim()))
-                    .ForMember(dest => dest.UsuarioEmail,
-                        opt => opt.MapFrom(src => src.Usuario.Email))
+                .ForMember(dest => dest.NombreRestaurante,
+                    opt => opt.MapFrom(src => src.Nombre))
+                .ForMember(dest => dest.Direccion,
+                    opt => opt.MapFrom(src => src.Direccion))
+                .ForMember(dest => dest.Latitud,
+                    opt => opt.MapFrom(src => src.Latitud))
+                .ForMember(dest => dest.Longitud,
+                    opt => opt.MapFrom(src => src.Longitud))
 
-                    .ForMember(dest => dest.NombreRestaurante,
-                        opt => opt.MapFrom(src => src.Nombre))
-                    .ForMember(dest => dest.Direccion,
-                        opt => opt.MapFrom(src => src.Direccion))
-                    .ForMember(dest => dest.Latitud,
-                        opt => opt.MapFrom(src => src.Latitud))
-                    .ForMember(dest => dest.Longitud,
-                        opt => opt.MapFrom(src => src.Longitud))
+                .ForMember(dest => dest.HorariosJson,
+                    opt => opt.MapFrom(src => src.HorariosJson))
 
-                    // ------------ PrimaryType + Types (desde JSON) ------------
-                    .ForMember(dest => dest.PrimaryType,
-                        opt => opt.MapFrom(src => src.PrimaryType ?? ""))
-                    .ForMember(dest => dest.Types,
-                        opt => opt.MapFrom(src =>
-                       string.IsNullOrWhiteSpace(src.TypesJson)
+                .ForMember(dest => dest.Gustos,
+                    opt => opt.MapFrom(src =>
+                        src.Gustos.Select(g => new ItemSimpleDto
+                        {
+                            Id = g.Id,
+                            Nombre = g.Nombre
+                        }).ToList()
+                    ))
 
-                         ? new List<string>()
-                        : JsonSerializer.Deserialize<List<string>>(src.TypesJson, 
-                        new JsonSerializerOptions())
-                                              ))
+                .ForMember(dest => dest.Restricciones,
+                    opt => opt.MapFrom(src =>
+                        src.Restricciones.Select(r => new ItemSimpleDto
+                        {
+                            Id = r.Id,
+                            Nombre = r.Nombre
+                        }).ToList()
+                    ))
 
-                    // ------------ Horarios JSON ------------
-                    .ForMember(dest => dest.HorariosJson,
-                        opt => opt.MapFrom(src => src.HorariosJson))
+                .ForMember(dest => dest.ImagenesDestacadas,
+                    opt => opt.MapFrom(src =>
+                        src.Imagenes
+                            .Where(i => i.Tipo == TipoImagenSolicitud.Destacada)
+                            .Select(i => i.Url)
+                            .FirstOrDefault() ?? string.Empty))
 
-                    // ------------ Gustos (ItemSimpleDto) ------------
-                    .ForMember(dest => dest.Gustos,
-                        opt => opt.MapFrom(src =>
-                            src.Gustos.Select(g => new ItemSimpleDto
-                            {
-                                Id = g.Id,
-                                Nombre = g.Nombre
-                            })
-                        ))
+                .ForMember(dest => dest.ImagenesInterior,
+                    opt => opt.MapFrom(src =>
+                        src.Imagenes
+                            .Where(i => i.Tipo == TipoImagenSolicitud.Interior)
+                            .Select(i => i.Url)
+                            .ToList()))
 
-                    // ------------ Restricciones (ItemSimpleDto) ------------
-                    .ForMember(dest => dest.Restricciones,
-                        opt => opt.MapFrom(src =>
-                            src.Restricciones.Select(r => new ItemSimpleDto
-                            {
-                                Id = r.Id,
-                                Nombre = r.Nombre
-                            })
-                        ))
+                .ForMember(dest => dest.ImagenesComida,
+                    opt => opt.MapFrom(src =>
+                        src.Imagenes
+                            .Where(i => i.Tipo == TipoImagenSolicitud.Comida)
+                            .Select(i => i.Url)
+                            .ToList()))
 
-
-                    // ------------ Imágenes por tipo ------------
-                    .ForMember(dest => dest.ImagenesDestacadas,
-                        opt => opt.MapFrom(src =>
-                            src.Imagenes
-                                .Where(i => i.Tipo == TipoImagenSolicitud.Destacada)
-                                .Select(i => i.Url)
-                        ))
-                    .ForMember(dest => dest.ImagenesInterior,
-                        opt => opt.MapFrom(src =>
-                            src.Imagenes
-                                .Where(i => i.Tipo == TipoImagenSolicitud.Interior)
-                                .Select(i => i.Url)
-                        ))
-                    .ForMember(dest => dest.ImagenesComida,
-                        opt => opt.MapFrom(src =>
-                            src.Imagenes
-                                .Where(i => i.Tipo == TipoImagenSolicitud.Comida)
-                                .Select(i => i.Url)
-                        ))
-
-                       .ForMember(dest => dest.ImagenMenu,
-                           opt => opt.MapFrom(src =>
-                            src.Imagenes
+                .ForMember(dest => dest.ImagenMenu,
+                    opt => opt.MapFrom(src =>
+                        src.Imagenes
                             .Where(i => i.Tipo == TipoImagenSolicitud.Menu)
-                             .Select(i => i.Url)
-                              .FirstOrDefault()
-                           ))
-                      .ForMember(dest => dest.Logo,
-                        opt => opt.MapFrom(src =>
-                         src.Imagenes
-                        .Where(i => i.Tipo == TipoImagenSolicitud.Logo)
-                        .Select(i => i.Url)
-                        .FirstOrDefault()
-                      ))
+                            .Select(i => i.Url)
+                            .FirstOrDefault()))
 
-             // ------------ Fecha de creación ------------
-                  .ForMember(dest => dest.FechaCreacionUtc,
-                  opt => opt.MapFrom(src => src.FechaCreacion));
-            }
+                .ForMember(dest => dest.Logo,
+                    opt => opt.MapFrom(src =>
+                        src.Imagenes
+                            .Where(i => i.Tipo == TipoImagenSolicitud.Logo)
+                            .Select(i => i.Url)
+                            .FirstOrDefault()))
+
+                .ForMember(dest => dest.FechaCreacionUtc,
+                    opt => opt.MapFrom(src => src.FechaCreacion))
+
+                // Conversión final de horarios JSON a objeto
+                .ForMember(dest => dest.Horarios,
+                    opt => opt.ConvertUsing(new HorariosJsonConverter(), src => src.HorariosJson));
+
+
         }
+
+    }
+
     }
 
 

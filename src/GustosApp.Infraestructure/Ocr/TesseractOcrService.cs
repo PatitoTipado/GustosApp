@@ -27,11 +27,10 @@ namespace GustosApp.Infraestructure.Ocr
 
         public async Task<string> ReconocerTextoAsync(IEnumerable<Stream> imagenes, string languages = "spa+eng", CancellationToken ct = default)
         {
-            if (imagenes is null) throw new ArgumentNullException(nameof(imagenes));
-
             if (!Directory.Exists(_tessdataPath))
-                throw new DirectoryNotFoundException($"No se encontró la carpeta tessdata en: {_tessdataPath}");
+                throw new DirectoryNotFoundException($"No se encontró tessdata: {_tessdataPath}");
 
+            // 🔥 OJO: NO usar AutoOsd —ROMPE TODO—
             using var engine = new TesseractEngine(_tessdataPath, languages, EngineMode.Default);
 
             var sb = new StringBuilder();
@@ -40,28 +39,26 @@ namespace GustosApp.Infraestructure.Ocr
             {
                 ct.ThrowIfCancellationRequested();
 
-                byte[] bytes;
-                if (img is MemoryStream ms && ms.TryGetBuffer(out var segment))
-                {
-                    bytes = segment.Array!.AsSpan(segment.Offset, segment.Count).ToArray();
-                }
-                else
-                {
-                    using var tmp = new MemoryStream();
-                    await img.CopyToAsync(tmp, ct).ConfigureAwait(false);
-                    bytes = tmp.ToArray();
-                }
+                using var mem = new MemoryStream();
+                await img.CopyToAsync(mem, ct);
+                var bytes = mem.ToArray();
 
                 using var pix = Pix.LoadFromMemory(bytes);
-                using var page = engine.Process(pix, PageSegMode.Auto);
-                var text = page.GetText();
 
-                if (!string.IsNullOrWhiteSpace(text))
-                    sb.AppendLine(Normalizar(text));
+                // 👉 ESTE MODO FUNCIONA PARA MENÚS
+                using var page = engine.Process(pix, PageSegMode.SingleColumn);
+
+                var raw = page.GetText();
+                Console.WriteLine(">>> RAW OCR TEXT:");
+                Console.WriteLine(raw);
+
+                if (!string.IsNullOrWhiteSpace(raw))
+                    sb.AppendLine(Normalizar(raw));
             }
 
             return sb.ToString().Trim();
         }
+
 
         private static string Normalizar(string input)
         {

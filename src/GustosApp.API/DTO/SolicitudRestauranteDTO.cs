@@ -9,7 +9,9 @@ namespace GustosApp.API.DTO
         public string Direccion { get; set; } = string.Empty;
         public string UsuarioNombre { get; set; } = string.Empty;
         public string UsuarioEmail { get; set; } = string.Empty;
-        public string imgLogo { get; set; } 
+        public string imgLogo { get; set; }
+
+        public EstadoSolicitudRestaurante Estado { get; set; }
 
 
         public DateTime FechaCreacionUtc { get; set; }
@@ -49,6 +51,17 @@ namespace GustosApp.API.DTO
 
         // Metadatos
         public DateTime FechaCreacionUtc { get; set; }
+        public List<HorarioSimpleDto> Horarios { get; set; } = new();
+
     }
+
+    public class HorarioSimpleDto
+    {
+        public string Dia { get; set; } = default!;
+        public bool Cerrado { get; set; }
+        public string? Desde { get; set; } // "12:00"
+        public string? Hasta { get; set; } // "22:00"
+    }
+
 
 }

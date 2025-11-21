@@ -29,6 +29,8 @@ public class GustosDbContext : DbContext
     public DbSet<RestauranteEspecialidad> RestauranteEspecialidades { get; set; }
     public DbSet<Restaurante> Restaurantes { get; set; }
 
+    public DbSet<RestauranteEstadisticas> RestauranteEstadisticas { get; set; }
+
     public DbSet<SolicitudRestaurante> SolicitudesRestaurantes { get; set; }
 
     //public DbSet<ReseñaRestaurante> ReseñasRestaurantes { get; set; }
@@ -72,6 +74,7 @@ public class GustosDbContext : DbContext
 
         modelBuilder.ApplyConfiguration(new Configurations.RestauranteImagenConfiguration());
         modelBuilder.ApplyConfiguration(new Configurations.RestauranteMenuConfiguration());
+        modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.RestauranteEstadisticasConfiguration());
 
         modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.VotacionGrupoConfiguration());
         modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.VotoRestauranteConfiguration());

@@ -205,6 +205,7 @@ builder.Services.AddScoped<INotificacionRealtimeService, SignalRNotificacionReal
 builder.Services.AddScoped<ISolicitudAmistadRealtimeService, SignalRSolicitudAmistadRealtimeService>();
 builder.Services.AddScoped<IUsuariosActivosService, UsuariosActivosService>();
 builder.Services.AddScoped<IOpinionRestauranteRepository, OpinionRestauranteRepositoryEF>();
+builder.Services.AddScoped<IRestauranteEstadisticasRepository, RestauranteEstadisticasRepositoryEF>();
 builder.Services.AddScoped<ActualizarValoracionRestauranteUseCase>();
 builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
 builder.Services.AddScoped<IUsuarioRestauranteFavoritoRepository, UsuarioRestauranteFavoritoEF>();
@@ -299,6 +300,12 @@ builder.Services.AddScoped<CrearOpinionRestauranteUseCase>();
 builder.Services.AddScoped<NotificacionesInteligentesService>();
 builder.Services.AddScoped<BuscarRestaurantesUseCase>();
 builder.Services.AddScoped<AgregarUsuarioRestauranteFavoritoUseCase>();
+builder.Services.AddScoped<RegistrarTop3IndividualRestaurantesUseCase>();
+builder.Services.AddScoped<RegistrarTop3GrupoRestaurantesUseCase>();
+builder.Services.AddScoped<RegistrarVisitaPerfilRestauranteUseCase>();
+builder.Services.AddScoped<ObtenerMetricasRestauranteUseCase>();
+
+
 builder.Services.AddHttpClient<IRecomendacionAIService, RecomendacionAIService>();
 builder.Services.Configure<GeminiSettings>(builder.Configuration.GetSection("GeminiSettings"));
 

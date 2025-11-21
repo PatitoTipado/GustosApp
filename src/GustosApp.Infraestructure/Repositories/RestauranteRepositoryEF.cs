@@ -18,11 +18,19 @@ namespace GustosApp.Infraestructure.Repositories
         public async Task<Restaurante?> GetByPlaceIdAsync(string placeId, CancellationToken ct = default)
             => await _db.Restaurantes.AsNoTracking().FirstOrDefaultAsync(r => r.PlaceId == placeId, ct);
 
+        public async Task<Restaurante?> GetRestauranteByIdAsync(Guid id, CancellationToken ct = default)
+            => await _db.Restaurantes.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id, ct);
+
         public async Task AddAsync(Restaurante r, CancellationToken ct = default)
             => await _db.Restaurantes.AddAsync(r, ct);
 
         public Task SaveChangesAsync(CancellationToken ct = default)
             => _db.SaveChangesAsync(ct);
+        public Task UpdateAsync(Restaurante restaurante, CancellationToken ct)
+        {
+            _db.Restaurantes.Update(restaurante);
+            return Task.CompletedTask;
+        }
 
         public async Task<List<Restaurante>> GetNearbyAsync(
     double lat,
@@ -187,6 +195,13 @@ namespace GustosApp.Infraestructure.Repositories
                   .FirstOrDefaultAsync(r => r.Id == id, ct);
           }
 
+        public async Task<Restaurante?> GetByIdAsync(Guid id, CancellationToken ct)
+        {
+            return await _db.Restaurantes.FirstOrDefaultAsync(r => r.Id == id);
+
+        }
+
+      
     }
 }
 

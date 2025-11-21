@@ -3,7 +3,6 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using GustosApp.Application.DTO.PlacesV1;
-using GustosApp.Application.DTOs.Restaurantes;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 using Microsoft.Extensions.Configuration;

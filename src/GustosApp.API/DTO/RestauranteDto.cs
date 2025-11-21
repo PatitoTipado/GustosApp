@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using GustosApp.API.DTO;
 using GustosApp.Application.DTO;
 using GustosApp.Domain.Model;
+using GustosApp.Domain.Model.@enum;
+using Microsoft.AspNetCore.Mvc;
 
 
 namespace GustosApp.API.DTO
@@ -132,6 +135,7 @@ namespace GustosApp.API.DTO
             public int Version { get; set; } = 1;
             public DateTime FechaActualizacionUtc { get; set; }
 
+
             public JsonElement? Menu { get; set; }
             public string? MenuRaw { get; set; }
         }
@@ -143,7 +147,39 @@ namespace GustosApp.API.DTO
         public int Take { get; set; }
         public List<RestauranteImagenDto> Items { get; set; } = new();
     }
-}
+    public class CrearRestauranteDto
+    {
+        public string Nombre { get; set; } = default!;
+        public string Direccion { get; set; } = default!;
+
+        [JsonPropertyName("lat")]
+        public double? Lat { get; set; }
+
+        [JsonPropertyName("lng")]
+        public double? Lng { get; set; }
+
+        [FromForm(Name = "horariosJson")]
+        public string? HorariosJson { get; set; }
+        
+        [JsonPropertyName("gustosQueSirveIds")]
+        public List<Guid>? GustosQueSirveIds { get; set; }
+
+        [JsonPropertyName("restriccionesQueRespetaIds")]
+        public List<Guid>? RestriccionesQueRespetaIds { get; set; }
+
+        // Imágenes
+        public IFormFile? ImagenDestacada { get; set; }
+        public List<IFormFile>? ImagenesInterior { get; set; }
+        public List<IFormFile>? ImagenesComidas { get; set; }
+        public IFormFile? ImagenMenu { get; set; }
+        public IFormFile? Logo { get; set; }
+    }
+    public class DatosSolicitudRestauranteDto
+    {
+        public List<ItemSimpleDto> Gustos { get; set; }
+        public List<ItemSimpleDto> Restricciones{ get; set; }
+    }
+    }
 
 
 

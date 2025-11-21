@@ -43,6 +43,7 @@ namespace GustosApp.API.Controllers
         private readonly IMapper _mapper;
         private readonly ObtenerRestaurantesAleatoriosGrupoUseCase _obtenerRestaurantesAleatorios;
         private readonly ConstruirPreferenciasUseCase _construirPreferencias;
+        private readonly ActualizarNombreGrupoUseCase _actualizarNombreGrupoUseCase;
 
         public GrupoController(
             CrearGrupoUseCase crearGrupoUseCase,
@@ -65,7 +66,8 @@ namespace GustosApp.API.Controllers
             ActualizarGustosAGrupoUseCase actualizarGustosAGrupoUseCase,
             IMapper mapper,
             ObtenerRestaurantesAleatoriosGrupoUseCase obtenerRestaurantesAleatorios,
-           ConstruirPreferenciasUseCase construirPreferencias
+           ConstruirPreferenciasUseCase construirPreferencias,
+            ActualizarNombreGrupoUseCase actualizarNombreGrupoUseCase
 
             )
         {
@@ -89,6 +91,7 @@ namespace GustosApp.API.Controllers
             _obtenerRestaurantesAleatorios = obtenerRestaurantesAleatorios;
             _construirPreferencias = construirPreferencias;
             _servicioPreferenciasGrupos = servicioPreferenciasGrupos;
+            _actualizarNombreGrupoUseCase = actualizarNombreGrupoUseCase;
 
         }
         [Authorize]
@@ -196,6 +199,19 @@ namespace GustosApp.API.Controllers
            
         }
         [Authorize]
+        [HttpPut("{grupoId}/nombre")]
+        [ProducesResponseType(typeof(GrupoResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> ActualizarNombreGrupo(Guid grupoId, [FromBody] ActualizarNombreGrupoRequest request, CancellationToken ct)
+        {
+            var firebaseUid = GetFirebaseUid();
+            var grupo = await _actualizarNombreGrupoUseCase.HandleAsync(firebaseUid, grupoId, request.Nombre, ct);
+            var response = _mapper.Map<GrupoResponse>(grupo);
+            return Ok(response);
+        }
+
+        [Authorize]
         [HttpDelete("{grupoId}")]
         [ProducesResponseType(typeof(EliminarGrupoResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -265,14 +281,26 @@ namespace GustosApp.API.Controllers
         public async Task<IActionResult> ObtenerGrupo(string grupoId, CancellationToken ct)
         {
                 var firebaseUid = GetFirebaseUid();
-                if (!Guid.TryParse(grupoId, out var gid)) return BadRequest("El id de grupo no es un GUID válido");
+                Console.WriteLine($"[GrupoController] ObtenerGrupo - FirebaseUid: {firebaseUid}, GrupoId: {grupoId}");
+                
+                if (!Guid.TryParse(grupoId, out var gid))
+                {
+                    Console.WriteLine($"[GrupoController] Invalid GUID: {grupoId}");
+                    return BadRequest("El id de grupo no es un GUID válido");
+                }
 
                 
               bool esMiembro = await _verificacionMiembroGrupo.HandleAsync(firebaseUid, gid, ct);
+              Console.WriteLine($"[GrupoController] Usuario {firebaseUid} es miembro del grupo {gid}: {esMiembro}");
+              
             if (!esMiembro)
-                return Forbid("No eres miembro de este grupo.");
+            {
+                Console.WriteLine($"[GrupoController] Returning 403 - User not member of group");
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "No eres miembro de este grupo." });
+            }
 
             var grupo = await _obtenerGrupoDetalleUseCase.HandleAsync(firebaseUid, gid, ct);
+            Console.WriteLine($"[GrupoController] Group details retrieved successfully");
 
             var response = _mapper.Map<GrupoResponse>(grupo);
             return Ok(response);

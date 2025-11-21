@@ -11,6 +11,8 @@
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <PackageReference Include="Google.Cloud.AIPlatform.V1" Version="3.56.0" />
+    <PackageReference Include="Google.GenAI" Version="0.6.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageReference Include="Microsoft.Owin.Security.Google" Version="4.2.3" />
     <PackageReference Include="xunit" Version="2.5.3" />

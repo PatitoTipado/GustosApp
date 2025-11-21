@@ -1,38 +1,40 @@
 using FirebaseAdmin;
+using Google.Api;
 using Google.Apis.Auth.OAuth2;
 using GustosApp.API.Hubs;
 using GustosApp.API.Hubs.GustosApp.API.Hubs;
 using GustosApp.API.Hubs.Services;
 using GustosApp.API.Mapping;
 using GustosApp.API.Middleware;
-using GustosApp.Application.Interfaces;
-using GustosApp.Application.UseCases;
 using GustosApp.Application.Handlers;
-using GustosApp.Domain.Interfaces;
-using GustosApp.Infraestructure;
-using GustosApp.Infraestructure.ML;
-using GustosApp.Infraestructure.Repositories;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
-using GustosApp.Infraestructure.Ocr;
-using GustosApp.Infraestructure.Parsing;
-using GustosApp.Infraestructure.Files;
-using StackExchange.Redis;
+using GustosApp.Application.Interfaces;
 using GustosApp.Application.Services;
-using GustosApp.Application.UseCases.GrupoUseCases;
-using GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases;
+using GustosApp.Application.UseCases;
 using GustosApp.Application.UseCases.AmistadUseCases;
+using GustosApp.Application.UseCases.GrupoUseCases;
+using GustosApp.Application.UseCases.GrupoUseCases.ChatGrupoUseCases;
+using GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases;
+using GustosApp.Application.UseCases.NotificacionUseCases;
 using GustosApp.Application.UseCases.RestauranteUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases;
-using GustosApp.Application.UseCases.GrupoUseCases.ChatGrupoUseCases;
-using GustosApp.Application.UseCases.NotificacionUseCases;
-using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
+using GustosApp.Domain.Interfaces;
+using GustosApp.Infraestructure;
+using GustosApp.Infraestructure.Files;
+using GustosApp.Infraestructure.ML;
+using GustosApp.Infraestructure.Ocr;
+using GustosApp.Infraestructure.Parsing;
+using GustosApp.Infraestructure.Repositories;
 using GustosApp.Infraestructure.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using StackExchange.Redis;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -117,6 +119,7 @@ builder.Services.AddSingleton<IOcrService>(sp =>
     return new TesseractOcrService(tessdataPath);
 });
 builder.Services.AddSingleton<IMenuParser, SimpleMenuParser>();
+
 
 //Autorizacion para acceder a ciertas rutas si el registro del usuario no esta completo
 builder.Services.AddAuthorization(opt =>
@@ -220,6 +223,7 @@ builder.Services.AddScoped<ObtenerNotificacionesUsuarioUseCase>();
 builder.Services.AddScoped<ObtenerNotificacionUsuarioUseCase>();
 builder.Services.AddScoped<MarcarNotificacionLeidaUseCase>();
 builder.Services.AddScoped<ConstruirPreferenciasUseCase>();
+builder.Services.AddScoped<RecomendacionIAUseCase>();
 
 // UseCases y repositorios de amistad
 builder.Services.AddScoped<ISolicitudAmistadRepository, SolicitudAmistadRepositoryEF>();
@@ -251,7 +255,8 @@ builder.Services.AddScoped<CrearOpinionRestauranteUseCase>();
 builder.Services.AddScoped<NotificacionesInteligentesService>();
 builder.Services.AddScoped<BuscarRestaurantesUseCase>();
 builder.Services.AddScoped<AgregarUsuarioRestauranteFavoritoUseCase>();
-
+builder.Services.AddHttpClient<IRecomendacionAIService, RecomendacionAIService>();
+builder.Services.Configure<GeminiSettings>(builder.Configuration.GetSection("GeminiSettings"));
 
 // Para notificaciones en tiempo real
 builder.Services.AddSignalR();

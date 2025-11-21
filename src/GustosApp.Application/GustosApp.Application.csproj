@@ -8,8 +8,11 @@
 
   <ItemGroup>
     <PackageReference Include="FirebaseAdmin" Version="3.4.0" />
+    <PackageReference Include="Google.Cloud.AIPlatform.V1" Version="3.56.0" />
+    <PackageReference Include="Google.GenAI" Version="0.6.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.9" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.0" />
     <PackageReference Include="Microsoft.Owin.Security.Google" Version="4.2.3" />
   </ItemGroup>
 

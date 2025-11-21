@@ -1,6 +1,4 @@
-using System;
-
-namespace GustosApp.Application.DTO
+﻿namespace GustosApp.API.DTO
 {
     public class RestauranteMetricasDashboardResponse
     {
@@ -12,7 +10,7 @@ namespace GustosApp.Application.DTO
 
         public int TotalVisitasPerfil { get; set; }
 
-    
+
         public int TotalFavoritosHistorico { get; set; }
 
         public int TotalFavoritosActual { get; set; }

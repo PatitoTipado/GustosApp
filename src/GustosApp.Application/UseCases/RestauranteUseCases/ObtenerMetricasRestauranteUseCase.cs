@@ -3,6 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using GustosApp.Application.DTO;
 using GustosApp.Domain.Interfaces;
+using GustosApp.Application.record;
+using System.Data;
 
 namespace GustosApp.Application.UseCases.RestauranteUseCases
 {
@@ -19,7 +21,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
             _favoritoRepository = favoritoRepository;
         }
 
-        public async Task<RestauranteMetricasDashboardResponse> HandleAsync(
+        public async Task<RestauranteMetricasRecord> HandleAsync(
             Guid restauranteId,
             CancellationToken ct = default)
         {
@@ -28,17 +30,14 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
 
             var estadisticas = await _estadisticasRepository.ObtenerPorRestauranteAsync(restauranteId, ct);
 
+            if (estadisticas==null)
+            {
+                throw new KeyNotFoundException("No se encontraron estadisticas con esa clave");
+            }
+
             var totalFavoritos = await _favoritoRepository.CountByRestauranteAsync(restauranteId, ct);
 
-            return new RestauranteMetricasDashboardResponse
-            {
-                RestauranteId = restauranteId,
-                TotalTop3Individual = estadisticas?.TotalTop3Individual ?? 0,
-                TotalTop3Grupo = estadisticas?.TotalTop3Grupo ?? 0,
-                TotalVisitasPerfil = estadisticas?.TotalVisitasPerfil ?? 0,
-                TotalFavoritosHistorico = totalFavoritos,
-                TotalFavoritosActual = totalFavoritos
-            };
+            return new RestauranteMetricasRecord( restauranteId , estadisticas, totalFavoritos);
         }
     }
 }

@@ -2,10 +2,8 @@ using AutoMapper;
 using GustosApp.API.DTO;
 using GustosApp.Application.DTO;
 using GustosApp.Application.Interfaces;
-using GustosApp.Application.Services;
 using GustosApp.Application.UseCases.RestauranteUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases;
-using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
 using GustosApp.Domain.Model;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -27,6 +25,7 @@ using GustosApp.Domain.Common;
 using GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestauranteUseCases;
 using System.Threading.Tasks;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using GustosApp.API.DTO;
 
 
 // Controlador para restaurantes que se registran en la app por un usuario y restaurantes traidos de Places v1
@@ -843,12 +842,23 @@ namespace GustosApp.API.Controllers
         }
 
         [HttpGet("{id:guid}/metricas")]
-        public async Task<ActionResult<RestauranteMetricasDashboardResponse>> ObtenerMetricas(
+        public async Task<ActionResult> ObtenerMetricas(
             Guid id,
             CancellationToken ct)
         {
             var metricas = await _obtenerMetricasRestauranteUseCase.HandleAsync(id, ct);
-            return Ok(metricas);
+
+            var rest = new RestauranteMetricasDashboardResponse
+            {
+                RestauranteId = metricas.RestauranteId,
+                TotalTop3Individual = metricas.Estadisticas?.TotalTop3Individual ?? 0,
+                TotalTop3Grupo = metricas.Estadisticas?.TotalTop3Grupo ?? 0,
+                TotalVisitasPerfil = metricas.Estadisticas?.TotalVisitasPerfil ?? 0,
+                TotalFavoritosHistorico = metricas.TotalFavoritos,
+                TotalFavoritosActual = metricas.TotalFavoritos
+            };
+
+            return Ok(rest);
         }
 
     }

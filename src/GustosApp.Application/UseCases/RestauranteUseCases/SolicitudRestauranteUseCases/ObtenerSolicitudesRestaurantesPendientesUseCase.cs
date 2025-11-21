@@ -21,7 +21,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
         {
             var solicitudes = await _repo.GetPendientesAsync(ct);
 
-            if (solicitudes == null) throw new Exception("No hay lista de solicitudes pendiente ");
+            if (solicitudes == null || (!solicitudes.Any())) throw new Exception("No hay lista de solicitudes pendiente ");
             return solicitudes;
         }
     }

@@ -73,6 +73,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
             // ================
             var restaurante = new Restaurante
             {
+                PropietarioUid= solicitud.UsuarioId.ToString(),
                 DuenoId = solicitud.UsuarioId,
                 Nombre = solicitud.Nombre,
                 NombreNormalizado = solicitud.Nombre.ToLower().Trim(),

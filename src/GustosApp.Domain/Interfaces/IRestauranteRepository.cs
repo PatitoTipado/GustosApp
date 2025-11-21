@@ -23,5 +23,8 @@ namespace GustosApp.Domain.Interfaces
             CancellationToken ct = default);
         Task ActualizarValoracionAsync(Guid restauranteId, double promedio, CancellationToken cancellationToken);
         Task<List<Restaurante>> BuscarPorTextoAsync(string texto, CancellationToken ct = default);
+         Task<Restaurante?> GetByIdAsync(Guid id, CancellationToken ct = default);
+        //Task<Restaurante?> GetByIdAsync(Guid id);
+
     }
 }

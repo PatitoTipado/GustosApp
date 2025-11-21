@@ -50,7 +50,7 @@ namespace GustosApp.Application.UseCases
             - Nombre: {restaurante.Nombre}
             - Ofrece: {string.Join(", ", gustosRestaurante)}
             - Respeta: {string.Join(", ", restriccionesRestaurante)}
-            Con esta información, explicále al usuario SI ESTE RESTAURANTE ES ADECUADO O NO SUS PREFERENCIAS Y POR QUÉ, en un lenguaje amigable, claro y breve.";
+            Con esta información, explicále al usuario si este restaurante es adecuado o no,segun sus preferencias,en un lenguaje amigable,claro y breve.";
         }
 
     }

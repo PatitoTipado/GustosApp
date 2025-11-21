@@ -97,7 +97,7 @@ namespace GustosApp.API.Controllers
         }*/
 
         [HttpGet("{restauranteId}/recomendacion")]
-        public async Task<IActionResult> ObtenerRecomendacion(string restauranteId,CancellationToken ct)
+        public async Task<IActionResult> ObtenerRecomendacion(Guid restauranteId, CancellationToken ct)
         {
             // 1) Obtener UID del usuario autenticado
             var usuarioId = User.FindFirst("user_id")?.Value;
@@ -108,7 +108,7 @@ namespace GustosApp.API.Controllers
             // 2) Obtener datos del usuario y del restaurante desde 
             var usuario = await _usuarioRepository.GetByFirebaseUidAsync(usuarioId);
 
-            var restaurante = await _restauranteRepository.GetByFirebaseUidAsync(restauranteId);
+            var restaurante = await _restauranteRepository.GetByIdAsync(restauranteId,ct);
 
             if (usuario == null || restaurante == null)
                 return NotFound();

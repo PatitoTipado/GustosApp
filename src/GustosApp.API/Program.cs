@@ -111,13 +111,21 @@ builder.Services.AddSingleton<IAlmacenamientoArchivos>(sp =>
 // OCR + Parser
 builder.Services.AddSingleton<IOcrService>(sp =>
 {
-    // Ruta base del host (la da el API host)
     var env = sp.GetRequiredService<IWebHostEnvironment>();
-    // tessdata en el proyecto API (copiá eng.traineddata y spa.traineddata ahí)
+
     var tessdataPath = Path.Combine(env.ContentRootPath, "tessdata");
+
+    Console.WriteLine(" TESSDATA PATH => " + tessdataPath);
+    Console.WriteLine(" Exists? => " + Directory.Exists(tessdataPath));
+
+    foreach (var file in Directory.GetFiles(tessdataPath))
+        Console.WriteLine(" " + file);
+
     return new TesseractOcrService(tessdataPath);
 });
-builder.Services.AddSingleton<IMenuParser, SimpleMenuParser>();
+
+
+builder.Services.AddScoped<IMenuParser, SimpleMenuParser>();
 
 //Autorizacion para acceder a ciertas rutas si el registro del usuario no esta completo
 builder.Services.AddAuthorization(opt =>
@@ -229,8 +237,9 @@ builder.Services.AddScoped<CrearSolicitudRestauranteUseCase>();
 builder.Services.AddScoped<AprobarSolicitudRestauranteUseCase>();
 builder.Services.AddScoped<ObtenerSolicitudesRestaurantesPendientesUseCase>();
 builder.Services.AddScoped<ObtenerSolicitudRestaurantesPorIdUseCase>();
-
-
+builder.Services.AddScoped<ObtenerDatosRegistroRestauranteUseCase>();
+builder.Services.AddScoped<ObtenerSolicitudesPorTipoUseCase>();
+builder.Services.AddScoped<RechazarSolicitudRestauranteUseCase>();
 
 
 // UseCases y repositorios de amistad

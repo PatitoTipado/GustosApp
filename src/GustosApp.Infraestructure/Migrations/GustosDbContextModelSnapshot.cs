@@ -2041,16 +2041,7 @@ namespace GustosApp.Infraestructure.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
-                    b.Property<string>("PrimaryType")
-                        .IsRequired()
-                        .HasMaxLength(80)
-                        .HasColumnType("nvarchar(80)");
-
                     b.PrimitiveCollection<string>("RestriccionesIds")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("TypesJson")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

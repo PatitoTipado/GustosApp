@@ -62,10 +62,10 @@ public class GustosDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.UsuarioRestauranteVisitadoConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.UsuarioRestauranteVisitadoConfiguration());
 
-        modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.RestauranteImagenConfiguration());
-        modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.RestauranteMenuConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.RestauranteImagenConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.RestauranteMenuConfiguration());
 
 
 
@@ -77,10 +77,6 @@ public class GustosDbContext : DbContext
             .HasMaxLength(150)
             .IsRequired();
 
-        modelBuilder.Entity<SolicitudRestaurante>()
-            .Property(s => s.PrimaryType)
-            .HasMaxLength(80)
-            .IsRequired();
 
         modelBuilder.Entity<SolicitudRestaurante>()
        .HasOne(s => s.Usuario)

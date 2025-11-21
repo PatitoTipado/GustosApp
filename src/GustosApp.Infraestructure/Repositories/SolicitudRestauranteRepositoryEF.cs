@@ -21,6 +21,9 @@ namespace GustosApp.Infraestructure.Repositories
         {
             return _db.SolicitudesRestaurantes
                 .Include(s => s.Usuario)
+                .Include(s => s.Imagenes)
+                .Include(g => g.Gustos)
+                .Include(r => r.Restricciones)
                 .FirstOrDefaultAsync(s => s.Id == id, ct);
         }
 
@@ -28,6 +31,7 @@ namespace GustosApp.Infraestructure.Repositories
         {
             return _db.SolicitudesRestaurantes
                 .Include(s => s.Usuario)
+                .Include(s => s.Imagenes)
                 .Where(s => s.Estado == EstadoSolicitudRestaurante.Pendiente)
                 .ToListAsync(ct);
         }
@@ -40,8 +44,35 @@ namespace GustosApp.Infraestructure.Repositories
 
         public async Task UpdateAsync(SolicitudRestaurante solicitud, CancellationToken ct)
         {
+            _db.SolicitudesRestaurantes.Update(solicitud);
             await _db.SaveChangesAsync(ct);
         }
+
+        public async Task<IEnumerable<SolicitudRestaurante>> GetAllAsync(CancellationToken ct)
+        {
+            return await _db.SolicitudesRestaurantes
+                .Include(s => s.Usuario)
+                .Include(s => s.Gustos)
+                .Include(s => s.Restricciones)
+                .Include(s => s.Imagenes)
+                .OrderByDescending(s => s.FechaCreacion)
+                .ToListAsync(ct);
+        }
+
+        public async Task<IEnumerable<SolicitudRestaurante>> GetByEstadoAsync(
+            EstadoSolicitudRestaurante estado,
+            CancellationToken ct)
+        {
+            return await _db.SolicitudesRestaurantes
+                .Where(s => s.Estado == estado)
+                .Include(s => s.Usuario)
+                .Include(s => s.Gustos)
+                .Include(s => s.Restricciones)
+                .Include(s => s.Imagenes)
+                .OrderByDescending(s => s.FechaCreacion)
+                .ToListAsync(ct);
+        }
+
     }
 
 }

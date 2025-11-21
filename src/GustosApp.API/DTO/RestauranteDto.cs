@@ -9,6 +9,7 @@ using GustosApp.API.DTO;
 using GustosApp.Application.DTO;
 using GustosApp.Domain.Model;
 using GustosApp.Domain.Model.@enum;
+using Microsoft.AspNetCore.Mvc;
 
 
 namespace GustosApp.API.DTO
@@ -134,6 +135,7 @@ namespace GustosApp.API.DTO
             public int Version { get; set; } = 1;
             public DateTime FechaActualizacionUtc { get; set; }
 
+
             public JsonElement? Menu { get; set; }
             public string? MenuRaw { get; set; }
         }
@@ -156,26 +158,9 @@ namespace GustosApp.API.DTO
         [JsonPropertyName("lng")]
         public double? Lng { get; set; }
 
-        public JsonElement? Horarios { get; set; }
-
-        [JsonPropertyName("primaryType")]
-        public string? PrimaryType { get; set; }
-
-        [JsonPropertyName("types")]
-        public List<string>? Types { get; set; }
-
-        [JsonIgnore]
-        public string TypesJson =>
-            Types is null ? "[]" :
-            JsonSerializer.Serialize(
-                Types.Select(t => t.Trim().ToLowerInvariant()),
-                new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }
-            );
-
-        [JsonIgnore]
-        public string? HorariosJson =>
-            Horarios?.GetRawText(); //  ORO. No hace doble serialización.
-
+        [FromForm(Name = "horariosJson")]
+        public string? HorariosJson { get; set; }
+        
         [JsonPropertyName("gustosQueSirveIds")]
         public List<Guid>? GustosQueSirveIds { get; set; }
 
@@ -189,9 +174,12 @@ namespace GustosApp.API.DTO
         public IFormFile? ImagenMenu { get; set; }
         public IFormFile? Logo { get; set; }
     }
-
-
-}
+    public class DatosSolicitudRestauranteDto
+    {
+        public List<ItemSimpleDto> Gustos { get; set; }
+        public List<ItemSimpleDto> Restricciones{ get; set; }
+    }
+    }
 
 
 

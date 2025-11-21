@@ -23,6 +23,11 @@ namespace GustosApp.Infraestructure.Repositories
 
         public Task SaveChangesAsync(CancellationToken ct = default)
             => _db.SaveChangesAsync(ct);
+        public Task UpdateAsync(Restaurante restaurante, CancellationToken ct)
+        {
+            _db.Restaurantes.Update(restaurante);
+            return Task.CompletedTask;
+        }
 
         public async Task<List<Restaurante>> GetNearbyAsync(
     double lat,
@@ -182,11 +187,7 @@ namespace GustosApp.Infraestructure.Repositories
 
         }
 
-        public Task UpdateAsync(Restaurante restaurante, CancellationToken ct)
-        {
-          _db.Restaurantes.Update(restaurante);
-            return _db.SaveChangesAsync(ct);
-        }
+      
     }
 }
 

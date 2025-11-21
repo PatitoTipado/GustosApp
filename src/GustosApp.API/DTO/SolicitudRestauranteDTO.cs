@@ -49,6 +49,17 @@ namespace GustosApp.API.DTO
 
         // Metadatos
         public DateTime FechaCreacionUtc { get; set; }
+        public List<HorarioSimpleDto> Horarios { get; set; } = new();
+
     }
+
+    public class HorarioSimpleDto
+    {
+        public string Dia { get; set; } = default!;
+        public bool Cerrado { get; set; }
+        public string? Desde { get; set; } // "12:00"
+        public string? Hasta { get; set; } // "22:00"
+    }
+
 
 }

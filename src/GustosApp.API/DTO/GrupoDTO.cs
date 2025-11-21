@@ -32,6 +32,13 @@ namespace GustosApp.API.DTO
         public string Mensaje { get; set; } = string.Empty;
     }
 
+    public class ActualizarNombreGrupoRequest
+    {
+        [Required(ErrorMessage = "El nombre del grupo es requerido")]
+        [StringLength(100, MinimumLength = 1, ErrorMessage = "El nombre debe tener entre 1 y 100 caracteres")]
+        public string Nombre { get; set; } = string.Empty;
+    }
+
     // -------------------------
     // 📦 Grupo principal
     // -------------------------
@@ -94,7 +101,7 @@ namespace GustosApp.API.DTO
         public string UsuarioUsername { get; set; } = string.Empty;
         public DateTime FechaUnion { get; set; }
         public bool EsAdministrador { get; set; }
-
+        public bool afectarRecomendacion { get; set; }
         public MiembroGrupoResponse() { }
 
         public MiembroGrupoResponse(
@@ -105,7 +112,8 @@ namespace GustosApp.API.DTO
             string usuarioEmail,
             string usuarioUsername,
             DateTime fechaUnion,
-            bool esAdministrador)
+            bool esAdministrador,
+            bool afectarRecomendacion)
         {
             Id = id;
             UsuarioId = usuarioId;
@@ -115,6 +123,7 @@ namespace GustosApp.API.DTO
             UsuarioUsername = usuarioUsername;
             FechaUnion = fechaUnion;
             EsAdministrador = esAdministrador;
+            this.afectarRecomendacion = afectarRecomendacion;
         }
     }
 

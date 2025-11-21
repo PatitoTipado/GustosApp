@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GustosApp.Application.UseCases
+namespace GustosApp.Application.UseCases.GrupoUseCases
 {
     public class ActivarMiembroDeGrupoUseCase
     {
@@ -36,7 +36,7 @@ namespace GustosApp.Application.UseCases
 
             var esMiembro = await _grupoRepository.UsuarioEsMiembroAsync(grupoId, firebaseUid);
 
-            if (!esAdmin || (!(usuarioObtenido.Id.Equals(usuarioId)) && esMiembro))
+            if (!esAdmin || !usuarioObtenido.Id.Equals(usuarioId) && esMiembro)
                 throw new UnauthorizedAccessException("No tienes permisos para desactivar al usuario");
 
             //cambiar el estado del usuario en el grupo

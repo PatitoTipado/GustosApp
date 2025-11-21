@@ -2,10 +2,10 @@
 {
     public enum TipoImagenRestaurante
     {
-        Perfil = 1,
-        Principal = 2,
-        Interior = 3,
-        Comida = 4,
-        Menu = 5
+        Destacada = 0,
+        Interior = 1,
+        Comida = 2,
+        Menu = 3,
+        Logo = 4
     }
 }

@@ -26,5 +26,6 @@ namespace GustosApp.Domain.Interfaces
         Task<IEnumerable<Usuario>> GetAllExceptAsync(Guid IdExcluir, int limite, CancellationToken ct);
         Task<IEnumerable<Usuario>> BuscarPorUsernameAsync(string usernameBuscar, Guid IdExcluir, CancellationToken ct);
 
+        Task UpdateAsync(Usuario user, CancellationToken ct);
     }
 }

@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using GustosApp.API.DTO;
 using GustosApp.Application.DTO;
 using GustosApp.Domain.Model;
+using GustosApp.Domain.Model.@enum;
 
 
 namespace GustosApp.API.DTO
@@ -143,6 +145,52 @@ namespace GustosApp.API.DTO
         public int Take { get; set; }
         public List<RestauranteImagenDto> Items { get; set; } = new();
     }
+    public class CrearRestauranteDto
+    {
+        public string Nombre { get; set; } = default!;
+        public string Direccion { get; set; } = default!;
+
+        [JsonPropertyName("lat")]
+        public double? Lat { get; set; }
+
+        [JsonPropertyName("lng")]
+        public double? Lng { get; set; }
+
+        public JsonElement? Horarios { get; set; }
+
+        [JsonPropertyName("primaryType")]
+        public string? PrimaryType { get; set; }
+
+        [JsonPropertyName("types")]
+        public List<string>? Types { get; set; }
+
+        [JsonIgnore]
+        public string TypesJson =>
+            Types is null ? "[]" :
+            JsonSerializer.Serialize(
+                Types.Select(t => t.Trim().ToLowerInvariant()),
+                new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }
+            );
+
+        [JsonIgnore]
+        public string? HorariosJson =>
+            Horarios?.GetRawText(); //  ORO. No hace doble serialización.
+
+        [JsonPropertyName("gustosQueSirveIds")]
+        public List<Guid>? GustosQueSirveIds { get; set; }
+
+        [JsonPropertyName("restriccionesQueRespetaIds")]
+        public List<Guid>? RestriccionesQueRespetaIds { get; set; }
+
+        // Imágenes
+        public IFormFile? ImagenDestacada { get; set; }
+        public List<IFormFile>? ImagenesInterior { get; set; }
+        public List<IFormFile>? ImagenesComidas { get; set; }
+        public IFormFile? ImagenMenu { get; set; }
+        public IFormFile? Logo { get; set; }
+    }
+
+
 }
 
 

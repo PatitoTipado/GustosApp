@@ -10,5 +10,6 @@ namespace GustosApp.Application.Interfaces
     {
         Task<string> UploadFileAsync(Stream stream, string nombreArchivo, string? carpeta = null);
 
+        Task DeleteFileAsync(string url);
     }
 }

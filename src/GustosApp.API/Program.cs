@@ -34,6 +34,7 @@ using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
 using GustosApp.Application.UseCases.VotacionUseCases;
 using GustosApp.Infraestructure.Services;
 using Microsoft.AspNetCore.Authorization;
+using GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestauranteUseCases;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -160,6 +161,7 @@ builder.Services.AddStackExchangeRedisCache(options =>
 builder.Services.AddDbContext<GustosDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+
 // =====================
 //   Repositorios
 // =====================
@@ -181,6 +183,10 @@ builder.Services.AddScoped<ISolicitudAmistadRealtimeService, SignalRSolicitudAmi
 builder.Services.AddScoped<IUsuariosActivosService, UsuariosActivosService>();
 builder.Services.AddScoped<IOpinionRestauranteRepository, OpinionRestauranteRepositoryEF>();
 builder.Services.AddScoped<ActualizarValoracionRestauranteUseCase>();
+builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
+builder.Services.AddScoped<IUsuarioRestauranteFavoritoRepository, UsuarioRestauranteFavoritoEF>();
+builder.Services.AddScoped<ISolicitudRestauranteRepository, SolicitudRestauranteRepositoryEF>();
+builder.Services.AddScoped<IRestauranteMenuRepository, RestauranteMenuRepositoryEF>();
 
 // Votaciones
 builder.Services.AddScoped<IVotacionRepository, VotacionRepository>();
@@ -194,6 +200,7 @@ builder.Services.AddScoped<SeleccionarGanadorRuletaUseCase>();
 // Chat repository
 builder.Services.AddScoped<IChatRepository,ChatRepositoryEF>();
 builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
+builder.Services.AddScoped<GustosApp.Domain.Interfaces.IChatRepository, GustosApp.Infraestructure.Repositories.ChatRepositoryEF>();
 
 // =====================
 //    UseCases existentes
@@ -227,6 +234,14 @@ builder.Services.AddScoped<ObtenerNotificacionesUsuarioUseCase>();
 builder.Services.AddScoped<ObtenerNotificacionUsuarioUseCase>();
 builder.Services.AddScoped<MarcarNotificacionLeidaUseCase>();
 builder.Services.AddScoped<ConstruirPreferenciasUseCase>();
+builder.Services.AddScoped<ActualizarValoracionRestauranteUseCase>();
+builder.Services.AddScoped<CrearSolicitudRestauranteUseCase>();
+builder.Services.AddScoped<AprobarSolicitudRestauranteUseCase>();
+builder.Services.AddScoped<ObtenerSolicitudesRestaurantesPendientesUseCase>();
+builder.Services.AddScoped<ObtenerSolicitudRestaurantesPorIdUseCase>();
+
+
+
 
 // UseCases y repositorios de amistad
 builder.Services.AddScoped<ISolicitudAmistadRepository, SolicitudAmistadRepositoryEF>();
@@ -256,6 +271,8 @@ builder.Services.AddScoped<ActivarMiembroDeGrupoUseCase>();
 builder.Services.AddScoped<EnviarRecomendacionesUsuariosActivosUseCase>();
 builder.Services.AddScoped<CrearOpinionRestauranteUseCase>();
 builder.Services.AddScoped<NotificacionesInteligentesService>();
+builder.Services.AddScoped<BuscarRestaurantesUseCase>();
+builder.Services.AddScoped<AgregarUsuarioRestauranteFavoritoUseCase>();
 
 
 // Para notificaciones en tiempo real
@@ -373,6 +390,7 @@ app.UseRouting();
 
 app.UseMiddleware<ManejadorErrorMiddleware>();
 app.UseAuthentication();
+app.UseMiddleware<RolesMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();

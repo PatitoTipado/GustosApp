@@ -28,12 +28,16 @@ namespace GustosApp.Domain.Model
 
         public bool RegistroInicialCompleto { get; set; }
 
+
+        public RolUsuario Rol { get; set; }
         public PlanUsuario Plan { get; set; } = PlanUsuario.Free;
 
 
         public ICollection<Gusto> Gustos { get; set; } = new List<Gusto>();
         public ICollection<Restriccion> Restricciones { get; set; } = new List<Restriccion>();
         public ICollection<CondicionMedica> CondicionesMedicas { get; set; } = new List<CondicionMedica>();
+        public ICollection<Restaurante> Restaurantes { get; set; } = new List<Restaurante>();
+        public ICollection<SolicitudRestaurante> SolicitudesRestaurantes { get; set; } = new List<SolicitudRestaurante>();
 
 
         // Relaciones con grupos
@@ -100,6 +104,6 @@ namespace GustosApp.Domain.Model
             return gustosIncompatibles.Select(g => g.Nombre).ToList();
         }
         public ICollection<UsuarioRestauranteVisitado> Visitados { get; set; } = new List<UsuarioRestauranteVisitado>();
-        //public object Reviews { get; set; }
+        public ICollection<UsuarioRestauranteFavorito> RestaurantesFavoritos { get; set; } = new List<UsuarioRestauranteFavorito>();
     }
 }

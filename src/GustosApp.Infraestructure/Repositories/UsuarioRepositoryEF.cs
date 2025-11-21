@@ -104,5 +104,10 @@ namespace GustosApp.Infraestructure.Repositories
                 .ToListAsync(ct);
         }
 
+        public Task UpdateAsync(Usuario user, CancellationToken ct)
+        {
+            _db.Usuarios.Update(user);
+            return _db.SaveChangesAsync(ct);
+        }
     }
 }

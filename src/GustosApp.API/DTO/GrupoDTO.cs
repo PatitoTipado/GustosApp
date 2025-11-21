@@ -101,7 +101,7 @@ namespace GustosApp.API.DTO
         public string UsuarioUsername { get; set; } = string.Empty;
         public DateTime FechaUnion { get; set; }
         public bool EsAdministrador { get; set; }
-
+        public bool afectarRecomendacion { get; set; }
         public MiembroGrupoResponse() { }
 
         public MiembroGrupoResponse(
@@ -112,7 +112,8 @@ namespace GustosApp.API.DTO
             string usuarioEmail,
             string usuarioUsername,
             DateTime fechaUnion,
-            bool esAdministrador)
+            bool esAdministrador,
+            bool afectarRecomendacion)
         {
             Id = id;
             UsuarioId = usuarioId;
@@ -122,6 +123,7 @@ namespace GustosApp.API.DTO
             UsuarioUsername = usuarioUsername;
             FechaUnion = fechaUnion;
             EsAdministrador = esAdministrador;
+            this.afectarRecomendacion = afectarRecomendacion;
         }
     }
 
@@ -143,7 +145,15 @@ namespace GustosApp.API.DTO
         [StringLength(200, ErrorMessage = "El mensaje personalizado no puede exceder los 200 caracteres")]
         public string? MensajePersonalizado { get; set; }
     }
+    public class CrearGrupoRequest
+    {
+        [Required(ErrorMessage = "El nombre del grupo es obligatorio")]
+        [StringLength(100, ErrorMessage = "El nombre no puede exceder los 100 caracteres")]
+        public string Nombre { get; set; } = string.Empty;
 
+        [StringLength(500, ErrorMessage = "La descripción no puede exceder los 500 caracteres")]
+        public string? Descripcion { get; set; }
+    }
     public class InvitacionGrupoResponse
     {
         public Guid Id { get; set; }
@@ -191,6 +201,7 @@ namespace GustosApp.API.DTO
             MensajePersonalizado = mensajePersonalizado;
             FechaExpiracion = fechaExpiracion;
         }
+
     }
 }
 

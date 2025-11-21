@@ -24,25 +24,46 @@ namespace GustosApp.Application.UseCases.GrupoUseCases
             _miembroGrupoRepository = miembroGrupoRepository;
         }
 
-        public async Task<bool> Handle(Guid grupoId, Guid usuarioId, string firebaseUid)
+        public async Task<bool> Handle(Guid grupoId, Guid usuarioIdADesactivar, string firebaseUid)
         {
-
             var usuarioSolicitante = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid);
-            var usuarioObtenido = await _usuarioRepository.GetByIdAsync(usuarioId);
-            if (usuarioSolicitante== null || usuarioObtenido == null)
+            var usuarioADesactivar = await _usuarioRepository.GetByIdAsync(usuarioIdADesactivar);
+
+            if (usuarioSolicitante == null)
             {
-                throw new UnauthorizedAccessException("no existe el usuario");
+                throw new UnauthorizedAccessException("El usuario solicitante no existe.");
+            }
+            if (usuarioADesactivar == null)
+            {
+                throw new ArgumentException("El ID de usuario a desactivar no existe.", nameof(usuarioIdADesactivar));
+            }
+
+            if (await _grupoRepository.GetByIdAsync(grupoId) == null)
+            {
+                throw new KeyNotFoundException("EL grupo no existe");
             }
 
             var esAdmin = await _grupoRepository.UsuarioEsAdministradorAsync(grupoId, usuarioSolicitante.Id);
+            var esElMismoUsuario = usuarioSolicitante.Id.Equals(usuarioADesactivar.Id);
 
-            var esMiembro = await _grupoRepository.UsuarioEsMiembroAsync(grupoId, firebaseUid);
+            if (!esAdmin && !esElMismoUsuario)
+            {
+                throw new UnauthorizedAccessException("Debe ser administrador del grupo o el mismo usuario para desactivar a un miembro.");
+            }            
 
-            if (!esAdmin ||!usuarioObtenido.Id.Equals(usuarioId) && esMiembro)
-                throw new UnauthorizedAccessException("No tienes permisos para desactivar al usuario");
+            var miembroGrupo = await _miembroGrupoRepository.GetByGrupoYUsuarioAsync(grupoId, usuarioADesactivar.IdUsuario);
 
-            //cambiar el estado del usuario en el grupo
-            return await _miembroGrupoRepository.DesactivarMiembroDeGrupo(grupoId, usuarioObtenido.Id);
+            if (miembroGrupo == null)
+            {
+                throw new InvalidOperationException("El usuario a desactivar no es un miembro del grupo.");
+            }
+
+            if (!miembroGrupo.afectarRecomendacion)
+            {
+                return true;
+            }
+
+            return await _miembroGrupoRepository.DesactivarMiembroDeGrupo(grupoId, usuarioADesactivar.Id);
         }
     }
 }

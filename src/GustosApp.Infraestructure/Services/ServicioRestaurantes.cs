@@ -164,12 +164,22 @@ namespace GustosApp.Infraestructure.Services
         public async Task<Restaurante?> ObtenerAsync(Guid id)
         {
             var r = await _db.Restaurantes
-                .Include(r => r.Reviews)               
-                    .ThenInclude(o => o.Usuario)        
-                .Include(r => r.Reviews)
-                    .ThenInclude(o => o.Fotos)         
-                .Include(r => r.Platos)
-                .FirstOrDefaultAsync(r => r.Id == id);
+
+         .Include(r => r.Reviews)
+          .ThenInclude(o => o.Usuario)
+         .Include(r => r.Reviews)
+           .ThenInclude(o => o.Fotos)
+
+         .Include(r => r.Imagenes)
+
+         .Include(r => r.Menu)
+
+         // ================================
+         // PLATOS (si los usás en otra parte)
+         // ================================
+         //.Include(r => r.Platos)
+
+         .FirstOrDefaultAsync(r => r.Id == id);
 
             return r;
         }

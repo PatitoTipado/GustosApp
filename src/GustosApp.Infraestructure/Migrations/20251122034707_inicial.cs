@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace GustosApp.Infraestructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InicialCreateMigration : Migration
+    public partial class inicial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -36,37 +36,6 @@ namespace GustosApp.Infraestructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Gustos", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Restaurantes",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    PropietarioUid = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
-                    Nombre = table.Column<string>(type: "nvarchar(160)", maxLength: 160, nullable: false),
-                    NombreNormalizado = table.Column<string>(type: "nvarchar(160)", maxLength: 160, nullable: false),
-                    Direccion = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
-                    Latitud = table.Column<double>(type: "float", nullable: false),
-                    Longitud = table.Column<double>(type: "float", nullable: false),
-                    HorariosJson = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreadoUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ActualizadoUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    PlaceId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true),
-                    Rating = table.Column<double>(type: "float", nullable: true),
-                    CantidadResenas = table.Column<int>(type: "int", nullable: true),
-                    Categoria = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: true),
-                    UltimaActualizacion = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    WebUrl = table.Column<string>(type: "nvarchar(2048)", maxLength: 2048, nullable: true),
-                    EmbeddingVector = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PrimaryType = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false, defaultValue: "restaurant"),
-                    TypesJson = table.Column<string>(type: "nvarchar(max)", nullable: false, defaultValue: "[]"),
-                    ImagenUrl = table.Column<string>(type: "nvarchar(2048)", maxLength: 2048, nullable: true),
-                    Valoracion = table.Column<decimal>(type: "decimal(3,2)", precision: 3, scale: 2, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Restaurantes", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -109,11 +78,408 @@ namespace GustosApp.Infraestructure.Migrations
                     FechaRegistro = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Activo = table.Column<bool>(type: "bit", nullable: false),
                     RegistroInicialCompleto = table.Column<bool>(type: "bit", nullable: false),
+                    Rol = table.Column<int>(type: "int", nullable: false),
                     Plan = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Usuarios", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CondicionMedicaTags",
+                columns: table => new
+                {
+                    CondicionesMedicasId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TagsId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CondicionMedicaTags", x => new { x.CondicionesMedicasId, x.TagsId });
+                    table.ForeignKey(
+                        name: "FK_CondicionMedicaTags_CondicionesMedicas_CondicionesMedicasId",
+                        column: x => x.CondicionesMedicasId,
+                        principalTable: "CondicionesMedicas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_CondicionMedicaTags_Tags_TagsId",
+                        column: x => x.TagsId,
+                        principalTable: "Tags",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "GustoTags",
+                columns: table => new
+                {
+                    GustosId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TagsId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GustoTags", x => new { x.GustosId, x.TagsId });
+                    table.ForeignKey(
+                        name: "FK_GustoTags_Gustos_GustosId",
+                        column: x => x.GustosId,
+                        principalTable: "Gustos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_GustoTags_Tags_TagsId",
+                        column: x => x.TagsId,
+                        principalTable: "Tags",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RestriccionTags",
+                columns: table => new
+                {
+                    RestriccionesId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TagsId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RestriccionTags", x => new { x.RestriccionesId, x.TagsId });
+                    table.ForeignKey(
+                        name: "FK_RestriccionTags_Restricciones_RestriccionesId",
+                        column: x => x.RestriccionesId,
+                        principalTable: "Restricciones",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_RestriccionTags_Tags_TagsId",
+                        column: x => x.TagsId,
+                        principalTable: "Tags",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Grupos",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Descripcion = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AdministradorId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Activo = table.Column<bool>(type: "bit", nullable: false),
+                    CodigoInvitacion = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    FechaExpiracionCodigo = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Grupos", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Grupos_Usuarios_AdministradorId",
+                        column: x => x.AdministradorId,
+                        principalTable: "Usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Restaurantes",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    PropietarioUid = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    DuenoId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Nombre = table.Column<string>(type: "nvarchar(160)", maxLength: 160, nullable: false),
+                    NombreNormalizado = table.Column<string>(type: "nvarchar(160)", maxLength: 160, nullable: false),
+                    Direccion = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
+                    Latitud = table.Column<double>(type: "float", nullable: false),
+                    Longitud = table.Column<double>(type: "float", nullable: false),
+                    HorariosJson = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreadoUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ActualizadoUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    PlaceId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true),
+                    Rating = table.Column<double>(type: "float", nullable: true),
+                    CantidadResenas = table.Column<int>(type: "int", nullable: true),
+                    Categoria = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: true),
+                    UltimaActualizacion = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    WebUrl = table.Column<string>(type: "nvarchar(2048)", maxLength: 2048, nullable: true),
+                    EmbeddingVector = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    MenuProcesado = table.Column<bool>(type: "bit", nullable: true),
+                    MenuError = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PrimaryType = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false, defaultValue: "restaurant"),
+                    TypesJson = table.Column<string>(type: "nvarchar(max)", nullable: false, defaultValue: "[]"),
+                    ImagenUrl = table.Column<string>(type: "nvarchar(2048)", maxLength: 2048, nullable: true),
+                    Valoracion = table.Column<decimal>(type: "decimal(3,2)", precision: 3, scale: 2, nullable: true),
+                    LogoUrl = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Restaurantes", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Restaurantes_Usuarios_DuenoId",
+                        column: x => x.DuenoId,
+                        principalTable: "Usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SolicitudesAmistad",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    RemitenteId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    DestinatarioId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    FechaEnvio = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    FechaRespuesta = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Estado = table.Column<int>(type: "int", nullable: false),
+                    Mensaje = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SolicitudesAmistad", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SolicitudesAmistad_Usuarios_DestinatarioId",
+                        column: x => x.DestinatarioId,
+                        principalTable: "Usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_SolicitudesAmistad_Usuarios_RemitenteId",
+                        column: x => x.RemitenteId,
+                        principalTable: "Usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SolicitudesRestaurantes",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UsuarioId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    Direccion = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Latitud = table.Column<decimal>(type: "decimal(10,7)", nullable: true),
+                    Longitud = table.Column<decimal>(type: "decimal(10,7)", nullable: true),
+                    HorariosJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    MotivoRechazo = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    GustosIds = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RestriccionesIds = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Estado = table.Column<int>(type: "int", nullable: false),
+                    FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SolicitudesRestaurantes", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SolicitudesRestaurantes_Usuarios_UsuarioId",
+                        column: x => x.UsuarioId,
+                        principalTable: "Usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UsuarioCondicionesMedicas",
+                columns: table => new
+                {
+                    CondicionesMedicasId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UsuariosId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UsuarioCondicionesMedicas", x => new { x.CondicionesMedicasId, x.UsuariosId });
+                    table.ForeignKey(
+                        name: "FK_UsuarioCondicionesMedicas_CondicionesMedicas_CondicionesMedicasId",
+                        column: x => x.CondicionesMedicasId,
+                        principalTable: "CondicionesMedicas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UsuarioCondicionesMedicas_Usuarios_UsuariosId",
+                        column: x => x.UsuariosId,
+                        principalTable: "Usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UsuarioGustos",
+                columns: table => new
+                {
+                    GustosId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UsuariosId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UsuarioGustos", x => new { x.GustosId, x.UsuariosId });
+                    table.ForeignKey(
+                        name: "FK_UsuarioGustos_Gustos_GustosId",
+                        column: x => x.GustosId,
+                        principalTable: "Gustos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UsuarioGustos_Usuarios_UsuariosId",
+                        column: x => x.UsuariosId,
+                        principalTable: "Usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UsuarioRestricciones",
+                columns: table => new
+                {
+                    RestriccionesId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UsuariosId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UsuarioRestricciones", x => new { x.RestriccionesId, x.UsuariosId });
+                    table.ForeignKey(
+                        name: "FK_UsuarioRestricciones_Restricciones_RestriccionesId",
+                        column: x => x.RestriccionesId,
+                        principalTable: "Restricciones",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UsuarioRestricciones_Usuarios_UsuariosId",
+                        column: x => x.UsuariosId,
+                        principalTable: "Usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChatMessages",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UsuarioNombre = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Mensaje = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FechaEnvio = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    GrupoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UsuarioId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatMessages", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ChatMessages_Grupos_GrupoId",
+                        column: x => x.GrupoId,
+                        principalTable: "Grupos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ChatMessages_Usuarios_UsuarioId",
+                        column: x => x.UsuarioId,
+                        principalTable: "Usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "InvitacionesGrupos",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    NotificacionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    GrupoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UsuarioInvitadoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UsuarioInvitadorId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    FechaInvitacion = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    FechaRespuesta = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Estado = table.Column<int>(type: "int", nullable: false),
+                    MensajePersonalizado = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    FechaExpiracion = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_InvitacionesGrupos", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_InvitacionesGrupos_Grupos_GrupoId",
+                        column: x => x.GrupoId,
+                        principalTable: "Grupos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_InvitacionesGrupos_Usuarios_UsuarioInvitadoId",
+                        column: x => x.UsuarioInvitadoId,
+                        principalTable: "Usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_InvitacionesGrupos_Usuarios_UsuarioInvitadorId",
+                        column: x => x.UsuarioInvitadorId,
+                        principalTable: "Usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "MiembrosGrupos",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    GrupoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UsuarioId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    FechaUnion = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Activo = table.Column<bool>(type: "bit", nullable: false),
+                    EsAdministrador = table.Column<bool>(type: "bit", nullable: false),
+                    afectarRecomendacion = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MiembrosGrupos", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_MiembrosGrupos_Grupos_GrupoId",
+                        column: x => x.GrupoId,
+                        principalTable: "Grupos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_MiembrosGrupos_Usuarios_UsuarioId",
+                        column: x => x.UsuarioId,
+                        principalTable: "Usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OpinionRestaurante",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    RestauranteId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UsuarioId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    AutorExterno = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    FuenteExterna = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ImagenAutorExterno = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Valoracion = table.Column<double>(type: "float", nullable: false),
+                    FechaVisita = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Titulo = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Opinion = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    MotivoVisita = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    MesAnioVisita = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    EsImportada = table.Column<bool>(type: "bit", nullable: false),
+                    FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OpinionRestaurante", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_OpinionRestaurante_Restaurantes_RestauranteId",
+                        column: x => x.RestauranteId,
+                        principalTable: "Restaurantes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_OpinionRestaurante_Usuarios_UsuarioId",
+                        column: x => x.UsuarioId,
+                        principalTable: "Usuarios",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -246,206 +612,27 @@ namespace GustosApp.Infraestructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "CondicionMedicaTags",
+                name: "UsuarioRestauranteFavoritos",
                 columns: table => new
                 {
-                    CondicionesMedicasId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    TagsId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_CondicionMedicaTags", x => new { x.CondicionesMedicasId, x.TagsId });
-                    table.ForeignKey(
-                        name: "FK_CondicionMedicaTags_CondicionesMedicas_CondicionesMedicasId",
-                        column: x => x.CondicionesMedicasId,
-                        principalTable: "CondicionesMedicas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_CondicionMedicaTags_Tags_TagsId",
-                        column: x => x.TagsId,
-                        principalTable: "Tags",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "GustoTags",
-                columns: table => new
-                {
-                    GustosId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    TagsId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_GustoTags", x => new { x.GustosId, x.TagsId });
-                    table.ForeignKey(
-                        name: "FK_GustoTags_Gustos_GustosId",
-                        column: x => x.GustosId,
-                        principalTable: "Gustos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_GustoTags_Tags_TagsId",
-                        column: x => x.TagsId,
-                        principalTable: "Tags",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "RestriccionTags",
-                columns: table => new
-                {
-                    RestriccionesId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    TagsId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_RestriccionTags", x => new { x.RestriccionesId, x.TagsId });
-                    table.ForeignKey(
-                        name: "FK_RestriccionTags_Restricciones_RestriccionesId",
-                        column: x => x.RestriccionesId,
-                        principalTable: "Restricciones",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_RestriccionTags_Tags_TagsId",
-                        column: x => x.TagsId,
-                        principalTable: "Tags",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Grupos",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Descripcion = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    AdministradorId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Activo = table.Column<bool>(type: "bit", nullable: false),
-                    CodigoInvitacion = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    FechaExpiracionCodigo = table.Column<DateTime>(type: "datetime2", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Grupos", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Grupos_Usuarios_AdministradorId",
-                        column: x => x.AdministradorId,
-                        principalTable: "Usuarios",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "OpinionRestaurante",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     UsuarioId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     RestauranteId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Valoracion = table.Column<int>(type: "int", nullable: false),
-                    Opinion = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    Titulo = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
-                    Img = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    FechaVisita = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Autor = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    FechaTexto = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    FechaAgregado = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_OpinionRestaurante", x => x.Id);
+                    table.PrimaryKey("PK_UsuarioRestauranteFavoritos", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_OpinionRestaurante_Restaurantes_RestauranteId",
+                        name: "FK_UsuarioRestauranteFavoritos_Restaurantes_RestauranteId",
                         column: x => x.RestauranteId,
                         principalTable: "Restaurantes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_OpinionRestaurante_Usuarios_UsuarioId",
+                        name: "FK_UsuarioRestauranteFavoritos_Usuarios_UsuarioId",
                         column: x => x.UsuarioId,
-                        principalTable: "Usuarios",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "SolicitudesAmistad",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    RemitenteId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DestinatarioId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FechaEnvio = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    FechaRespuesta = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Estado = table.Column<int>(type: "int", nullable: false),
-                    Mensaje = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SolicitudesAmistad", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_SolicitudesAmistad_Usuarios_DestinatarioId",
-                        column: x => x.DestinatarioId,
-                        principalTable: "Usuarios",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_SolicitudesAmistad_Usuarios_RemitenteId",
-                        column: x => x.RemitenteId,
-                        principalTable: "Usuarios",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "UsuarioCondicionesMedicas",
-                columns: table => new
-                {
-                    CondicionesMedicasId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UsuariosId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UsuarioCondicionesMedicas", x => new { x.CondicionesMedicasId, x.UsuariosId });
-                    table.ForeignKey(
-                        name: "FK_UsuarioCondicionesMedicas_CondicionesMedicas_CondicionesMedicasId",
-                        column: x => x.CondicionesMedicasId,
-                        principalTable: "CondicionesMedicas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_UsuarioCondicionesMedicas_Usuarios_UsuariosId",
-                        column: x => x.UsuariosId,
-                        principalTable: "Usuarios",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "UsuarioGustos",
-                columns: table => new
-                {
-                    GustosId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UsuariosId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UsuarioGustos", x => new { x.GustosId, x.UsuariosId });
-                    table.ForeignKey(
-                        name: "FK_UsuarioGustos_Gustos_GustosId",
-                        column: x => x.GustosId,
-                        principalTable: "Gustos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_UsuarioGustos_Usuarios_UsuariosId",
-                        column: x => x.UsuariosId,
                         principalTable: "Usuarios",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -481,120 +668,98 @@ namespace GustosApp.Infraestructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "UsuarioRestricciones",
+                name: "Votaciones",
                 columns: table => new
                 {
-                    RestriccionesId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UsuariosId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    GrupoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    FechaInicio = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    FechaCierre = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Estado = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    RestauranteGanadorId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Descripcion = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_UsuarioRestricciones", x => new { x.RestriccionesId, x.UsuariosId });
+                    table.PrimaryKey("PK_Votaciones", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_UsuarioRestricciones_Restricciones_RestriccionesId",
+                        name: "FK_Votaciones_Grupos_GrupoId",
+                        column: x => x.GrupoId,
+                        principalTable: "Grupos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Votaciones_Restaurantes_RestauranteGanadorId",
+                        column: x => x.RestauranteGanadorId,
+                        principalTable: "Restaurantes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SolicitudRestaurante_Gustos",
+                columns: table => new
+                {
+                    GustosId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    SolicitudRestauranteId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SolicitudRestaurante_Gustos", x => new { x.GustosId, x.SolicitudRestauranteId });
+                    table.ForeignKey(
+                        name: "FK_SolicitudRestaurante_Gustos_Gustos_GustosId",
+                        column: x => x.GustosId,
+                        principalTable: "Gustos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_SolicitudRestaurante_Gustos_SolicitudesRestaurantes_SolicitudRestauranteId",
+                        column: x => x.SolicitudRestauranteId,
+                        principalTable: "SolicitudesRestaurantes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SolicitudRestaurante_Restricciones",
+                columns: table => new
+                {
+                    RestriccionesId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    SolicitudRestauranteId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SolicitudRestaurante_Restricciones", x => new { x.RestriccionesId, x.SolicitudRestauranteId });
+                    table.ForeignKey(
+                        name: "FK_SolicitudRestaurante_Restricciones_Restricciones_RestriccionesId",
                         column: x => x.RestriccionesId,
                         principalTable: "Restricciones",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_UsuarioRestricciones_Usuarios_UsuariosId",
-                        column: x => x.UsuariosId,
-                        principalTable: "Usuarios",
+                        name: "FK_SolicitudRestaurante_Restricciones_SolicitudesRestaurantes_SolicitudRestauranteId",
+                        column: x => x.SolicitudRestauranteId,
+                        principalTable: "SolicitudesRestaurantes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "ChatMessages",
+                name: "SolicitudRestauranteImagenes",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UsuarioNombre = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Mensaje = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    FechaEnvio = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    GrupoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UsuarioId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    SolicitudId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Tipo = table.Column<int>(type: "int", nullable: false),
+                    Url = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ChatMessages", x => x.Id);
+                    table.PrimaryKey("PK_SolicitudRestauranteImagenes", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ChatMessages_Grupos_GrupoId",
-                        column: x => x.GrupoId,
-                        principalTable: "Grupos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ChatMessages_Usuarios_UsuarioId",
-                        column: x => x.UsuarioId,
-                        principalTable: "Usuarios",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "InvitacionesGrupos",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    NotificacionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    GrupoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UsuarioInvitadoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UsuarioInvitadorId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FechaInvitacion = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    FechaRespuesta = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Estado = table.Column<int>(type: "int", nullable: false),
-                    MensajePersonalizado = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    FechaExpiracion = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_InvitacionesGrupos", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_InvitacionesGrupos_Grupos_GrupoId",
-                        column: x => x.GrupoId,
-                        principalTable: "Grupos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_InvitacionesGrupos_Usuarios_UsuarioInvitadoId",
-                        column: x => x.UsuarioInvitadoId,
-                        principalTable: "Usuarios",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_InvitacionesGrupos_Usuarios_UsuarioInvitadorId",
-                        column: x => x.UsuarioInvitadorId,
-                        principalTable: "Usuarios",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "MiembrosGrupos",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    GrupoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UsuarioId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FechaUnion = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Activo = table.Column<bool>(type: "bit", nullable: false),
-                    EsAdministrador = table.Column<bool>(type: "bit", nullable: false),
-                    afectarRecomendacion = table.Column<bool>(type: "bit", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_MiembrosGrupos", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_MiembrosGrupos_Grupos_GrupoId",
-                        column: x => x.GrupoId,
-                        principalTable: "Grupos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_MiembrosGrupos_Usuarios_UsuarioId",
-                        column: x => x.UsuarioId,
-                        principalTable: "Usuarios",
+                        name: "FK_SolicitudRestauranteImagenes_SolicitudesRestaurantes_SolicitudId",
+                        column: x => x.SolicitudId,
+                        principalTable: "SolicitudesRestaurantes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -659,6 +824,60 @@ namespace GustosApp.Infraestructure.Migrations
                         principalTable: "MiembrosGrupos",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OpinionesFotos",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    OpinionRestauranteId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Url = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FechaSubida = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OpinionesFotos", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_OpinionesFotos_OpinionRestaurante_OpinionRestauranteId",
+                        column: x => x.OpinionRestauranteId,
+                        principalTable: "OpinionRestaurante",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Votos",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    VotacionId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UsuarioId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    RestauranteId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    FechaVoto = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Comentario = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Votos", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Votos_Restaurantes_RestauranteId",
+                        column: x => x.RestauranteId,
+                        principalTable: "Restaurantes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Votos_Usuarios_UsuarioId",
+                        column: x => x.UsuarioId,
+                        principalTable: "Usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Votos_Votaciones_VotacionId",
+                        column: x => x.VotacionId,
+                        principalTable: "Votaciones",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.InsertData(
@@ -1080,15 +1299,19 @@ namespace GustosApp.Infraestructure.Migrations
                 column: "UsuarioDestinoId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_OpinionesFotos_OpinionRestauranteId",
+                table: "OpinionesFotos",
+                column: "OpinionRestauranteId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_OpinionRestaurante_RestauranteId",
                 table: "OpinionRestaurante",
                 column: "RestauranteId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_OpinionRestaurante_UsuarioId_RestauranteId",
+                name: "IX_OpinionRestaurante_UsuarioId",
                 table: "OpinionRestaurante",
-                columns: new[] { "UsuarioId", "RestauranteId" },
-                unique: true);
+                column: "UsuarioId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RestauranteEspecialidades_RestauranteId",
@@ -1108,12 +1331,18 @@ namespace GustosApp.Infraestructure.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_RestMenu_RestauranteId",
                 table: "RestauranteMenus",
-                column: "RestauranteId");
+                column: "RestauranteId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_RestauranteRestricciones_RestriccionesQueRespetaId",
                 table: "RestauranteRestricciones",
                 column: "RestriccionesQueRespetaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Restaurantes_DuenoId",
+                table: "Restaurantes",
+                column: "DuenoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Restaurantes_Latitud_Longitud",
@@ -1153,6 +1382,31 @@ namespace GustosApp.Infraestructure.Migrations
                 column: "RemitenteId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_SolicitudesRestaurantes_Estado",
+                table: "SolicitudesRestaurantes",
+                column: "Estado");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SolicitudesRestaurantes_UsuarioId",
+                table: "SolicitudesRestaurantes",
+                column: "UsuarioId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SolicitudRestaurante_Gustos_SolicitudRestauranteId",
+                table: "SolicitudRestaurante_Gustos",
+                column: "SolicitudRestauranteId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SolicitudRestaurante_Restricciones_SolicitudRestauranteId",
+                table: "SolicitudRestaurante_Restricciones",
+                column: "SolicitudRestauranteId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SolicitudRestauranteImagenes_SolicitudId",
+                table: "SolicitudRestauranteImagenes",
+                column: "SolicitudId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UsuarioCondicionesMedicas_UsuariosId",
                 table: "UsuarioCondicionesMedicas",
                 column: "UsuariosId");
@@ -1161,6 +1415,17 @@ namespace GustosApp.Infraestructure.Migrations
                 name: "IX_UsuarioGustos_UsuariosId",
                 table: "UsuarioGustos",
                 column: "UsuariosId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UsuarioRestauranteFavoritos_RestauranteId",
+                table: "UsuarioRestauranteFavoritos",
+                column: "RestauranteId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UsuarioRestauranteFavoritos_UsuarioId_RestauranteId",
+                table: "UsuarioRestauranteFavoritos",
+                columns: new[] { "UsuarioId", "RestauranteId" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_UsuarioRestauranteVisitados_PlaceId",
@@ -1199,6 +1464,32 @@ namespace GustosApp.Infraestructure.Migrations
                 table: "Usuarios",
                 column: "IdUsuario",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Votaciones_GrupoId_Estado",
+                table: "Votaciones",
+                columns: new[] { "GrupoId", "Estado" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Votaciones_RestauranteGanadorId",
+                table: "Votaciones",
+                column: "RestauranteGanadorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Votos_RestauranteId",
+                table: "Votos",
+                column: "RestauranteId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Votos_UsuarioId",
+                table: "Votos",
+                column: "UsuarioId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Votos_VotacionId_UsuarioId",
+                table: "Votos",
+                columns: new[] { "VotacionId", "UsuarioId" },
+                unique: true);
         }
 
         /// <inheritdoc />
@@ -1220,7 +1511,7 @@ namespace GustosApp.Infraestructure.Migrations
                 name: "Notificaciones");
 
             migrationBuilder.DropTable(
-                name: "OpinionRestaurante");
+                name: "OpinionesFotos");
 
             migrationBuilder.DropTable(
                 name: "RestauranteEspecialidades");
@@ -1247,10 +1538,22 @@ namespace GustosApp.Infraestructure.Migrations
                 name: "SolicitudesAmistad");
 
             migrationBuilder.DropTable(
+                name: "SolicitudRestaurante_Gustos");
+
+            migrationBuilder.DropTable(
+                name: "SolicitudRestaurante_Restricciones");
+
+            migrationBuilder.DropTable(
+                name: "SolicitudRestauranteImagenes");
+
+            migrationBuilder.DropTable(
                 name: "UsuarioCondicionesMedicas");
 
             migrationBuilder.DropTable(
                 name: "UsuarioGustos");
+
+            migrationBuilder.DropTable(
+                name: "UsuarioRestauranteFavoritos");
 
             migrationBuilder.DropTable(
                 name: "UsuarioRestauranteVisitados");
@@ -1259,13 +1562,22 @@ namespace GustosApp.Infraestructure.Migrations
                 name: "UsuarioRestricciones");
 
             migrationBuilder.DropTable(
+                name: "Votos");
+
+            migrationBuilder.DropTable(
                 name: "MiembrosGrupos");
 
             migrationBuilder.DropTable(
                 name: "InvitacionesGrupos");
 
             migrationBuilder.DropTable(
+                name: "OpinionRestaurante");
+
+            migrationBuilder.DropTable(
                 name: "Tags");
+
+            migrationBuilder.DropTable(
+                name: "SolicitudesRestaurantes");
 
             migrationBuilder.DropTable(
                 name: "CondicionesMedicas");
@@ -1274,13 +1586,16 @@ namespace GustosApp.Infraestructure.Migrations
                 name: "Gustos");
 
             migrationBuilder.DropTable(
-                name: "Restaurantes");
-
-            migrationBuilder.DropTable(
                 name: "Restricciones");
 
             migrationBuilder.DropTable(
+                name: "Votaciones");
+
+            migrationBuilder.DropTable(
                 name: "Grupos");
+
+            migrationBuilder.DropTable(
+                name: "Restaurantes");
 
             migrationBuilder.DropTable(
                 name: "Usuarios");

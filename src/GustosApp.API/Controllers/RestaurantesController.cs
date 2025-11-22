@@ -27,6 +27,7 @@ using GustosApp.Domain.Common;
 using GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestauranteUseCases;
 using System.Threading.Tasks;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using System.Globalization;
 
 
 // Controlador para restaurantes que se registran en la app por un usuario y restaurantes traidos de Places v1
@@ -206,28 +207,34 @@ namespace GustosApp.API.Controllers
         {
             var uid = GetFirebaseUid();
 
+         
             var restaurante = await _servicio.ObtenerAsync(id);
 
             if (restaurante == null)
                 return NotFound("Restaurante no encontrado");
 
-
-            if (restaurante.PlaceId != null && (restaurante.Reviews == null || !restaurante.Reviews.Any()))
+            // 2) Si es GOOGLE y NO tiene reviews locales → Fetch Google Places
+            if (!string.IsNullOrWhiteSpace(restaurante.PlaceId) &&
+                (restaurante.Reviews == null || !restaurante.Reviews.Any()))
             {
                 var actualizado = await _servicio.ObtenerResenasDesdeGooglePlaces(restaurante.PlaceId, ct);
-                if (actualizado is not null)
-                    restaurante = actualizado;
-
+                if (actualizado != null)
+                    restaurante = actualizado; 
             }
 
-            // Ordenar reseñas: locales primero, google después
+          
             restaurante.Reviews = restaurante.Reviews
-                .OrderBy(o => o.EsImportada)  // false = locales primero
-                .ThenByDescending(o => o.FechaCreacion)
+                .OrderBy(r => !r.EsImportada)             
+                .ThenByDescending(r => r.FechaCreacion)  
                 .ToList();
 
-            return Ok(restaurante);
+           
+            var dto = _mapper.Map<RestauranteDetalleDto>(restaurante);
+
+            
+            return Ok(dto);
         }
+
 
         /* [Obsolete]
          [HttpPost]
@@ -316,8 +323,24 @@ namespace GustosApp.API.Controllers
              CancellationToken ct)
         {
             var uid = GetFirebaseUid();
-            var usuario = await _obtenerUsuario.HandleAsync(FirebaseUid: uid, ct: ct);
 
+            var usuario = await _obtenerUsuario.HandleAsync(FirebaseUid: uid, ct: ct);
+            // Parsear las coordenadas manualmente con InvariantCulture
+            double? lat = null;
+            double? lng = null;
+
+            if (!string.IsNullOrWhiteSpace(dto.Lat))
+            {
+                // Reemplazar coma por punto y parsear con InvariantCulture
+                var latStr = dto.Lat.Replace(",", ".");
+                lat = double.Parse(latStr, CultureInfo.InvariantCulture);
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.Lng))
+            {
+                var lngStr = dto.Lng.Replace(",", ".");
+                lng = double.Parse(lngStr, CultureInfo.InvariantCulture);
+            }
             if (usuario.Rol != RolUsuario.Usuario)
                 return BadRequest("Ya hiciste una solicitud o sos dueño de un restaurante.");
 
@@ -346,7 +369,7 @@ namespace GustosApp.API.Controllers
 
 
                 var response = await _solicitudesRestaurantes.HandleAsync(uid, dto.Nombre, dto.Direccion,
-                    dto.Lat, dto.Lng, dto.HorariosJson, dto.GustosQueSirveIds,
+                    lat, lng, dto.HorariosJson, dto.GustosQueSirveIds,
                     dto.RestriccionesQueRespetaIds, imagenes, ct);
 
                 return Ok(response);

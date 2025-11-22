@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -127,19 +128,6 @@ namespace GustosApp.API.DTO
         }
 
 
-        public class RestauranteMenuDto
-        {
-            public Guid Id { get; set; }
-            public Guid RestauranteId { get; set; }
-            public string Moneda { get; set; } = "ARS";
-            public int Version { get; set; } = 1;
-            public DateTime FechaActualizacionUtc { get; set; }
-
-
-            public JsonElement? Menu { get; set; }
-            public string? MenuRaw { get; set; }
-        }
-
     public class ImagenesResponse
     {
         public int Total { get; set; }
@@ -153,10 +141,19 @@ namespace GustosApp.API.DTO
         public string Direccion { get; set; } = default!;
 
         [JsonPropertyName("lat")]
-        public double? Lat { get; set; }
+        public string? Lat { get; set; } // Cambiar a string
 
         [JsonPropertyName("lng")]
-        public double? Lng { get; set; }
+        public string? Lng { get; set; } // Cambiar a string
+
+        // Propiedades helper para obtener como double
+        public double? LatAsDouble => !string.IsNullOrWhiteSpace(Lat)
+            ? double.Parse(Lat.Replace(",", "."), CultureInfo.InvariantCulture)
+            : null;
+
+        public double? LngAsDouble => !string.IsNullOrWhiteSpace(Lng)
+            ? double.Parse(Lng.Replace(",", "."), CultureInfo.InvariantCulture)
+            : null;
 
         [FromForm(Name = "horariosJson")]
         public string? HorariosJson { get; set; }
@@ -179,7 +176,78 @@ namespace GustosApp.API.DTO
         public List<ItemSimpleDto> Gustos { get; set; }
         public List<ItemSimpleDto> Restricciones{ get; set; }
     }
+
+
+
+    public class RestauranteDetalleDto
+    {
+        public Guid Id { get; set; }
+
+        public bool EsDeLaApp { get; set; }
+        public string Nombre { get; set; } = "";
+        public string Direccion { get; set; } = "";
+        public double Latitud { get; set; }
+        public double Longitud { get; set; }
+
+        public string? WebUrl { get; set; }
+
+        public double? Rating { get; set; }
+        public int? CantidadResenas { get; set; }
+        public string? Categoria { get; set; }
+        public string PrimaryType { get; set; } = "restaurant";
+
+        // ==================
+        // IMÁGENES
+        // ==================
+        public string? LogoUrl { get; set; }          // Tipo 4
+        public string? ImagenDestacada { get; set; }  // Tipo 0
+        public List<string> ImagenesInterior { get; set; } = new();
+        public List<string> ImagenesComida { get; set; } = new();
+
+        // ==================
+        // HORARIOS
+        // ==================
+        public string HorariosJson { get; set; } = "{}";
+
+        // ==================
+        // MENÚ OCR PARSEADO
+        // ==================
+        public RestauranteMenuDto? Menu { get; set; }
+
+        // ==================
+        // REVIEWS
+        // ==================
+        public List<OpinionRestauranteDto> ReviewsLocales { get; set; } = new();
+        public List<OpinionRestauranteDto> ReviewsGoogle { get; set; } = new();
     }
+    public class RestauranteMenuDto
+    {
+        public string NombreMenu { get; set; } = "";
+        public string Moneda { get; set; } = "ARS";
+        public List<CategoriaMenuDto> Categorias { get; set; } = new();
+    }
+
+    public class CategoriaMenuDto
+    {
+        public string Nombre { get; set; } = "";
+        public List<ItemMenuDto> Items { get; set; } = new();
+    }
+
+    public class ItemMenuDto
+    {
+        public string Nombre { get; set; } = "";
+        public string? Descripcion { get; set; }
+        public List<PrecioMenuDto> Precios { get; set; } = new();
+    }
+
+    public class PrecioMenuDto
+    {
+        public string Tamaño { get; set; } = "";
+        public decimal Monto { get; set; }
+    }
+
+
+}
 
 
 

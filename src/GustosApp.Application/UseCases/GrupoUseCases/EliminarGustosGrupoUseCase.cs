@@ -32,8 +32,6 @@ namespace GustosApp.Application.UseCases.GrupoUseCases
 
         public Task<bool> Handle(List<string> gustosDeUsuario, Guid grupoId,string firebaseUid)
         {
-            //primero validamos que exista el grupo -> todos estos false los cambiare por exeptions despues
-
             var miembroGrupo = _usuarioRepository.GetByFirebaseUidAsync(firebaseUid).Result;
 
             if (miembroGrupo == null)
@@ -50,8 +48,6 @@ namespace GustosApp.Application.UseCases.GrupoUseCases
             {
                 throw new UnauthorizedAccessException("El miembro no es un usuario activo (expulsado)");
             }
-
-            //validamos que los gustos existan
 
             List<Gusto> gustos = _gustoRepository.obtenerGustosPorNombre(gustosDeUsuario).Result;
 

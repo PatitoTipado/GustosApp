@@ -4,6 +4,7 @@ using GustosApp.Infraestructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GustosApp.Infraestructure.Migrations
 {
     [DbContext(typeof(GustosDbContext))]
-    partial class GustosDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251121214711_RestauranteEstadisticas")]
+    partial class RestauranteEstadisticas
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1728,7 +1731,7 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Property<string>("MenuError")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool?>("MenuProcesado")
+                    b.Property<bool>("MenuProcesado")
                         .HasColumnType("bit");
 
                     b.Property<string>("Nombre")
@@ -1900,7 +1903,6 @@ namespace GustosApp.Infraestructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("RestauranteId")
-                        .IsUnique()
                         .HasDatabaseName("IX_RestMenu_RestauranteId");
 
                     b.ToTable("RestauranteMenus", (string)null);
@@ -2053,11 +2055,11 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Property<string>("HorariosJson")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal?>("Latitud")
-                        .HasColumnType("decimal(10,7)");
+                    b.Property<double?>("Latitud")
+                        .HasColumnType("float");
 
-                    b.Property<decimal?>("Longitud")
-                        .HasColumnType("decimal(10,7)");
+                    b.Property<double?>("Longitud")
+                        .HasColumnType("float");
 
                     b.Property<string>("MotivoRechazo")
                         .HasColumnType("nvarchar(max)");
@@ -2853,8 +2855,8 @@ namespace GustosApp.Infraestructure.Migrations
             modelBuilder.Entity("GustosApp.Domain.Model.RestauranteMenu", b =>
                 {
                     b.HasOne("GustosApp.Domain.Model.Restaurante", "Restaurante")
-                        .WithOne("Menu")
-                        .HasForeignKey("GustosApp.Domain.Model.RestauranteMenu", "RestauranteId")
+                        .WithMany()
+                        .HasForeignKey("RestauranteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -3089,8 +3091,6 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Navigation("Estadisticas");
 
                     b.Navigation("Imagenes");
-
-                    b.Navigation("Menu");
 
                     b.Navigation("Platos");
 

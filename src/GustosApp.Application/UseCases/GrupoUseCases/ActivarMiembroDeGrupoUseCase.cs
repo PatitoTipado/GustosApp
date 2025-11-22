@@ -1,6 +1,7 @@
 ﻿using GustosApp.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -32,12 +33,28 @@ namespace GustosApp.Application.UseCases.GrupoUseCases
                 throw new UnauthorizedAccessException("no existe el usuario");
             }
 
+            if (await _grupoRepository.GetByIdAsync(grupoId)==null)
+            {
+                throw new KeyNotFoundException("EL grupo no existe");
+            }
+
             var esAdmin = await _grupoRepository.UsuarioEsAdministradorAsync(grupoId, usuarioSolicitante.Id);
+            var esElMismoUsuario = usuarioSolicitante.Id.Equals(usuarioId); 
 
-            var esMiembro = await _grupoRepository.UsuarioEsMiembroAsync(grupoId, firebaseUid);
+            if (!esAdmin && !esElMismoUsuario)
+            {
+                throw new UnauthorizedAccessException("Debe ser administrador del grupo o el mismo usuario para activar al miembro.");
+            }
 
-            if (!esAdmin || !usuarioObtenido.Id.Equals(usuarioId) && esMiembro)
-                throw new UnauthorizedAccessException("No tienes permisos para desactivar al usuario");
+            var miembroGrupo = await _miembroGrupoRepository.GetByGrupoYUsuarioAsync(grupoId, usuarioObtenido.IdUsuario);
+
+            if (miembroGrupo == null || miembroGrupo.afectarRecomendacion)
+            {
+                // Lanza una excepción o devuelve true si ya está activo (Idempotencia)
+                if (miembroGrupo != null && miembroGrupo.afectarRecomendacion) return true;
+
+                throw new InvalidOperationException("El usuario no es un miembro inactivo del grupo.");
+            }
 
             //cambiar el estado del usuario en el grupo
             return await _miembroGrupoRepository.ActivarMiembro(grupoId, usuarioObtenido.Id);

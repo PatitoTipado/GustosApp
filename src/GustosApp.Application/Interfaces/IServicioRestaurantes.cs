@@ -11,7 +11,7 @@ namespace GustosApp.Application.Interfaces
        // Task<Restaurante> CrearAsync(string propietarioUid, CrearRestauranteDto dto);
         Task<Restaurante?> ObtenerAsync(Guid id);
         Task<Restaurante?> ObtenerPorPropietarioAsync(string propietarioUid);
-        Task<Restaurante?> ActualizarAsync(Guid id, string solicitanteUid, bool esAdmin, ActualizarRestauranteDto dto);
+
         Task<bool> EliminarAsync(Guid id, string solicitanteUid, bool esAdmin);
 
         Task<List<Restaurante>> BuscarAsync(

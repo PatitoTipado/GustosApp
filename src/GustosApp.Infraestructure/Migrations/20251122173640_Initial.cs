@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace GustosApp.Infraestructure.Migrations
 {
     /// <inheritdoc />
-    public partial class inicial : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -262,6 +262,7 @@ namespace GustosApp.Infraestructure.Migrations
                     Direccion = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Latitud = table.Column<decimal>(type: "decimal(10,7)", nullable: true),
                     Longitud = table.Column<decimal>(type: "decimal(10,7)", nullable: true),
+                    WebsiteUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     HorariosJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     MotivoRechazo = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     GustosIds = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -495,6 +496,28 @@ namespace GustosApp.Infraestructure.Migrations
                     table.PrimaryKey("PK_RestauranteEspecialidades", x => x.Id);
                     table.ForeignKey(
                         name: "FK_RestauranteEspecialidades_Restaurantes_RestauranteId",
+                        column: x => x.RestauranteId,
+                        principalTable: "Restaurantes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RestauranteEstadisticas",
+                columns: table => new
+                {
+                    RestauranteId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TotalTop3Individual = table.Column<int>(type: "int", nullable: false),
+                    TotalTop3Grupo = table.Column<int>(type: "int", nullable: false),
+                    TotalVisitasPerfil = table.Column<int>(type: "int", nullable: false),
+                    FechaCreacionUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UltimaActualizacionUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RestauranteEstadisticas", x => x.RestauranteId);
+                    table.ForeignKey(
+                        name: "FK_RestauranteEstadisticas_Restaurantes_RestauranteId",
                         column: x => x.RestauranteId,
                         principalTable: "Restaurantes",
                         principalColumn: "Id",
@@ -1515,6 +1538,9 @@ namespace GustosApp.Infraestructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "RestauranteEspecialidades");
+
+            migrationBuilder.DropTable(
+                name: "RestauranteEstadisticas");
 
             migrationBuilder.DropTable(
                 name: "RestauranteGustos");

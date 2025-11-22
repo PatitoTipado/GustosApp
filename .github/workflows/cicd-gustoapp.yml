@@ -39,6 +39,7 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     needs: build
+    if: ${{ inputs.run-docker }} 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

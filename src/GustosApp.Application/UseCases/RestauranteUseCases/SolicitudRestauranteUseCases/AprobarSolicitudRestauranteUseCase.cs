@@ -20,13 +20,18 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
         private readonly IRestriccionRepository _restricciones;
         private readonly IGustoRepository _gustos;
         private readonly IRestauranteMenuRepository _menuRepo;
-
+        private readonly IFirebaseAuthService _firebase;
+        private readonly IEmailService _email;
+        private readonly IEmailTemplateService _templates;
 
 
         public AprobarSolicitudRestauranteUseCase(ISolicitudRestauranteRepository solicitudes,
              IRestauranteRepository restaurantes, IUsuarioRepository usuarios,
              IOcrService ocr, IMenuParser menuParser, IRestriccionRepository restricciones,
-            IGustoRepository gustos, IRestauranteMenuRepository menuRepo)
+            IGustoRepository gustos, IRestauranteMenuRepository menuRepo, 
+            IFirebaseAuthService firebase, IEmailService email, 
+            IEmailTemplateService templates
+            )
         {
             _solicitudes = solicitudes;
             _restaurantes = restaurantes;
@@ -36,6 +41,9 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
             _restricciones = restricciones;
             _gustos = gustos;
             _menuRepo = menuRepo;
+            _firebase = firebase;
+            _email = email;
+            _templates = templates;
         }
 
 
@@ -51,8 +59,23 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
             solicitud.Usuario.Rol = RolUsuario.DuenoRestaurante;
             solicitud.Estado = EstadoSolicitudRestaurante.Aprobada;
 
+            await _firebase.SetUserRoleAsync(solicitud.Usuario.FirebaseUid, RolUsuario.DuenoRestaurante.ToString());
 
             await _restaurantes.SaveChangesAsync(ct);
+
+
+            //modifcar para deploy
+            await _email.EnviarEmailAsync(
+                solicitud.Usuario.Email,
+                "Tu solicitud fue aprobada",
+             _templates.Render("SolicitudAprobada.html", new Dictionary<string, string>
+              {
+             { "Nombre", solicitud.Usuario.Nombre },
+            { "NombreRestaurante", restaurante.Nombre },
+            { "LINK", $"http://localhost:3000/restaurante/panel/{restaurante.Id}" }
+             })
+            );
+
 
             return restaurante;
         }
@@ -65,6 +88,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
         {
             var restaurante = new Restaurante
             {
+                PropietarioUid= solicitud.UsuarioId.ToString(),
                 DuenoId = solicitud.UsuarioId,
                 Nombre = solicitud.Nombre,
                 NombreNormalizado = solicitud.Nombre.ToLower().Trim(),
@@ -75,7 +99,8 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
                 TypesJson = "",
                 HorariosJson = solicitud.HorariosJson ?? "{}",
                 CreadoUtc = DateTime.UtcNow,
-                ActualizadoUtc = DateTime.UtcNow
+                ActualizadoUtc = DateTime.UtcNow,
+                WebUrl = solicitud.WebsiteUrl
             };
 
             // Relaciones

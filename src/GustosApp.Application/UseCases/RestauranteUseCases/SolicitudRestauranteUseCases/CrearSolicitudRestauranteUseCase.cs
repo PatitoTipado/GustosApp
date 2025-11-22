@@ -7,6 +7,7 @@ using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model.@enum;
 using GustosApp.Domain.Model;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using GustosApp.Application.Interfaces;
 
 namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestauranteUseCases
 {
@@ -16,16 +17,24 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
         private readonly IGustoRepository _gustos;
         private readonly IRestriccionRepository _restricciones;
         private readonly IUsuarioRepository _usuarios;
+        private readonly IFirebaseAuthService _firebase;
+        private readonly IEmailService _email;
+        private readonly IEmailTemplateService _templates;
 
         public CrearSolicitudRestauranteUseCase(
             ISolicitudRestauranteRepository solicitudes,
              IRestriccionRepository restricciones, IGustoRepository gustos,
-            IUsuarioRepository usuarios)
+            IUsuarioRepository usuarios, IFirebaseAuthService firebase,
+            IEmailService email, IEmailTemplateService templates
+)
         {
             _solicitudes = solicitudes;
             _usuarios = usuarios;
             _gustos = gustos;
             _restricciones = restricciones;
+            _firebase = firebase;
+            _email = email;
+           _templates = templates;
         }
 
         public async Task<Guid> HandleAsync(
@@ -38,6 +47,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
      List<Guid>? gustosIds,
      List<Guid>? restriccionesIds,
      List<SolicitudRestauranteImagen> imagenes,
+     string websiteUrl,
      CancellationToken ct = default)
         {
             // 1) Obtener usuario
@@ -62,7 +72,8 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
                 RestriccionesIds = restriccionesIds ?? new List<Guid>(),
                 Imagenes = imagenes ?? new List<SolicitudRestauranteImagen>(),
                 FechaCreacion = DateTime.UtcNow,
-                Estado = EstadoSolicitudRestaurante.Pendiente
+                Estado = EstadoSolicitudRestaurante.Pendiente,
+                WebsiteUrl = websiteUrl.Trim()
             };
 
             solicitud.Gustos = await _gustos.GetByIdsAsync(gustosIds,ct);
@@ -74,7 +85,20 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
             usuario.Rol = RolUsuario.PendienteRestaurante;
             await _usuarios.UpdateAsync(usuario, ct);
 
-      
+            await _firebase.SetUserRoleAsync(usuario.FirebaseUid, RolUsuario.PendienteRestaurante.ToString());
+ 
+            //Modificar esto si es deploy?
+           await _email.EnviarEmailAsync(
+            destinatario: "gonzalomarcos551@gmail.com",   
+             asunto: "Nueva solicitud de restaurante",
+             cuerpoHtml: _templates.Render("SolicitudNueva.html", new Dictionary<string, string>
+            { 
+        { "NombreUsuario", usuario.Nombre },
+        { "EmailUsuario", usuario.Email },
+        { "NombreRestaurante", solicitud.Nombre },
+        { "LINK", "http://localhost:3000/admin/"}
+             })
+            );
             return solicitud.Id;
         }
 

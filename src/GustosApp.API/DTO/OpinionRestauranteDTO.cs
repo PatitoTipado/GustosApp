@@ -24,4 +24,15 @@
         public double? RestauranteLatitud { get; set; }
         public double? RestauranteLongitud { get; set; }
     }
+    public class OpinionRestauranteDto
+    {
+        public Guid Id { get; set; }
+        public string Autor { get; set; } = "";
+        public string Opinion { get; set; } = "";
+        public int Valoracion { get; set; }
+        public DateTime Fecha { get; set; }
+        public string? ImagenAutor { get; set; }
+        public List<string?>Fotos  { get; set; }
+    }
+
 }

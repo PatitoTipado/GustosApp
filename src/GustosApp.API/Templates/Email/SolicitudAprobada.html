@@ -1,0 +1,54 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Solicitud Aprobada</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #fef7f6;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            max-width: 600px;
+            margin: auto;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .title {
+            font-size: 22px;
+            color: #ff8b33;
+            margin-bottom: 10px;
+        }
+
+        .btn {
+            background: #ff8b33;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2 class="title">🎉 ¡Tu restaurante fue aprobado!</h2>
+
+        <p>Hola {{USUARIO}},</p>
+        <p>
+            Tu restaurante <strong>{{NOMBRE}}</strong> ya está publicado en GustosApp.<br>
+            ¡Felicitaciones!
+        </p>
+
+        <a class="btn" href="{{LINK}}" target="_blank">
+            Ver mi restaurante
+        </a>
+    </div>
+</body>
+</html>

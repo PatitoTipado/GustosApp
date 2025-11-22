@@ -42,6 +42,7 @@ namespace GustosApp.API.Controllers
         [HttpGet("pendientes")]
         public async Task<IActionResult> GetPendientes(CancellationToken ct)
         {
+            
             var result = await _getPendientes.HandleAsync(ct);
             var response = _mapper.Map<List<SolicitudRestaurantePendienteDto>>(result);
             return Ok(response);
@@ -61,9 +62,7 @@ namespace GustosApp.API.Controllers
         {
             var restaurante = await _aprobarSolicitud.HandleAsync(id, ct);
 
-
             return Ok(restaurante);
-
         }
 
         [HttpDelete("{id:guid}")]

@@ -29,20 +29,11 @@ namespace GustosApp.Application.Validations.Restaurantes
                 .NotEmpty()
                 .MaximumLength(300);
 
-            // ===========================
-            // COORDENADAS
-            // ===========================
-            RuleFor(x => x.Lat)
-                .NotNull().WithMessage("Latitud requerida.")
-                .InclusiveBetween(-90, 90);
+           
 
-            RuleFor(x => x.Lng)
-                .NotNull().WithMessage("Longitud requerida.")
-                .InclusiveBetween(-180, 180);
 
-          
 
-     
+
 
             // ===========================
             // GUSTOS / RESTRICCIONES

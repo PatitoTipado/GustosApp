@@ -45,15 +45,19 @@ namespace GustosApp.Domain.Model
         public string? EmbeddingVector { get; set; }
 
         // Menú (OCR)
-        public bool MenuProcesado { get; set; }
+        public bool? MenuProcesado { get; set; }
         public string? MenuError { get; set; }
 
         public RestauranteEstadisticas? Estadisticas { get; set; }
+
+        public RestauranteMenu? Menu { get; set; }
+
 
         public ICollection<OpinionRestaurante> Reviews { get; set; } = new List<OpinionRestaurante>();
         public ICollection<Gusto> GustosQueSirve { get; set; } = new List<Gusto>();
         public ICollection<Restriccion> RestriccionesQueRespeta { get; set; } = new List<Restriccion>();
 
+       
         // ====== V2 ======
 
         public string PrimaryType { get; set; } = "restaurant";

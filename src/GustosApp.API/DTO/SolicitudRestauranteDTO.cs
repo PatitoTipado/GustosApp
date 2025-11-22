@@ -49,6 +49,9 @@ namespace GustosApp.API.DTO
         public string? ImagenMenu { get; set; }
         public string? Logo { get; set; }
 
+        public string WebsiteUrl { get; set; }
+
+
         // Metadatos
         public DateTime FechaCreacionUtc { get; set; }
         public List<HorarioSimpleDto> Horarios { get; set; } = new();

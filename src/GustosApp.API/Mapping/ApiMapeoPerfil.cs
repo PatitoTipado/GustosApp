@@ -230,12 +230,113 @@ namespace GustosApp.API.Mapping
                 .ForMember(dest => dest.Horarios,
                     opt => opt.ConvertUsing(new HorariosJsonConverter(), src => src.HorariosJson));
 
+            CreateMap<Restaurante, RestauranteDetalleDto>()
 
+                  .ForMember(dest => dest.Latitud,
+                 opt => opt.MapFrom(src =>  src.Latitud))
+
+                   .ForMember(dest => dest.Longitud,
+                 opt => opt.MapFrom(src => src.Longitud))
+
+                    .ForMember(dest => dest.Longitud,
+                 opt => opt.MapFrom(src => src.Longitud))
+
+                .ForMember(dest => dest.EsDeLaApp,
+                 opt => opt.MapFrom(src => string.IsNullOrWhiteSpace(src.PlaceId)))
+
+           .ForMember(dest => dest.ImagenDestacada,
+               opt => opt.MapFrom(src => src.ImagenUrl)) // Tipo 0
+           .ForMember(dest => dest.LogoUrl,
+               opt => opt.MapFrom(src => src.LogoUrl)) // Tipo 4
+           .ForMember(dest => dest.ImagenesInterior,
+               opt => opt.MapFrom(src =>
+                   src.Imagenes
+                       .Where(i => i.Tipo == TipoImagenRestaurante.Interior)
+                       .OrderBy(i => i.Orden)
+                       .Select(i => i.Url)
+                       .ToList()
+               ))
+           .ForMember(dest => dest.ImagenesComida,
+               opt => opt.MapFrom(src =>
+                   src.Imagenes
+                       .Where(i => i.Tipo == TipoImagenRestaurante.Comida)
+                       .OrderBy(i => i.Orden)
+                       .Select(i => i.Url)
+                       .ToList()
+               ))
+       .ForMember(dest => dest.Menu,
+    opt => opt.MapFrom(src =>
+        src.Menu != null &&
+        !string.IsNullOrWhiteSpace(src.Menu.Json)
+            ? DeserializeMenu(src)
+            : null
+    ))
+
+
+           // Reviews Locales
+           .ForMember(dest => dest.ReviewsLocales,
+               opt => opt.MapFrom(src =>
+                   src.Reviews
+                       .Where(r => !r.EsImportada)
+                       .OrderByDescending(r => r.FechaCreacion)
+               ))
+           // Reviews Google
+           .ForMember(dest => dest.ReviewsGoogle,
+               opt => opt.MapFrom(src =>
+                   src.Reviews
+                       .Where(r => r.EsImportada)
+                       .OrderByDescending(r => r.FechaCreacion)
+               ))
+           ;
+
+          
+            CreateMap<OpinionRestaurante, OpinionRestauranteDto>()
+
+                .ForMember(dest => dest.Autor,
+                    opt => opt.MapFrom(src =>
+                        src.AutorExterno ??
+                        (src.Usuario != null ? $"{src.Usuario.Nombre} {src.Usuario.Apellido}" : "Usuario")
+                    ))
+                .ForMember(dest => dest.Fecha,
+                    opt => opt.MapFrom(src => src.FechaCreacion))
+                .ForMember(dest => dest.ImagenAutor,
+                    opt => opt.MapFrom(src => src.ImagenAutorExterno))
+
+                .ForMember(dest => dest.Fotos,
+                 opt => opt.MapFrom(src =>
+            src.Fotos != null
+                ? src.Fotos.Select(f => f.Url).ToList()
+                : new List<string>()
+        ));
+
+
+        }
+
+        private static RestauranteMenuDto? DeserializeMenu(Restaurante r)
+        {
+            try
+            {
+                // Si no existe el menú → null
+                if (r.Menu == null)
+                    return null;
+
+                if (string.IsNullOrWhiteSpace(r.Menu.Json))
+                    return null;
+
+                // Deserialize sencillo
+                return JsonSerializer.Deserialize<RestauranteMenuDto>(r.Menu.Json);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
     }
 
-    }
+}
+
+    
 
 
 

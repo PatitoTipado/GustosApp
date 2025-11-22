@@ -1,0 +1,55 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Solicitud Rechazada</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #fff5f5;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            max-width: 600px;
+            margin: auto;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .title {
+            font-size: 22px;
+            color: #cc2a36;
+            margin-bottom: 10px;
+        }
+
+        .motivo {
+            background: #ffe0e0;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            color: #b30000;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2 class="title">❌ Tu solicitud fue rechazada</h2>
+
+        <p>Hola {{USUARIO}},</p>
+        <p>
+            Lamentablemente tu solicitud para <strong>{{NOMBRE}}</strong> no pudo ser aprobada.
+        </p>
+
+        <div class="motivo">
+            <strong>Motivo:</strong> {{MOTIVO}}
+        </div>
+
+        <p style="margin-top: 20px;">
+            Podés volver a enviar una solicitud cuando lo desees.
+        </p>
+    </div>
+</body>
+</html>

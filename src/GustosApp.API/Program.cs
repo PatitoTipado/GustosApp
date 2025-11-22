@@ -212,6 +212,7 @@ builder.Services.AddScoped<IUsuarioRestauranteFavoritoRepository, UsuarioRestaur
 builder.Services.AddScoped<ISolicitudRestauranteRepository, SolicitudRestauranteRepositoryEF>();
 builder.Services.AddScoped<IRestauranteMenuRepository, RestauranteMenuRepositoryEF>();
 builder.Services.AddScoped<IFirebaseAuthService, FirebaseAuthService>();
+builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
 
 // Votaciones
 builder.Services.AddScoped<IVotacionRepository, VotacionRepository>();

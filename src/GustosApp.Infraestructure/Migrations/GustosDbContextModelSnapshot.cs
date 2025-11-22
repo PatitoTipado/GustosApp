@@ -1728,7 +1728,7 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Property<string>("MenuError")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("MenuProcesado")
+                    b.Property<bool?>("MenuProcesado")
                         .HasColumnType("bit");
 
                     b.Property<string>("Nombre")
@@ -1900,6 +1900,7 @@ namespace GustosApp.Infraestructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("RestauranteId")
+                        .IsUnique()
                         .HasDatabaseName("IX_RestMenu_RestauranteId");
 
                     b.ToTable("RestauranteMenus", (string)null);
@@ -2052,11 +2053,11 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Property<string>("HorariosJson")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<double?>("Latitud")
-                        .HasColumnType("float");
+                    b.Property<decimal?>("Latitud")
+                        .HasColumnType("decimal(10,7)");
 
-                    b.Property<double?>("Longitud")
-                        .HasColumnType("float");
+                    b.Property<decimal?>("Longitud")
+                        .HasColumnType("decimal(10,7)");
 
                     b.Property<string>("MotivoRechazo")
                         .HasColumnType("nvarchar(max)");
@@ -2072,6 +2073,10 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.Property<Guid>("UsuarioId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("WebsiteUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -2852,8 +2857,8 @@ namespace GustosApp.Infraestructure.Migrations
             modelBuilder.Entity("GustosApp.Domain.Model.RestauranteMenu", b =>
                 {
                     b.HasOne("GustosApp.Domain.Model.Restaurante", "Restaurante")
-                        .WithMany()
-                        .HasForeignKey("RestauranteId")
+                        .WithOne("Menu")
+                        .HasForeignKey("GustosApp.Domain.Model.RestauranteMenu", "RestauranteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -3088,6 +3093,8 @@ namespace GustosApp.Infraestructure.Migrations
                     b.Navigation("Estadisticas");
 
                     b.Navigation("Imagenes");
+
+                    b.Navigation("Menu");
 
                     b.Navigation("Platos");
 

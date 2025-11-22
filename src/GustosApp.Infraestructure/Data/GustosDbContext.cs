@@ -82,6 +82,14 @@ public class GustosDbContext : DbContext
 
 
         modelBuilder.Entity<SolicitudRestaurante>()
+    .Property(s => s.Latitud)
+    .HasColumnType("decimal(10,7)");
+
+        modelBuilder.Entity<SolicitudRestaurante>()
+            .Property(s => s.Longitud)
+            .HasColumnType("decimal(10,7)");
+
+        modelBuilder.Entity<SolicitudRestaurante>()
     .HasIndex(s => s.Estado);
 
         modelBuilder.Entity<SolicitudRestaurante>()
@@ -116,6 +124,12 @@ public class GustosDbContext : DbContext
 
         modelBuilder.Entity<Restaurante>()
         .Ignore(r => r.Score);
+
+        modelBuilder.Entity<Restaurante>()
+         .HasOne(r => r.Menu)
+         .WithOne(m => m.Restaurante)
+         .HasForeignKey<RestauranteMenu>(m => m.RestauranteId)
+         .OnDelete(DeleteBehavior.Cascade);
 
 
         modelBuilder.Entity<Restaurante>()

@@ -841,6 +841,14 @@ namespace GustosApp.API.Controllers
             return Ok();
         }
 
+        [HttpDelete("{restauranteId}/favorito")]
+        public async Task<IActionResult> EliminarFavorito(Guid restauranteId)
+        {
+            var firebaseUid = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            await _agregarFavoritoUseCase.HandleAsyncDelete(firebaseUid, restauranteId);
+            return Ok();
+        }
+
         [HttpGet("{id:guid}/metricas")]
         public async Task<ActionResult> ObtenerMetricas(
             Guid id,

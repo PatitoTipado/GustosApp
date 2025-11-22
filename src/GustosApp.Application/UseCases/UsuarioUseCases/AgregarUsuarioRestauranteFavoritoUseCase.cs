@@ -48,5 +48,19 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases
             };
             await _repositorioFavorito.CrearAsync(favorito, ct);
         }
+
+        public async Task HandleAsyncDelete(string firebaseUid, Guid restauranteId, CancellationToken ct = default)
+        {
+            var usuario = await _repositorioUsuario.GetByFirebaseUidAsync(firebaseUid, ct);
+            if (usuario == null)
+                throw new Exception("Usuario no encontrado");
+
+            var existe = await _repositorioFavorito.ExistsAsync(usuario.Id, restauranteId, ct);
+            if (!existe)
+            {
+                throw new Exception("Este restaurante no está en tus favoritos.");
+            }
+            await _repositorioFavorito.EliminarAsync(usuario.Id, restauranteId, ct);
+        }
     }
 }

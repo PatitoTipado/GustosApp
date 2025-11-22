@@ -55,8 +55,8 @@ namespace GustosApp.Application.UseCases
             - Cantidad de Reseñas: {restaurante.CantidadResenas ?? 0} 
             - Disponibilidad del Menú Detallado: {estadoMenu}
             - Horarios (JSON Parcial): {restaurante.HorariosJson.Substring(0, Math.Min(restaurante.HorariosJson.Length, 100))} 
-
-Basado en el perfil del usuario, la oferta y la valoración del restaurante, explicále al usuario si este restaurante es una buena coincidencia. **Incluye una mención a la valoración y al horario si es relevant";
+           
+            Basado en el perfil del usuario, la oferta y la valoración del restaurante, explicále al usuario si este restaurante es una buena coincidencia. **Incluye una mención a la valoración y al horario si es relevant";
         }
     }
 

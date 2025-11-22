@@ -96,7 +96,7 @@ namespace GustosApp.API.Controllers
             return Ok(new { recomendaciones });
         }*/
 
-        [HttpGet("{restauranteId}/recomendacion")]
+        [HttpGet("{restauranteId}")]
         public async Task<IActionResult> ObtenerRecomendacion(Guid restauranteId, CancellationToken ct)
         {
             // 1) Obtener UID del usuario autenticado

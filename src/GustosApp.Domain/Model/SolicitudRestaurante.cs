@@ -20,6 +20,7 @@ namespace GustosApp.Domain.Model
         public string Direccion { get; set; } = default!;
         public double? Latitud { get; set; }
         public double? Longitud { get; set; }
+        public string WebsiteUrl { get; set; }
 
         // Horarios enviados del front (JSON)
         public string? HorariosJson { get; set; }

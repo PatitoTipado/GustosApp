@@ -238,6 +238,9 @@ namespace GustosApp.API.Mapping
                    .ForMember(dest => dest.Longitud,
                  opt => opt.MapFrom(src => src.Longitud))
 
+                    .ForMember(dest => dest.Longitud,
+                 opt => opt.MapFrom(src => src.Longitud))
+
                 .ForMember(dest => dest.EsDeLaApp,
                  opt => opt.MapFrom(src => string.IsNullOrWhiteSpace(src.PlaceId)))
 
@@ -261,13 +264,15 @@ namespace GustosApp.API.Mapping
                        .Select(i => i.Url)
                        .ToList()
                ))
-           // MENU OCR → parseado automáticamente
-           .ForMember(dest => dest.Menu,
-               opt => opt.MapFrom(src =>
-     src.MenuProcesado == true && !string.IsNullOrWhiteSpace(src.MenuError)
-                       ? null
-                       : DeserializeMenu(src)  // método helper abajo
-               ))
+       .ForMember(dest => dest.Menu,
+    opt => opt.MapFrom(src =>
+        src.Menu != null &&
+        !string.IsNullOrWhiteSpace(src.Menu.Json)
+            ? DeserializeMenu(src)
+            : null
+    ))
+
+
            // Reviews Locales
            .ForMember(dest => dest.ReviewsLocales,
                opt => opt.MapFrom(src =>

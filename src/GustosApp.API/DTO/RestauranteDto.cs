@@ -140,6 +140,9 @@ namespace GustosApp.API.DTO
         public string Nombre { get; set; } = default!;
         public string Direccion { get; set; } = default!;
 
+        public string WebsiteUrl { get; set; } = default!;
+
+
         [JsonPropertyName("lat")]
         public string? Lat { get; set; } // Cambiar a string
 
@@ -222,29 +225,46 @@ namespace GustosApp.API.DTO
     }
     public class RestauranteMenuDto
     {
+        [JsonPropertyName("nombreMenu")]
         public string NombreMenu { get; set; } = "";
+
+        [JsonPropertyName("moneda")]
         public string Moneda { get; set; } = "ARS";
+
+        [JsonPropertyName("categorias")]
         public List<CategoriaMenuDto> Categorias { get; set; } = new();
     }
 
     public class CategoriaMenuDto
     {
+        [JsonPropertyName("nombre")]
         public string Nombre { get; set; } = "";
+
+        [JsonPropertyName("items")]
         public List<ItemMenuDto> Items { get; set; } = new();
     }
 
     public class ItemMenuDto
     {
+        [JsonPropertyName("nombre")]
         public string Nombre { get; set; } = "";
+
+        [JsonPropertyName("descripcion")]
         public string? Descripcion { get; set; }
+
+        [JsonPropertyName("precios")]
         public List<PrecioMenuDto> Precios { get; set; } = new();
     }
 
     public class PrecioMenuDto
     {
+        [JsonPropertyName("tamaño")]
         public string Tamaño { get; set; } = "";
+
+        [JsonPropertyName("monto")]
         public decimal Monto { get; set; }
     }
+
 
 
 }

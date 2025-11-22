@@ -44,6 +44,21 @@ namespace GustosApp.Infraestructure.Repositories
                 .Distinct()
                 .CountAsync(ct);
         }
+
+        public async Task EliminarAsync(Guid usuarioId, Guid restauranteId, CancellationToken ct)
+        {
+            var favorito = await _dbContext.UsuarioRestauranteFavoritos
+                    .FirstOrDefaultAsync(f =>
+                        f.UsuarioId == usuarioId &&
+                        f.RestauranteId == restauranteId,
+                        ct);
+
+            if (favorito != null)
+            {
+                _dbContext.UsuarioRestauranteFavoritos.Remove(favorito);
+                await _dbContext.SaveChangesAsync(ct);
+            }
+        }
     }
    
 }

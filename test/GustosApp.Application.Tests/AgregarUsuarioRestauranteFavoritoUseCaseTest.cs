@@ -118,7 +118,45 @@ namespace GustosApp.Application.Tests
             await Assert.ThrowsAsync<Exception>(() =>
               useCase.HandleAsync("abc", Guid.NewGuid()));
         }
-    
+
+        [Fact]
+        public async Task EliminarFavorito_DeberiaEliminarCuandoExiste()
+        {
+            var usuarioId = Guid.NewGuid();
+            var restauranteId = Guid.NewGuid();
+            var firebaseUid = "test_uid";
+
+            var usuario = new Usuario
+            {
+                Id = usuarioId,
+                FirebaseUid = firebaseUid
+            };
+
+            var mockUsuarioRepo = new Mock<IUsuarioRepository>();
+            var mockFavoritoRepo = new Mock<IUsuarioRestauranteFavoritoRepository>();
+
+            mockUsuarioRepo
+                .Setup(r => r.GetByFirebaseUidAsync(firebaseUid, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(usuario);
+
+            mockFavoritoRepo
+                .Setup(r => r.ExistsAsync(usuarioId, restauranteId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
+
+            var useCase = new AgregarUsuarioRestauranteFavoritoUseCase(
+               mockFavoritoRepo.Object,
+               mockUsuarioRepo.Object
+           );
+
+            await useCase.HandleAsyncDelete(firebaseUid, restauranteId, CancellationToken.None);
+
+            mockFavoritoRepo.Verify(
+                r => r.EliminarAsync(usuarioId, restauranteId, It.IsAny<CancellationToken>()),
+                Times.Once
+            );
+        }
     }
+
+
 }
 

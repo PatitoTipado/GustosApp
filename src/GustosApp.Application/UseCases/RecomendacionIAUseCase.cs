@@ -38,7 +38,7 @@ namespace GustosApp.Application.UseCases
 
             var gustosRestaurante = restaurante.GustosQueSirve.Select(g => g.Nombre).ToList();
             var restriccionesRestaurante = restaurante.RestriccionesQueRespeta.Select(r => r.Nombre).ToList();
-            var estadoMenu = restaurante.MenuProcesado ? "Sí (Menú detallado disponible)" : "No (Solo datos generales)";
+            var estadoMenu = (bool)restaurante.MenuProcesado ? "Sí (Menú detallado disponible)" : "No (Solo datos generales)";
 
             return $@"Sos una IA que recomienda restaurantes basándote en preferencias reales del usuario.
             USUARIO:

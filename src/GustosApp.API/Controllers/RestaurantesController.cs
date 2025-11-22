@@ -359,18 +359,7 @@ namespace GustosApp.API.Controllers
             return Ok(dto);
         }
 
-        [HttpPut("{id:guid}")]
-        [Authorize]
-        public async Task<IActionResult> Put(Guid id, [FromBody] ActualizarRestauranteDto dto)
-        {
-            var uid = User.FindFirst("user_id")?.Value ?? User.FindFirst("sub")?.Value;
-            if (string.IsNullOrWhiteSpace(uid)) return Unauthorized();
-
-            var esAdmin = User.IsInRole("admin") || User.Claims.Any(c => c.Type == "role" && c.Value == "admin");
-
-            var r = await _servicio.ActualizarAsync(id, uid, esAdmin, dto);
-            return r is null ? NotFound() : Ok(r);
-        }
+        
 
         [HttpDelete("{id:guid}")]
         [Authorize]

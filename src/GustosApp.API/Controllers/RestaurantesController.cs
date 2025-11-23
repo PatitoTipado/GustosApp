@@ -310,7 +310,7 @@ namespace GustosApp.API.Controllers
 
             return Ok(dto);
         }
-
+/*
         [Authorize]
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> ActualizarBasico(
@@ -675,7 +675,7 @@ namespace GustosApp.API.Controllers
         }
 
 
-
+*/
 
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)

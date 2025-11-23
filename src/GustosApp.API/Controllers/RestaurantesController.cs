@@ -146,15 +146,15 @@ namespace GustosApp.API.Controllers
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> Get(
-      [FromQuery] List<string>? gustos,
-       [FromQuery] string? amigoUsername,
-      CancellationToken ct,
-     [FromQuery] string? tipoDeRestaurante,
-      [FromQuery] double rating,
-      [FromQuery(Name = "near.lat")] double? lat,
-      [FromQuery(Name = "near.lng")] double? lng,
-      [FromQuery(Name = "radiusMeters")] int? radius = 3000,
-      [FromQuery] int top = 10
+            [FromQuery] List<string>? gustos,
+            [FromQuery] string? amigoUsername,
+            CancellationToken ct,
+            [FromQuery] string? tipoDeRestaurante,
+            [FromQuery] double rating,
+            [FromQuery(Name = "near.lat")] double? lat,
+            [FromQuery(Name = "near.lng")] double? lng,
+            [FromQuery(Name = "radiusMeters")] int? radius = 3000,
+            [FromQuery] int top = 10
   )
         {
 

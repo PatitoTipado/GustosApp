@@ -356,7 +356,7 @@ namespace GustosApp.API.Controllers
         [HttpDelete("{restauranteId}/favorito")]
         public async Task<IActionResult> EliminarFavorito(Guid restauranteId)
         {
-            var firebaseUid = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+           var firebaseUid = GetFirebaseUid();
             await _agregarFavoritoUseCase.HandleAsyncDelete(firebaseUid, restauranteId);
             return Ok();
         }

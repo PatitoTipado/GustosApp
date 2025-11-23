@@ -115,8 +115,23 @@ builder.Services.AddSingleton<IEmbeddingService>(sp =>
 });
 
 // Autorización explícita 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", policy =>
+    {
+        policy.RequireClaim("rol", "Admin");
+    });
 
+    options.AddPolicy("DuenoRestaurante", policy =>
+    {
+        policy.RequireClaim("rol", "DuenoRestaurante");
+    });
+
+    options.AddPolicy("PendienteRestaurante", policy =>
+    {
+        policy.RequireClaim("rol", "PendienteRestaurante");
+    });
+});
 
 
 

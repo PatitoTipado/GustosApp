@@ -1,5 +1,5 @@
-﻿using GustosApp.Domain.Model.@enum;
-
+﻿//*using GustosApp.Domain.Model.@enum;
+/*
 namespace GustosApp.API.Middleware
 {
     public class BloqueoPorRolMiddleware
@@ -64,3 +64,4 @@ namespace GustosApp.API.Middleware
         }
     }
 }
+*/

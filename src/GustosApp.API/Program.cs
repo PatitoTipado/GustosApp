@@ -459,8 +459,6 @@ app.UseAuthorization();
 //app.UseMiddleware<BloqueoPorRolMiddleware>();
 
 
-
-
 app.MapControllers();
 app.MapHub<ChatHub>("/chatHub");
 app.MapHub<NotificacionesHub>("/notificacionesHub");

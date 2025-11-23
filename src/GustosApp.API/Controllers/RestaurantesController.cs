@@ -47,6 +47,10 @@ namespace GustosApp.API.Controllers
         private readonly CrearSolicitudRestauranteUseCase _solicitudesRestaurantes;
         private readonly BuscarRestaurantesUseCase _buscarRestaurante;
         private readonly IFileStorageService _firebaseStorage;
+
+        private readonly IFileStorageService _firebase;
+        private readonly GustosApp.Infraestructure.GustosDbContext _db;
+
         private readonly ObtenerDatosRegistroRestauranteUseCase _getDatosRegistroRestaurante;
         private readonly ICacheService _cache;
         private readonly IMapper _mapper;
@@ -74,7 +78,8 @@ namespace GustosApp.API.Controllers
       RegistrarTop3IndividualRestaurantesUseCase registrarTop3IndividualUseCase,
     RegistrarVisitaPerfilRestauranteUseCase registrarVisitaPerfilUseCase,
     ObtenerMetricasRestauranteUseCase obtenerMetricasRestauranteUseCase,
-    ActualizarRestauranteDashboardUseCase actualizarRestauranteDashboardUseCase)
+    ActualizarRestauranteDashboardUseCase actualizarRestauranteDashboardUseCase,
+    GustosApp.Infraestructure.GustosDbContext db, IFileStorageService firebase)
         {
             _servicio = servicio;
             _obtenerUsuario = obtenerUsuario;
@@ -93,8 +98,11 @@ namespace GustosApp.API.Controllers
             _registrarVisitaPerfilUseCase = registrarVisitaPerfilUseCase;
             _obtenerMetricasRestauranteUseCase = obtenerMetricasRestauranteUseCase;
             _actualizarRestauranteDashboardUseCase = actualizarRestauranteDashboardUseCase;
+            _firebase = firebase;
+            _db = db;
 
         }
+
        
         [HttpGet]
         public async Task<IActionResult> Get(
@@ -310,19 +318,14 @@ namespace GustosApp.API.Controllers
 
             return Ok(dto);
         }
-/*
-        [Authorize]
+
+        [Authorize(Policy = "DuenoRestaurante")]
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> ActualizarBasico(
             Guid id,
             [FromBody] ActualizarRestauranteDashboardRequest dto,
             CancellationToken ct)
         {
-            var (ok, uid) = await CheckOwnerAsync(id, User, ct);
-            if (!ok)
-            {
-                return Forbid();
-            }
 
             var restauranteActualizado = await _actualizarRestauranteDashboardUseCase.HandleAsync(
                 id,
@@ -390,9 +393,8 @@ namespace GustosApp.API.Controllers
 
 
 
-        // ...
 
-        [Authorize]
+        [Authorize(Policy = "DuenoRestaurante")]
         [HttpPut("{id:guid}/imagenes/destacada")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> ActualizarImagenDestacada(
@@ -400,8 +402,6 @@ namespace GustosApp.API.Controllers
             [FromForm] ActualizarImagenRestauranteRequest request,
             CancellationToken ct = default)
         {
-            var (ok, uid) = await CheckOwnerAsync(id, User, ct);
-            if (!ok) return Forbid();
 
             var urlsSubidas = new List<string>();
 
@@ -452,7 +452,7 @@ namespace GustosApp.API.Controllers
 
 
 
-        [Authorize]
+        [Authorize(Policy = "DuenoRestaurante")]
         [HttpPut("{id:guid}/imagenes/logo")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> ActualizarLogo(
@@ -460,8 +460,6 @@ namespace GustosApp.API.Controllers
     [FromForm] ActualizarImagenRestauranteRequest request,
     CancellationToken ct = default)
         {
-            var (ok, uid) = await CheckOwnerAsync(id, User, ct);
-            if (!ok) return Forbid();
 
             var urlsSubidas = new List<string>();
 
@@ -511,7 +509,7 @@ namespace GustosApp.API.Controllers
         }
 
 
-        [Authorize]
+        [Authorize(Policy = "DuenoRestaurante")]
         [HttpPut("{id:guid}/imagenes/interior")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> ActualizarImagenesInterior(
@@ -519,9 +517,7 @@ namespace GustosApp.API.Controllers
     [FromForm] ActualizarImagenesRestauranteRequest request,
     CancellationToken ct = default)
         {
-            var (ok, uid) = await CheckOwnerAsync(id, User, ct);
-            if (!ok) return Forbid();
-
+            
             var urlsSubidas = new List<string>();
 
             try
@@ -565,7 +561,7 @@ namespace GustosApp.API.Controllers
 
 
 
-        [Authorize]
+        [Authorize(Policy = "DuenoRestaurante")]
         [HttpPut("{id:guid}/imagenes/comidas")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> ActualizarImagenesComida(
@@ -573,8 +569,6 @@ namespace GustosApp.API.Controllers
     [FromForm] ActualizarImagenesRestauranteRequest request,
     CancellationToken ct = default)
         {
-            var (ok, uid) = await CheckOwnerAsync(id, User, ct);
-            if (!ok) return Forbid();
 
             var urlsSubidas = new List<string>();
 
@@ -618,7 +612,7 @@ namespace GustosApp.API.Controllers
         }
 
 
-        [Authorize]
+        [Authorize(Policy = "DuenoRestaurante")]
         [HttpPut("{id:guid}/imagenes/menu")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> ActualizarImagenMenu(
@@ -626,8 +620,6 @@ namespace GustosApp.API.Controllers
     [FromForm] ActualizarImagenRestauranteRequest request,
     CancellationToken ct = default)
         {
-            var (ok, uid) = await CheckOwnerAsync(id, User, ct);
-            if (!ok) return Forbid();
 
             var urlsSubidas = new List<string>();
 
@@ -673,9 +665,6 @@ namespace GustosApp.API.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
-
-
-*/
 
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)

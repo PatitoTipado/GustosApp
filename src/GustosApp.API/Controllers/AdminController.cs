@@ -50,16 +50,20 @@ namespace GustosApp.API.Controllers
             return Ok(response);
         }*/
 
-     [HttpPost("debug/set-admin")]
-public async Task<IActionResult> SetAdminDebug()
-{
-            var firebaseUid = GetFirebaseUid();
-            await _firebase.SetUserRoleAsync(firebaseUid, "Admin");
-              return Ok("Admin seteado");
-}
+        [HttpPost("debug/set-admin")]
+        [AllowAnonymous] // <-- Permite acceso sin token
+        public async Task<IActionResult> SetAdminDebug([FromQuery] string firebaseUid)
+        {
+            if (string.IsNullOrWhiteSpace(firebaseUid))
+                return BadRequest("firebaseUid requerido");
 
-        
+            await _firebase.SetUserRoleAsync(firebaseUid, "Admin");
+            return Ok(new { message = $"Rol ADMIN seteado para UID: {firebaseUid}" });
+        }
+
+
         [HttpGet("me/role")]
+        [AllowAnonymous]
         public IActionResult GetMyRole()
         {
             var rol = User.FindFirst("rol")?.Value;

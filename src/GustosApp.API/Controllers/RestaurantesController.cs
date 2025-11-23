@@ -306,18 +306,7 @@ namespace GustosApp.API.Controllers
             return Ok(dto);
         }
 
-        [HttpPut("{id:guid}")]
-        [Authorize]
-        public async Task<IActionResult> Put(Guid id, [FromBody] ActualizarRestauranteDto dto)
-        {
-            var uid = GetFirebaseUid();
-           
-
-            var esAdmin = User.IsInRole("admin") || User.Claims.Any(c => c.Type == "role" && c.Value == "admin");
-
-            var r = await _servicio.ActualizarAsync(id, uid, esAdmin, dto);
-            return r is null ? NotFound() : Ok(r);
-        }
+        
 
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
@@ -361,6 +350,14 @@ namespace GustosApp.API.Controllers
         {
             var firebaseUid = GetFirebaseUid();
             await _agregarFavoritoUseCase.HandleAsync(firebaseUid, restauranteId);
+            return Ok();
+        }
+
+        [HttpDelete("{restauranteId}/favorito")]
+        public async Task<IActionResult> EliminarFavorito(Guid restauranteId)
+        {
+            var firebaseUid = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            await _agregarFavoritoUseCase.HandleAsyncDelete(firebaseUid, restauranteId);
             return Ok();
         }
 

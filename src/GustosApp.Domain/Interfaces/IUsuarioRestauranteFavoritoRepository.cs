@@ -13,5 +13,6 @@ namespace GustosApp.Domain.Interfaces
         Task CrearAsync(UsuarioRestauranteFavorito usuarioRestauranteFavorito, CancellationToken ct);
         Task<bool> ExistsAsync(Guid usuarioId, Guid restauranteId, CancellationToken ct);
         Task<int> CountByRestauranteAsync(Guid restauranteId, CancellationToken ct);
+        Task EliminarAsync(Guid id, Guid restauranteId, CancellationToken ct);
     }
 }

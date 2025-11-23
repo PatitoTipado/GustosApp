@@ -3,7 +3,7 @@
     public class CrearOpinionRestauranteRequest
     {
         public Guid RestauranteId { get; set; }
-        public int Valoracion { get; set; }
+        public double Valoracion { get; set; }
         public string? Opinion { get; set; }
         public string? Titulo { get; set; }
         public DateTime? FechaVisita { get; set; }

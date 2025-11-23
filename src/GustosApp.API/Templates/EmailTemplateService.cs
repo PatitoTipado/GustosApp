@@ -4,8 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using GustosApp.Application.Interfaces;
+using Microsoft.AspNetCore.Hosting;
 
-namespace GustosApp.Infraestructure.Services
+namespace GustosApp.API.Templates.Email
 {
     public class EmailTemplateService : IEmailTemplateService
     {

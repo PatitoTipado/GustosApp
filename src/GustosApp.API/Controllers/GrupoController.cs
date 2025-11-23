@@ -346,6 +346,24 @@ namespace GustosApp.API.Controllers
         }
 
         [Authorize]
+        [HttpDelete("eliminarMiGusto")]
+        [ProducesResponseType(typeof(ActualizarGustosGrupoResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> eliminarMiGustoDeGrupo(Guid grupoId, List<string> gustos)
+        {
+            var firebaseUid = GetFirebaseUid();
+            var ok = await _servicioPreferenciasGrupos.EliminarGustosDeGrupo(gustos, grupoId, firebaseUid);
+
+            var response = new ActualizarGustosGrupoResponse
+            {
+                Success = ok,
+                Mensaje = "Gustos eliminados correctamente"
+            };
+            return Ok(response);
+        }
+
+
+        [Authorize]
         [HttpPut("desactivarMiembro")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]

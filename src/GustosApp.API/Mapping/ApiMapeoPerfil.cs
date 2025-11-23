@@ -127,7 +127,9 @@ namespace GustosApp.API.Mapping
             .ForMember(dest => dest.GustosQueSirve, opt => opt.MapFrom(src =>
                  src.GustosQueSirve.Select(g => new GustoDto(g.Id, g.Nombre, g.ImagenUrl))))
             .ForMember(dest => dest.RestriccionesQueRespeta, opt => opt.MapFrom(src =>
-                 src.RestriccionesQueRespeta.Select(r => new RestriccionResponse(r.Id, r.Nombre))));
+                 src.RestriccionesQueRespeta.Select(r => new RestriccionResponse(r.Id, r.Nombre))))
+            .ForMember(dest => dest.GooglePlaceId, opt => opt.MapFrom
+            (src =>src.PlaceId ));
 
             CreateMap<Restaurante, RestauranteListadoDto>()
            .ForMember(dest => dest.PrimaryType, opt => opt.MapFrom(src => src.Categoria));

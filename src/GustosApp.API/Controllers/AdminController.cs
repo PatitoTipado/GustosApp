@@ -10,11 +10,11 @@ using GustosApp.API.DTO;
 
 namespace GustosApp.API.Controllers
 {
+    [Authorize(Policy = "Admin")]
     [Route("[controller]")]
     [ApiController]
 
-    [Authorize(Roles = "Admin")]
-    public class AdminController : Controller
+    public class AdminController : BaseApiController
     {
         private readonly AprobarSolicitudRestauranteUseCase _aprobarSolicitud;
         private readonly ObtenerSolicitudesRestaurantesPendientesUseCase _getPendientes;
@@ -22,12 +22,13 @@ namespace GustosApp.API.Controllers
         private readonly RechazarSolicitudRestauranteUseCase _rechazarSolicitud;
         private readonly ObtenerSolicitudesPorTipoUseCase _getPorTipo;
         private readonly IMapper _mapper;
-
+        private readonly IFirebaseAuthService _firebase;
         public AdminController(AprobarSolicitudRestauranteUseCase aprobarSolicitud,
            ObtenerSolicitudesRestaurantesPendientesUseCase getPendientes,
            ObtenerSolicitudRestaurantesPorIdUseCase getDetalle,
            RechazarSolicitudRestauranteUseCase rechazarSolicitud,
            ObtenerSolicitudesPorTipoUseCase getPorTipo,
+              IFirebaseAuthService firebase,
             IMapper mapper)
         {
             _aprobarSolicitud = aprobarSolicitud;
@@ -35,6 +36,7 @@ namespace GustosApp.API.Controllers
             _getDetalle = getDetalle;
             _rechazarSolicitud = rechazarSolicitud;
             _getPorTipo = getPorTipo;
+            _firebase = firebase;
             _mapper = mapper;
         }
 
@@ -47,6 +49,27 @@ namespace GustosApp.API.Controllers
             var response = _mapper.Map<List<SolicitudRestaurantePendienteDto>>(result);
             return Ok(response);
         }*/
+
+        [HttpPost("debug/set-admin")]
+        [AllowAnonymous] // <-- Permite acceso sin token
+        public async Task<IActionResult> SetAdminDebug([FromQuery] string firebaseUid)
+        {
+            if (string.IsNullOrWhiteSpace(firebaseUid))
+                return BadRequest("firebaseUid requerido");
+
+            await _firebase.SetUserRoleAsync(firebaseUid, "Admin");
+            return Ok(new { message = $"Rol ADMIN seteado para UID: {firebaseUid}" });
+        }
+
+
+        [HttpGet("me/role")]
+        [AllowAnonymous]
+        public IActionResult GetMyRole()
+        {
+            var rol = User.FindFirst("rol")?.Value;
+            return Ok(new { rol });
+        }
+
 
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetDetalle(Guid id, CancellationToken ct)

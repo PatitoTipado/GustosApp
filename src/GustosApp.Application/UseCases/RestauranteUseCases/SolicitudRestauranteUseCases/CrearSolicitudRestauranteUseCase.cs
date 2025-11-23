@@ -86,19 +86,20 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
             await _usuarios.UpdateAsync(usuario, ct);
 
             await _firebase.SetUserRoleAsync(usuario.FirebaseUid, RolUsuario.PendienteRestaurante.ToString());
- 
+
             //Modificar esto si es deploy?
-           await _email.EnviarEmailAsync(
-            destinatario: "gonzalomarcos551@gmail.com",   
-             asunto: "Nueva solicitud de restaurante",
-             cuerpoHtml: _templates.Render("SolicitudNueva.html", new Dictionary<string, string>
-            { 
-        { "NombreUsuario", usuario.Nombre },
-        { "EmailUsuario", usuario.Email },
-        { "NombreRestaurante", solicitud.Nombre },
-        { "LINK", "http://localhost:3000/admin/"}
-             })
-            );
+            await _email.EnviarEmailAsync(
+        "gonzalomarcos551@gmail.com",
+        "Nueva solicitud de restaurante",
+        _templates.Render("SolicitudNueva.html", new Dictionary<string, string>
+        {
+        { "USUARIO", solicitud.Usuario.Email },
+        { "NOMBRE", solicitud.Nombre },
+        { "DIRECCION", solicitud.Direccion },
+        { "LINK", "http://localhost:3000/admin" }
+        })
+    );
+
             return solicitud.Id;
         }
 

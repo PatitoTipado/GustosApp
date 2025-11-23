@@ -38,6 +38,7 @@ namespace GustosApp.Application.UseCases
 
             var gustosRestaurante = restaurante.GustosQueSirve.Select(g => g.Nombre).ToList();
             var restriccionesRestaurante = restaurante.RestriccionesQueRespeta.Select(r => r.Nombre).ToList();
+            var estadoMenu = (bool)restaurante.MenuProcesado ? "Sí (Menú detallado disponible)" : "No (Solo datos generales)";
 
             return $@"Sos una IA que recomienda restaurantes basándote en preferencias reales del usuario.
             USUARIO:
@@ -50,9 +51,13 @@ namespace GustosApp.Application.UseCases
             - Nombre: {restaurante.Nombre}
             - Ofrece: {string.Join(", ", gustosRestaurante)}
             - Respeta: {string.Join(", ", restriccionesRestaurante)}
-            Con esta información, explicále al usuario si este restaurante es adecuado o no,segun sus preferencias,en un lenguaje amigable,claro y breve.";
+            - Valoración media: {restaurante.Rating?.ToString("N1") ?? "Sin Reseñas"} 
+            - Cantidad de Reseñas: {restaurante.CantidadResenas ?? 0} 
+            - Disponibilidad del Menú Detallado: {estadoMenu}
+            - Horarios (JSON Parcial): {restaurante.HorariosJson.Substring(0, Math.Min(restaurante.HorariosJson.Length, 100))} 
+           
+            Basado en el perfil del usuario, la oferta y la valoración del restaurante, explicále al usuario si este restaurante es una buena coincidencia. **Incluye una mención a la valoración y al horario si es relevant";
         }
-
     }
 
 }

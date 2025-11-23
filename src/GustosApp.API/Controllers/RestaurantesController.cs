@@ -47,6 +47,10 @@ namespace GustosApp.API.Controllers
         private readonly CrearSolicitudRestauranteUseCase _solicitudesRestaurantes;
         private readonly BuscarRestaurantesUseCase _buscarRestaurante;
         private readonly IFileStorageService _firebaseStorage;
+
+        private readonly IFileStorageService _firebase;
+        private readonly GustosApp.Infraestructure.GustosDbContext _db;
+
         private readonly ObtenerDatosRegistroRestauranteUseCase _getDatosRegistroRestaurante;
         private readonly ICacheService _cache;
         private readonly IMapper _mapper;
@@ -54,6 +58,8 @@ namespace GustosApp.API.Controllers
         private readonly RegistrarTop3IndividualRestaurantesUseCase _registrarTop3IndividualUseCase;
         private readonly RegistrarVisitaPerfilRestauranteUseCase _registrarVisitaPerfilUseCase;
         private readonly ObtenerMetricasRestauranteUseCase _obtenerMetricasRestauranteUseCase;
+        private readonly ActualizarRestauranteDashboardUseCase _actualizarRestauranteDashboardUseCase;
+
 
 
 
@@ -71,7 +77,9 @@ namespace GustosApp.API.Controllers
        AgregarUsuarioRestauranteFavoritoUseCase agregarUsuarioRestauranteFavoritoUseCase,
       RegistrarTop3IndividualRestaurantesUseCase registrarTop3IndividualUseCase,
     RegistrarVisitaPerfilRestauranteUseCase registrarVisitaPerfilUseCase,
-    ObtenerMetricasRestauranteUseCase obtenerMetricasRestauranteUseCase)
+    ObtenerMetricasRestauranteUseCase obtenerMetricasRestauranteUseCase,
+    ActualizarRestauranteDashboardUseCase actualizarRestauranteDashboardUseCase,
+    GustosApp.Infraestructure.GustosDbContext db, IFileStorageService firebase)
         {
             _servicio = servicio;
             _obtenerUsuario = obtenerUsuario;
@@ -89,7 +97,12 @@ namespace GustosApp.API.Controllers
             _registrarTop3IndividualUseCase = registrarTop3IndividualUseCase;
             _registrarVisitaPerfilUseCase = registrarVisitaPerfilUseCase;
             _obtenerMetricasRestauranteUseCase = obtenerMetricasRestauranteUseCase;
+            _actualizarRestauranteDashboardUseCase = actualizarRestauranteDashboardUseCase;
+            _firebase = firebase;
+            _db = db;
+
         }
+
        
         [HttpGet]
         public async Task<IActionResult> Get(
@@ -174,7 +187,7 @@ namespace GustosApp.API.Controllers
         {
             var uid = GetFirebaseUid();
 
-         
+
             var restaurante = await _servicio.ObtenerAsync(id);
 
             if (restaurante == null)
@@ -186,13 +199,13 @@ namespace GustosApp.API.Controllers
             {
                 var actualizado = await _servicio.ObtenerResenasDesdeGooglePlaces(restaurante.PlaceId, ct);
                 if (actualizado != null)
-                    restaurante = actualizado; 
+                    restaurante = actualizado;
             }
 
-          
+
             restaurante.Reviews = restaurante.Reviews
-                .OrderBy(r => !r.EsImportada)             
-                .ThenByDescending(r => r.FechaCreacion)  
+                .OrderBy(r => !r.EsImportada)
+                .ThenByDescending(r => r.FechaCreacion)
                 .ToList();
 
             //registrar visita al perfil
@@ -203,12 +216,12 @@ namespace GustosApp.API.Controllers
 
             var dto = _mapper.Map<RestauranteDetalleDto>(restaurante);
 
-            
+
             return Ok(dto);
         }
 
 
-     
+
 
         [HttpPost]
         [RequestSizeLimit(50 * 1024 * 1024)]
@@ -265,7 +278,7 @@ namespace GustosApp.API.Controllers
 
                 var response = await _solicitudesRestaurantes.HandleAsync(uid, dto.Nombre, dto.Direccion,
                     lat, lng, dto.HorariosJson, dto.GustosQueSirveIds,
-                    dto.RestriccionesQueRespetaIds, imagenes,dto.WebsiteUrl ,ct);
+                    dto.RestriccionesQueRespetaIds, imagenes, dto.WebsiteUrl, ct);
 
                 return Ok(response);
             }
@@ -306,7 +319,362 @@ namespace GustosApp.API.Controllers
             return Ok(dto);
         }
 
-        
+        [Authorize(Policy = "DuenoRestaurante")]
+        [HttpPut("{id:guid}")]
+        public async Task<IActionResult> ActualizarBasico(
+            Guid id,
+            [FromBody] ActualizarRestauranteDashboardRequest dto,
+            CancellationToken ct)
+        {
+
+            var restauranteActualizado = await _actualizarRestauranteDashboardUseCase.HandleAsync(
+                id,
+                dto.Direccion,
+                dto.Latitud,
+                dto.Longitud,
+                dto.HorariosJson,
+                dto.WebUrl,
+                dto.GustosQueSirveIds,
+                dto.RestriccionesQueRespetaIds,
+                ct);
+
+            var detalle = _mapper.Map<RestauranteDetalleDto>(restauranteActualizado);
+            return Ok(detalle);
+        }
+
+
+        private async Task ReemplazarImagenesTipoAsync(
+            Guid restauranteId,
+            TipoImagenRestaurante tipo,
+            IList<IFormFile>? archivos,
+            bool soloBorrar,
+            List<string> urlsSubidas,
+            CancellationToken ct)
+        {
+            var imagenesExistentes = await _db.RestauranteImagenes
+                .Where(i => i.RestauranteId == restauranteId && i.Tipo == tipo)
+                .ToListAsync(ct);
+
+            foreach (var img in imagenesExistentes)
+            {
+                try
+                {
+                    await _firebase.DeleteFileAsync(img.Url);
+                }
+                catch
+                {
+                }
+
+                _db.RestauranteImagenes.Remove(img);
+            }
+
+            if (soloBorrar || archivos == null || archivos.Count == 0)
+                return;
+
+            var orden = 0;
+            foreach (var archivo in archivos)
+            {
+                using var stream = archivo.OpenReadStream();
+                var url = await _firebase.UploadFileAsync(stream, archivo.FileName, "restaurantes");
+                urlsSubidas.Add(url);
+
+                var entidad = new RestauranteImagen
+                {
+                    RestauranteId = restauranteId,
+                    Tipo = tipo,
+                    Url = url,
+                    Orden = orden++,
+                    FechaCreacionUtc = DateTime.UtcNow
+                };
+
+                await _db.RestauranteImagenes.AddAsync(entidad, ct);
+            }
+        }
+
+
+
+        [Authorize(Policy = "DuenoRestaurante")]
+        [HttpGet("mio")]
+        public async Task<IActionResult> ObtenerRestauranteIdDueñoRestaurante()
+        {
+            var firebaseuid= GetFirebaseUid();
+            var usuario= await _obtenerUsuario.HandleAsync(FirebaseUid: firebaseuid, ct: CancellationToken.None);
+            var restaurante = await _servicio.ObtenerPorPropietarioAsync(usuario.Id);
+
+            return Ok(restaurante.Id);
+        }
+
+        [Authorize(Policy = "DuenoRestaurante")]
+        [HttpPut("{id:guid}/imagenes/destacada")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> ActualizarImagenDestacada(
+            Guid id,
+            [FromForm] ActualizarImagenRestauranteRequest request,
+            CancellationToken ct = default)
+        {
+
+            var urlsSubidas = new List<string>();
+
+            try
+            {
+                var restaurante = await _db.Restaurantes
+                    .FirstOrDefaultAsync(r => r.Id == id, ct);
+
+                if (restaurante == null)
+                    return NotFound("Restaurante no encontrado.");
+
+                if (!string.IsNullOrWhiteSpace(restaurante.ImagenUrl))
+                {
+                    try { await _firebase.DeleteFileAsync(restaurante.ImagenUrl); }
+                    catch { }
+
+                    restaurante.ImagenUrl = null;
+                }
+
+                if (!request.SoloBorrar && request.Archivo != null)
+                {
+                    using var stream = request.Archivo.OpenReadStream();
+                    var url = await _firebase.UploadFileAsync(
+                        stream,
+                        request.Archivo.FileName,
+                        "restaurantes");
+
+                    urlsSubidas.Add(url);
+                    restaurante.ImagenUrl = url;
+                }
+
+                restaurante.ActualizadoUtc = DateTime.UtcNow;
+                await _db.SaveChangesAsync(ct);
+
+                return Ok(new { imagenDestacada = restaurante.ImagenUrl });
+            }
+            catch (Exception ex)
+            {
+                foreach (var url in urlsSubidas)
+                {
+                    try { await _firebase.DeleteFileAsync(url); }
+                    catch { }
+                }
+
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+
+
+        [Authorize(Policy = "DuenoRestaurante")]
+        [HttpPut("{id:guid}/imagenes/logo")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> ActualizarLogo(
+    Guid id,
+    [FromForm] ActualizarImagenRestauranteRequest request,
+    CancellationToken ct = default)
+        {
+
+            var urlsSubidas = new List<string>();
+
+            try
+            {
+                var restaurante = await _db.Restaurantes
+                    .FirstOrDefaultAsync(r => r.Id == id, ct);
+
+                if (restaurante == null)
+                    return NotFound("Restaurante no encontrado.");
+
+                if (!string.IsNullOrWhiteSpace(restaurante.LogoUrl))
+                {
+                    try { await _firebase.DeleteFileAsync(restaurante.LogoUrl); }
+                    catch { }
+
+                    restaurante.LogoUrl = null;
+                }
+
+                if (!request.SoloBorrar && request.Archivo != null)
+                {
+                    using var stream = request.Archivo.OpenReadStream();
+                    var url = await _firebase.UploadFileAsync(
+                        stream,
+                        request.Archivo.FileName,
+                        "restaurantes");
+
+                    urlsSubidas.Add(url);
+                    restaurante.LogoUrl = url;
+                }
+
+                restaurante.ActualizadoUtc = DateTime.UtcNow;
+                await _db.SaveChangesAsync(ct);
+
+                return Ok(new { logoUrl = restaurante.LogoUrl });
+            }
+            catch (Exception ex)
+            {
+                foreach (var url in urlsSubidas)
+                {
+                    try { await _firebase.DeleteFileAsync(url); }
+                    catch { }
+                }
+
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+
+        [Authorize(Policy = "DuenoRestaurante")]
+        [HttpPut("{id:guid}/imagenes/interior")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> ActualizarImagenesInterior(
+    Guid id,
+    [FromForm] ActualizarImagenesRestauranteRequest request,
+    CancellationToken ct = default)
+        {
+            
+            var urlsSubidas = new List<string>();
+
+            try
+            {
+                var restaurante = await _db.Restaurantes
+                    .FirstOrDefaultAsync(r => r.Id == id, ct);
+
+                if (restaurante == null)
+                    return NotFound("Restaurante no encontrado.");
+
+                await ReemplazarImagenesTipoAsync(
+                    restauranteId: id,
+                    tipo: TipoImagenRestaurante.Interior,
+                    archivos: request.Archivos,
+                    soloBorrar: request.SoloBorrar,
+                    urlsSubidas: urlsSubidas,
+                    ct: ct);
+
+                restaurante.ActualizadoUtc = DateTime.UtcNow;
+                await _db.SaveChangesAsync(ct);
+
+                var urls = await _db.RestauranteImagenes
+                    .Where(i => i.RestauranteId == id && i.Tipo == TipoImagenRestaurante.Interior)
+                    .OrderBy(i => i.Orden)
+                    .Select(i => i.Url)
+                    .ToListAsync(ct);
+
+                return Ok(new { imagenesInterior = urls });
+            }
+            catch (Exception ex)
+            {
+                foreach (var url in urlsSubidas)
+                {
+                    try { await _firebase.DeleteFileAsync(url); }
+                    catch { }
+                }
+
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+
+
+        [Authorize(Policy = "DuenoRestaurante")]
+        [HttpPut("{id:guid}/imagenes/comidas")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> ActualizarImagenesComida(
+    Guid id,
+    [FromForm] ActualizarImagenesRestauranteRequest request,
+    CancellationToken ct = default)
+        {
+
+            var urlsSubidas = new List<string>();
+
+            try
+            {
+                var restaurante = await _db.Restaurantes
+                    .FirstOrDefaultAsync(r => r.Id == id, ct);
+
+                if (restaurante == null)
+                    return NotFound("Restaurante no encontrado.");
+
+                await ReemplazarImagenesTipoAsync(
+                    restauranteId: id,
+                    tipo: TipoImagenRestaurante.Comida,
+                    archivos: request.Archivos,
+                    soloBorrar: request.SoloBorrar,
+                    urlsSubidas: urlsSubidas,
+                    ct: ct);
+
+                restaurante.ActualizadoUtc = DateTime.UtcNow;
+                await _db.SaveChangesAsync(ct);
+
+                var urls = await _db.RestauranteImagenes
+                    .Where(i => i.RestauranteId == id && i.Tipo == TipoImagenRestaurante.Comida)
+                    .OrderBy(i => i.Orden)
+                    .Select(i => i.Url)
+                    .ToListAsync(ct);
+
+                return Ok(new { imagenesComida = urls });
+            }
+            catch (Exception ex)
+            {
+                foreach (var url in urlsSubidas)
+                {
+                    try { await _firebase.DeleteFileAsync(url); }
+                    catch { }
+                }
+
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+
+        [Authorize(Policy = "DuenoRestaurante")]
+        [HttpPut("{id:guid}/imagenes/menu")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> ActualizarImagenMenu(
+    Guid id,
+    [FromForm] ActualizarImagenRestauranteRequest request,
+    CancellationToken ct = default)
+        {
+
+            var urlsSubidas = new List<string>();
+
+            try
+            {
+                var restaurante = await _db.Restaurantes
+                    .FirstOrDefaultAsync(r => r.Id == id, ct);
+
+                if (restaurante == null)
+                    return NotFound("Restaurante no encontrado.");
+
+                IList<IFormFile>? archivos = null;
+                if (request.Archivo != null)
+                    archivos = new List<IFormFile> { request.Archivo };
+
+                await ReemplazarImagenesTipoAsync(
+                    restauranteId: id,
+                    tipo: TipoImagenRestaurante.Menu,
+                    archivos: archivos,
+                    soloBorrar: request.SoloBorrar,
+                    urlsSubidas: urlsSubidas,
+                    ct: ct);
+
+                restaurante.ActualizadoUtc = DateTime.UtcNow;
+                await _db.SaveChangesAsync(ct);
+
+                var urlMenu = await _db.RestauranteImagenes
+                    .Where(i => i.RestauranteId == id && i.Tipo == TipoImagenRestaurante.Menu)
+                    .OrderBy(i => i.Orden)
+                    .Select(i => i.Url)
+                    .FirstOrDefaultAsync(ct);
+
+                return Ok(new { imagenMenu = urlMenu });
+            }
+            catch (Exception ex)
+            {
+                foreach (var url in urlsSubidas)
+                {
+                    try { await _firebase.DeleteFileAsync(url); }
+                    catch { }
+                }
+
+                return BadRequest(new { error = ex.Message });
+            }
+        }
 
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)

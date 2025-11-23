@@ -185,11 +185,10 @@ namespace GustosApp.Infraestructure.Services
         }
 
 
-        public async Task<Restaurante?> ObtenerPorPropietarioAsync(string propietarioUid)
+        public async Task<Restaurante?> ObtenerPorPropietarioAsync(Guid DuenoID)
         {
             var r = await _db.Restaurantes.AsNoTracking()
-                .Include(x => x.Platos)
-                .FirstOrDefaultAsync(x => x.PropietarioUid == propietarioUid);
+                .FirstOrDefaultAsync(x => x.DuenoId == DuenoID);
             return r is null ? null : r;
         }
 

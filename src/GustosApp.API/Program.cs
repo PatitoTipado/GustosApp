@@ -332,6 +332,8 @@ builder.Services.AddScoped<RegistrarTop3IndividualRestaurantesUseCase>();
 builder.Services.AddScoped<RegistrarTop3GrupoRestaurantesUseCase>();
 builder.Services.AddScoped<RegistrarVisitaPerfilRestauranteUseCase>();
 builder.Services.AddScoped<ObtenerMetricasRestauranteUseCase>();
+builder.Services.AddScoped<ActualizarRestauranteDashboardUseCase>();
+
 
 
 builder.Services.AddHttpClient<IRecomendacionAIService, RecomendacionAIService>();
@@ -453,9 +455,6 @@ app.UseRouting();
 app.UseMiddleware<ManejadorErrorMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseMiddleware<BloqueoPorRolMiddleware>();
-
-
 
 
 app.MapControllers();

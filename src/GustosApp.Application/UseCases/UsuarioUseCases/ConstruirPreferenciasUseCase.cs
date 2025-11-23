@@ -17,19 +17,22 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases
         private readonly ConfirmarAmistadEntreUsuarios _confirmarAmistad;
         private readonly IUsuarioRepository _usuarioRepo;
         private readonly IGustosGrupoRepository _gustosGrupoRepo;
+        private readonly IMiembroGrupoRepository _miembroGrupoRepository;
 
         public ConstruirPreferenciasUseCase(
             ObtenerUsuarioUseCase obtenerUsuario,
             ObtenerGustosUseCase obtenerGustosUser,
             ConfirmarAmistadEntreUsuarios confirmarAmistad,
             IUsuarioRepository usuarioRepo,
-            IGustosGrupoRepository gustosGrupoRepo)
+            IGustosGrupoRepository gustosGrupoRepo,
+            IMiembroGrupoRepository miembroGrupoRepository)
         {
             _obtenerUsuario = obtenerUsuario;
             _obtenerGustosUser = obtenerGustosUser;
             _confirmarAmistad = confirmarAmistad;
             _usuarioRepo = usuarioRepo;
             _gustosGrupoRepo = gustosGrupoRepo;
+            _miembroGrupoRepository = miembroGrupoRepository;
         }
 
         public async Task<UsuarioPreferencias> HandleAsync(
@@ -39,26 +42,26 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases
             List<string>? gustosDelFiltro,
             CancellationToken ct)
         {
-
-            var usuarioActual = await _obtenerUsuario.HandleAsync(FirebaseUid: firebaseUid, ct:ct);
-
-            // PRIORIDAD 1: preferencias de GRUPO
             if (grupoId.HasValue)
             {
                 var gustosGrupo = await _gustosGrupoRepo.ObtenerGustosDelGrupo(grupoId.Value);
-                return new UsuarioPreferencias { Gustos = gustosGrupo };
+                var obtenerPrefDeMiembrosValidos = _miembroGrupoRepository.obtenerMiembrosActivosConSusPreferenciasYCondiciones(grupoId.Value);
+                return new UsuarioPreferencias { Gustos = gustosGrupo,
+                    CondicionesMedicas= obtenerPrefDeMiembrosValidos.Result.CondicionesMedicas,
+                    Restricciones= obtenerPrefDeMiembrosValidos.Result.Restricciones};
             }
 
             // Preferencias del usuario base
             var prefsUser = await _obtenerGustosUser.HandleAsync(firebaseUid, ct, gustosDelFiltro);
 
-            // PRIORIDAD 2: preferencias con AMIGO (si viene uno)
             if (!string.IsNullOrWhiteSpace(amigoUsername))
             {
+                //aca trae los gustos y restricciones 
                 var amigo = await _usuarioRepo.GetByUsernameAsync(amigoUsername, ct);
                 if (amigo != null)
                 {
-                    // validar amistad
+                    var usuarioActual = await _obtenerUsuario.HandleAsync(FirebaseUid: firebaseUid, ct: ct);
+
                     var amistad = await _confirmarAmistad
                         .HandleAsync(usuarioActual.Id , amigo.Id, ct);
 
@@ -68,17 +71,29 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases
                         var prefsAmigo = await _obtenerGustosUser
                             .HandleAsync(amigo.FirebaseUid, ct, null);
 
-                        var combinados = prefsUser.Gustos
+                        var gustosCombinados = prefsUser.Gustos
                             .Concat(prefsAmigo.Gustos)
                             .Distinct(StringComparer.OrdinalIgnoreCase)
                             .ToList();
 
-                        return new UsuarioPreferencias { Gustos = combinados };
+                        var restriccionesCombinadas = prefsUser.Restricciones
+                            .Concat(prefsAmigo.Restricciones)
+                            .Distinct(StringComparer.OrdinalIgnoreCase)
+                            .ToList();
+
+                        var condicionesCombinadas = prefsUser.CondicionesMedicas
+                            .Concat(prefsAmigo.CondicionesMedicas)
+                            .Distinct(StringComparer.OrdinalIgnoreCase)
+                            .ToList();
+
+
+                        return new UsuarioPreferencias { Gustos = gustosCombinados,
+                                                        Restricciones= restriccionesCombinadas,
+                                                        CondicionesMedicas= condicionesCombinadas};
                     }
                 }
             }
 
-            // Usuario solo
             return prefsUser;
         }
     }

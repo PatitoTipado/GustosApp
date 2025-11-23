@@ -1,3 +1,4 @@
+using GustosApp.Domain.Common;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 using GustosApp.Infraestructure;
@@ -124,6 +125,34 @@ namespace GustosApp.Infraestructure.Repositories
             await UpdateAsync(miembro);
 
             return true;
+        }
+
+        public async Task<UsuarioPreferencias> obtenerMiembrosActivosConSusPreferenciasYCondiciones(Guid grupoId)
+        {
+
+            var miembros = await _context.MiembrosGrupos
+                .Include(m => m.Usuario)
+                    .ThenInclude(u => u.Restricciones)
+                .Include(m => m.Usuario)
+                    .ThenInclude(u => u.CondicionesMedicas)
+                        .Where(m => m.GrupoId == grupoId && m.afectarRecomendacion && m.Activo)
+                .ToListAsync();
+
+            var todasLasPreferencias = miembros
+                .SelectMany(m => m.Usuario.Restricciones)
+                .Select(p => p.Nombre)
+                .Distinct()
+                .ToList();
+
+            var todasLasCondiciones = miembros
+                .SelectMany(m => m.Usuario.CondicionesMedicas)
+                .Select(c => c.Nombre)
+                .Distinct()
+                .ToList();
+
+            return new UsuarioPreferencias() {Restricciones=todasLasPreferencias,CondicionesMedicas = todasLasCondiciones };
+
+
         }
     }
 }

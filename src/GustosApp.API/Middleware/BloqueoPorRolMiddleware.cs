@@ -41,8 +41,6 @@ namespace GustosApp.API.Middleware
                 //ejmplo de rutas permitidas
                 var allowed = new[] {
                 "/api/restaurantes/mio",
-                "/api/restaurantes/menu",
-                "/api/restaurantes/imagenes",
                 "/api/restaurantes/dashboard"
             };
 

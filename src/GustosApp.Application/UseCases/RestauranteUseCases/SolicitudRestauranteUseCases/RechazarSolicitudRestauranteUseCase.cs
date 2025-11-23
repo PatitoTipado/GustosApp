@@ -69,8 +69,9 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
                  "Tu solicitud fue rechazada",
              _templates.Render("SolicitudRechazada.html", new Dictionary<string, string>
                  {
-                { "Nombre", solicitud.Usuario.Nombre },
-                { "Motivo", solicitud.MotivoRechazo }
+                { "USUARIO", solicitud.Usuario.Nombre },
+                { "NOMBRE", solicitud.Nombre},
+                { "MOTIVO", solicitud.MotivoRechazo }
                })
             );
 

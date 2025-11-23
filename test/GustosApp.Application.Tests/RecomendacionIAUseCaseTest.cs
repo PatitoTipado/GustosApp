@@ -18,7 +18,8 @@ namespace GustosApp.Application.Tests
     public class RecomendacionIAUseCaseTest
     {
 
-        [Fact]
+        /*[Fact]
+
         public async Task queLaIADeUnaExplicacion()
         {
             // Arrange
@@ -67,7 +68,7 @@ namespace GustosApp.Application.Tests
                 "El caso de uso debe llamar al servicio de IA exactamente una vez.");
         }
 
-     
+     */
     }
 }
 

@@ -70,8 +70,8 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
                 "Tu solicitud fue aprobada",
              _templates.Render("SolicitudAprobada.html", new Dictionary<string, string>
               {
-             { "Nombre", solicitud.Usuario.Nombre },
-            { "NombreRestaurante", restaurante.Nombre },
+             { "USUARIO", solicitud.Usuario.Nombre },
+            { "NOMBRE", restaurante.Nombre },
             { "LINK", $"http://localhost:3000/restaurante/panel/{restaurante.Id}" }
              })
             );
@@ -100,7 +100,8 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
                 HorariosJson = solicitud.HorariosJson ?? "{}",
                 CreadoUtc = DateTime.UtcNow,
                 ActualizadoUtc = DateTime.UtcNow,
-                WebUrl = solicitud.WebsiteUrl
+                WebUrl = solicitud.WebsiteUrl,
+                Rating= 4.0,
             };
 
             // Relaciones

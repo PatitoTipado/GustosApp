@@ -33,6 +33,7 @@ using System.Globalization;
 
 namespace GustosApp.API.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class RestaurantesController : BaseApiController
@@ -45,17 +46,11 @@ namespace GustosApp.API.Controllers
         private readonly ConstruirPreferenciasUseCase _construirPreferencias;
         private readonly CrearSolicitudRestauranteUseCase _solicitudesRestaurantes;
         private readonly BuscarRestaurantesUseCase _buscarRestaurante;
-        private readonly IAlmacenamientoArchivos _fileStorage;
-        private readonly IFileStorageService _firebase;
-        private readonly GustosApp.Infraestructure.GustosDbContext _db;
+        private readonly IFileStorageService _firebaseStorage;
         private readonly ObtenerDatosRegistroRestauranteUseCase _getDatosRegistroRestaurante;
-        private readonly IOcrService _ocr;
-        private readonly IMenuParser _menuParser;
         private readonly ICacheService _cache;
-
-        private IMapper _mapper;
+        private readonly IMapper _mapper;
         private readonly AgregarUsuarioRestauranteFavoritoUseCase _agregarFavoritoUseCase;
-
         private readonly RegistrarTop3IndividualRestaurantesUseCase _registrarTop3IndividualUseCase;
         private readonly RegistrarVisitaPerfilRestauranteUseCase _registrarVisitaPerfilUseCase;
         private readonly ObtenerMetricasRestauranteUseCase _obtenerMetricasRestauranteUseCase;
@@ -69,15 +64,11 @@ namespace GustosApp.API.Controllers
      BuscarRestaurantesCercanosUseCase buscarRestaurantes,
      ConstruirPreferenciasUseCase construirPreferencias,
      ActualizarDetallesRestauranteUseCase obtenerDetalles,
-     IAlmacenamientoArchivos fileStorage,
-      IFileStorageService firebase,
+    IFileStorageService firebaseStorage,
       CrearSolicitudRestauranteUseCase solicitudesRestaurantes,
       ObtenerDatosRegistroRestauranteUseCase getDatosRegistroRestaurante,
-        GustosApp.Infraestructure.GustosDbContext db,
-        ICacheService cache,
-     IOcrService ocr,
-     IMenuParser menuParser,
-     IMapper mapper, BuscarRestaurantesUseCase buscarRestaurante, AgregarUsuarioRestauranteFavoritoUseCase agregarUsuarioRestauranteFavoritoUseCase,
+        ICacheService cache,IMapper mapper, BuscarRestaurantesUseCase buscarRestaurante,
+       AgregarUsuarioRestauranteFavoritoUseCase agregarUsuarioRestauranteFavoritoUseCase,
       RegistrarTop3IndividualRestaurantesUseCase registrarTop3IndividualUseCase,
     RegistrarVisitaPerfilRestauranteUseCase registrarVisitaPerfilUseCase,
     ObtenerMetricasRestauranteUseCase obtenerMetricasRestauranteUseCase)
@@ -90,61 +81,17 @@ namespace GustosApp.API.Controllers
             _solicitudesRestaurantes = solicitudesRestaurantes;
             _getDatosRegistroRestaurante = getDatosRegistroRestaurante;
             _obtenerDetalles = obtenerDetalles;
-            _fileStorage = fileStorage;
-            _firebase = firebase;
-            _db = db;
-            _fileStorage = fileStorage;
+            _firebaseStorage = firebaseStorage;
             _cache = cache;
             _mapper = mapper;
-            _ocr = ocr;
-            _menuParser = menuParser;
             _buscarRestaurante = buscarRestaurante;
             _agregarFavoritoUseCase = agregarUsuarioRestauranteFavoritoUseCase;
             _registrarTop3IndividualUseCase = registrarTop3IndividualUseCase;
             _registrarVisitaPerfilUseCase = registrarVisitaPerfilUseCase;
             _obtenerMetricasRestauranteUseCase = obtenerMetricasRestauranteUseCase;
         }
-        [Authorize]
-
-        private async Task<(bool ok, string? uid)> CheckOwnerAsync(Guid restauranteId, System.Security.Claims.ClaimsPrincipal user, System.Threading.CancellationToken ct)
-        {
-            var uid = user.FindFirst("user_id")?.Value
-                      ?? user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
-                      ?? user.FindFirst("sub")?.Value;
-            if (string.IsNullOrWhiteSpace(uid)) return (false, null);
-            var r = await _db.Restaurantes.FirstOrDefaultAsync(x => x.Id == restauranteId, ct);
-            if (r == null) return (false, uid);
-            var esAdmin = user.IsInRole("admin") || user.Claims.Any(c => c.Type == "role" && c.Value == "admin");
-            if (r.PropietarioUid != uid && !esAdmin) return (false, uid);
-            return (true, uid);
-        }
-        [HttpGet("cercanos")]
-        public async Task<IActionResult> GetCercanos(double lat, double lng, int radio = 2000, string? types = null, string? priceLevels = null,
-                    bool? openNow = null, double? minRating = null, int minUserRatings = 0, string? serves = null,
-                    CancellationToken ct = default)
-        {
-
-            var result = await _buscarRestaurantes.HandleAsync(lat, lng, radio, types, priceLevels, openNow, minRating, minUserRatings, serves, ct);
-
-            var response = _mapper.Map<List<RestauranteListadoDto>>(result);
-            return Ok(new { count = response.Count, restaurantes = response });
-
-
-        }
-
-
-
-        [HttpGet("detalles")]
-        public async Task<IActionResult> GetDetalles([FromQuery] string placeId, CancellationToken ct = default)
-        {
-            var restaurante = await _obtenerDetalles.HandleAsync(placeId, ct);
-
-            var detalles = _mapper.Map<RestauranteListadoDto>(restaurante);
-            return Ok(new { message = "Detalles actualizados", detalles });
-        }
-
+       
         [HttpGet]
-        [Authorize]
         public async Task<IActionResult> Get(
       [FromQuery] List<string>? gustos,
        [FromQuery] string? amigoUsername,
@@ -221,7 +168,7 @@ namespace GustosApp.API.Controllers
         }
 
 
-        [Authorize]
+        
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
         {
@@ -264,13 +211,13 @@ namespace GustosApp.API.Controllers
      
 
         [HttpPost]
-        [Authorize]
         [RequestSizeLimit(50 * 1024 * 1024)]
         public async Task<IActionResult> CrearSolicitud(
          [FromForm] CrearRestauranteDto dto,
              CancellationToken ct)
         {
             var uid = GetFirebaseUid();
+
 
             var usuario = await _obtenerUsuario.HandleAsync(FirebaseUid: uid, ct: ct);
             // Parsear las coordenadas manualmente con InvariantCulture
@@ -326,7 +273,7 @@ namespace GustosApp.API.Controllers
             {
                 foreach (var url in urlsSubidas)
                 {
-                    try { await _firebase.DeleteFileAsync(url); }
+                    try { await _firebaseStorage.DeleteFileAsync(url); }
                     catch { }
                 }
 
@@ -334,7 +281,7 @@ namespace GustosApp.API.Controllers
             }
         }
 
-        [Authorize]
+      
         [HttpGet("registro-datos")]
         public async Task<IActionResult> ObtenerDatosParaRegistro(CancellationToken ct)
         {
@@ -362,11 +309,10 @@ namespace GustosApp.API.Controllers
         
 
         [HttpDelete("{id:guid}")]
-        [Authorize]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var uid = User.FindFirst("user_id")?.Value ?? User.FindFirst("sub")?.Value;
-            if (string.IsNullOrWhiteSpace(uid)) return Unauthorized();
+            var uid = GetFirebaseUid();
+
 
             var esAdmin = User.IsInRole("admin") || User.Claims.Any(c => c.Type == "role" && c.Value == "admin");
 
@@ -374,43 +320,35 @@ namespace GustosApp.API.Controllers
             return ok ? NoContent() : NotFound();
         }
 
-
-        private async Task<SolicitudRestauranteImagen> SubirImagenAsync(IFormFile archivo,
-            TipoImagenSolicitud tipo, List<string> urlsSubidas)
-
-        {
-            using var stream = archivo.OpenReadStream();
-            var url = await _firebase.UploadFileAsync(stream, archivo.FileName, "solicitudes");
-            urlsSubidas.Add(url);
-            return new SolicitudRestauranteImagen
-            {
-                Tipo = tipo,
-                Url = url
-            };
-        }
-
+        
         [HttpGet("buscar")]
         public async Task<IActionResult> Buscar([FromQuery] string texto, CancellationToken ct)
         {
+            var uid = GetFirebaseUid();
+
             var restaurantes = await _buscarRestaurante.HandleAsync(texto, ct);
 
             var dto = restaurantes.Select(r => new RestauranteResponse
             {
                 Id = r.Id,
                 Nombre = r.Nombre,
+                Latitud = r.Latitud,
+                Longitud = r.Longitud,
                 Categoria = r.Categoria,
                 Rating = r.Rating,
                 Direccion = r.Direccion,
-                ImagenUrl = r.ImagenUrl
+                ImagenUrl = string.IsNullOrWhiteSpace(r.ImagenUrl) ? "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/restauranteicono.jpg?alt=media&token=cb818ad4-78b0-4fbb-a13d-46ce1aa66ac1" : r.ImagenUrl
             }).ToList();
 
             return Ok(dto);
         }
 
-        [HttpPost("{restauranteId}/favorito")]
+
+        [Authorize]
+        [HttpPost("favorito/{restauranteId}")]
         public async Task<IActionResult> AgregarFavorito(Guid restauranteId)
         {
-            var firebaseUid = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var firebaseUid = GetFirebaseUid();
             await _agregarFavoritoUseCase.HandleAsync(firebaseUid, restauranteId);
             return Ok();
         }
@@ -443,7 +381,44 @@ namespace GustosApp.API.Controllers
             return Ok(rest);
         }
 
+        [HttpGet("cercanos")]
+        public async Task<IActionResult> GetCercanos(double lat, double lng, int radio = 2000, string? types = null, string? priceLevels = null,
+                    bool? openNow = null, double? minRating = null, int minUserRatings = 0, string? serves = null,
+                    CancellationToken ct = default)
+        {
+
+
+            var result = await _buscarRestaurantes.HandleAsync(lat, lng, radio, types, priceLevels, openNow, minRating, minUserRatings, serves, ct);
+
+            var response = _mapper.Map<List<RestauranteListadoDto>>(result);
+            return Ok(new { count = response.Count, restaurantes = response });
+
+
+        }
+
+        [HttpGet("detalles")]
+        public async Task<IActionResult> GetDetalles([FromQuery] string placeId, CancellationToken ct = default)
+        {
+            var restaurante = await _obtenerDetalles.HandleAsync(placeId, ct);
+
+            var detalles = _mapper.Map<RestauranteListadoDto>(restaurante);
+            return Ok(new { message = "Detalles actualizados", detalles });
+        }
+        private async Task<SolicitudRestauranteImagen> SubirImagenAsync(IFormFile archivo,
+       TipoImagenSolicitud tipo, List<string> urlsSubidas)
+
+        {
+            using var stream = archivo.OpenReadStream();
+            var url = await _firebaseStorage.UploadFileAsync(stream, archivo.FileName, "solicitudes");
+            urlsSubidas.Add(url);
+            return new SolicitudRestauranteImagen
+            {
+                Tipo = tipo,
+                Url = url
+            };
+        }
     }
+
 
 
 }

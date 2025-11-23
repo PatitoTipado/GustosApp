@@ -19,13 +19,16 @@ namespace GustosApp.API.DTO
 
     public class RestauranteDTO
     {
+       
+
+
         public Guid Id { get; set; }
         public string PropietarioUid { get; set; } = string.Empty;
 
         public object? Horarios { get; set; }
         public DateTime CreadoUtc { get; set; }
         public DateTime ActualizadoUtc { get; set; }
-
+        public bool EsDeLaApp { get; set; }
         public string Nombre { get; set; }
         public string Direccion { get; set; }
         public double Latitud { get; set; }

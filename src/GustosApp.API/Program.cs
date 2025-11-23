@@ -1,5 +1,6 @@
 using FirebaseAdmin;
 using Google.Api;
+using FluentValidation;
 using Google.Apis.Auth.OAuth2;
 using GustosApp.API.Hubs;
 using GustosApp.API.Hubs.GustosApp.API.Hubs;
@@ -50,6 +51,10 @@ using GustosApp.Application.UseCases.VotacionUseCases;
 using GustosApp.Infraestructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestauranteUseCases;
+using GustosApp.API.Templates.Email;
+using GustosApp.Application.Validations.Restaurantes;
+using FluentValidation.AspNetCore;
+using GustosApp.API.Validations.OpinionRestaurantes;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -159,6 +164,13 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     var config = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
     return ConnectionMultiplexer.Connect(config);
 });
+
+
+builder.Services
+    .AddFluentValidationAutoValidation()
+    .AddFluentValidationClientsideAdapters();
+builder.Services.AddValidatorsFromAssemblyContaining<CrearSolicitudRestauranteValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CrearOpinionRestauranteValidator>();
 
 
 

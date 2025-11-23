@@ -26,7 +26,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
         }
 
         public async Task HandleAsync(string firebaseUid, Guid restauranteId,
-            int valoracionUsuario, string opinion, string titulo, List<FileUpload>? Imagenes, string? motivoVisita,
+            double valoracionUsuario, string opinion, string titulo, List<FileUpload>? Imagenes, string? motivoVisita,
             DateTime fechaVisita, CancellationToken cancellationToken)
         {
 
@@ -74,6 +74,9 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
 
                     opinionRestaurante.Fotos.Add(new OpinionFoto { Url = url });
                 }
+                //lugar visitado por usuario agregar
+
+
 
                 await _repoOpinionRest.CrearAsync(opinionRestaurante, cancellationToken);
             }

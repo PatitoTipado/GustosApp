@@ -454,12 +454,11 @@ app.UseRouting();
 
 app.UseMiddleware<ManejadorErrorMiddleware>();
 app.UseAuthentication();
-app.UseMiddleware<RolesMiddleware>(); 
-
-
 app.UseAuthorization();
 
 //app.UseMiddleware<BloqueoPorRolMiddleware>();
+
+
 
 
 app.MapControllers();

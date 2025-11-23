@@ -456,8 +456,6 @@ app.UseMiddleware<ManejadorErrorMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
-//app.UseMiddleware<BloqueoPorRolMiddleware>();
-
 
 app.MapControllers();
 app.MapHub<ChatHub>("/chatHub");

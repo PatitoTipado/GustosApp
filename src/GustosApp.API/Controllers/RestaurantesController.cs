@@ -393,6 +393,16 @@ namespace GustosApp.API.Controllers
 
 
 
+        [Authorize(Policy = "DuenoRestaurante")]
+        [HttpGet("mio")]
+        public async Task<IActionResult> ObtenerRestauranteIdDueñoRestaurante()
+        {
+            var firebaseuid= GetFirebaseUid();
+            var usuario= await _obtenerUsuario.HandleAsync(FirebaseUid: firebaseuid, ct: CancellationToken.None);
+            var restaurante = await _servicio.ObtenerPorPropietarioAsync(usuario.Id);
+
+            return Ok(restaurante.Id);
+        }
 
         [Authorize(Policy = "DuenoRestaurante")]
         [HttpPut("{id:guid}/imagenes/destacada")]

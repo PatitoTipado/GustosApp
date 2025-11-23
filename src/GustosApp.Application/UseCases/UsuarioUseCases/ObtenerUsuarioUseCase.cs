@@ -20,7 +20,7 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases
         /// <summary>
         /// Obtiene un usuario según FirebaseUid, username o Guid Id (según el parámetro disponible)
         /// </summary>
-        public async Task<Usuario> HandleAsync(
+        public virtual async Task<Usuario> HandleAsync(
             string? FirebaseUid = null,
             string? Username = null,
             Guid? id = null,

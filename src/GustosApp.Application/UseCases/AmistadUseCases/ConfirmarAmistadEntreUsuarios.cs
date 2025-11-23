@@ -18,7 +18,7 @@ namespace GustosApp.Application.UseCases.AmistadUseCases
             _solicitudAmistadRepository = solicitudAmistadRepository;
         }
 
-        public async Task<SolicitudAmistad> HandleAsync(Guid idActual, Guid idOtroUsuario, CancellationToken ct)
+        public virtual async Task<SolicitudAmistad> HandleAsync(Guid idActual, Guid idOtroUsuario, CancellationToken ct)
         {
             if (idActual == Guid.Empty || idOtroUsuario == Guid.Empty)
                 throw new ArgumentException("User IDs cannot be empty.");

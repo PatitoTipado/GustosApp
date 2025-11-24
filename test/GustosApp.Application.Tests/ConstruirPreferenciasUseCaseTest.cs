@@ -68,9 +68,6 @@ namespace GustosApp.Application.Tests
             };
         }
 
-        // ==========================================================
-        // 1) CUANDO HAY GRUPO → SE DEVUELVE LO DEL GRUPO
-        // ==========================================================
         [Fact]
         public async Task HandleAsync_CuandoHayGrupoId_RetornaPreferenciasDelGrupo()
         {
@@ -104,9 +101,6 @@ namespace GustosApp.Application.Tests
             Assert.Equal(new List<string> { "Hipertensión" }, result.CondicionesMedicas);
         }
 
-        // ==========================================================
-        // 2) SIN GRUPO Y SIN AMIGO → PREFERENCIAS DEL USUARIO BASE
-        // ==========================================================
         [Fact]
         public async Task HandleAsync_SinGrupoNiAmigo_DevuelvePreferenciasBase()
         {
@@ -136,9 +130,7 @@ namespace GustosApp.Application.Tests
             Assert.Equal(prefsUser.CondicionesMedicas, result.CondicionesMedicas);
         }
 
-        // ==========================================================
-        // 3) SIN GRUPO PERO CON AMIGO + AMISTAD → COMBINA LAS PREFS
-        // ==========================================================
+     
         [Fact]
         public async Task HandleAsync_ConAmigoYAmistad_CombinaPreferencias()
         {

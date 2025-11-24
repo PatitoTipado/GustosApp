@@ -64,12 +64,14 @@ namespace GustosApp.Infraestructure.Repositories
         public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
         {
             var s = await _context.SolicitudesAmistad.FindAsync(new object[] { id }, cancellationToken);
-            if (s != null)
-            {
-                _context.SolicitudesAmistad.Remove(s);
-                await _context.SaveChangesAsync(cancellationToken);
-            }
+
+            if (s == null)
+                throw new InvalidOperationException($"No se encontró la solicitud con Id {id} para eliminar.");
+
+            _context.SolicitudesAmistad.Remove(s);
+            await _context.SaveChangesAsync(cancellationToken);
         }
+
         public async Task<SolicitudAmistad?> GetAmistadEntreUsuariosAsync(Guid usuarioAId, Guid usuarioBId, CancellationToken ct = default)
         {
             return await _context.SolicitudesAmistad

@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GustosApp.Application.UseCases
+namespace GustosApp.Application.UseCases.RestauranteUseCases
 {
     public class RecomendacionIAUseCase
     {

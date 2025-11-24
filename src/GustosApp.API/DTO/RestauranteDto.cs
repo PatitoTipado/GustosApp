@@ -225,6 +225,9 @@ namespace GustosApp.API.DTO
         // ==================
         public List<OpinionRestauranteDto> ReviewsLocales { get; set; } = new();
         public List<OpinionRestauranteDto> ReviewsGoogle { get; set; } = new();
+
+        public bool esFavorito { get; set; }
+
     }
     public class RestauranteMenuDto
     {
@@ -268,7 +271,52 @@ namespace GustosApp.API.DTO
         public decimal Monto { get; set; }
     }
 
+    public class RestauranteResponse
+    {
+        public Guid Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string Categoria { get; set; } = string.Empty;
+        public double? Rating { get; set; }
+        public string Direccion { get; set; } = string.Empty;
+        public string ImagenUrl { get; set; } = string.Empty;
+        public double Latitud { get; set; }
+        public double Longitud { get; set; }
+    }
+    public class RestauranteMetricasDashboardResponse
+    {
+        public Guid RestauranteId { get; set; }
 
+        public int TotalTop3Individual { get; set; }
+
+        public int TotalTop3Grupo { get; set; }
+
+        public int TotalVisitasPerfil { get; set; }
+
+
+        public int TotalFavoritosHistorico { get; set; }
+
+        public int TotalFavoritosActual { get; set; }
+    }
+
+    public class BuscarRestaurantesRequest
+    {
+        public string Texto { get; set; } = string.Empty;
+    }
+
+    public class RecomendacionResponse
+    {
+        public Guid RestauranteId { get; set; }
+        public string Explicacion { get; set; }
+    }
+
+    public class RestauranteFavoritoDto
+    {
+        public Guid RestauranteId { get; set; }
+        public string Nombre { get; set; } = "";
+        public string LogoUrl { get; set; } = "";
+        public double Rating { get; set; }
+        public bool EsFavorito { get; set; } = true; 
+    }
 
 }
 

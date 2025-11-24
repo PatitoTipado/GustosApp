@@ -12,6 +12,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
 {
     public class AprobarSolicitudRestauranteUseCase
     {
+        private readonly IHttpDownloader _downloader;
         private readonly ISolicitudRestauranteRepository _solicitudes;
         private readonly IRestauranteRepository _restaurantes;
         private readonly IUsuarioRepository _usuarios;
@@ -30,7 +31,8 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
              IOcrService ocr, IMenuParser menuParser, IRestriccionRepository restricciones,
             IGustoRepository gustos, IRestauranteMenuRepository menuRepo, 
             IFirebaseAuthService firebase, IEmailService email, 
-            IEmailTemplateService templates
+            IEmailTemplateService templates, IHttpDownloader downloader
+
             )
         {
             _solicitudes = solicitudes;
@@ -44,6 +46,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
             _firebase = firebase;
             _email = email;
             _templates = templates;
+            _downloader = downloader;
         }
 
 
@@ -112,7 +115,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
             restaurante.ImagenUrl = solicitud.Imagenes.FirstOrDefault(i => i.Tipo == TipoImagenSolicitud.Destacada)?.Url;
             restaurante.LogoUrl = solicitud.Imagenes.FirstOrDefault(i => i.Tipo == TipoImagenSolicitud.Logo)?.Url;
 
-            // Imágenes múltiples
+            // Img multiples
             restaurante.Imagenes = solicitud.Imagenes
                 .Where(i => i.Tipo == TipoImagenSolicitud.Interior || i.Tipo == TipoImagenSolicitud.Comida)
                 .Select(i => new RestauranteImagen
@@ -147,13 +150,16 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
                 Console.WriteLine($"IMG | Tipo={img.Tipo} | Url={img.Url}");
             }
 
-            if (imgMenu == null)
-                return;
+            if (imgMenu == null) { 
+                restaurante.MenuProcesado = false;
+            restaurante.MenuError = "Menú vacío";
+            return;
 
+        }
             try
             {
-                using var http = new HttpClient();
-                var bytes = await http.GetByteArrayAsync(imgMenu.Url, ct);
+                var bytes = await _downloader.DownloadAsync(imgMenu.Url, ct);
+
                 using var stream = new MemoryStream(bytes);
 
                 var texto = await _ocr.ReconocerTextoAsync(new[] { stream }, "spa+eng", ct);

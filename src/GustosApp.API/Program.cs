@@ -40,7 +40,6 @@ using GustosApp.Application.Services;
 using GustosApp.Application.UseCases.GrupoUseCases;
 using GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases;
 using GustosApp.Application.UseCases.AmistadUseCases;
-using GustosApp.Application.UseCases.RestauranteUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases;
 using GustosApp.Application.UseCases.GrupoUseCases.ChatGrupoUseCases;
 using GustosApp.Application.UseCases.NotificacionUseCases;
@@ -55,6 +54,7 @@ using GustosApp.API.Templates.Email;
 using GustosApp.Application.Validations.Restaurantes;
 using FluentValidation.AspNetCore;
 using GustosApp.API.Validations.OpinionRestaurantes;
+using GustosApp.Application.UseCases.RestauranteUseCases.OpinionesRestaurantes;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -134,16 +134,6 @@ builder.Services.AddAuthorization(options =>
 });
 
 
-
-
-// Almacenamiento de archivos local (wwwroot/uploads)
-builder.Services.AddSingleton<IAlmacenamientoArchivos>(sp =>
-{
-    var env = sp.GetRequiredService<IWebHostEnvironment>();
-    var uploadsRoot = Path.Combine(env.ContentRootPath, "wwwroot", "uploads");
-    return new LocalFileStorage(uploadsRoot);
-});
-
 // OCR + Parser
 builder.Services.AddSingleton<IOcrService>(sp =>
 {
@@ -215,6 +205,8 @@ builder.Services.AddDbContext<GustosDbContext>(options =>
 // =====================
 //   Repositorios
 // =====================
+builder.Services.AddScoped<IHttpDownloader, HttpDownloader>();
+
 builder.Services.AddScoped<IAuthorizationHandler, RegistroIncompletoHandler>();
 builder.Services.AddScoped<ICacheService, RedisCacheService>();
 builder.Services.AddScoped<IFileStorageService, FirebaseStorageService>();
@@ -233,13 +225,13 @@ builder.Services.AddScoped<ISolicitudAmistadRealtimeService, SignalRSolicitudAmi
 builder.Services.AddScoped<IUsuariosActivosService, UsuariosActivosService>();
 builder.Services.AddScoped<IOpinionRestauranteRepository, OpinionRestauranteRepositoryEF>();
 builder.Services.AddScoped<IRestauranteEstadisticasRepository, RestauranteEstadisticasRepositoryEF>();
-builder.Services.AddScoped<ActualizarValoracionRestauranteUseCase>();
 builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
 builder.Services.AddScoped<IUsuarioRestauranteFavoritoRepository, UsuarioRestauranteFavoritoEF>();
 builder.Services.AddScoped<ISolicitudRestauranteRepository, SolicitudRestauranteRepositoryEF>();
 builder.Services.AddScoped<IRestauranteMenuRepository, RestauranteMenuRepositoryEF>();
 builder.Services.AddScoped<IFirebaseAuthService, FirebaseAuthService>();
 builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
+builder.Services.AddScoped<ISolicitudAmistadRepository, SolicitudAmistadRepositoryEF>();
 
 // Votaciones
 builder.Services.AddScoped<IVotacionRepository, VotacionRepository>();
@@ -278,8 +270,6 @@ builder.Services.AddScoped<GuardarRestriccionesUseCase>();
 builder.Services.AddScoped<ObtenerGustosFiltradosUseCase>();
 builder.Services.AddScoped<ObtenerResumenRegistroUseCase>();
 builder.Services.AddScoped<FinalizarRegistroUseCase>();
-builder.Services.AddScoped<BuscarRestaurantesCercanosUseCase>();
-builder.Services.AddScoped<ActualizarDetallesRestauranteUseCase>();
 builder.Services.AddScoped<RemoverMiembroGrupoUseCase>();
 builder.Services.AddScoped<SugerirGustosSobreUnRadioUseCase>();
 builder.Services.AddScoped<CrearNotificacionUseCase>();
@@ -290,16 +280,15 @@ builder.Services.AddScoped<ConstruirPreferenciasUseCase>();
 builder.Services.AddScoped<ActualizarValoracionRestauranteUseCase>();
 builder.Services.AddScoped<CrearSolicitudRestauranteUseCase>();
 builder.Services.AddScoped<AprobarSolicitudRestauranteUseCase>();
-builder.Services.AddScoped<ObtenerSolicitudesRestaurantesPendientesUseCase>();
 builder.Services.AddScoped<ObtenerSolicitudRestaurantesPorIdUseCase>();
 builder.Services.AddScoped<ObtenerDatosRegistroRestauranteUseCase>();
 builder.Services.AddScoped<ObtenerSolicitudesPorTipoUseCase>();
 builder.Services.AddScoped<RechazarSolicitudRestauranteUseCase>();
-
+builder.Services.AddScoped<ActualizarValoracionRestauranteUseCase>();
 builder.Services.AddScoped<RecomendacionIAUseCase>();
-
+ builder.Services.AddScoped<ActualizarPerfilUsuarioUseCase>();
 // UseCases y repositorios de amistad
-builder.Services.AddScoped<ISolicitudAmistadRepository, SolicitudAmistadRepositoryEF>();
+
 builder.Services.AddScoped<EnviarSolicitudAmistadUseCase>();
 builder.Services.AddScoped<ObtenerSolicitudesPendientesUseCase>();
 builder.Services.AddScoped<AceptarSolicitudUseCase>();
@@ -333,8 +322,8 @@ builder.Services.AddScoped<RegistrarTop3GrupoRestaurantesUseCase>();
 builder.Services.AddScoped<RegistrarVisitaPerfilRestauranteUseCase>();
 builder.Services.AddScoped<ObtenerMetricasRestauranteUseCase>();
 builder.Services.AddScoped<ActualizarRestauranteDashboardUseCase>();
-
-
+builder.Services.AddScoped<ObtenerRestaurantesFavoritosUseCase>();
+builder.Services.AddScoped<ObtenerRestauranteDetalleUseCase>();
 
 builder.Services.AddHttpClient<IRecomendacionAIService, RecomendacionAIService>();
 builder.Services.Configure<GeminiSettings>(builder.Configuration.GetSection("GeminiSettings"));

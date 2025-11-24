@@ -2,7 +2,7 @@ using GustosApp.API.DTO;
 using GustosApp.Application.DTO;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.Services;
-using GustosApp.Application.UseCases; // tu UseCase nuevo o existente
+using GustosApp.Application.UseCases.RestauranteUseCases;
 using GustosApp.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

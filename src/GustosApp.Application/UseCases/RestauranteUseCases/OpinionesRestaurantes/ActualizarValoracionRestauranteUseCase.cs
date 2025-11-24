@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GustosApp.Application.UseCases.RestauranteUseCases
+namespace GustosApp.Application.UseCases.RestauranteUseCases.OpinionesRestaurantes
 {
     public class ActualizarValoracionRestauranteUseCase
     {

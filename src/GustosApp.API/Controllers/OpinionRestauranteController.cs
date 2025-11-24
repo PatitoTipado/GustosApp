@@ -1,11 +1,10 @@
 ﻿using AutoMapper;
 using GustosApp.API.DTO;
 using GustosApp.Application.Interfaces;
-using GustosApp.Application.UseCases.RestauranteUseCases;
+using GustosApp.Application.UseCases.RestauranteUseCases.OpinionesRestaurantes;
 using GustosApp.Domain.Common;
 using GustosApp.Domain.Model;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading;
 
 namespace GustosApp.API.Controllers
 {

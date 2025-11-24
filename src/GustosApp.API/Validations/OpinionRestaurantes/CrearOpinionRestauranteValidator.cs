@@ -13,7 +13,7 @@ namespace GustosApp.API.Validations.OpinionRestaurantes
         {
             // VALORACIÓN
             RuleFor(x => x.Valoracion)
-                .InclusiveBetween(1, 5)
+                .InclusiveBetween(0.5, 5.0)
                 .WithMessage("La valoración debe estar entre 1 y 5.");
 
             // OPINIÓN (OBLIGATORIA)
@@ -40,8 +40,8 @@ namespace GustosApp.API.Validations.OpinionRestaurantes
                 .MinimumLength(3).WithMessage("El motivo debe tener al menos 3 caracteres.");
 
             RuleFor(x => x.Imagenes)
-             .Must(list => list != null && list.Count >= 1 && list.Count <= 5)
-             .WithMessage("Debe subir entre 1 y 5 imágenes.");
+             .Must(list => list != null && list.Count >= 1 && list.Count <= 3)
+             .WithMessage("Debe subir entre 1 y 3 imágenes.");
 
             RuleForEach(x => x.Imagenes)
                 .Must(f => f != null && f.Length <= MaxSize)

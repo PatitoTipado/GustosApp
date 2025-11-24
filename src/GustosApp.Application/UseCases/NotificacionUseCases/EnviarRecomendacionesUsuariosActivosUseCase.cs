@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
-using GustosApp.Application.DTO.PlacesV1;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases.RestauranteUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases;

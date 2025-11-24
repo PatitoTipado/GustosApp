@@ -268,8 +268,6 @@ builder.Services.AddScoped<GuardarRestriccionesUseCase>();
 builder.Services.AddScoped<ObtenerGustosFiltradosUseCase>();
 builder.Services.AddScoped<ObtenerResumenRegistroUseCase>();
 builder.Services.AddScoped<FinalizarRegistroUseCase>();
-builder.Services.AddScoped<BuscarRestaurantesCercanosUseCase>();
-builder.Services.AddScoped<ActualizarDetallesRestauranteUseCase>();
 builder.Services.AddScoped<RemoverMiembroGrupoUseCase>();
 builder.Services.AddScoped<SugerirGustosSobreUnRadioUseCase>();
 builder.Services.AddScoped<CrearNotificacionUseCase>();

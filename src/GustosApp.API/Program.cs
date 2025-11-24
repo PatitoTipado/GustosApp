@@ -205,6 +205,8 @@ builder.Services.AddDbContext<GustosDbContext>(options =>
 // =====================
 //   Repositorios
 // =====================
+builder.Services.AddScoped<IHttpDownloader, HttpDownloader>();
+
 builder.Services.AddScoped<IAuthorizationHandler, RegistroIncompletoHandler>();
 builder.Services.AddScoped<ICacheService, RedisCacheService>();
 builder.Services.AddScoped<IFileStorageService, FirebaseStorageService>();

@@ -26,7 +26,7 @@ namespace GustosApp.Application.Tests
         private readonly Mock<IFirebaseAuthService> _firebase;
         private readonly Mock<IEmailService> _email;
         private readonly Mock<IEmailTemplateService> _templates;
-
+        private readonly Mock<IHttpDownloader> _downloader;
         private readonly AprobarSolicitudRestauranteUseCase _useCase;
 
         public AprobarSolicitudRestauranteUseCaseTests()
@@ -42,6 +42,7 @@ namespace GustosApp.Application.Tests
             _firebase = new Mock<IFirebaseAuthService>();
             _email = new Mock<IEmailService>();
             _templates = new Mock<IEmailTemplateService>();
+            _downloader = new Mock<IHttpDownloader>();
 
             _useCase = new AprobarSolicitudRestauranteUseCase(
                 _solicitudes.Object,
@@ -54,7 +55,9 @@ namespace GustosApp.Application.Tests
                 _menuRepo.Object,
                 _firebase.Object,
                 _email.Object,
-                _templates.Object
+                _templates.Object,
+                _downloader.Object
+
             );
         }
         private Usuario FakeUsuario(Guid id)
@@ -121,9 +124,8 @@ namespace GustosApp.Application.Tests
             var usuario = FakeUsuario(Guid.NewGuid());
             var solicitud = FakeSolicitudConMenu(idSolicitud, usuario, true);
 
-            // FIX: evitar 404 → usamos un endpoint que siempre devuelve bytes reales
-            solicitud.Imagenes.First(i => i.Tipo == TipoImagenSolicitud.Menu).Url =
-                "https://httpbin.org/image/jpeg";
+            // Ahora no importa la URL, nunca se usa realmente
+            solicitud.Imagenes.First(i => i.Tipo == TipoImagenSolicitud.Menu).Url = "fake://menu";
 
             _solicitudes.Setup(r => r.GetByIdAsync(idSolicitud, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(solicitud);
@@ -139,15 +141,19 @@ namespace GustosApp.Application.Tests
             _restaurantes.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
-            // OCR → texto válido
+            // === ✔ MOCK HTTP COMPLETAMENTE ===
+            _downloader.Setup(d => d.DownloadAsync("fake://menu", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new byte[] { 1, 2, 3 }); // cualquier byte array
+
+            // OCR válido
             _ocr.Setup(o => o.ReconocerTextoAsync(It.IsAny<IEnumerable<Stream>>(), "spa+eng", It.IsAny<CancellationToken>()))
                 .ReturnsAsync("texto del menú");
 
-            // Parser → JSON
+            // Parser válido
             _menuParser.Setup(p => p.ParsearAsync("texto del menú", "ARS", It.IsAny<CancellationToken>()))
                 .ReturnsAsync("{\"parsed\":true}");
 
-            // No existe menú previo → se crea
+            // No existe menú previo
             _menuRepo.Setup(m => m.GetByRestauranteIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync((RestauranteMenu?)null);
 
@@ -161,9 +167,10 @@ namespace GustosApp.Application.Tests
             _firebase.Setup(f => f.SetUserRoleAsync(usuario.FirebaseUid, RolUsuario.DuenoRestaurante.ToString()))
                 .Returns(Task.CompletedTask);
 
+            // === ACT ===
             var res = await _useCase.HandleAsync(idSolicitud, CancellationToken.None);
 
-            // ASSERT
+            // === ASSERT ===
             res.MenuProcesado.Should().BeTrue();
             res.MenuError.Should().BeNull();
 
@@ -172,37 +179,36 @@ namespace GustosApp.Application.Tests
         }
 
         [Fact]
-        public async Task HandleAsync_OcrTextoVacio_DeberiaMarcarMenuVacio()
+        public async Task HandleAsync_OcrTextoVacio_DeberiaMarcarMenuVacio_YNoCrearMenu()
         {
             var idSolicitud = Guid.NewGuid();
             var usuario = FakeUsuario(Guid.NewGuid());
             var solicitud = FakeSolicitudConMenu(idSolicitud, usuario, true);
 
-            solicitud.Imagenes.First(i => i.Tipo == TipoImagenSolicitud.Menu).Url =
-                "https://httpbin.org/image/jpeg";
+            // No importa URL real, no se usa
+            solicitud.Imagenes.First(i => i.Tipo == TipoImagenSolicitud.Menu).Url = "fake://menu";
 
             _solicitudes.Setup(r => r.GetByIdAsync(idSolicitud, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(solicitud);
 
             SetupGustosYRestricciones(solicitud);
 
-            Restaurante? rest = null;
+          
+            _downloader.Setup(d => d.DownloadAsync("fake://menu", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new byte[] { 1, 2, 3 });
 
-            _restaurantes.Setup(r => r.AddAsync(It.IsAny<Restaurante>(), It.IsAny<CancellationToken>()))
-                .Callback<Restaurante, CancellationToken>((x, _) => rest = x)
-                .Returns(Task.CompletedTask);
+         
+            _ocr.Setup(o => o.ReconocerTextoAsync(It.IsAny<IEnumerable<Stream>>(), "spa+eng", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(string.Empty);
 
-            _restaurantes.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
-                .Returns(Task.CompletedTask);
-
-            _ocr.Setup(o =>
-                o.ReconocerTextoAsync(It.IsAny<IEnumerable<Stream>>(), "spa+eng", It.IsAny<CancellationToken>()))
-                .ReturnsAsync("");
+       
+            _menuRepo.Setup(m => m.GetByRestauranteIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((RestauranteMenu?)null);
 
             _templates.Setup(t => t.Render("SolicitudAprobada.html", It.IsAny<Dictionary<string, string>>()))
                 .Returns("HTML");
 
-            _email.Setup(e => e.EnviarEmailAsync(usuario.Email, "Tu solicitud fue aprobada", 
+            _email.Setup(e => e.EnviarEmailAsync(It.IsAny<string>(), "Tu solicitud fue aprobada",
                 "HTML", CancellationToken.None))
                 .Returns(Task.CompletedTask);
 
@@ -211,9 +217,11 @@ namespace GustosApp.Application.Tests
 
             var result = await _useCase.HandleAsync(idSolicitud, CancellationToken.None);
 
+            // === ASSERT ===
             result.MenuProcesado.Should().BeFalse();
             result.MenuError.Should().Be("Menú vacío");
 
+            // NO debe crearse ningún menú
             _menuRepo.Verify(m => m.AddAsync(It.IsAny<RestauranteMenu>(), It.IsAny<CancellationToken>()), Times.Never);
             _menuRepo.Verify(m => m.UpdateAsync(It.IsAny<RestauranteMenu>(), It.IsAny<CancellationToken>()), Times.Never);
         }

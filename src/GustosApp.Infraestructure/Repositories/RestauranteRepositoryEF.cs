@@ -195,13 +195,22 @@ namespace GustosApp.Infraestructure.Repositories
                   .FirstOrDefaultAsync(r => r.Id == id, ct);
           }
 
-       /* public async Task<Restaurante?> GetByIdAsync(Guid id, CancellationToken ct)
+        public Task<List<Restaurante>> obtenerRestauranteConResenias(List<Guid> ids)
         {
-            return await _db.Restaurantes.FirstOrDefaultAsync(r => r.Id == id);
+            return _db.Restaurantes
+                .Where(r => ids.Contains(r.Id))
+                .Include(r => r.Reviews) // si se llama distinto, decímelo
+                .ToListAsync();
+        }
 
-        }*/
 
-      
+        /* public async Task<Restaurante?> GetByIdAsync(Guid id, CancellationToken ct)
+         {
+             return await _db.Restaurantes.FirstOrDefaultAsync(r => r.Id == id);
+
+         }*/
+
+
     }
 }
 

@@ -41,8 +41,7 @@ namespace GustosApp.API.Controllers
         private readonly IServicioRestaurantes _servicio;
         private readonly ObtenerUsuarioUseCase _obtenerUsuario;
         private readonly SugerirGustosSobreUnRadioUseCase _sugerirGustos;
-        private readonly BuscarRestaurantesCercanosUseCase _buscarRestaurantes;
-        private readonly ActualizarDetallesRestauranteUseCase _obtenerDetalles;
+    
         private readonly ConstruirPreferenciasUseCase _construirPreferencias;
         private readonly CrearSolicitudRestauranteUseCase _solicitudesRestaurantes;
         private readonly BuscarRestaurantesUseCase _buscarRestaurante;
@@ -67,9 +66,7 @@ namespace GustosApp.API.Controllers
      IServicioRestaurantes servicio,
       ObtenerUsuarioUseCase obtenerUsuario,
      SugerirGustosSobreUnRadioUseCase sugerirGustos,
-     BuscarRestaurantesCercanosUseCase buscarRestaurantes,
      ConstruirPreferenciasUseCase construirPreferencias,
-     ActualizarDetallesRestauranteUseCase obtenerDetalles,
     IFileStorageService firebaseStorage,
       CrearSolicitudRestauranteUseCase solicitudesRestaurantes,
       ObtenerDatosRegistroRestauranteUseCase getDatosRegistroRestaurante,
@@ -84,11 +81,9 @@ namespace GustosApp.API.Controllers
             _servicio = servicio;
             _obtenerUsuario = obtenerUsuario;
             _sugerirGustos = sugerirGustos;
-            _buscarRestaurantes = buscarRestaurantes;
             _construirPreferencias = construirPreferencias;
             _solicitudesRestaurantes = solicitudesRestaurantes;
             _getDatosRegistroRestaurante = getDatosRegistroRestaurante;
-            _obtenerDetalles = obtenerDetalles;
             _firebaseStorage = firebaseStorage;
             _cache = cache;
             _mapper = mapper;
@@ -749,29 +744,6 @@ namespace GustosApp.API.Controllers
             return Ok(rest);
         }
 
-        [HttpGet("cercanos")]
-        public async Task<IActionResult> GetCercanos(double lat, double lng, int radio = 2000, string? types = null, string? priceLevels = null,
-                    bool? openNow = null, double? minRating = null, int minUserRatings = 0, string? serves = null,
-                    CancellationToken ct = default)
-        {
-
-
-            var result = await _buscarRestaurantes.HandleAsync(lat, lng, radio, types, priceLevels, openNow, minRating, minUserRatings, serves, ct);
-
-            var response = _mapper.Map<List<RestauranteListadoDto>>(result);
-            return Ok(new { count = response.Count, restaurantes = response });
-
-
-        }
-
-        [HttpGet("detalles")]
-        public async Task<IActionResult> GetDetalles([FromQuery] string placeId, CancellationToken ct = default)
-        {
-            var restaurante = await _obtenerDetalles.HandleAsync(placeId, ct);
-
-            var detalles = _mapper.Map<RestauranteListadoDto>(restaurante);
-            return Ok(new { message = "Detalles actualizados", detalles });
-        }
         private async Task<SolicitudRestauranteImagen> SubirImagenAsync(IFormFile archivo,
        TipoImagenSolicitud tipo, List<string> urlsSubidas)
 

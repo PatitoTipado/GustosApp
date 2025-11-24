@@ -9,6 +9,9 @@ namespace GustosApp.Application.Interfaces
     public interface IFirebaseAuthService
     {
         Task SetUserRoleAsync(string firebaseUid, string rol);
+
+        Task UpdateUserEmailAsync(string firebaseUid, string Email);
     }
+
 
 }

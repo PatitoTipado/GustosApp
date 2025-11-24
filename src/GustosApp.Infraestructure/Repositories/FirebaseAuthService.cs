@@ -20,6 +20,18 @@ namespace GustosApp.Infraestructure.Repositories
                 { "rol", rol }
                 });
         }
+
+        public async Task UpdateUserEmailAsync(string firebaseUid, string newEmail)
+        {
+            var args = new UserRecordArgs()
+            {
+                Uid = firebaseUid,
+                Email = newEmail
+            };
+
+            await FirebaseAuth.DefaultInstance.UpdateUserAsync(args);
+        }
+
     }
 
 }

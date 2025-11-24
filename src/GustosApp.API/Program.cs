@@ -229,6 +229,7 @@ builder.Services.AddScoped<ISolicitudRestauranteRepository, SolicitudRestaurante
 builder.Services.AddScoped<IRestauranteMenuRepository, RestauranteMenuRepositoryEF>();
 builder.Services.AddScoped<IFirebaseAuthService, FirebaseAuthService>();
 builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
+builder.Services.AddScoped<ISolicitudAmistadRepository, SolicitudAmistadRepositoryEF>();
 
 // Votaciones
 builder.Services.AddScoped<IVotacionRepository, VotacionRepository>();
@@ -285,9 +286,9 @@ builder.Services.AddScoped<ObtenerSolicitudesPorTipoUseCase>();
 builder.Services.AddScoped<RechazarSolicitudRestauranteUseCase>();
 builder.Services.AddScoped<ActualizarValoracionRestauranteUseCase>();
 builder.Services.AddScoped<RecomendacionIAUseCase>();
-
+ builder.Services.AddScoped<ActualizarPerfilUsuarioUseCase>();
 // UseCases y repositorios de amistad
-builder.Services.AddScoped<ISolicitudAmistadRepository, SolicitudAmistadRepositoryEF>();
+
 builder.Services.AddScoped<EnviarSolicitudAmistadUseCase>();
 builder.Services.AddScoped<ObtenerSolicitudesPendientesUseCase>();
 builder.Services.AddScoped<AceptarSolicitudUseCase>();
@@ -321,7 +322,7 @@ builder.Services.AddScoped<RegistrarTop3GrupoRestaurantesUseCase>();
 builder.Services.AddScoped<RegistrarVisitaPerfilRestauranteUseCase>();
 builder.Services.AddScoped<ObtenerMetricasRestauranteUseCase>();
 builder.Services.AddScoped<ActualizarRestauranteDashboardUseCase>();
-
+builder.Services.AddScoped<ObtenerRestaurantesFavoritosUseCase>();
 
 
 builder.Services.AddHttpClient<IRecomendacionAIService, RecomendacionAIService>();

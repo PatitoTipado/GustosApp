@@ -5,8 +5,20 @@
       <DataCollector friendlyName="XPlat Code Coverage">
         <Configuration>
           <Format>cobertura</Format>
-          <Include>[GustosApp.*]*</Include>
-          <Exclude>[*.Tests]*</Exclude>
+
+          <!-- Incluir solo Application -->
+          <Include>
+            [GustosApp.Application]* 
+          </Include>
+
+          <!-- Excluir everything else -->
+          <Exclude>
+            [GustosApp.API]* 
+            [GustosApp.Infraestructura]*
+            [GustosApp.Domain]*
+            [*.Tests]*
+          </Exclude>
+
           <IncludeTestAssembly>true</IncludeTestAssembly>
           <UseSourceLink>true</UseSourceLink>
         </Configuration>

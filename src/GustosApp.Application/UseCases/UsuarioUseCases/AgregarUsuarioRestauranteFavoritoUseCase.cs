@@ -24,17 +24,17 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases
         public async Task HandleAsync(string firebaseUid, Guid restauranteId, CancellationToken ct = default)
         {
             var usuario = await _repositorioUsuario.GetByFirebaseUidAsync(firebaseUid, ct);
-            if(usuario == null)
+            if (usuario == null)
                 throw new Exception("Usuario no encontrado");
 
             var cantidadRestauranteFavorito = await _repositorioFavorito.CountByUsuarioAsync(usuario.Id, ct);
 
-            if(usuario.Plan == PlanUsuario.Free && cantidadRestauranteFavorito >= 3)
+            if (usuario.Plan == PlanUsuario.Free && cantidadRestauranteFavorito >= 3)
             {
                 throw new Exception("Has alcanzado el límite de favoritos. Suscribite para agregar más.");
             }
 
-            var existe = await _repositorioFavorito.ExistsAsync(usuario.Id,restauranteId, ct);
+            var existe = await _repositorioFavorito.ExistsAsync(usuario.Id, restauranteId, ct);
             if (existe)
             {
                 throw new Exception("Este restaurante ya está en tus favoritos.");
@@ -56,10 +56,13 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases
                 throw new Exception("Usuario no encontrado");
 
             var existe = await _repositorioFavorito.ExistsAsync(usuario.Id, restauranteId, ct);
+
+            // Si no existe, simplemente retornar sin hacer nada (idempotente)
             if (!existe)
             {
-                throw new Exception("Este restaurante no está en tus favoritos.");
+                return; // Ya no está en favoritos, operación exitosa
             }
+
             await _repositorioFavorito.EliminarAsync(usuario.Id, restauranteId, ct);
         }
     }

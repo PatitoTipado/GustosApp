@@ -323,7 +323,7 @@ builder.Services.AddScoped<RegistrarVisitaPerfilRestauranteUseCase>();
 builder.Services.AddScoped<ObtenerMetricasRestauranteUseCase>();
 builder.Services.AddScoped<ActualizarRestauranteDashboardUseCase>();
 builder.Services.AddScoped<ObtenerRestaurantesFavoritosUseCase>();
-
+builder.Services.AddScoped<ObtenerRestauranteDetalleUseCase>();
 
 builder.Services.AddHttpClient<IRecomendacionAIService, RecomendacionAIService>();
 builder.Services.Configure<GeminiSettings>(builder.Configuration.GetSection("GeminiSettings"));

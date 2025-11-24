@@ -60,7 +60,7 @@ namespace GustosApp.API.Controllers
         private readonly ObtenerMetricasRestauranteUseCase _obtenerMetricasRestauranteUseCase;
         private readonly ActualizarRestauranteDashboardUseCase _actualizarRestauranteDashboardUseCase;
 
-
+        private readonly ObtenerRestauranteDetalleUseCase _obtenerRestauranteDetalle;
 
 
         public RestaurantesController(
@@ -79,6 +79,7 @@ namespace GustosApp.API.Controllers
     RegistrarVisitaPerfilRestauranteUseCase registrarVisitaPerfilUseCase,
     ObtenerMetricasRestauranteUseCase obtenerMetricasRestauranteUseCase,
     ActualizarRestauranteDashboardUseCase actualizarRestauranteDashboardUseCase,
+    ObtenerRestauranteDetalleUseCase obtenerRestauranteDetalle,
     GustosApp.Infraestructure.GustosDbContext db, IFileStorageService firebase)
         {
             _servicio = servicio;
@@ -99,6 +100,7 @@ namespace GustosApp.API.Controllers
             _obtenerMetricasRestauranteUseCase = obtenerMetricasRestauranteUseCase;
             _actualizarRestauranteDashboardUseCase = actualizarRestauranteDashboardUseCase;
             _firebase = firebase;
+            _obtenerRestauranteDetalle = obtenerRestauranteDetalle;
             _db = db;
 
         }
@@ -181,41 +183,16 @@ namespace GustosApp.API.Controllers
         }
 
 
-        
+
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
         {
             var uid = GetFirebaseUid();
 
+            var result = await _obtenerRestauranteDetalle.HandleAsync(id, uid, ct);
 
-            var restaurante = await _servicio.ObtenerAsync(id);
-
-            if (restaurante == null)
-                return NotFound("Restaurante no encontrado");
-
-            // 2) Si es GOOGLE y NO tiene reviews locales → Fetch Google Places
-            if (!string.IsNullOrWhiteSpace(restaurante.PlaceId) &&
-                (restaurante.Reviews == null || !restaurante.Reviews.Any()))
-            {
-                var actualizado = await _servicio.ObtenerResenasDesdeGooglePlaces(restaurante.PlaceId, ct);
-                if (actualizado != null)
-                    restaurante = actualizado;
-            }
-
-
-            restaurante.Reviews = restaurante.Reviews
-                .OrderBy(r => !r.EsImportada)
-                .ThenByDescending(r => r.FechaCreacion)
-                .ToList();
-
-            //registrar visita al perfil
-            if (!string.IsNullOrEmpty(uid))
-            {
-                await _registrarVisitaPerfilUseCase.HandleAsync(id, ct);
-            }
-
-            var dto = _mapper.Map<RestauranteDetalleDto>(restaurante);
-
+            var dto = _mapper.Map<RestauranteDetalleDto>(result.Restaurante);
+            dto.esFavorito = result.EsFavorito;
 
             return Ok(dto);
         }
@@ -721,12 +698,14 @@ namespace GustosApp.API.Controllers
             return Ok();
         }
 
-        [HttpDelete("{restauranteId}/favorito")]
+        [HttpDelete("favorito/{restauranteId}")]
         public async Task<IActionResult> EliminarFavorito(Guid restauranteId)
         {
-           var firebaseUid = GetFirebaseUid();
-            await _agregarFavoritoUseCase.HandleAsyncDelete(firebaseUid, restauranteId);
-            return Ok();
+            var firebaseUid = GetFirebaseUid();
+                await _agregarFavoritoUseCase.HandleAsyncDelete(firebaseUid, restauranteId);
+
+                return Ok();
+
         }
 
         [HttpGet("{id:guid}/metricas")]

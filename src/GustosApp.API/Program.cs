@@ -423,17 +423,9 @@ builder.Services.AddCors(options =>
             policy.WithOrigins(allowedOrigins)
                   .AllowCredentials()
                   .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .SetIsOriginAllowed(_ => true); // Permitir cualquier origen en desarrollo
+                  .AllowAnyMethod();
         });
 
-    // Política más permisiva para desarrollo
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
 });
 
 /* (Opcional) Exigir role=negocio para crear restaurantes
@@ -457,8 +449,6 @@ if (app.Environment.IsDevelopment())
 
 // CORS debe ir antes de UseRouting para SignalR
 app.UseCors(MyAllowSpecificOrigins);
-
-app.UseHttpsRedirection();
 
 app.UseStaticFiles(); // Habilitar archivos estáticos
 

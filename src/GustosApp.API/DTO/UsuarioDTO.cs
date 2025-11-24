@@ -110,5 +110,18 @@ namespace GustosApp.API.DTO
 
     }
 
+    public class EditarDatosUsuarioDTO
+    {
+        public string? Email { get; set; }
+        public string? Nombre { get; set; }
+        public string? Apellido { get; set; }
+
+        public IFormFile? FotoPerfil { get; set; }
+
+        public bool EsPrivado { get; set; }
+    }
+
+
+
 }
 

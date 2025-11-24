@@ -36,19 +36,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using StackExchange.Redis;
-using GustosApp.Application.Services;
-using GustosApp.Application.UseCases.GrupoUseCases;
-using GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases;
-using GustosApp.Application.UseCases.AmistadUseCases;
-using GustosApp.Application.UseCases.UsuarioUseCases;
-using GustosApp.Application.UseCases.GrupoUseCases.ChatGrupoUseCases;
-using GustosApp.Application.UseCases.NotificacionUseCases;
-using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
-using GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCases;
-using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
 using GustosApp.Application.UseCases.VotacionUseCases;
-using GustosApp.Infraestructure.Services;
-using Microsoft.AspNetCore.Authorization;
 using GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestauranteUseCases;
 using GustosApp.API.Templates.Email;
 using GustosApp.Application.Validations.Restaurantes;
@@ -64,15 +52,26 @@ var builder = WebApplication.CreateBuilder(args);
 // =====================
 
 //(en la carpeta /secrets)
-var firebaseKeyPath = Path.Combine(builder.Environment.ContentRootPath, "secrets", "firebase-key.json");
-var firebaseProjectId = "gustosapp-5c3c9";
+//var firebaseKeyPath = Path.Combine(builder.Environment.ContentRootPath, "secrets", "firebase-key.json");
+//var firebaseProjectId = "gustosapp-5c3c9";
+
+var firebaseKeyPath = builder.Configuration["FIREBASE_SERVICE_ACCOUNT_JSON"];
+var firebaseProjectId = builder.Configuration["Firebase:ProjectId"];
 
 // Inicializar Firebase solo si no está inicializado (Admin SDK: útil p/ scripts, NO requerido para validar JWT)
-if (FirebaseApp.DefaultInstance == null)
+/*if (FirebaseApp.DefaultInstance == null)
 {
     FirebaseApp.Create(new AppOptions()
     {
         Credential = GoogleCredential.FromFile(firebaseKeyPath)
+    });
+}*/
+
+if (FirebaseApp.DefaultInstance == null)
+{
+    FirebaseApp.Create(new AppOptions()
+    {
+        Credential = GoogleCredential.FromJson(firebaseKeyPath)
     });
 }
 
@@ -391,12 +390,22 @@ builder.Services.AddSwaggerGen(options =>
 //    CORS
 // =====================
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
+
+var allowedOriginsString = builder.Configuration["CORS_ALLOWED_ORIGINS"];
+
+var allowedOrigins = allowedOriginsString?
+    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+    .Select(s => s.Trim())
+    .ToArray() ?? Array.Empty<string>();
+
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "http://localhost:5174", "https://lois-membranous-glancingly.ngrok-free.dev")
+            policy.WithOrigins(allowedOrigins)
                   .AllowCredentials()
                   .AllowAnyHeader()
                   .AllowAnyMethod()

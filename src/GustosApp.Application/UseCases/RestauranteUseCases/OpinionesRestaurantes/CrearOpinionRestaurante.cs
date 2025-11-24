@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GustosApp.Application.UseCases.RestauranteUseCases
+namespace GustosApp.Application.UseCases.RestauranteUseCases.OpinionesRestaurantes
 {
     public class CrearOpinionRestauranteUseCase
     {
@@ -26,25 +26,23 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
         }
 
         public async Task HandleAsync(string firebaseUid, Guid restauranteId,
-            double valoracionUsuario, string opinion, string titulo, List<FileUpload>? Imagenes, string? motivoVisita,
-            DateTime fechaVisita, CancellationToken cancellationToken)
+     double valoracionUsuario, string opinion, string titulo,
+     List<FileUpload>? Imagenes, string? motivoVisita,
+     DateTime fechaVisita, CancellationToken cancellationToken)
         {
-
             var usuario = await _repoUsuario.GetByFirebaseUidAsync(firebaseUid, cancellationToken)
-            ?? throw new UnauthorizedAccessException("Usuario no encontrado");
+                ?? throw new UnauthorizedAccessException("Usuario no encontrado");
 
             if (valoracionUsuario < 1 || valoracionUsuario > 5)
-            {
                 throw new ArgumentException("La valoracion debe estar entre 1 y 5");
-
-            }
-
 
             var existe = await _repoOpinionRest.ExisteValoracionAsync(usuario.Id, restauranteId, cancellationToken);
             if (existe)
-            {
                 throw new ArgumentException("El usuario ya valoro a este restaurante");
-            }
+
+       
+            if (Imagenes == null || !Imagenes.Any())
+                throw new ArgumentException("Debes subir al menos una imagen para crear una opinión.");
 
             var opinionRestaurante = new OpinionRestaurante
             {
@@ -60,27 +58,21 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
                 EsImportada = false
             };
 
-
-
-            if (Imagenes != null && Imagenes.Any())
+       
+            foreach (var file in Imagenes)
             {
-                foreach (var file in Imagenes)
-                {
-                    var url = await _fileStorage.UploadFileAsync(
-                        file.Content,
-                        file.FileName,
-                        "opiniones"
-                    );
+                var url = await _fileStorage.UploadFileAsync(
+                    file.Content,
+                    file.FileName,
+                    "opiniones"
+                );
 
-                    opinionRestaurante.Fotos.Add(new OpinionFoto { Url = url });
-                }
-                //lugar visitado por usuario agregar
-
-
-
-                await _repoOpinionRest.CrearAsync(opinionRestaurante, cancellationToken);
+                opinionRestaurante.Fotos.Add(new OpinionFoto { Url = url });
             }
+
+            await _repoOpinionRest.CrearAsync(opinionRestaurante, cancellationToken);
         }
+
     }
     }
 

@@ -19,18 +19,10 @@ namespace GustosApp.Application.UseCases.AmistadUseCases
     string firebaseUid,
     CancellationToken ct = default)
         {
-            Console.WriteLine($"🔥 UID recibido: {firebaseUid}");
-
             var usuario = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid, ct)
                 ?? throw new UnauthorizedAccessException("Usuario no encontrado");
-
-            Console.WriteLine($"✅ Usuario encontrado: {usuario.IdUsuario} ({usuario.Id})");
-
             var pendientes = await _solicitudRepository
                 .GetSolicitudesPendientesByUsuarioIdAsync(usuario.Id, ct);
-
-            Console.WriteLine($"📬 Solicitudes encontradas: {pendientes.Count()}");
-
             return pendientes;
         }
 

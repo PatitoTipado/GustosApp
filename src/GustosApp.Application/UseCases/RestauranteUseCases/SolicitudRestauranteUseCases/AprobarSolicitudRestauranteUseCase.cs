@@ -112,7 +112,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
             restaurante.ImagenUrl = solicitud.Imagenes.FirstOrDefault(i => i.Tipo == TipoImagenSolicitud.Destacada)?.Url;
             restaurante.LogoUrl = solicitud.Imagenes.FirstOrDefault(i => i.Tipo == TipoImagenSolicitud.Logo)?.Url;
 
-            // Imágenes múltiples
+            // Img multiples
             restaurante.Imagenes = solicitud.Imagenes
                 .Where(i => i.Tipo == TipoImagenSolicitud.Interior || i.Tipo == TipoImagenSolicitud.Comida)
                 .Select(i => new RestauranteImagen
@@ -147,9 +147,12 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestaurant
                 Console.WriteLine($"IMG | Tipo={img.Tipo} | Url={img.Url}");
             }
 
-            if (imgMenu == null)
-                return;
+            if (imgMenu == null) { 
+                restaurante.MenuProcesado = false;
+            restaurante.MenuError = "Menú vacío";
+            return;
 
+        }
             try
             {
                 using var http = new HttpClient();

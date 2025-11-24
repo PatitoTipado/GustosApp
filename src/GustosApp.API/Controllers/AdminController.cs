@@ -17,21 +17,18 @@ namespace GustosApp.API.Controllers
     public class AdminController : BaseApiController
     {
         private readonly AprobarSolicitudRestauranteUseCase _aprobarSolicitud;
-        private readonly ObtenerSolicitudesRestaurantesPendientesUseCase _getPendientes;
         private readonly ObtenerSolicitudRestaurantesPorIdUseCase _getDetalle;
         private readonly RechazarSolicitudRestauranteUseCase _rechazarSolicitud;
         private readonly ObtenerSolicitudesPorTipoUseCase _getPorTipo;
         private readonly IMapper _mapper;
        
         public AdminController(AprobarSolicitudRestauranteUseCase aprobarSolicitud,
-           ObtenerSolicitudesRestaurantesPendientesUseCase getPendientes,
            ObtenerSolicitudRestaurantesPorIdUseCase getDetalle,
            RechazarSolicitudRestauranteUseCase rechazarSolicitud,
            ObtenerSolicitudesPorTipoUseCase getPorTipo,
             IMapper mapper)
         {
             _aprobarSolicitud = aprobarSolicitud;
-            _getPendientes = getPendientes;
             _getDetalle = getDetalle;
             _rechazarSolicitud = rechazarSolicitud;
             _getPorTipo = getPorTipo;

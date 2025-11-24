@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
 using GustosApp.API.DTO;
 using GustosApp.Application.DTO;
-using GustosApp.Application.UseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
+using GustosApp.Domain.Model.@enum;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -12,28 +14,32 @@ namespace GustosApp.API.Controllers
 {
     [Route("[controller]")]
     [ApiController]
-    public class GustoController : ControllerBase
+    public class GustoController : BaseApiController
     {
-
+        private readonly GuardarGustosUseCase _saveGustos;
         private readonly ObtenerGustosFiltradosUseCase _obtenerGustos;
         private readonly ObtenerGustosPaginacionUseCase _obtenerGustosPaginacion;
         private readonly BuscarGustoPorCoincidenciaUseCase _buscarGustoPorCoincidencia;
         private readonly ObtenerGustosSeleccionadosPorUsuarioYParaFiltrarUseCase _obtenerGustosSeleccionadosPorUsuarioYParaFiltrarUseCase;
+       
+
         private readonly IMapper _mapper;
         public GustoController(
-           
+           GuardarGustosUseCase saveGustos,
            ObtenerGustosFiltradosUseCase obtenerGustos,
             IMapper mapper,
              ObtenerGustosPaginacionUseCase obtenerGustosPaginacion,
             BuscarGustoPorCoincidenciaUseCase buscarGustoPorCoincidenciaUseCase,
             ObtenerGustosSeleccionadosPorUsuarioYParaFiltrarUseCase obtenerGustosSeleccionadosPorUsuarioYParaFiltrarUseCase)
         {
+            _saveGustos = saveGustos;
             _obtenerGustos = obtenerGustos;
             _obtenerGustosPaginacion = obtenerGustosPaginacion;
             _buscarGustoPorCoincidencia = buscarGustoPorCoincidenciaUseCase;
             _obtenerGustosSeleccionadosPorUsuarioYParaFiltrarUseCase = obtenerGustosSeleccionadosPorUsuarioYParaFiltrarUseCase;  
             _mapper = mapper;
-            }
+            
+        }
         
 
         [HttpGet("obtenerGustosPaginados")]
@@ -96,16 +102,27 @@ namespace GustosApp.API.Controllers
             return Ok(response);
         }
 
-        private string GetFirebaseUid()
+
+
+
+
+        [Authorize]
+        [HttpPut("gustos")]
+        [ProducesResponseType(typeof(GuardarGustosResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GuardarGustos([FromBody] GuardarIdsRequest req, CancellationToken ct)
         {
-            var firebaseUid = User.FindFirst("user_id")?.Value
-                            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                            ?? User.FindFirst("sub")?.Value;
+            var uid = GetFirebaseUid();
 
-            if (string.IsNullOrWhiteSpace(firebaseUid))
-                throw new UnauthorizedAccessException("No se encontró el UID de Firebase en el token.");
+            var gustos = await _saveGustos.HandleAsync(uid, req.Ids, ModoPreferencias.Edicion, ct);
 
-            return firebaseUid;
+            var response = new GuardarGustosResponse
+            {
+                Mensaje = "Gustos guardados correctamente",
+                GustosIncompatibles = gustos
+            };
+            return Ok(response);
         }
     }
 }

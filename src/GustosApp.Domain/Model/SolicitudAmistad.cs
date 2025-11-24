@@ -1,13 +1,7 @@
 using System;
+using GustosApp.Domain.Model.@enum;
 namespace GustosApp.Domain.Model
 {
-    public enum EstadoSolicitud
-    {
-        Pendiente = 0,
-        Aceptada = 1,
-        Rechazada = 2,
-        Expirada = 3
-    }
 
     public class SolicitudAmistad
     {

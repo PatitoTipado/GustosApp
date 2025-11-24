@@ -14,11 +14,17 @@ namespace GustosApp.Infraestructure.Configurations
             b.Property(x => x.Json).IsRequired();
 
             b.HasOne(x => x.Restaurante)
-             .WithMany()
-             .HasForeignKey(x => x.RestauranteId)
-             .OnDelete(DeleteBehavior.Cascade);
+             .WithOne(r => r.Menu)
+            .HasForeignKey<RestauranteMenu>(x => x.RestauranteId)
+              .OnDelete(DeleteBehavior.Cascade);
+
+
+         
 
             b.HasIndex(x => x.RestauranteId).HasDatabaseName("IX_RestMenu_RestauranteId");
+
+            b.Property(x => x.Version).IsRequired();
+            b.Property(x => x.FechaActualizacionUtc).IsRequired();
         }
     }
 }

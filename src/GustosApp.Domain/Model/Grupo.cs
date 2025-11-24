@@ -8,7 +8,7 @@ namespace GustosApp.Domain.Model
 {
     public class Grupo
     {
-        public Guid Id { get; private set; } = Guid.NewGuid();
+        public Guid Id { get; set; } = Guid.NewGuid();
         public string Nombre { get; private set; }
         public string? Descripcion { get; private set; }
         public Guid AdministradorId { get; private set; }
@@ -40,6 +40,14 @@ namespace GustosApp.Domain.Model
 
             Nombre = nombre;
             Descripcion = descripcion;
+        }
+
+        public void ActualizarNombre(string nombre)
+        {
+            if (string.IsNullOrWhiteSpace(nombre))
+                throw new ArgumentException("El nombre del grupo no puede estar vacío", nameof(nombre));
+
+            Nombre = nombre;
         }
 
         public void GenerarCodigoInvitacion()

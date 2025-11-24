@@ -10,7 +10,8 @@ using System.IO;
 using System.Reflection.Emit;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using Tokenizers.HuggingFace.Decoders;
-
+using GustosApp.Domain.Model.@enum;
+using GustosApp.Application.Interfaces;
 
 public class GustosDbContext : DbContext
 {
@@ -28,7 +29,11 @@ public class GustosDbContext : DbContext
     public DbSet<RestauranteEspecialidad> RestauranteEspecialidades { get; set; }
     public DbSet<Restaurante> Restaurantes { get; set; }
 
-    public DbSet<ReseñaRestaurante> ReseñasRestaurantes { get; set; }
+    public DbSet<RestauranteEstadisticas> RestauranteEstadisticas { get; set; }
+
+    public DbSet<SolicitudRestaurante> SolicitudesRestaurantes { get; set; }
+
+    //public DbSet<ReseñaRestaurante> ReseñasRestaurantes { get; set; }
 
     public DbSet<Tag> Tags { get; set; }
 
@@ -40,8 +45,23 @@ public class GustosDbContext : DbContext
 
     public DbSet<RestauranteImagen> RestauranteImagenes { get; set; }
     public DbSet<RestauranteMenu> RestauranteMenus { get; set; }
+    public DbSet<SolicitudRestauranteImagen> SolicitudRestauranteImagenes { get; set; }
+
 
     public DbSet<UsuarioRestauranteVisitado> UsuarioRestauranteVisitados { get; set; }
+
+    //public DbSet<Valoracion> Valoraciones { get; set; }
+
+    public DbSet<OpinionRestaurante> OpinionesRestaurantes { get; set; }
+    public DbSet<OpinionFoto> OpinionesFotos { get; set; }
+
+    
+    public DbSet<VotacionGrupo> Votaciones { get; set; }
+    public DbSet<VotoRestaurante> Votos { get; set; }
+
+    public DbSet<OpinionRestaurante> OpinionesRestaurante { get; set; }
+    public DbSet<UsuarioRestauranteFavorito> UsuarioRestauranteFavoritos { get; set; }
+
 
     public GustosDbContext(DbContextOptions<GustosDbContext> options)
     : base(options) { }
@@ -50,18 +70,92 @@ public class GustosDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.UsuarioRestauranteVisitadoConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.UsuarioRestauranteVisitadoConfiguration());
 
-        modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.RestauranteImagenConfiguration());
-        modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.RestauranteMenuConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.RestauranteImagenConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.RestauranteMenuConfiguration());
+        modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.RestauranteEstadisticasConfiguration());
+
+        modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.VotacionGrupoConfiguration());
+        modelBuilder.ApplyConfiguration(new GustosApp.Infraestructure.Configurations.VotoRestauranteConfiguration());
+
+
+
+        modelBuilder.Entity<SolicitudRestaurante>()
+    .Property(s => s.Latitud)
+    .HasColumnType("decimal(10,7)");
+
+        modelBuilder.Entity<SolicitudRestaurante>()
+            .Property(s => s.Longitud)
+            .HasColumnType("decimal(10,7)");
+
+        modelBuilder.Entity<SolicitudRestaurante>()
+    .HasIndex(s => s.Estado);
+
+        modelBuilder.Entity<SolicitudRestaurante>()
+            .Property(s => s.Nombre)
+            .HasMaxLength(150)
+            .IsRequired();
+
+
+        modelBuilder.Entity<SolicitudRestaurante>()
+       .HasOne(s => s.Usuario)
+       .WithMany(u => u.SolicitudesRestaurantes)
+       .HasForeignKey(s => s.UsuarioId)
+       .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<SolicitudRestaurante>()
+            .HasMany(s => s.Gustos)
+            .WithMany()
+            .UsingEntity(j => j.ToTable("SolicitudRestaurante_Gustos"));
+
+        modelBuilder.Entity<SolicitudRestaurante>()
+            .HasMany(s => s.Restricciones)
+            .WithMany()
+            .UsingEntity(j => j.ToTable("SolicitudRestaurante_Restricciones"));
+
+
+        modelBuilder.Entity<SolicitudRestauranteImagen>()
+          .HasOne(i => i.Solicitud)
+           .WithMany(s => s.Imagenes)
+           .HasForeignKey(i => i.SolicitudId)
+            .OnDelete(DeleteBehavior.Cascade);
+
 
         modelBuilder.Entity<Restaurante>()
-              .Ignore(r => r.Score)
-            .HasMany(r => r.Reviews)
+        .Ignore(r => r.Score);
+
+        modelBuilder.Entity<Restaurante>()
+         .HasOne(r => r.Menu)
+         .WithOne(m => m.Restaurante)
+         .HasForeignKey<RestauranteMenu>(m => m.RestauranteId)
+         .OnDelete(DeleteBehavior.Cascade);
+
+
+        modelBuilder.Entity<Restaurante>()
+                .HasMany(r => r.Reviews)
                 .WithOne()
                 .HasForeignKey(r => r.RestauranteId)
 
                 .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Restaurante>()
+            .HasOne(r => r.Dueno)
+            .WithMany(u => u.Restaurantes)
+            .HasForeignKey(r => r.DuenoId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Restaurante>()
+             .HasMany(r => r.GustosQueSirve)
+             .WithMany(g => g.restaurantes)
+             .UsingEntity(j => j.ToTable("RestauranteGustos"));
+
+        modelBuilder.Entity<Restaurante>()
+            .HasMany(r => r.RestriccionesQueRespeta)
+            .WithMany(p => p.Restaurantes)
+            .UsingEntity(j => j.ToTable("RestauranteRestricciones"));
+
+
         // Relaciones muchos a muchos
         modelBuilder.Entity<Usuario>()
             .HasMany(u => u.Gustos)
@@ -98,11 +192,7 @@ public class GustosDbContext : DbContext
            .HasIndex(u => u.IdUsuario)
            .IsUnique();
 
-        modelBuilder.Entity<Usuario>()
-            .HasMany(u => u.Restricciones)
-            .WithMany(r => r.Usuarios)
-            .UsingEntity(j => j.ToTable("UsuarioRestricciones"));
-
+       
         // Gusto ↔ Tag
         modelBuilder.Entity<Gusto>()
             .HasMany(g => g.Tags)
@@ -237,6 +327,13 @@ public class GustosDbContext : DbContext
             .HasForeignKey(gg => gg.GustoId)
             .OnDelete(DeleteBehavior.Restrict); // No eliminar un Gusto si está siendo usado por grupos
 
+        // 4. Relación de GrupoGusto con MiembroGrupo
+        modelBuilder.Entity<GrupoGusto>()
+            .HasOne(gg => gg.Miembro)
+            .WithMany(m => m.GustosSeleccionados)
+            .HasForeignKey(gg => gg.MiembroId)
+            .OnDelete(DeleteBehavior.Restrict); 
+
         // Chat messages
         modelBuilder.Entity<ChatMensaje>()
             .HasKey(c => c.Id);
@@ -244,15 +341,21 @@ public class GustosDbContext : DbContext
             .Property(c => c.Mensaje)
             .IsRequired();
 
-        modelBuilder.Entity<Restaurante>()
-            .HasMany(r => r.GustosQueSirve)
-            .WithMany(g => g.restaurantes)
-            .UsingEntity(j => j.ToTable("RestauranteGustos"));
+        
 
-        modelBuilder.Entity<Restaurante>()
-            .HasMany(r => r.RestriccionesQueRespeta)
-            .WithMany(p => p.Restaurantes)
-            .UsingEntity(j => j.ToTable("RestauranteRestricciones"));
+        modelBuilder.Entity<UsuarioRestauranteFavorito>()
+            .HasIndex(f => new { f.UsuarioId, f.RestauranteId })
+            .IsUnique(); // Evita duplicados
+
+        modelBuilder.Entity<UsuarioRestauranteFavorito>()
+            .HasOne(f => f.Usuario)
+            .WithMany(u => u.RestaurantesFavoritos)
+            .HasForeignKey(f => f.UsuarioId);
+
+        modelBuilder.Entity<UsuarioRestauranteFavorito>()
+            .HasOne(f => f.Restaurante)
+            .WithMany()
+            .HasForeignKey(f => f.RestauranteId);
 
         modelBuilder.Entity<Notificacion>(entity =>
         {
@@ -287,6 +390,26 @@ public class GustosDbContext : DbContext
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
+        modelBuilder.Entity<OpinionRestaurante>()
+            .HasOne(o => o.Restaurante)
+            .WithMany(r => r.Reviews)
+            .HasForeignKey(o => o.RestauranteId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+      
+        modelBuilder.Entity<OpinionRestaurante>()
+            .HasOne(o => o.Usuario)
+            .WithMany()
+            .HasForeignKey(o => o.UsuarioId)
+            .OnDelete(DeleteBehavior.NoAction);
+        // (NoAction evita eliminar opiniones si se borra un usuario; se podrían conservar como "opiniones antiguas")
+
+      
+        modelBuilder.Entity<OpinionFoto>()
+            .HasOne(f => f.Opinion)
+            .WithMany(o => o.Fotos)
+            .HasForeignKey(f => f.OpinionRestauranteId)
+            .OnDelete(DeleteBehavior.Cascade);
 
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(GustosDbContext).Assembly);

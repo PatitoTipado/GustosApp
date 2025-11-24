@@ -2,30 +2,33 @@
 using AutoMapper;
 using GustosApp.API.DTO;
 using GustosApp.Application.DTO;
-using GustosApp.Application.UseCases;
-using GustosApp.Domain.Model;
+using GustosApp.Application.UseCases.UsuarioUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
+using GustosApp.Domain.Model.@enum;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace GustosApp.API.Controllers
 {
     [Route("[controller]")]
     [ApiController]
-    public class RestriccionController : ControllerBase
+    public class RestriccionController : BaseApiController
     {
-
+        private readonly GuardarRestriccionesUseCase _saveRestr;
         private readonly ObtenerRestriccionesUseCase _obtenerRestricciones;
         private readonly ObtenerUsuarioUseCase _usuario; 
         private readonly IMapper _mapper;
 
-        public RestriccionController(ObtenerRestriccionesUseCase obtenerRestricciones
+        public RestriccionController(GuardarRestriccionesUseCase saveRestr,
+            ObtenerRestriccionesUseCase obtenerRestricciones
             ,ObtenerUsuarioUseCase usuario, IMapper mapper)
         {
+            _saveRestr = saveRestr;
             _obtenerRestricciones = obtenerRestricciones;
             _usuario = usuario;
             _mapper = mapper;
+            
         }
 
         // GET: api/<ValuesController>
@@ -37,9 +40,7 @@ namespace GustosApp.API.Controllers
         public async Task<IActionResult> GetAll(CancellationToken ct)
         {
             
-            var uid = User.FindFirst("user_id")?.Value
-                     ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                     ?? User.FindFirst("sub")?.Value;
+            var uid = GetFirebaseUid();
 
             if (string.IsNullOrWhiteSpace(uid))
                 return Unauthorized(new { message = "Token no válido o sin UID" });
@@ -61,5 +62,25 @@ namespace GustosApp.API.Controllers
 
             return Ok(resultado);
         }
+
+        [Authorize]
+        [HttpPut("restricciones")]
+        [ProducesResponseType(typeof(GuardarRestriccionesResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GuardarRestricciones([FromBody] GuardarIdsRequest req, CancellationToken ct)
+        {
+            var uid = GetFirebaseUid();
+
+            var restriccionesGuardadas = await _saveRestr.HandleAsync(uid, req.Ids, req.Skip, ModoPreferencias.Edicion, ct);
+
+            var response = new GuardarRestriccionesResponse
+            {
+                Mensaje = "Restricciones guardadas correctamente",
+                GustosRemovidos = restriccionesGuardadas
+            };
+            return Ok(response);
+        }
+
     }
 }

@@ -19,20 +19,15 @@ namespace GustosApp.Infraestructure.Repositories
             _context = context;
         }
 
-        public async Task<bool> AgregarGustosAlGrupo(Guid grupoId, List<Gusto> gustos)
+        public async Task<bool> AgregarGustosAlGrupo(Guid grupoId, List<Gusto> gustos, Guid idMiembro)
         {
-            var gustosExistentes = await _context.GrupoGustos
-                .Where(gg => gg.GrupoId == grupoId)
-                .Select(gg => gg.GustoId)
-                .ToListAsync();
-
             var nuevosGustos = gustos
-                .Where(g => !gustosExistentes.Contains(g.Id))
                 .Select(g => new GrupoGusto
                 {
                     Id = Guid.NewGuid(),
                     GrupoId = grupoId,
-                    GustoId = g.Id
+                    GustoId = g.Id,
+                    MiembroId = idMiembro
                 })
                 .ToList();
 
@@ -40,22 +35,54 @@ namespace GustosApp.Infraestructure.Repositories
                 return true;
 
             await _context.GrupoGustos.AddRangeAsync(nuevosGustos);
-
             await _context.SaveChangesAsync();
 
             return true;
         }
+
+
+        public async Task<bool> EliminarGustosAlGrupo(Guid grupoId, List<Gusto> gustos, Guid miembroGrupoId)
+        {
+            int eliminados = 0;
+
+            foreach (var gusto in gustos)
+            {
+                var entidad = await _context.GrupoGustos
+                    .FirstOrDefaultAsync(gg => gg.GrupoId == grupoId && gg.GustoId == gusto.Id && gg.MiembroId==miembroGrupoId);
+
+                if (entidad != null)
+                {
+                    _context.GrupoGustos.Remove(entidad);
+                    eliminados++;
+                }
+            }
+
+            if (eliminados == 0)
+                throw new Exception("Ninguno de los gustos que intenta eliminar existe en el grupo.");
+
+            await _context.SaveChangesAsync();
+            return eliminados > 0;
+        }
+
 
         public async Task<List<string>> ObtenerGustosDelGrupo(Guid grupoId)
         {
             var gustos = await _context.GrupoGustos
                 .Where(gg => gg.GrupoId == grupoId)
                 .Join(
-                    _context.Gustos,
-                    gg => gg.GustoId,
-                    g => g.Id,
-                    (gg, g) => g.Nombre
+                    _context.MiembrosGrupos,
+                    gg => gg.GrupoId,
+                    mg => mg.GrupoId,
+                    (gg, mg) => new { gg, mg }
                 )
+                .Where(x => x.mg.afectarRecomendacion) 
+                .Join(
+                    _context.Gustos,
+                    x => x.gg.GustoId,
+                    g => g.Id,
+                    (x, g) => g.Nombre
+                )
+                .Distinct() // evitar duplicados si hay varios miembros activos con el mismo gusto
                 .ToListAsync();
 
             return gustos;

@@ -5,7 +5,7 @@ using MercadoPagoCore.Resource.Preference;
 using MercadoPagoCore.Resource.Payment;
 using Microsoft.Extensions.Configuration;
 using GustosApp.Domain.Interfaces;
-using GustosApp.Domain.Model;
+using GustosApp.Domain.Model.@enum;
 
 namespace GustosApp.Infraestructure.Services
 {

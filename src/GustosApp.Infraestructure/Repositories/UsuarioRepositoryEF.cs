@@ -13,23 +13,30 @@ namespace GustosApp.Infraestructure.Repositories
         public async Task<Usuario?> GetByFirebaseUidAsync(string firebaseUid, CancellationToken ct = default)
         {
             return await _db.Usuarios
-         .Include(u => u.Gustos)
-             .ThenInclude(g => g.Tags)
-         .Include(u => u.Restricciones)
-             .ThenInclude(r => r.TagsProhibidos)
-         .Include(u => u.CondicionesMedicas)
-             .ThenInclude(c => c.TagsCriticos)
-         .FirstOrDefaultAsync(u => u.FirebaseUid == firebaseUid, ct);
+               
+                .Include(u => u.Gustos)
+                    .ThenInclude(g => g.Tags)
+                .Include(u => u.Restricciones)
+                    .ThenInclude(r => r.TagsProhibidos)
+                .Include(u => u.CondicionesMedicas)
+                    .ThenInclude(c => c.TagsCriticos)
+                .Include(u => u.Visitados)
+                .FirstOrDefaultAsync(u => u.FirebaseUid == firebaseUid, ct);
         }
+
+
 
         public Task<Usuario?> GetByEmailAsync(string email, CancellationToken ct = default)
             => _db.Usuarios.FirstOrDefaultAsync(u => u.Email == email, ct);
 
         public Task<Usuario?> GetByUsernameAsync(string username, CancellationToken ct = default)
-            => _db.Usuarios
-                .Include(u => u.Gustos)
-                .Include(u => u.Visitados)
-                .FirstOrDefaultAsync(u => u.IdUsuario == username, ct);
+     => _db.Usuarios
+         .Include(u => u.Gustos)
+         .Include(u => u.Restricciones)
+         .Include(u => u.CondicionesMedicas)
+         .Include(u => u.Visitados)
+         .FirstOrDefaultAsync(u => u.IdUsuario == username, ct);
+
 
         public async Task<IEnumerable<Usuario>> GetAllAsync(int limit = 100, CancellationToken ct = default)
         {
@@ -45,7 +52,7 @@ namespace GustosApp.Infraestructure.Repositories
         public Task SaveChangesAsync(CancellationToken ct = default)
             => _db.SaveChangesAsync(ct);
 
-        public async Task UpdatePlanAsync(string firebaseUid, PlanUsuario plan, CancellationToken ct = default)
+        public async Task UpdatePlanAsync(string firebaseUid, Domain.Model.@enum.PlanUsuario plan, CancellationToken ct = default)
         {
             var usuario = await _db.Usuarios
                 .FirstOrDefaultAsync(u => u.FirebaseUid == firebaseUid, ct);
@@ -97,5 +104,10 @@ namespace GustosApp.Infraestructure.Repositories
                 .ToListAsync(ct);
         }
 
+        public Task UpdateAsync(Usuario user, CancellationToken ct)
+        {
+            _db.Usuarios.Update(user);
+            return _db.SaveChangesAsync(ct);
+        }
     }
 }

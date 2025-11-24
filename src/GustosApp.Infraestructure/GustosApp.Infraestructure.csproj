@@ -19,6 +19,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+    <PackageReference Include="FirebaseAdmin" Version="3.4.0" />
+    <PackageReference Include="Google.Cloud.AIPlatform.V1" Version="3.56.0" />
+    <PackageReference Include="Google.Cloud.Storage.V1" Version="4.13.0" />
+    <PackageReference Include="Google.GenAI" Version="0.6.0" />
     <PackageReference Include="MercadoPagoCore" Version="5.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
       <PrivateAssets>all</PrivateAssets>
@@ -31,7 +35,9 @@
     </PackageReference>
     <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.17.0" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.17.0" />
+    <PackageReference Include="Microsoft.Owin.Security.Google" Version="4.2.3" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
+    <PackageReference Include="StackExchange.Redis" Version="2.9.32" />
     <PackageReference Include="System.Numerics.Tensors" Version="9.0.0" />
     <PackageReference Include="Tesseract" Version="5.2.0" />
     <PackageReference Include="Tokenizers.HuggingFace" Version="2.21.4" />

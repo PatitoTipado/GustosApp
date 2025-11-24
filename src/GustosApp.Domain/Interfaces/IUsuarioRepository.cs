@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using GustosApp.Domain.Model;
+using GustosApp.Domain.Model.@enum;
 
 namespace GustosApp.Domain.Interfaces
 {
@@ -25,5 +26,6 @@ namespace GustosApp.Domain.Interfaces
         Task<IEnumerable<Usuario>> GetAllExceptAsync(Guid IdExcluir, int limite, CancellationToken ct);
         Task<IEnumerable<Usuario>> BuscarPorUsernameAsync(string usernameBuscar, Guid IdExcluir, CancellationToken ct);
 
+        Task UpdateAsync(Usuario user, CancellationToken ct);
     }
 }

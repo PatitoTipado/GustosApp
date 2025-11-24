@@ -1,297 +1,658 @@
-using System.IO;
-using GustosApp.Application.Interfaces;
-using Microsoft.AspNetCore.Http;
 using AutoMapper;
 using GustosApp.API.DTO;
 using GustosApp.Application.DTO;
-using GustosApp.Application.DTOs.Restaurantes;
-using GustosApp.Application.Services;
-using GustosApp.Application.UseCases;
+using GustosApp.Application.Interfaces;
+using GustosApp.Application.UseCases.RestauranteUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases;
 using GustosApp.Domain.Model;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO;
 using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Http;
-using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Http.HttpResults;
+using System.Security.Cryptography;
+using GustosApp.Domain.Model.@enum;
+using GustosApp.Domain.Common;
+using GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestauranteUseCases;
+using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using GustosApp.API.DTO;
+using System.Globalization;
 
 
 // Controlador para restaurantes que se registran en la app por un usuario y restaurantes traidos de Places v1
 
 namespace GustosApp.API.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class RestaurantesController : ControllerBase
+    public class RestaurantesController : BaseApiController
     {
         private readonly IServicioRestaurantes _servicio;
-        private readonly ObtenerGustosUseCase _obtenerGustos;
+        private readonly ObtenerUsuarioUseCase _obtenerUsuario;
         private readonly SugerirGustosSobreUnRadioUseCase _sugerirGustos;
-        private readonly BuscarRestaurantesCercanosUseCase _buscarRestaurantes;
-        private readonly ActualizarDetallesRestauranteUseCase _obtenerDetalles;
-        private readonly IAlmacenamientoArchivos _fileStorage;
-        private readonly GustosApp.Infraestructure.GustosDbContext _db;
-        private readonly IOcrService _ocr;
-        private readonly IMenuParser _menuParser;
-        private IMapper _mapper;
+    
+        private readonly ConstruirPreferenciasUseCase _construirPreferencias;
+        private readonly CrearSolicitudRestauranteUseCase _solicitudesRestaurantes;
+        private readonly BuscarRestaurantesUseCase _buscarRestaurante;
+        private readonly IFileStorageService _firebaseStorage;
 
+        private readonly IFileStorageService _firebase;
+        private readonly GustosApp.Infraestructure.GustosDbContext _db;
+
+        private readonly ObtenerDatosRegistroRestauranteUseCase _getDatosRegistroRestaurante;
+        private readonly ICacheService _cache;
+        private readonly IMapper _mapper;
+        private readonly AgregarUsuarioRestauranteFavoritoUseCase _agregarFavoritoUseCase;
+        private readonly RegistrarTop3IndividualRestaurantesUseCase _registrarTop3IndividualUseCase;
+        private readonly RegistrarVisitaPerfilRestauranteUseCase _registrarVisitaPerfilUseCase;
+        private readonly ObtenerMetricasRestauranteUseCase _obtenerMetricasRestauranteUseCase;
+        private readonly ActualizarRestauranteDashboardUseCase _actualizarRestauranteDashboardUseCase;
+
+        private readonly ObtenerRestauranteDetalleUseCase _obtenerRestauranteDetalle;
 
 
         public RestaurantesController(
      IServicioRestaurantes servicio,
+      ObtenerUsuarioUseCase obtenerUsuario,
      SugerirGustosSobreUnRadioUseCase sugerirGustos,
-     ObtenerGustosUseCase obtenerGustos,
-     BuscarRestaurantesCercanosUseCase buscarRestaurantes,
-     ActualizarDetallesRestauranteUseCase obtenerDetalles,
-     IAlmacenamientoArchivos fileStorage,
-     GustosApp.Infraestructure.GustosDbContext db,
-     IOcrService ocr,
-     IMenuParser menuParser,
-     IMapper mapper)
+     ConstruirPreferenciasUseCase construirPreferencias,
+    IFileStorageService firebaseStorage,
+      CrearSolicitudRestauranteUseCase solicitudesRestaurantes,
+      ObtenerDatosRegistroRestauranteUseCase getDatosRegistroRestaurante,
+        ICacheService cache,IMapper mapper, BuscarRestaurantesUseCase buscarRestaurante,
+       AgregarUsuarioRestauranteFavoritoUseCase agregarUsuarioRestauranteFavoritoUseCase,
+      RegistrarTop3IndividualRestaurantesUseCase registrarTop3IndividualUseCase,
+    RegistrarVisitaPerfilRestauranteUseCase registrarVisitaPerfilUseCase,
+    ObtenerMetricasRestauranteUseCase obtenerMetricasRestauranteUseCase,
+    ActualizarRestauranteDashboardUseCase actualizarRestauranteDashboardUseCase,
+    ObtenerRestauranteDetalleUseCase obtenerRestauranteDetalle,
+    GustosApp.Infraestructure.GustosDbContext db, IFileStorageService firebase)
         {
             _servicio = servicio;
-            _obtenerGustos = obtenerGustos;
+            _obtenerUsuario = obtenerUsuario;
             _sugerirGustos = sugerirGustos;
-            _buscarRestaurantes = buscarRestaurantes;
-            _obtenerDetalles = obtenerDetalles;
-            _fileStorage = fileStorage;
-            _db = db;
-            _fileStorage = fileStorage;
+            _construirPreferencias = construirPreferencias;
+            _solicitudesRestaurantes = solicitudesRestaurantes;
+            _getDatosRegistroRestaurante = getDatosRegistroRestaurante;
+            _firebaseStorage = firebaseStorage;
+            _cache = cache;
             _mapper = mapper;
-
-            _ocr = ocr;
-            _menuParser = menuParser;
-
-        }
-        [Authorize]
-
-        private async Task<(bool ok, string? uid)> CheckOwnerAsync(Guid restauranteId, System.Security.Claims.ClaimsPrincipal user, System.Threading.CancellationToken ct)
-        {
-            var uid = user.FindFirst("user_id")?.Value
-                      ?? user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
-                      ?? user.FindFirst("sub")?.Value;
-            if (string.IsNullOrWhiteSpace(uid)) return (false, null);
-            var r = await _db.Restaurantes.FirstOrDefaultAsync(x => x.Id == restauranteId, ct);
-            if (r == null) return (false, uid);
-            var esAdmin = user.IsInRole("admin") || user.Claims.Any(c => c.Type == "role" && c.Value == "admin");
-            if (r.PropietarioUid != uid && !esAdmin) return (false, uid);
-            return (true, uid);
-        }
-        [HttpGet("cercanos")]
-        public async Task<IActionResult> GetCercanos(double lat, double lng, int radio = 2000, string? types = null, string? priceLevels = null,
-                    bool? openNow = null, double? minRating = null, int minUserRatings = 0, string? serves = null,
-                    CancellationToken ct = default)
-        {
-
-            var result = await _buscarRestaurantes.HandleAsync(lat, lng, radio, types, priceLevels, openNow, minRating, minUserRatings, serves, ct);
-
-            var response = _mapper.Map<List<RestauranteListadoDto>>(result);
-            return Ok(new { count = response.Count, restaurantes = response });
-
+            _buscarRestaurante = buscarRestaurante;
+            _agregarFavoritoUseCase = agregarUsuarioRestauranteFavoritoUseCase;
+            _registrarTop3IndividualUseCase = registrarTop3IndividualUseCase;
+            _registrarVisitaPerfilUseCase = registrarVisitaPerfilUseCase;
+            _obtenerMetricasRestauranteUseCase = obtenerMetricasRestauranteUseCase;
+            _actualizarRestauranteDashboardUseCase = actualizarRestauranteDashboardUseCase;
+            _firebase = firebase;
+            _obtenerRestauranteDetalle = obtenerRestauranteDetalle;
+            _db = db;
 
         }
 
-
-
-        [HttpGet("detalles")]
-        public async Task<IActionResult> GetDetalles([FromQuery] string placeId, CancellationToken ct = default)
-        {
-            var restaurante = await _obtenerDetalles.HandleAsync(placeId, ct);
-
-            var detalles = _mapper.Map<RestauranteListadoDto>(restaurante);
-            return Ok(new { message = "Detalles actualizados", detalles });
-        }
-
+       
         [HttpGet]
-        [Authorize]
         public async Task<IActionResult> Get(
             [FromQuery] List<string>? gustos,
+            [FromQuery] string? amigoUsername,
             CancellationToken ct,
-            string? tipoDeRestaurante,
-            [FromQuery]double rating,
-            [FromQuery(Name = "near.lat")] double? lat = -34.641812775271,
-            [FromQuery(Name = "near.lng")] double? lng = -58.56990230458638,
-            [FromQuery(Name = "radiusMeters")] int? radius = 1000,
+            [FromQuery] string? tipoDeRestaurante,
+            [FromQuery] double rating,
+            [FromQuery(Name = "near.lat")] double? lat,
+            [FromQuery(Name = "near.lng")] double? lng,
+            [FromQuery(Name = "radiusMeters")] int? radius = 3000,
             [FromQuery] int top = 10
-        )
+  )
         {
+
+            var firebaseUid = GetFirebaseUid();
+
+            // Filtrar restaurantes cercanos
             var res = await _servicio.BuscarAsync(
+                rating: rating,
                 tipo: tipoDeRestaurante,
                 plato: "",
                 lat: lat,
                 lng: lng,
-                radioMetros: radius,
-                rating: rating
+                radioMetros: radius
+              );
+
+
+
+            await _cache.SetAsync(
+             $"usuario:{firebaseUid}:location",
+             new UserLocation
+             (
+                lat ?? 0,
+                lng ?? 0,
+                radius ?? 3000,
+                DateTime.UtcNow
+             ),
+              TimeSpan.FromMinutes(10));
+
+            var preferencias = await _construirPreferencias.HandleAsync(
+                firebaseUid,
+                amigoUsername: amigoUsername,
+                grupoId: null,
+                gustosDelFiltro: gustos,
+                ct);
+
+            //  Algoritmo combinado
+            var recommendations = await _sugerirGustos.Handle(
+                preferencias,
+                res,
+                top,
+                ct
             );
 
-            Console.WriteLine(res.ToList().Count());
-            Console.WriteLine(res.ToList().Count());
-            Console.WriteLine(res.ToList().Count());
+            // DTO
+            var response = _mapper.Map<List<RestauranteDTO>>(recommendations);
 
+            //registrar cuantos restaurantes salieron en el top 3 individual
+            var top3Ids = response
+                .Take(3)
+                .Select(r => r.Id)
+                .ToList();
 
-            var firebaseUid = User.FindFirst("user_id")?.Value
-            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-            ?? User.FindFirst("sub")?.Value;
-
-            if (string.IsNullOrWhiteSpace(firebaseUid))
+            if (top3Ids.Count > 0)
             {
-                return Unauthorized(new { message = "No se encontr el UID de Firebase en el token." });
+                await _registrarTop3IndividualUseCase.HandleAsync(top3Ids, ct);
             }
-
-            var preferencias = await _obtenerGustos.HandleAsync(firebaseUid, ct, gustos);
-
-            var recommendations = _sugerirGustos.Handle(preferencias, res, top, ct);
-
-            var response = recommendations.Select(r => new RestauranteDto
-            {
-                Id = r.Id,
-                PropietarioUid = r.PropietarioUid,
-                Nombre = r.Nombre,
-                Direccion = r.Direccion,
-                Latitud = r.Latitud,
-                Longitud = r.Longitud,
-                ImagenUrl = r.ImagenUrl,
-                Rating = r.Rating ?? 0,
-                Valoracion = r.Valoracion,
-                Tipo = r.TypesJson,
-                GustosQueSirve = r.GustosQueSirve
-             .Select(g => new GustoDto(g.Id, g.Nombre, g.ImagenUrl))
-             .ToList(),
-                RestriccionesQueRespeta = r.RestriccionesQueRespeta
-             .Select(re => new RestriccionResponse(re.Id, re.Nombre))
-             .ToList(),
-                Score = r.Score
-            }).ToList();
 
             return Ok(new
             {
                 total = response.Count,
                 recomendaciones = response
             });
+
         }
+
 
 
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
         {
-            var restaurante = await _servicio.ObtenerAsync(id);
+            var uid = GetFirebaseUid();
 
-            if (restaurante == null)
-                return NotFound("Restaurante no encontrado");
+            var result = await _obtenerRestauranteDetalle.HandleAsync(id, uid, ct);
 
+            var dto = _mapper.Map<RestauranteDetalleDto>(result.Restaurante);
+            dto.esFavorito = result.EsFavorito;
 
-            if (restaurante.PlaceId!=null && (restaurante.Reviews == null || !restaurante.Reviews.Any()))
-            {
-                var actualizado = await _servicio.ObtenerResenasDesdeGooglePlaces(restaurante.PlaceId, ct);
-                if (actualizado is not null)
-                    restaurante = actualizado;
-            }
-
-            return Ok(restaurante);
+            return Ok(dto);
         }
+
+
+
 
         [HttpPost]
-        [Authorize]
-        public async Task<IActionResult> Post([FromBody] CrearRestauranteDto dto, CancellationToken ct)
+        [RequestSizeLimit(50 * 1024 * 1024)]
+        public async Task<IActionResult> CrearSolicitud(
+         [FromForm] CrearRestauranteDto dto,
+             CancellationToken ct)
         {
-            var uid = User.FindFirst("user_id")?.Value
-                      ?? User.FindFirst("sub")?.Value
-                      ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrWhiteSpace(uid)) return Unauthorized();
+            var uid = GetFirebaseUid();
 
-            var (lat, lng) = dto.Coordenadas;
-            dto.Latitud = lat;
-            dto.Longitud = lng;
 
-            if (dto.Horarios is null)
+            var usuario = await _obtenerUsuario.HandleAsync(FirebaseUid: uid, ct: ct);
+            // Parsear las coordenadas manualmente con InvariantCulture
+            double? lat = null;
+            double? lng = null;
+
+            if (!string.IsNullOrWhiteSpace(dto.Lat))
             {
-                var json = dto.HorariosComoJson;
-                if (!string.IsNullOrWhiteSpace(json))
-                {
-                    dto.Horarios = JsonSerializer.Deserialize<JsonElement>(json);
-                }
+                // Reemplazar coma por punto y parsear con InvariantCulture
+                var latStr = dto.Lat.Replace(",", ".");
+                lat = double.Parse(latStr, CultureInfo.InvariantCulture);
             }
 
-            var creado = await _servicio.CrearAsync(uid, dto);
-
-            var restaurante = await _db.Restaurantes
-                .Include(r => r.GustosQueSirve)
-                .Include(r => r.RestriccionesQueRespeta)
-                .FirstOrDefaultAsync(r => r.Id == creado.Id, ct);
-
-            if (restaurante is null)
-                return CreatedAtAction(nameof(GetById), new { id = creado.Id }, creado);
-
-            if (dto.GustosQueSirveIds is { Count: > 0 })
+            if (!string.IsNullOrWhiteSpace(dto.Lng))
             {
-                var gustos = await _db.Gustos
-                    .Where(g => dto.GustosQueSirveIds!.Contains(g.Id))
-                    .ToListAsync(ct);
-
-                foreach (var g in gustos)
-                {
-                    if (!restaurante.GustosQueSirve.Any(x => x.Id == g.Id))
-                        restaurante.GustosQueSirve.Add(g);
-                }
+                var lngStr = dto.Lng.Replace(",", ".");
+                lng = double.Parse(lngStr, CultureInfo.InvariantCulture);
             }
+            if (usuario.Rol != RolUsuario.Usuario)
+                return BadRequest("Ya hiciste una solicitud o sos dueño de un restaurante.");
 
-            if (dto.RestriccionesQueRespetaIds is { Count: > 0 })
+            var imagenes = new List<SolicitudRestauranteImagen>();
+
+            var urlsSubidas = new List<string>();
+
+            try
             {
-                var restricciones = await _db.Restricciones
-                    .Where(r => dto.RestriccionesQueRespetaIds!.Contains(r.Id))
-                    .ToListAsync(ct);
+                if (dto.ImagenDestacada != null)
+                    imagenes.Add(await SubirImagenAsync(dto.ImagenDestacada, TipoImagenSolicitud.Destacada, urlsSubidas));
 
-                foreach (var r in restricciones)
-                {
-                    if (!restaurante.RestriccionesQueRespeta.Any(x => x.Id == r.Id))
-                        restaurante.RestriccionesQueRespeta.Add(r);
-                }
+                if (dto.ImagenesInterior != null)
+                    foreach (var file in dto.ImagenesInterior)
+                        imagenes.Add(await SubirImagenAsync(file, TipoImagenSolicitud.Interior, urlsSubidas));
+
+                if (dto.ImagenesComidas != null)
+                    foreach (var file in dto.ImagenesComidas)
+                        imagenes.Add(await SubirImagenAsync(file, TipoImagenSolicitud.Comida, urlsSubidas));
+
+                if (dto.ImagenMenu != null)
+                    imagenes.Add(await SubirImagenAsync(dto.ImagenMenu, TipoImagenSolicitud.Menu, urlsSubidas));
+
+                if (dto.Logo != null)
+                    imagenes.Add(await SubirImagenAsync(dto.Logo, TipoImagenSolicitud.Logo, urlsSubidas));
+
+
+                var response = await _solicitudesRestaurantes.HandleAsync(uid, dto.Nombre, dto.Direccion,
+                    lat, lng, dto.HorariosJson, dto.GustosQueSirveIds,
+                    dto.RestriccionesQueRespetaIds, imagenes, dto.WebsiteUrl, ct);
+
+                return Ok(response);
             }
-
-            await _db.SaveChangesAsync(ct);
-
-
-            return CreatedAtAction(nameof(GetById), new { id = creado.Id }, new
+            catch (Exception ex)
             {
-                creado.Id,
-                creado.Nombre,
-                creado.Direccion,
-                creado.Latitud,
-                creado.Longitud,
-                PrimaryType = creado.PrimaryType,
-                Types = creado.TypesJson,
-                creado.ImagenUrl,
-                GustosVinculados = dto.GustosQueSirveIds,
-                RestriccionesVinculadas = dto.RestriccionesQueRespetaIds
-            });
+                foreach (var url in urlsSubidas)
+                {
+                    try { await _firebaseStorage.DeleteFileAsync(url); }
+                    catch { }
+                }
+
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+      
+        [HttpGet("registro-datos")]
+        public async Task<IActionResult> ObtenerDatosParaRegistro(CancellationToken ct)
+        {
+            var guid = GetFirebaseUid();
+
+            var (gustos, restricciones) = await _getDatosRegistroRestaurante.HandleAsync(ct);
+
+            var dto = new DatosSolicitudRestauranteDto
+            {
+                Gustos = gustos.Select(g => new ItemSimpleDto
+                {
+                    Id = g.Id,
+                    Nombre = g.Nombre
+                }).ToList(),
+                Restricciones = restricciones.Select(r => new ItemSimpleDto
+                {
+                    Id = r.Id,
+                    Nombre = r.Nombre
+                }).ToList()
+            };
+
+            return Ok(dto);
+        }
+
+        [Authorize(Policy = "DuenoRestaurante")]
+        [HttpPut("{id:guid}")]
+        public async Task<IActionResult> ActualizarBasico(
+            Guid id,
+            [FromBody] ActualizarRestauranteDashboardRequest dto,
+            CancellationToken ct)
+        {
+
+            var restauranteActualizado = await _actualizarRestauranteDashboardUseCase.HandleAsync(
+                id,
+                dto.Direccion,
+                dto.Latitud,
+                dto.Longitud,
+                dto.HorariosJson,
+                dto.WebUrl,
+                dto.GustosQueSirveIds,
+                dto.RestriccionesQueRespetaIds,
+                ct);
+
+            var detalle = _mapper.Map<RestauranteDetalleDto>(restauranteActualizado);
+            return Ok(detalle);
         }
 
 
-        [HttpPut("{id:guid}")]
-        [Authorize]
-        public async Task<IActionResult> Put(Guid id, [FromBody] ActualizarRestauranteDto dto)
+        private async Task ReemplazarImagenesTipoAsync(
+            Guid restauranteId,
+            TipoImagenRestaurante tipo,
+            IList<IFormFile>? archivos,
+            bool soloBorrar,
+            List<string> urlsSubidas,
+            CancellationToken ct)
         {
-            var uid = User.FindFirst("user_id")?.Value ?? User.FindFirst("sub")?.Value;
-            if (string.IsNullOrWhiteSpace(uid)) return Unauthorized();
+            var imagenesExistentes = await _db.RestauranteImagenes
+                .Where(i => i.RestauranteId == restauranteId && i.Tipo == tipo)
+                .ToListAsync(ct);
 
-            var esAdmin = User.IsInRole("admin") || User.Claims.Any(c => c.Type == "role" && c.Value == "admin");
+            foreach (var img in imagenesExistentes)
+            {
+                try
+                {
+                    await _firebase.DeleteFileAsync(img.Url);
+                }
+                catch
+                {
+                }
 
-            var r = await _servicio.ActualizarAsync(id, uid, esAdmin, dto);
-            return r is null ? NotFound() : Ok(r);
+                _db.RestauranteImagenes.Remove(img);
+            }
+
+            if (soloBorrar || archivos == null || archivos.Count == 0)
+                return;
+
+            var orden = 0;
+            foreach (var archivo in archivos)
+            {
+                using var stream = archivo.OpenReadStream();
+                var url = await _firebase.UploadFileAsync(stream, archivo.FileName, "restaurantes");
+                urlsSubidas.Add(url);
+
+                var entidad = new RestauranteImagen
+                {
+                    RestauranteId = restauranteId,
+                    Tipo = tipo,
+                    Url = url,
+                    Orden = orden++,
+                    FechaCreacionUtc = DateTime.UtcNow
+                };
+
+                await _db.RestauranteImagenes.AddAsync(entidad, ct);
+            }
+        }
+
+
+
+        [Authorize(Policy = "DuenoRestaurante")]
+        [HttpGet("mio")]
+        public async Task<IActionResult> ObtenerRestauranteIdDueñoRestaurante()
+        {
+            var firebaseuid= GetFirebaseUid();
+            var usuario= await _obtenerUsuario.HandleAsync(FirebaseUid: firebaseuid, ct: CancellationToken.None);
+            var restaurante = await _servicio.ObtenerPorPropietarioAsync(usuario.Id);
+
+            return Ok(restaurante.Id);
+        }
+
+        [Authorize(Policy = "DuenoRestaurante")]
+        [HttpPut("{id:guid}/imagenes/destacada")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> ActualizarImagenDestacada(
+            Guid id,
+            [FromForm] ActualizarImagenRestauranteRequest request,
+            CancellationToken ct = default)
+        {
+
+            var urlsSubidas = new List<string>();
+
+            try
+            {
+                var restaurante = await _db.Restaurantes
+                    .FirstOrDefaultAsync(r => r.Id == id, ct);
+
+                if (restaurante == null)
+                    return NotFound("Restaurante no encontrado.");
+
+                if (!string.IsNullOrWhiteSpace(restaurante.ImagenUrl))
+                {
+                    try { await _firebase.DeleteFileAsync(restaurante.ImagenUrl); }
+                    catch { }
+
+                    restaurante.ImagenUrl = null;
+                }
+
+                if (!request.SoloBorrar && request.Archivo != null)
+                {
+                    using var stream = request.Archivo.OpenReadStream();
+                    var url = await _firebase.UploadFileAsync(
+                        stream,
+                        request.Archivo.FileName,
+                        "restaurantes");
+
+                    urlsSubidas.Add(url);
+                    restaurante.ImagenUrl = url;
+                }
+
+                restaurante.ActualizadoUtc = DateTime.UtcNow;
+                await _db.SaveChangesAsync(ct);
+
+                return Ok(new { imagenDestacada = restaurante.ImagenUrl });
+            }
+            catch (Exception ex)
+            {
+                foreach (var url in urlsSubidas)
+                {
+                    try { await _firebase.DeleteFileAsync(url); }
+                    catch { }
+                }
+
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+
+
+        [Authorize(Policy = "DuenoRestaurante")]
+        [HttpPut("{id:guid}/imagenes/logo")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> ActualizarLogo(
+    Guid id,
+    [FromForm] ActualizarImagenRestauranteRequest request,
+    CancellationToken ct = default)
+        {
+
+            var urlsSubidas = new List<string>();
+
+            try
+            {
+                var restaurante = await _db.Restaurantes
+                    .FirstOrDefaultAsync(r => r.Id == id, ct);
+
+                if (restaurante == null)
+                    return NotFound("Restaurante no encontrado.");
+
+                if (!string.IsNullOrWhiteSpace(restaurante.LogoUrl))
+                {
+                    try { await _firebase.DeleteFileAsync(restaurante.LogoUrl); }
+                    catch { }
+
+                    restaurante.LogoUrl = null;
+                }
+
+                if (!request.SoloBorrar && request.Archivo != null)
+                {
+                    using var stream = request.Archivo.OpenReadStream();
+                    var url = await _firebase.UploadFileAsync(
+                        stream,
+                        request.Archivo.FileName,
+                        "restaurantes");
+
+                    urlsSubidas.Add(url);
+                    restaurante.LogoUrl = url;
+                }
+
+                restaurante.ActualizadoUtc = DateTime.UtcNow;
+                await _db.SaveChangesAsync(ct);
+
+                return Ok(new { logoUrl = restaurante.LogoUrl });
+            }
+            catch (Exception ex)
+            {
+                foreach (var url in urlsSubidas)
+                {
+                    try { await _firebase.DeleteFileAsync(url); }
+                    catch { }
+                }
+
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+
+        [Authorize(Policy = "DuenoRestaurante")]
+        [HttpPut("{id:guid}/imagenes/interior")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> ActualizarImagenesInterior(
+    Guid id,
+    [FromForm] ActualizarImagenesRestauranteRequest request,
+    CancellationToken ct = default)
+        {
+            
+            var urlsSubidas = new List<string>();
+
+            try
+            {
+                var restaurante = await _db.Restaurantes
+                    .FirstOrDefaultAsync(r => r.Id == id, ct);
+
+                if (restaurante == null)
+                    return NotFound("Restaurante no encontrado.");
+
+                await ReemplazarImagenesTipoAsync(
+                    restauranteId: id,
+                    tipo: TipoImagenRestaurante.Interior,
+                    archivos: request.Archivos,
+                    soloBorrar: request.SoloBorrar,
+                    urlsSubidas: urlsSubidas,
+                    ct: ct);
+
+                restaurante.ActualizadoUtc = DateTime.UtcNow;
+                await _db.SaveChangesAsync(ct);
+
+                var urls = await _db.RestauranteImagenes
+                    .Where(i => i.RestauranteId == id && i.Tipo == TipoImagenRestaurante.Interior)
+                    .OrderBy(i => i.Orden)
+                    .Select(i => i.Url)
+                    .ToListAsync(ct);
+
+                return Ok(new { imagenesInterior = urls });
+            }
+            catch (Exception ex)
+            {
+                foreach (var url in urlsSubidas)
+                {
+                    try { await _firebase.DeleteFileAsync(url); }
+                    catch { }
+                }
+
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+
+
+        [Authorize(Policy = "DuenoRestaurante")]
+        [HttpPut("{id:guid}/imagenes/comidas")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> ActualizarImagenesComida(
+    Guid id,
+    [FromForm] ActualizarImagenesRestauranteRequest request,
+    CancellationToken ct = default)
+        {
+
+            var urlsSubidas = new List<string>();
+
+            try
+            {
+                var restaurante = await _db.Restaurantes
+                    .FirstOrDefaultAsync(r => r.Id == id, ct);
+
+                if (restaurante == null)
+                    return NotFound("Restaurante no encontrado.");
+
+                await ReemplazarImagenesTipoAsync(
+                    restauranteId: id,
+                    tipo: TipoImagenRestaurante.Comida,
+                    archivos: request.Archivos,
+                    soloBorrar: request.SoloBorrar,
+                    urlsSubidas: urlsSubidas,
+                    ct: ct);
+
+                restaurante.ActualizadoUtc = DateTime.UtcNow;
+                await _db.SaveChangesAsync(ct);
+
+                var urls = await _db.RestauranteImagenes
+                    .Where(i => i.RestauranteId == id && i.Tipo == TipoImagenRestaurante.Comida)
+                    .OrderBy(i => i.Orden)
+                    .Select(i => i.Url)
+                    .ToListAsync(ct);
+
+                return Ok(new { imagenesComida = urls });
+            }
+            catch (Exception ex)
+            {
+                foreach (var url in urlsSubidas)
+                {
+                    try { await _firebase.DeleteFileAsync(url); }
+                    catch { }
+                }
+
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+
+        [Authorize(Policy = "DuenoRestaurante")]
+        [HttpPut("{id:guid}/imagenes/menu")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> ActualizarImagenMenu(
+    Guid id,
+    [FromForm] ActualizarImagenRestauranteRequest request,
+    CancellationToken ct = default)
+        {
+
+            var urlsSubidas = new List<string>();
+
+            try
+            {
+                var restaurante = await _db.Restaurantes
+                    .FirstOrDefaultAsync(r => r.Id == id, ct);
+
+                if (restaurante == null)
+                    return NotFound("Restaurante no encontrado.");
+
+                IList<IFormFile>? archivos = null;
+                if (request.Archivo != null)
+                    archivos = new List<IFormFile> { request.Archivo };
+
+                await ReemplazarImagenesTipoAsync(
+                    restauranteId: id,
+                    tipo: TipoImagenRestaurante.Menu,
+                    archivos: archivos,
+                    soloBorrar: request.SoloBorrar,
+                    urlsSubidas: urlsSubidas,
+                    ct: ct);
+
+                restaurante.ActualizadoUtc = DateTime.UtcNow;
+                await _db.SaveChangesAsync(ct);
+
+                var urlMenu = await _db.RestauranteImagenes
+                    .Where(i => i.RestauranteId == id && i.Tipo == TipoImagenRestaurante.Menu)
+                    .OrderBy(i => i.Orden)
+                    .Select(i => i.Url)
+                    .FirstOrDefaultAsync(ct);
+
+                return Ok(new { imagenMenu = urlMenu });
+            }
+            catch (Exception ex)
+            {
+                foreach (var url in urlsSubidas)
+                {
+                    try { await _firebase.DeleteFileAsync(url); }
+                    catch { }
+                }
+
+                return BadRequest(new { error = ex.Message });
+            }
         }
 
         [HttpDelete("{id:guid}")]
-        [Authorize]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var uid = User.FindFirst("user_id")?.Value ?? User.FindFirst("sub")?.Value;
-            if (string.IsNullOrWhiteSpace(uid)) return Unauthorized();
+            var uid = GetFirebaseUid();
+
 
             var esAdmin = User.IsInRole("admin") || User.Claims.Any(c => c.Type == "role" && c.Value == "admin");
 
@@ -299,362 +660,85 @@ namespace GustosApp.API.Controllers
             return ok ? NoContent() : NotFound();
         }
 
-        [Authorize]
-        [HttpPost("{id:guid}/imagenes/{tipo}")]
-        public async Task<IActionResult> SubirImagen(Guid id, string tipo, IFormFile archivo, CancellationToken ct)
+        
+        [HttpGet("buscar")]
+        public async Task<IActionResult> Buscar([FromQuery] string texto, CancellationToken ct)
         {
-            if (archivo == null || archivo.Length == 0)
-                return BadRequest(new { mensaje = "Archivo requerido" });
+            var uid = GetFirebaseUid();
 
-            var (ok, uid) = await CheckOwnerAsync(id, User, ct);
-            if (!ok) return Forbid();
+            var restaurantes = await _buscarRestaurante.HandleAsync(texto, ct);
 
-            if (!Enum.TryParse<TipoImagenRestaurante>(
-                tipo.Replace("-", "", StringComparison.OrdinalIgnoreCase), ignoreCase: true, out var tipoImg))
+            var dto = restaurantes.Select(r => new RestauranteResponse
             {
-                tipo = tipo.ToLowerInvariant();
-                if (tipo == "perfil") tipoImg = TipoImagenRestaurante.Perfil;
-                else if (tipo == "principal") tipoImg = TipoImagenRestaurante.Principal;
-                else if (tipo == "interior") tipoImg = TipoImagenRestaurante.Interior;
-                else if (tipo == "comida") tipoImg = TipoImagenRestaurante.Comida;
-                else return BadRequest(new { mensaje = "Tipo de imagen inválido" });
-            }
-
-            if (!(archivo.ContentType?.StartsWith("image/") ?? false))
-                return BadRequest(new { mensaje = "Tipo de archivo no soportado" });
-
-            var ext = Path.GetExtension(archivo.FileName);
-            var fileName = $"{Guid.NewGuid():N}{ext}";
-            var rutaRel = Path.Combine(id.ToString(), tipoImg.ToString().ToLowerInvariant(), fileName);
-            using var s = archivo.OpenReadStream();
-            var url = await _fileStorage.SubirAsync(s, rutaRel, ct);
-
-            var reg = new RestauranteImagen
-            {
-                RestauranteId = id,
-                Tipo = tipoImg,
-                Url = url,
-                FechaCreacionUtc = DateTime.UtcNow
-            };
-            _db.Set<RestauranteImagen>().Add(reg);
-            await _db.SaveChangesAsync(ct);
-
-            return Created(url, new { mensaje = "Imagen subida", url });
-        }
-
-        [Authorize]
-        [HttpPost("{id:guid}/menu/manual")]
-        [Consumes("application/json")]
-        public async Task<IActionResult> GuardarMenuManual(Guid id, [FromBody] object menu, CancellationToken ct)
-        {
-            var (ok, uid) = await CheckOwnerAsync(id, User, ct);
-            if (!ok) return Forbid();
-
-            if (menu is null) return BadRequest(new { mensaje = "menu requerido" });
-
-            // Validación real del JSON y default de moneda
-            using var doc = System.Text.Json.JsonDocument.Parse(JsonSerializer.Serialize(menu));
-            var root = doc.RootElement;
-
-            if (!root.TryGetProperty("categorias", out var categorias) || categorias.ValueKind != JsonValueKind.Array)
-                return BadRequest(new { mensaje = "El menú debe contener 'categorias' como arreglo." });
-
-            var moneda = root.TryGetProperty("moneda", out var monedaEl) && monedaEl.ValueKind == JsonValueKind.String
-                ? monedaEl.GetString()
-                : "ARS";
-
-            var json = JsonSerializer.Serialize(root, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-            });
-
-            var repo = _db.Set<RestauranteMenu>();
-            var existente = await repo.FirstOrDefaultAsync(m => m.RestauranteId == id, ct);
-
-            var created = false;
-            if (existente == null)
-            {
-                existente = new RestauranteMenu
-                {
-                    RestauranteId = id,
-                    Moneda = moneda ?? "ARS",
-                    Json = json,
-                    Version = 1,
-                    FechaActualizacionUtc = DateTime.UtcNow
-                };
-                repo.Add(existente);
-                created = true;
-            }
-            else
-            {
-                existente.Moneda = moneda ?? existente.Moneda;
-                existente.Json = json;
-                existente.Version += 1;
-                existente.FechaActualizacionUtc = DateTime.UtcNow;
-            }
-
-            await _db.SaveChangesAsync(ct);
-
-            if (created)
-            {
-
-                return CreatedAtAction(nameof(GetMenu), new { id }, new
-                {
-                    mensaje = "Menú creado",
-                    version = existente.Version
-                });
-            }
-            return Ok(new { mensaje = "Menú actualizado", version = existente.Version });
-        }
-
-
-        [Authorize]
-        [HttpPost("{id:guid}/menu/ocr")]
-        [Consumes("multipart/form-data")]
-        public async Task<IActionResult> MenuOCR(Guid id, [FromForm] List<IFormFile> archivos, CancellationToken ct)
-        {
-            var (ok, uid) = await CheckOwnerAsync(id, User, ct);
-            if (!ok) return Forbid();
-
-            if (archivos is null || archivos.Count == 0)
-                return BadRequest(new { mensaje = "Debe enviar al menos una imagen" });
-
-            if (archivos.Count > 10)
-                return BadRequest(new { mensaje = "Máximo 10 imágenes por solicitud" });
-
-            const long MaxFileSizeBytes = 10 * 1024 * 1024;
-            var ocrStreams = new List<Stream>();
-
-            try
-            {
-                foreach (var a in archivos)
-                {
-                    if (!(a.ContentType?.StartsWith("image/") ?? false))
-                        return BadRequest(new { mensaje = $"Tipo de archivo no soportado: {a.FileName}" });
-
-                    if (a.Length <= 0 || a.Length > MaxFileSizeBytes)
-                        return BadRequest(new { mensaje = $"Archivo inválido o excede el límite ({a.FileName})." });
-
-                    using var tmp = new MemoryStream();
-                    await a.OpenReadStream().CopyToAsync(tmp, ct);
-                    var bytes = tmp.ToArray();
-
-                    var ext = Path.GetExtension(a.FileName);
-                    var nombre = $"{Guid.NewGuid():N}{ext}";
-                    var rutaRel = Path.Combine(id.ToString(), "menu", nombre);
-
-                    using (var sStore = new MemoryStream(bytes, writable: false))
-                        await _fileStorage.SubirAsync(sStore, rutaRel, ct);
-
-                    ocrStreams.Add(new MemoryStream(bytes, writable: false));
-                }
-
-                var textoReconocido = await _ocr.ReconocerTextoAsync(ocrStreams, "spa+eng", ct);
-                if (string.IsNullOrWhiteSpace(textoReconocido))
-                    return BadRequest(new { mensaje = "No se pudo extraer texto del menú" });
-
-                var menuJson = await _menuParser.ParsearAsync(textoReconocido, "ARS", ct);
-
-                var repo = _db.Set<RestauranteMenu>();
-                var existente = await repo.FirstOrDefaultAsync(m => m.RestauranteId == id, ct);
-                var created = false;
-
-                if (existente == null)
-                {
-                    existente = new RestauranteMenu
-                    {
-                        RestauranteId = id,
-                        Moneda = "ARS",
-                        Json = menuJson,
-                        Version = 1,
-                        FechaActualizacionUtc = DateTime.UtcNow
-                    };
-                    repo.Add(existente);
-                    created = true;
-                }
-                else
-                {
-                    existente.Json = menuJson;
-                    existente.Version += 1;
-                    existente.FechaActualizacionUtc = DateTime.UtcNow;
-                }
-
-                await _db.SaveChangesAsync(ct);
-
-                JsonElement menuElem;
-                using (var doc = System.Text.Json.JsonDocument.Parse(menuJson))
-                    menuElem = doc.RootElement.Clone();
-
-                var payload = new
-                {
-                    mensaje = created ? "Menú OCR creado" : "Menú OCR actualizado",
-                    version = existente.Version,
-                    menu = menuElem
-                };
-
-                return created
-                    ? CreatedAtAction(nameof(GetMenu), new { id }, payload)
-                    : Ok(payload);
-            }
-            finally
-            {
-                foreach (var s in ocrStreams) s.Dispose();
-            }
-        }
-
-
-        // ---------------------------------------------
-        // GET /api/Restaurantes/{id}/imagenes?tipo=perfil|principal|interior|comida|menu&skip=0&take=20&miniatura=true
-        // ---------------------------------------------
-        [HttpGet("{id:guid}/imagenes")]
-        public async Task<ActionResult<ImagenesResponse>> GetImagenes(
-            Guid id,
-            [FromQuery] string? tipo,
-            [FromQuery] int skip = 0,
-            [FromQuery] int take = 20,
-            [FromQuery] bool miniatura = false,
-            CancellationToken ct = default)
-        {
-            var existe = await _db.Restaurantes.AsNoTracking().AnyAsync(r => r.Id == id, ct);
-            if (!existe) return NotFound(new { mensaje = "Restaurante no encontrado" });
-
-            TipoImagenRestaurante? tipoImg = null;
-            if (!string.IsNullOrWhiteSpace(tipo))
-            {
-                if (!TryParseTipo(tipo, out var parsed))
-                    return BadRequest(new { mensaje = "Tipo de imagen inválido. Use perfil|principal|interior|comida|menu" });
-                tipoImg = parsed;
-            }
-
-            var q = _db.Set<RestauranteImagen>()
-                .AsNoTracking()
-                .Where(i => i.RestauranteId == id);
-
-            if (tipoImg.HasValue)
-                q = q.Where(i => i.Tipo == tipoImg.Value);
-
-            q = q.OrderBy(i => i.Orden == null)
-                 .ThenBy(i => i.Orden)
-                 .ThenByDescending(i => i.FechaCreacionUtc);
-
-            var total = await q.CountAsync(ct);
-
-            if (take <= 0) take = 20;
-            if (skip < 0) skip = 0;
-
-            var data = await q.Skip(skip).Take(take)
-                .Select(i => new RestauranteImagenDto
-                {
-                    Id = i.Id,
-                    Tipo = i.Tipo.ToString().ToLowerInvariant(),
-                    Url = i.Url,
-                    Orden = i.Orden,
-                    FechaCreacionUtc = i.FechaCreacionUtc,
-                    MiniaturaUrl = (miniatura && i.Tipo == TipoImagenRestaurante.Perfil)
-                        ? i.Url
-                        : null
-                })
-                .ToListAsync(ct);
-
-            return Ok(new ImagenesResponse
-            {
-                Total = total,
-                Skip = skip,
-                Take = take,
-                Items = data
-            });
-        }
-
-        // ---------------------------------------------
-        // GET /api/Restaurantes/{id}/imagenes/{imagenId}
-        // ---------------------------------------------
-        [HttpGet("{id:guid}/imagenes/{imagenId:guid}")]
-        public async Task<ActionResult<RestauranteImagenDto>> GetImagenPorId(
-            Guid id,
-            Guid imagenId,
-            [FromQuery] bool miniatura = false,
-            CancellationToken ct = default)
-        {
-            var img = await _db.Set<RestauranteImagen>()
-                .AsNoTracking()
-                .FirstOrDefaultAsync(i => i.RestauranteId == id && i.Id == imagenId, ct);
-
-            if (img is null) return NotFound(new { mensaje = "Imagen no encontrada" });
-
-            var dto = new RestauranteImagenDto
-            {
-                Id = img.Id,
-                Tipo = img.Tipo.ToString().ToLowerInvariant(),
-                Url = img.Url,
-                Orden = img.Orden,
-                FechaCreacionUtc = img.FechaCreacionUtc,
-                MiniaturaUrl = (miniatura && img.Tipo == TipoImagenRestaurante.Perfil)
-                    ? img.Url /* o tu convención de thumbs */
-                    : null
-            };
+                Id = r.Id,
+                Nombre = r.Nombre,
+                Latitud = r.Latitud,
+                Longitud = r.Longitud,
+                Categoria = r.Categoria,
+                Rating = r.Rating,
+                Direccion = r.Direccion,
+                ImagenUrl = string.IsNullOrWhiteSpace(r.ImagenUrl) ? "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/restauranteicono.jpg?alt=media&token=cb818ad4-78b0-4fbb-a13d-46ce1aa66ac1" : r.ImagenUrl
+            }).ToList();
 
             return Ok(dto);
         }
 
-        // ---------------------------------------------
-        // GET /api/Restaurantes/{id}/menu
-        // ---------------------------------------------
-        [HttpGet("{id:guid}/menu")]
-        public async Task<ActionResult<RestauranteMenuDto>> GetMenu(Guid id, CancellationToken ct = default)
+
+        [Authorize]
+        [HttpPost("favorito/{restauranteId}")]
+        public async Task<IActionResult> AgregarFavorito(Guid restauranteId)
         {
-            var menu = await _db.Set<RestauranteMenu>()
-                .AsNoTracking()
-                .FirstOrDefaultAsync(m => m.RestauranteId == id, ct);
-
-            if (menu is null) return NotFound(new { mensaje = "El restaurante no tiene menú guardado" });
-
-
-            JsonElement? parsed = null;
-            try
-            {
-                using var doc = JsonDocument.Parse(menu.Json ?? "{}");
-                parsed = doc.RootElement.Clone();
-            }
-            catch
-            {
-
-            }
-
-            var dto = new RestauranteMenuDto
-            {
-                Id = menu.Id,
-                RestauranteId = menu.RestauranteId,
-                Moneda = menu.Moneda,
-                Version = menu.Version,
-                FechaActualizacionUtc = menu.FechaActualizacionUtc,
-                Menu = parsed,
-                MenuRaw = parsed is null ? (menu.Json ?? "{}") : null
-            };
-
-            return Ok(dto);
+            var firebaseUid = GetFirebaseUid();
+            await _agregarFavoritoUseCase.HandleAsync(firebaseUid, restauranteId);
+            return Ok();
         }
 
-        // -------------------
-        // Helpers
-        // -------------------
-        private static bool TryParseTipo(string tipo, out TipoImagenRestaurante value)
+        [HttpDelete("favorito/{restauranteId}")]
+        public async Task<IActionResult> EliminarFavorito(Guid restauranteId)
         {
+            var firebaseUid = GetFirebaseUid();
+                await _agregarFavoritoUseCase.HandleAsyncDelete(firebaseUid, restauranteId);
 
-            var t = tipo.Trim().ToLowerInvariant();
-            switch (t)
+                return Ok();
+
+        }
+
+        [HttpGet("{id:guid}/metricas")]
+        public async Task<ActionResult> ObtenerMetricas(
+            Guid id,
+            CancellationToken ct)
+        {
+            var metricas = await _obtenerMetricasRestauranteUseCase.HandleAsync(id, ct);
+
+            var rest = new RestauranteMetricasDashboardResponse
             {
-                case "perfil": value = TipoImagenRestaurante.Perfil; return true;
-                case "principal": value = TipoImagenRestaurante.Principal; return true;
-                case "interior": value = TipoImagenRestaurante.Interior; return true;
-                case "comida": value = TipoImagenRestaurante.Comida; return true;
-                case "menu": value = TipoImagenRestaurante.Menu; return true;
-                default:
+                RestauranteId = metricas.RestauranteId,
+                TotalTop3Individual = metricas.Estadisticas?.TotalTop3Individual ?? 0,
+                TotalTop3Grupo = metricas.Estadisticas?.TotalTop3Grupo ?? 0,
+                TotalVisitasPerfil = metricas.Estadisticas?.TotalVisitasPerfil ?? 0,
+                TotalFavoritosHistorico = metricas.TotalFavoritos,
+                TotalFavoritosActual = metricas.TotalFavoritos
+            };
 
-                    return Enum.TryParse<TipoImagenRestaurante>(tipo, true, out value);
-            }
+            return Ok(rest);
+        }
+
+        private async Task<SolicitudRestauranteImagen> SubirImagenAsync(IFormFile archivo,
+       TipoImagenSolicitud tipo, List<string> urlsSubidas)
+
+        {
+            using var stream = archivo.OpenReadStream();
+            var url = await _firebaseStorage.UploadFileAsync(stream, archivo.FileName, "solicitudes");
+            urlsSubidas.Add(url);
+            return new SolicitudRestauranteImagen
+            {
+                Tipo = tipo,
+                Url = url
+            };
         }
     }
+
+
 
 }
 

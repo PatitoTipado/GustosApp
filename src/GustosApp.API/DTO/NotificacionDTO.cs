@@ -1,4 +1,4 @@
-﻿
+﻿using GustosApp.Domain.Model.@enum;
 
 namespace GustosApp.API.DTO
 {
@@ -15,6 +15,17 @@ namespace GustosApp.API.DTO
         public bool Leida { get; set; } = false;
 
         public DateTime FechaCreacion { get; set; }
+    }
+
+    public class CrearNotificacionRequest
+    {
+        public Guid UsuarioDestinoId { get; set; }
+        public string Mensaje { get; set; } = string.Empty;
+        public TipoNotificacion TipoNotificacion { get; set; }
+        public string nombreUsuario { get; set; } = string.Empty;
+        public string? nombreGrupo { get; set; } // opcional
+
+
     }
 }
 

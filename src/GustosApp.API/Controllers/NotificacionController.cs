@@ -1,22 +1,39 @@
 ﻿using GustosApp.API.DTO;
-using GustosApp.Application.Tests.mocks;
-using GustosApp.Application.UseCases;
+using GustosApp.Application.UseCases.NotificacionUseCases;
 using GustosApp.Domain.Model;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GustosApp.API.Controllers
 {
-    public class NotificacionController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class NotificacionController : BaseApiController
     {
         private readonly CrearNotificacionUseCase _crearNotificacion;
         private readonly ObtenerNotificacionUsuarioUseCase _ObtenerNotificaciones;
         private readonly MarcarNotificacionLeidaUseCase _marcarNotificion;
+        private readonly EnviarRecomendacionesUsuariosActivosUseCase _enviarRecomendacion;
 
-        public NotificacionController(CrearNotificacionUseCase crearNotificacion, ObtenerNotificacionUsuarioUseCase obtenerNotificaciones, MarcarNotificacionLeidaUseCase marcarNotificion)
+        public NotificacionController(CrearNotificacionUseCase crearNotificacion, 
+            ObtenerNotificacionUsuarioUseCase obtenerNotificaciones, 
+            MarcarNotificacionLeidaUseCase marcarNotificion,
+            EnviarRecomendacionesUsuariosActivosUseCase enviarRecomendacion)
         {
             _crearNotificacion = crearNotificacion;
             _ObtenerNotificaciones = obtenerNotificaciones;
             _marcarNotificion = marcarNotificion;
+            _enviarRecomendacion = enviarRecomendacion;
+        }
+
+        //(Roles = "Moderador")
+        [Authorize]
+        [HttpPost("recomendar")]
+        public async Task<IActionResult> Recomendar()
+        {
+            var uid = GetFirebaseUid();
+            var funciono=await _enviarRecomendacion.HandleAsync(uid,CancellationToken.None);
+            return Ok(funciono);
         }
 
         [HttpPost("solicitud")]

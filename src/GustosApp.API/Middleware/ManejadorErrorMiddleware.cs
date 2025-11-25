@@ -80,6 +80,26 @@ namespace GustosApp.API.Middleware
                     result = responseObj;
                     break;
 
+
+                case LimiteFavoritosAlcanzadoException favEx:
+                    status = (HttpStatusCode)402;
+
+                    var beneficiosFav = new BeneficiosPremiumDto { Precio = 9999.99m };
+
+                    var favResponse = new
+                    {
+                        message = $"Has alcanzado el límite de {favEx.LimiteActual} favoritos para usuarios del plan {favEx.TipoPlan}.",
+                        plan = favEx.TipoPlan,
+                        limite = favEx.LimiteActual,
+                        actuales = favEx.FavoritosActuales,
+                        beneficios = beneficiosFav,
+                        linkPago = "/api/pago/crear"
+                    };
+
+                    result = favResponse;
+                    break;
+
+
                 default:
                     result = new
                     {

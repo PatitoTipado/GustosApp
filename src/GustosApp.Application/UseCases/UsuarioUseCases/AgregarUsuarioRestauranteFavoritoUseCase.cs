@@ -1,4 +1,5 @@
-﻿using GustosApp.Domain.Interfaces;
+﻿using GustosApp.Application.Common.Exceptions;
+using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 using GustosApp.Domain.Model.@enum;
 using System;
@@ -31,7 +32,11 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases
 
             if (usuario.Plan == PlanUsuario.Free && cantidadRestauranteFavorito >= 3)
             {
-                throw new Exception("Has alcanzado el límite de favoritos. Suscribite para agregar más.");
+                throw new LimiteFavoritosAlcanzadoException(
+                      tipoPlan: "Free",
+                     limiteActual: 3,
+                    favoritosActuales: cantidadRestauranteFavorito
+                  );
             }
 
             var existe = await _repositorioFavorito.ExistsAsync(usuario.Id, restauranteId, ct);

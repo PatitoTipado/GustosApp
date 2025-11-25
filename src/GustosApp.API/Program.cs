@@ -278,7 +278,8 @@ builder.Services.AddStackExchangeRedisCache(options =>
 //   EF Core / SQL Server
 // =====================
 builder.Services.AddDbContext<GustosDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
+            sqlOptions => sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
 
 
 // =====================

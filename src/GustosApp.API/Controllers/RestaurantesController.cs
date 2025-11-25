@@ -149,7 +149,7 @@ namespace GustosApp.API.Controllers
                 gustosDelFiltro: gustos,
                 ct);
 
-            if (preferencias.Gustos==null || preferencias.Gustos.Any())
+            if (preferencias.Gustos==null || !preferencias.Gustos.Any())
             {
                 throw new ArgumentException("los gustos que quiere buscar no son validos");
             }
@@ -162,7 +162,7 @@ namespace GustosApp.API.Controllers
                 ct
             );
 
-            if (recommendations == null || recommendations.Any())
+            if (recommendations == null || !recommendations.Any())
             {
                 throw new KeyNotFoundException("no existen coincidencias con sus gustos y preferencias en la zona");
             }

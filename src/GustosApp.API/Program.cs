@@ -54,10 +54,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 //(en la carpeta /secrets)
 //var firebaseKeyPath = Path.Combine(builder.Environment.ContentRootPath, "secrets", "firebase-key.json");
-//var firebaseProjectId = "gustosapp-5c3c9";
+var firebaseProjectId = "gustosapp-5c3c9";
 
 var firebaseKeyPath = builder.Configuration["FIREBASE_SERVICE_ACCOUNT_JSON"];
-var firebaseProjectId = builder.Configuration["Firebase:ProjectId"];
+//var firebaseProjectId = builder.Configuration["Firebase:ProjectId"];
 
 // Inicializar Firebase solo si no está inicializado (Admin SDK: útil p/ scripts, NO requerido para validar JWT)
 /*if (FirebaseApp.DefaultInstance == null)

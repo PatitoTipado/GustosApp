@@ -105,20 +105,36 @@ namespace GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases
 
             return invitacionCompleta;
         }
-        private async Task<Usuario?> ObtenerUsuarioInvitado(string? EmailUsuario, Guid? UsuarioId,
-           string? UsuarioUsername, string? MensajePersonalizado, CancellationToken ct)
+        private async Task<Usuario?> ObtenerUsuarioInvitado(
+         string? emailUsuario,
+         Guid? usuarioId,
+         string? usuarioUsername,
+         string? mensajePersonalizado,
+         CancellationToken ct)
         {
-            if (UsuarioId.HasValue && UsuarioId != Guid.Empty)
-                return await _usuarioRepository.GetByIdAsync(UsuarioId.Value, ct);
+            Usuario? usuario = null;
 
-            if (!string.IsNullOrWhiteSpace(UsuarioUsername))
-                return await _usuarioRepository.GetByUsernameAsync(UsuarioUsername, ct);
+            if (usuarioId.HasValue && usuarioId.Value != Guid.Empty)
+            {
+                usuario = await _usuarioRepository.GetByIdAsync(usuarioId.Value, ct);
+                if (usuario != null) return usuario;
+            }
 
-            if (!string.IsNullOrWhiteSpace(EmailUsuario))
-                return await _usuarioRepository.GetByEmailAsync(EmailUsuario, ct);
+            if (!string.IsNullOrWhiteSpace(usuarioUsername))
+            {
+                usuario = await _usuarioRepository.GetByUsernameAsync(usuarioUsername.Trim(), ct);
+                if (usuario != null) return usuario;
+            }
+
+            if (!string.IsNullOrWhiteSpace(emailUsuario))
+            {
+                usuario = await _usuarioRepository.GetByEmailAsync(emailUsuario.Trim(), ct);
+                if (usuario != null) return usuario;
+            }
 
             return null;
         }
+
     }
 }
 

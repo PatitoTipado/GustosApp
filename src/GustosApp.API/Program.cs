@@ -45,8 +45,6 @@ using GustosApp.API.Validations.OpinionRestaurantes;
 using GustosApp.Application.UseCases.RestauranteUseCases.OpinionesRestaurantes;
 
 
-AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -424,8 +422,6 @@ builder.Services.AddAuthorization(options =>
         policy.RequireClaim("role", "negocio").RequireAuthenticatedUser());
 });
 */
-try
-{
 
     var app = builder.Build();
 
@@ -437,6 +433,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseMiddleware<ManejadorErrorMiddleware>();
 
 // CORS debe ir antes de UseRouting para SignalR
 app.UseCors(MyAllowSpecificOrigins);
@@ -445,8 +442,6 @@ app.UseStaticFiles(); // Habilitar archivos estáticos
 
 app.UseRouting();
 
-
-app.UseMiddleware<ManejadorErrorMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -457,9 +452,3 @@ app.MapHub<NotificacionesHub>("/notificacionesHub");
 app.MapHub<SolicitudesAmistadHub>("/solicitudesAmistadHub");
 
 app.Run();
-}
-catch (Exception ex)
-{
-    Console.WriteLine("🔥 ERROR FATAL: " + ex);
-    throw;
-}

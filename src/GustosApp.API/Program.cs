@@ -1,12 +1,15 @@
 using FirebaseAdmin;
-using Google.Api;
 using FluentValidation;
+using FluentValidation.AspNetCore;
+using Google.Api;
 using Google.Apis.Auth.OAuth2;
 using GustosApp.API.Hubs;
 using GustosApp.API.Hubs.GustosApp.API.Hubs;
 using GustosApp.API.Hubs.Services;
 using GustosApp.API.Mapping;
 using GustosApp.API.Middleware;
+using GustosApp.API.Templates.Email;
+using GustosApp.API.Validations.OpinionRestaurantes;
 using GustosApp.Application.Handlers;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.Services;
@@ -17,10 +20,14 @@ using GustosApp.Application.UseCases.GrupoUseCases.ChatGrupoUseCases;
 using GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases;
 using GustosApp.Application.UseCases.NotificacionUseCases;
 using GustosApp.Application.UseCases.RestauranteUseCases;
+using GustosApp.Application.UseCases.RestauranteUseCases.OpinionesRestaurantes;
+using GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestauranteUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
+using GustosApp.Application.UseCases.VotacionUseCases;
+using GustosApp.Application.Validations.Restaurantes;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Infraestructure;
 using GustosApp.Infraestructure.Files;
@@ -31,6 +38,7 @@ using GustosApp.Infraestructure.Repositories;
 using GustosApp.Infraestructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -58,6 +66,7 @@ using GustosApp.Application.UseCases.RestauranteUseCases.OpinionesRestaurantes;
 using System.Globalization;
 
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // =====================
@@ -65,27 +74,37 @@ var builder = WebApplication.CreateBuilder(args);
 // =====================
 
 //(en la carpeta /secrets)
-var firebaseKeyPath = Path.Combine(builder.Environment.ContentRootPath, "secrets", "firebase-key.json");
-var firebaseProjectId = "gustosapp-5c3c9";
+//var firebaseKeyPath = Path.Combine(builder.Environment.ContentRootPath, "secrets", "firebase-key.json");
+
+var firebaseKeyPath = builder.Configuration["FIREBASE_SERVICE_ACCOUNT_JSON"];
+var firebaseProjectId = builder.Configuration["FIREBASE_PROJECTID"];
 
 // Inicializar Firebase solo si no está inicializado (Admin SDK: útil p/ scripts, NO requerido para validar JWT)
-if (FirebaseApp.DefaultInstance == null)
+/*if (FirebaseApp.DefaultInstance == null)
 {
     FirebaseApp.Create(new AppOptions()
     {
         Credential = GoogleCredential.FromFile(firebaseKeyPath)
+    });
+}*/
+
+if (FirebaseApp.DefaultInstance == null)
+{
+    FirebaseApp.Create(new AppOptions()
+    {
+        Credential = GoogleCredential.FromJson(firebaseKeyPath)
     });
 }
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 
-// Validación de JWT emitidos por Firebase (securetoken)
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.Authority = $"https://securetoken.google.com/{firebaseProjectId}";
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -94,32 +113,79 @@ builder.Services
             ValidAudience = firebaseProjectId,
             ValidateLifetime = true
         };
+
+        // Unificamos todo en un solo bloque de eventos
         options.Events = new JwtBearerEvents
         {
             OnMessageReceived = context =>
             {
-                // Prioridad 1: Si hay cookie "token", úsala como fuente del JWT (para HTTP normal)
+                // 0. Preparar Logger
+                var logger = context.HttpContext.RequestServices
+                    .GetRequiredService<ILoggerFactory>()
+                    .CreateLogger("JWT");
+
+                logger.LogInformation("📥 Request a: {Path}", context.Request.Path);
+
+                // Prioridad 1: Cookie "token"
                 if (context.Request.Cookies.ContainsKey("token"))
                 {
-                    context.Token = context.Request.Cookies["token"];
+                    var raw = context.Request.Cookies["token"];
+                    logger.LogInformation("🍪 Cookie 'token' encontrada: {TokenInicio}...",
+                        raw?.Substring(0, Math.Min(15, raw.Length)));
+
+                    context.Token = raw;
                     return Task.CompletedTask;
                 }
 
-                // Prioridad 2: Leer token del query string "access_token" (para SignalR)
+                // Prioridad 2: Query string "access_token" (SignalR)
                 var accessToken = context.Request.Query["access_token"];
                 if (!string.IsNullOrEmpty(accessToken))
                 {
+                    logger.LogInformation("🔗 Token encontrado en QueryString (SignalR)");
                     context.Token = accessToken;
                     return Task.CompletedTask;
                 }
 
-                // Prioridad 3: Leer del header Authorization (para compatibilidad)
+                // Prioridad 3: Header Authorization (Manual check)
+                // Nota: Normalmente JWTBearer lo hace solo, pero al sobrescribir este evento 
+                // es seguro mantener tu lógica manual para garantizar que lo lea.
                 var authHeader = context.Request.Headers["Authorization"].ToString();
                 if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
                 {
+                    // No logueamos aquí para no llenar la consola de logs "normales"
                     context.Token = authHeader.Substring("Bearer ".Length).Trim();
                     return Task.CompletedTask;
                 }
+
+                // Si llegamos acá, no se encontró token
+                logger.LogWarning("⚠️ No llegó token en Cookie, QueryString ni Header");
+                return Task.CompletedTask;
+            },
+
+            OnTokenValidated = context =>
+            {
+                var logger = context.HttpContext.RequestServices
+                    .GetRequiredService<ILoggerFactory>()
+                    .CreateLogger("JWT");
+
+                logger.LogInformation("✅ Token VALIDADO correctamente");
+
+                var claims = context.Principal.Claims
+                    .Select(c => $"{c.Type} = {c.Value}");
+
+                logger.LogInformation("🧩 Claims recibidos:\n{Claims}", string.Join("\n", claims));
+
+                return Task.CompletedTask;
+            },
+
+            OnAuthenticationFailed = context =>
+            {
+                var logger = context.HttpContext.RequestServices
+                    .GetRequiredService<ILoggerFactory>()
+                    .CreateLogger("JWT");
+
+                logger.LogError(context.Exception,
+                    "❌ Falló la autenticación del JWT: {Error}", context.Exception.Message);
 
                 return Task.CompletedTask;
             }
@@ -182,14 +248,48 @@ builder.Services.AddAuthorization(opt =>
 
 
 
-
+//##########
 //REDIS
+//############
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
+    // 1. Obtener el ILogger<T> del ServiceProvider (sp)
+    //    Usamos ILogger<IConnectionMultiplexer> por convención, ya que es la clase que se está configurando.
+    var logger = sp.GetRequiredService<ILogger<IConnectionMultiplexer>>();
+
+    // 2. Obtener la configuración de la conexión Redis
     var config = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+
+    // 3. Registrar el valor de la cadena de conexión
+    //    Usamos LogInformation para registrar que se va a intentar conectar con esta configuración.
+    logger.LogInformation("🚀 Conectando a Redis con la cadena de conexión: {RedisConnectionString}", config);
+
+    // --- CONFIGURACIÓN DE FIREBASE Y LOGGING ---
+    var firebaseKeyPath = builder.Configuration["FIREBASE_SERVICE_ACCOUNT_JSON"];
+    var firebaseProjectId = builder.Configuration["FIREBASE_PROJECTID"];
+
+    // Loguear los valores de Firebase
+    if (!string.IsNullOrEmpty(firebaseKeyPath))
+    {
+        logger.LogInformation("🔑 Ruta del Service Account de Firebase: {FirebaseKeyPath}", firebaseKeyPath);
+    }
+    else
+    {
+        logger.LogWarning("⚠️ La ruta FIREBASE_SERVICE_ACCOUNT_JSON no está configurada.");
+    }
+
+    if (!string.IsNullOrEmpty(firebaseProjectId))
+    {
+        logger.LogInformation("💡 ID del Proyecto de Firebase: {FirebaseProjectId}", firebaseProjectId);
+    }
+    else
+    {
+        logger.LogWarning("⚠️ El ID del Proyecto de Firebase (FIREBASE_PROJECTID) no está configurado.");
+    }
+
+    // 4. Conectar al multiplexer
     return ConnectionMultiplexer.Connect(config);
 });
-
 
 builder.Services
     .AddFluentValidationAutoValidation()
@@ -219,7 +319,8 @@ builder.Services.AddStackExchangeRedisCache(options =>
 //   EF Core / SQL Server
 // =====================
 builder.Services.AddDbContext<GustosDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
+            sqlOptions => sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
 
 
 // =====================
@@ -228,9 +329,13 @@ builder.Services.AddDbContext<GustosDbContext>(options =>
 builder.Services.AddScoped<IHttpDownloader, HttpDownloader>();
 
 builder.Services.AddScoped<IAuthorizationHandler, RegistroIncompletoHandler>();
+
 builder.Services.AddScoped<ICacheService, RedisCacheService>();
+
 builder.Services.AddScoped<IFileStorageService, FirebaseStorageService>();
+
 builder.Services.AddScoped<IEmailService, EmailService>();
+
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepositoryEF>();
 builder.Services.AddScoped<IRestriccionRepository, RestriccionRepositoryEF>();
 builder.Services.AddScoped<ICondicionMedicaRepository, CondicionMedicaRepositoryEF>();
@@ -240,8 +345,11 @@ builder.Services.AddScoped<IMiembroGrupoRepository, MiembroGrupoRepositoryEF>();
 builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepositoryEF>();
 builder.Services.AddScoped<IGustosGrupoRepository, GustosGrupoRepositoryEF>();
 builder.Services.AddScoped<INotificacionRepository, NotificacionRepositoryEF>();
+
 builder.Services.AddScoped<INotificacionRealtimeService, SignalRNotificacionRealtimeService>();
+
 builder.Services.AddScoped<ISolicitudAmistadRealtimeService, SignalRSolicitudAmistadRealtimeService>();
+
 builder.Services.AddScoped<IUsuariosActivosService, UsuariosActivosService>();
 builder.Services.AddScoped<IOpinionRestauranteRepository, OpinionRestauranteRepositoryEF>();
 builder.Services.AddScoped<IRestauranteEstadisticasRepository, RestauranteEstadisticasRepositoryEF>();
@@ -249,8 +357,10 @@ builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
 builder.Services.AddScoped<IUsuarioRestauranteFavoritoRepository, UsuarioRestauranteFavoritoEF>();
 builder.Services.AddScoped<ISolicitudRestauranteRepository, SolicitudRestauranteRepositoryEF>();
 builder.Services.AddScoped<IRestauranteMenuRepository, RestauranteMenuRepositoryEF>();
+
 builder.Services.AddScoped<IFirebaseAuthService, FirebaseAuthService>();
 builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
+
 builder.Services.AddScoped<ISolicitudAmistadRepository, SolicitudAmistadRepositoryEF>();
 
 // Votaciones
@@ -264,6 +374,7 @@ builder.Services.AddScoped<SeleccionarGanadorRuletaUseCase>();
 
 // Chat repository
 builder.Services.AddScoped<IChatRepository,ChatRepositoryEF>();
+
 builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
 builder.Services.AddScoped<GustosApp.Domain.Interfaces.IChatRepository, GustosApp.Infraestructure.Repositories.ChatRepositoryEF>();
 
@@ -354,6 +465,8 @@ builder.Services.AddSignalR(options =>
     options.EnableDetailedErrors = true;
 });
 
+builder.Services.AddSingleton<IUserIdProvider, FirebaseUserIdProvider>();
+
 // =====================
 //    Restaurantes (DI)
 // =====================
@@ -414,25 +527,27 @@ CultureInfo.DefaultThreadCurrentUICulture = culture;
 //    CORS
 // =====================
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
+
+var allowedOriginsString = builder.Configuration["CORS_ALLOWED_ORIGINS"];
+
+var allowedOrigins = allowedOriginsString?
+    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+    .Select(s => s.Trim())
+    .ToArray() ?? Array.Empty<string>();
+
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "http://localhost:5174", "https://lois-membranous-glancingly.ngrok-free.dev")
+            policy.WithOrigins(allowedOrigins)
                   .AllowCredentials()
                   .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .SetIsOriginAllowed(_ => true); // Permitir cualquier origen en desarrollo
+                  .AllowAnyMethod();
         });
 
-    // Política más permisiva para desarrollo
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
 });
 
 /* (Opcional) Exigir role=negocio para crear restaurantes
@@ -443,7 +558,37 @@ builder.Services.AddAuthorization(options =>
 });
 */
 
-var app = builder.Build();
+    var app = builder.Build();
+
+
+using (var scope = app.Services.CreateScope())
+{
+    // Obtener el Logger
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    // Obtener la instancia de IConfiguration
+    var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+
+    // Obtener la sección específica
+    var geminiSection = configuration.GetSection("GeminiSettings");
+
+    // 4. Imprimir la sección en el Logger
+    if (geminiSection.Exists())
+    {
+        logger.LogInformation("🚀 Valores de la sección GeminiSettings:");
+
+        // Iterar sobre los pares clave-valor dentro de la sección
+        foreach (var child in geminiSection.GetChildren())
+        {
+            // Nota: El valor puede ser nulo si la clave tiene sub-secciones
+            logger.LogInformation($"\t{child.Key} = {child.Value ?? "[Sub-sección o Nulo]"}");
+        }
+    }
+    else
+    {
+        logger.LogWarning("⚠️ La sección GeminiSettings no fue encontrada en la configuración.");
+    }
+}
 
 // =====================
 //   Pipeline HTTP
@@ -453,18 +598,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseMiddleware<ManejadorErrorMiddleware>();
 
 // CORS debe ir antes de UseRouting para SignalR
 app.UseCors(MyAllowSpecificOrigins);
-
-app.UseHttpsRedirection();
 
 app.UseStaticFiles(); // Habilitar archivos estáticos
 
 app.UseRouting();
 
-
-app.UseMiddleware<ManejadorErrorMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 

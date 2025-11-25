@@ -54,10 +54,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 //(en la carpeta /secrets)
 //var firebaseKeyPath = Path.Combine(builder.Environment.ContentRootPath, "secrets", "firebase-key.json");
-var firebaseProjectId = "gustosapp-5c3c9";
 
 var firebaseKeyPath = builder.Configuration["FIREBASE_SERVICE_ACCOUNT_JSON"];
-//var firebaseProjectId = builder.Configuration["Firebase:ProjectId"];
+var firebaseProjectId = builder.Configuration["FIREBASE_PROJECTID"];
 
 // Inicializar Firebase solo si no está inicializado (Admin SDK: útil p/ scripts, NO requerido para validar JWT)
 /*if (FirebaseApp.DefaultInstance == null)
@@ -213,10 +212,43 @@ builder.Services.AddAuthorization(opt =>
 //############
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
+    // 1. Obtener el ILogger<T> del ServiceProvider (sp)
+    //    Usamos ILogger<IConnectionMultiplexer> por convención, ya que es la clase que se está configurando.
+    var logger = sp.GetRequiredService<ILogger<IConnectionMultiplexer>>();
+
+    // 2. Obtener la configuración de la conexión Redis
     var config = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+
+    // 3. Registrar el valor de la cadena de conexión
+    //    Usamos LogInformation para registrar que se va a intentar conectar con esta configuración.
+    logger.LogInformation("🚀 Conectando a Redis con la cadena de conexión: {RedisConnectionString}", config);
+
+    // --- CONFIGURACIÓN DE FIREBASE Y LOGGING ---
+    var firebaseKeyPath = builder.Configuration["FIREBASE_SERVICE_ACCOUNT_JSON"];
+    var firebaseProjectId = builder.Configuration["FIREBASE_PROJECTID"];
+
+    // Loguear los valores de Firebase
+    if (!string.IsNullOrEmpty(firebaseKeyPath))
+    {
+        logger.LogInformation("🔑 Ruta del Service Account de Firebase: {FirebaseKeyPath}", firebaseKeyPath);
+    }
+    else
+    {
+        logger.LogWarning("⚠️ La ruta FIREBASE_SERVICE_ACCOUNT_JSON no está configurada.");
+    }
+
+    if (!string.IsNullOrEmpty(firebaseProjectId))
+    {
+        logger.LogInformation("💡 ID del Proyecto de Firebase: {FirebaseProjectId}", firebaseProjectId);
+    }
+    else
+    {
+        logger.LogWarning("⚠️ El ID del Proyecto de Firebase (FIREBASE_PROJECTID) no está configurado.");
+    }
+
+    // 4. Conectar al multiplexer
     return ConnectionMultiplexer.Connect(config);
 });
-
 
 builder.Services
     .AddFluentValidationAutoValidation()
@@ -471,6 +503,35 @@ builder.Services.AddAuthorization(options =>
 
     var app = builder.Build();
 
+
+using (var scope = app.Services.CreateScope())
+{
+    // Obtener el Logger
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    // Obtener la instancia de IConfiguration
+    var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+
+    // Obtener la sección específica
+    var geminiSection = configuration.GetSection("GeminiSettings");
+
+    // 4. Imprimir la sección en el Logger
+    if (geminiSection.Exists())
+    {
+        logger.LogInformation("🚀 Valores de la sección GeminiSettings:");
+
+        // Iterar sobre los pares clave-valor dentro de la sección
+        foreach (var child in geminiSection.GetChildren())
+        {
+            // Nota: El valor puede ser nulo si la clave tiene sub-secciones
+            logger.LogInformation($"\t{child.Key} = {child.Value ?? "[Sub-sección o Nulo]"}");
+        }
+    }
+    else
+    {
+        logger.LogWarning("⚠️ La sección GeminiSettings no fue encontrada en la configuración.");
+    }
+}
 // =====================
 //   Pipeline HTTP
 // =====================

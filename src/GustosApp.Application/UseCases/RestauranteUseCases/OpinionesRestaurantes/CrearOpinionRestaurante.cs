@@ -70,7 +70,13 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.OpinionesRestaurant
                 opinionRestaurante.Fotos.Add(new OpinionFoto { Url = url });
             }
 
+
             await _repoOpinionRest.CrearAsync(opinionRestaurante, cancellationToken);
+
+
+            //lugar visitado por usuario
+
+            await _repoUsuario.MarcarRestauranteComoVisitadoAsync(usuario.Id, restauranteId, cancellationToken);
         }
 
     }

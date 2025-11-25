@@ -70,6 +70,8 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases
             }
 
 
+            await _usuarios.SaveChangesAsync(ct);
+
             return usuario;
         }
     }

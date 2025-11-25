@@ -109,5 +109,24 @@ namespace GustosApp.Infraestructure.Repositories
             _db.Usuarios.Update(user);
             return _db.SaveChangesAsync(ct);
         }
+
+        public Task MarcarRestauranteComoVisitadoAsync(Guid id, Guid restauranteId, CancellationToken cancellationToken)
+        {
+         _db.UsuarioRestauranteVisitados.Add(new UsuarioRestauranteVisitado
+         {
+             UsuarioId = id,
+             RestauranteId = restauranteId,
+             FechaVisitaUtc = DateTime.UtcNow
+         });
+            return _db.SaveChangesAsync(cancellationToken);
+        }
+
+        public Task<Usuario?> GetByUsernameWithRestaurantesVisitadosAsync(string? username, CancellationToken ct)
+        {
+           return _db.Usuarios
+                .Include(u => u.Visitados)
+                .ThenInclude(v => v.Restaurante)
+                .FirstOrDefaultAsync(u => u.IdUsuario == username, ct);
+        }
     }
 }

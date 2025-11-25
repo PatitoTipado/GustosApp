@@ -44,6 +44,26 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using StackExchange.Redis;
+using GustosApp.Application.Services;
+using GustosApp.Application.UseCases.GrupoUseCases;
+using GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases;
+using GustosApp.Application.UseCases.AmistadUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases;
+using GustosApp.Application.UseCases.GrupoUseCases.ChatGrupoUseCases;
+using GustosApp.Application.UseCases.NotificacionUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
+using GustosApp.Application.UseCases.VotacionUseCases;
+using GustosApp.Infraestructure.Services;
+using Microsoft.AspNetCore.Authorization;
+using GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestauranteUseCases;
+using GustosApp.API.Templates.Email;
+using GustosApp.Application.Validations.Restaurantes;
+using FluentValidation.AspNetCore;
+using GustosApp.API.Validations.OpinionRestaurantes;
+using GustosApp.Application.UseCases.RestauranteUseCases.OpinionesRestaurantes;
+using System.Globalization;
 
 
 
@@ -76,9 +96,9 @@ if (FirebaseApp.DefaultInstance == null)
     });
 }
 
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-builder.Services.AddAutoMapper(typeof(ApiMapeoPerfil));
-// Validación de JWT emitidos por Firebase (securetoken)
+
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -94,17 +114,19 @@ builder.Services
             ValidateLifetime = true
         };
 
-        // INYECTAMOS LOGGER
+        // Unificamos todo en un solo bloque de eventos
         options.Events = new JwtBearerEvents
         {
             OnMessageReceived = context =>
             {
+                // 0. Preparar Logger
                 var logger = context.HttpContext.RequestServices
                     .GetRequiredService<ILoggerFactory>()
                     .CreateLogger("JWT");
 
                 logger.LogInformation("📥 Request a: {Path}", context.Request.Path);
 
+                // Prioridad 1: Cookie "token"
                 if (context.Request.Cookies.ContainsKey("token"))
                 {
                     var raw = context.Request.Cookies["token"];
@@ -112,12 +134,31 @@ builder.Services
                         raw?.Substring(0, Math.Min(15, raw.Length)));
 
                     context.Token = raw;
-                }
-                else
-                {
-                    logger.LogWarning("⚠️ No llegó cookie 'token' en la request");
+                    return Task.CompletedTask;
                 }
 
+                // Prioridad 2: Query string "access_token" (SignalR)
+                var accessToken = context.Request.Query["access_token"];
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    logger.LogInformation("🔗 Token encontrado en QueryString (SignalR)");
+                    context.Token = accessToken;
+                    return Task.CompletedTask;
+                }
+
+                // Prioridad 3: Header Authorization (Manual check)
+                // Nota: Normalmente JWTBearer lo hace solo, pero al sobrescribir este evento 
+                // es seguro mantener tu lógica manual para garantizar que lo lea.
+                var authHeader = context.Request.Headers["Authorization"].ToString();
+                if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                {
+                    // No logueamos aquí para no llenar la consola de logs "normales"
+                    context.Token = authHeader.Substring("Bearer ".Length).Trim();
+                    return Task.CompletedTask;
+                }
+
+                // Si llegamos acá, no se encontró token
+                logger.LogWarning("⚠️ No llegó token en Cookie, QueryString ni Header");
                 return Task.CompletedTask;
             },
 
@@ -150,7 +191,6 @@ builder.Services
             }
         };
     });
-
 
 builder.Services.AddSingleton<IEmbeddingService>(sp =>
 {
@@ -479,6 +519,9 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
+var culture = CultureInfo.InvariantCulture;
+CultureInfo.DefaultThreadCurrentCulture = culture;
+CultureInfo.DefaultThreadCurrentUICulture = culture;
 
 // =====================
 //    CORS

@@ -26,8 +26,8 @@ namespace GustosApp.API.Controllers
             _enviarRecomendacion = enviarRecomendacion;
         }
 
-        //(Roles = "Moderador")
-        [Authorize]
+        
+        [Authorize(Policy ="Admin")]
         [HttpPost("recomendar")]
         public async Task<IActionResult> Recomendar()
         {

@@ -84,6 +84,7 @@ builder.Services
     .AddJwtBearer(options =>
     {
         options.Authority = $"https://securetoken.google.com/{firebaseProjectId}";
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -92,19 +93,64 @@ builder.Services
             ValidAudience = firebaseProjectId,
             ValidateLifetime = true
         };
+
+        // INYECTAMOS LOGGER
         options.Events = new JwtBearerEvents
         {
             OnMessageReceived = context =>
             {
-                // Si hay cookie "token", úsala como fuente del JWT
+                var logger = context.HttpContext.RequestServices
+                    .GetRequiredService<ILoggerFactory>()
+                    .CreateLogger("JWT");
+
+                logger.LogInformation("📥 Request a: {Path}", context.Request.Path);
+
                 if (context.Request.Cookies.ContainsKey("token"))
                 {
-                    context.Token = context.Request.Cookies["token"];
+                    var raw = context.Request.Cookies["token"];
+                    logger.LogInformation("🍪 Cookie 'token' encontrada: {TokenInicio}...",
+                        raw?.Substring(0, Math.Min(15, raw.Length)));
+
+                    context.Token = raw;
                 }
+                else
+                {
+                    logger.LogWarning("⚠️ No llegó cookie 'token' en la request");
+                }
+
+                return Task.CompletedTask;
+            },
+
+            OnTokenValidated = context =>
+            {
+                var logger = context.HttpContext.RequestServices
+                    .GetRequiredService<ILoggerFactory>()
+                    .CreateLogger("JWT");
+
+                logger.LogInformation("✅ Token VALIDADO correctamente");
+
+                var claims = context.Principal.Claims
+                    .Select(c => $"{c.Type} = {c.Value}");
+
+                logger.LogInformation("🧩 Claims recibidos:\n{Claims}", string.Join("\n", claims));
+
+                return Task.CompletedTask;
+            },
+
+            OnAuthenticationFailed = context =>
+            {
+                var logger = context.HttpContext.RequestServices
+                    .GetRequiredService<ILoggerFactory>()
+                    .CreateLogger("JWT");
+
+                logger.LogError(context.Exception,
+                    "❌ Falló la autenticación del JWT: {Error}", context.Exception.Message);
+
                 return Task.CompletedTask;
             }
         };
     });
+
 
 builder.Services.AddSingleton<IEmbeddingService>(sp =>
 {

@@ -162,26 +162,11 @@ builder.Services.AddAuthorization(opt =>
 
 
 
+//REDIS
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
-    var logger = sp.GetRequiredService<ILogger<Program>>();
-
-    var config = builder.Configuration.GetConnectionString("Redis");
-
-    logger.LogInformation("🔵 [Redis] Cadena recibida: {config}", config);
-
-    try
-    {
-        logger.LogInformation("🟡 [Redis] Intentando conectar...");
-        var mux = ConnectionMultiplexer.Connect(config);
-        logger.LogInformation("🟢 [Redis] Conexión exitosa.");
-        return mux;
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "🔴 [Redis] Error al conectar.");
-        throw;
-    }
+    var config = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+    return ConnectionMultiplexer.Connect(config);
 });
 
 

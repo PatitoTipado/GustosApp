@@ -45,6 +45,9 @@ using GustosApp.API.Validations.OpinionRestaurantes;
 using GustosApp.Application.UseCases.RestauranteUseCases.OpinionesRestaurantes;
 
 
+AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 // =====================
@@ -161,8 +164,9 @@ builder.Services.AddAuthorization(opt =>
 
 
 
-
+//##########
 //REDIS
+//############
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
     var config = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
@@ -420,8 +424,10 @@ builder.Services.AddAuthorization(options =>
         policy.RequireClaim("role", "negocio").RequireAuthenticatedUser());
 });
 */
+try
+{
 
-var app = builder.Build();
+    var app = builder.Build();
 
 // =====================
 //   Pipeline HTTP
@@ -451,3 +457,9 @@ app.MapHub<NotificacionesHub>("/notificacionesHub");
 app.MapHub<SolicitudesAmistadHub>("/solicitudesAmistadHub");
 
 app.Run();
+}
+catch (Exception ex)
+{
+    Console.WriteLine("🔥 ERROR FATAL: " + ex);
+    throw;
+}

@@ -185,62 +185,76 @@ namespace GustosApp.API.Controllers
 
         [HttpGet("{username}/perfil")]
         [Authorize]
-        public async Task<IActionResult> GetPerfilUsuario([FromRoute] string username, CancellationToken ct = default)
+        public async Task<IActionResult> GetPerfilUsuario(
+      [FromRoute] string username,
+      CancellationToken ct = default)
         {
-
             var currentUid = GetFirebaseUid();
+            if (string.IsNullOrWhiteSpace(currentUid))
+                return Unauthorized(new { mensaje = "UID inválido" });
 
-            // Usuario solicitado (por username)
-            var usuarioPerfil = await _obtenerUsuario.HandleAsync(Username: username, ct: ct);
-            if (usuarioPerfil == null)
-                return NotFound(new { mensaje = "Usuario no encontrado" });
+      
+            var usuarioActual = await _obtenerUsuario.HandleAsync(
+                FirebaseUid: currentUid,
+                ct: ct
+            );
 
-            // Usuario autenticado (por UID)
-            var usuarioActual = await _obtenerUsuario.HandleAsync(FirebaseUid: currentUid, ct: ct);
             if (usuarioActual == null)
                 return Unauthorized(new { mensaje = "Usuario autenticado no encontrado" });
 
-            // Verificar si es su propio perfil
+         
+            var usuarioPerfil = await _obtenerUsuario.HandleAsync(
+                Username: username,
+                ct: ct
+            );
+
+            if (usuarioPerfil == null)
+                return NotFound(new { mensaje = "Usuario no encontrado" });
+
             var esMiPerfil = usuarioPerfil.FirebaseUid == usuarioActual.FirebaseUid;
 
+            var amistad = await _confirmarAmistadEntreUsuarios.HandleAsync(
+                usuarioActual.Id,
+                usuarioPerfil.Id,
+                ct
+            );
 
-            var amistad = await _confirmarAmistadEntreUsuarios.HandleAsync(usuarioActual.Id, usuarioPerfil.Id, ct);
+            var esAmigo = amistad != null && amistad.Estado == EstadoSolicitud.Aceptada;
+
+            bool puedeVerCompleto = esMiPerfil || esAmigo || !usuarioPerfil.EsPrivado;
 
 
-
-
-            // Mapear respuesta
-            var resp = new UsuarioPerfilResponse
+            if (!puedeVerCompleto)
             {
-                Nombre = usuarioPerfil.Nombre,
-                Apellido = usuarioPerfil.Apellido,
-                Username = usuarioPerfil.IdUsuario,
-                FotoPerfilUrl = usuarioPerfil.FotoPerfilUrl,
-                EsPrivado = usuarioPerfil.EsPrivado,
-                EsMiPerfil = esMiPerfil,
-                EsAmigo = amistad != null && amistad.Estado == EstadoSolicitud.Aceptada,
-                Gustos = (usuarioPerfil.Gustos ?? new List<Gusto>())
-                    .Select(g => new GustoLiteDto
-                    {
-                        Id = g.Id,
-                        Nombre = g.Nombre
-                    })
-                    .ToList(),
-                Visitados = (usuarioPerfil.Visitados ?? new List<UsuarioRestauranteVisitado>())
-                    .Select(v => new VisitadoDto
-                    {
-                        Id = !string.IsNullOrWhiteSpace(v.PlaceId)
-                            ? v.PlaceId!
-                            : (v.RestauranteId.HasValue ? v.RestauranteId.Value.ToString() : v.Id.ToString()),
-                        Nombre = v.Nombre,
-                        Lat = v.Latitud,
-                        Lng = v.Longitud
-                    })
-                    .ToList()
-            };
+                return Ok(new UsuarioPerfilResponse
+                {
+                    Nombre = usuarioPerfil.Nombre,
+                    Apellido = usuarioPerfil.Apellido,
+                    Username = usuarioPerfil.IdUsuario,
+                    FotoPerfilUrl = usuarioPerfil.FotoPerfilUrl,
+                    EsPrivado = usuarioPerfil.EsPrivado,
+                    EsMiPerfil = esMiPerfil,
+                    EsAmigo = esAmigo,
+                    Gustos = new(),
+                    Visitados = new()
+                });
+            }
+
+       
+            usuarioPerfil = await _obtenerUsuario.HandleWithVisitadosAsync(
+                Username: username,
+                ct: ct
+            );
+
+            var resp = _mapper.Map<UsuarioPerfilResponse>(usuarioPerfil);
+
+            resp.EsMiPerfil = esMiPerfil;
+            resp.EsAmigo = esAmigo;
 
             return Ok(resp);
         }
+
+
 
         [Authorize]
         [HttpGet("estado-registro")]

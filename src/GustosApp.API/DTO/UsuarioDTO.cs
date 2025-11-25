@@ -90,10 +90,11 @@ namespace GustosApp.API.DTO
     public class VisitadoDto
     {
 
-        public string Id { get; set; } = string.Empty;
+        public string IdRestaurante { get; set; } = string.Empty;
         public string Nombre { get; set; } = string.Empty;
-        public double Lat { get; set; }
-        public double Lng { get; set; }
+        public string Direccion { get; set; }
+        public DateTime FechaVisita { get; set; }
+
     }
 
     public class RegistrarUsuarioRequest

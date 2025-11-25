@@ -55,6 +55,7 @@ using GustosApp.Application.Validations.Restaurantes;
 using FluentValidation.AspNetCore;
 using GustosApp.API.Validations.OpinionRestaurantes;
 using GustosApp.Application.UseCases.RestauranteUseCases.OpinionesRestaurantes;
+using System.Globalization;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -76,8 +77,7 @@ if (FirebaseApp.DefaultInstance == null)
     });
 }
 
-
-builder.Services.AddAutoMapper(typeof(ApiMapeoPerfil));
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 // Validación de JWT emitidos por Firebase (securetoken)
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -386,6 +386,9 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
+var culture = CultureInfo.InvariantCulture;
+CultureInfo.DefaultThreadCurrentCulture = culture;
+CultureInfo.DefaultThreadCurrentUICulture = culture;
 
 // =====================
 //    CORS

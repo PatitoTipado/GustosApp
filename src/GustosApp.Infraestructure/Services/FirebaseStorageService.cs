@@ -19,7 +19,7 @@ namespace GustosApp.Infraestructure.Services
         public FirebaseStorageService(IConfiguration config)
         {
             // Intentar cargar desde variable Base64 (producción)
-            var base64 = config["Firebase:CredentialJsonBase64"];
+            var base64 = config["FIREBASE_SERVICE_ACCOUNT_JSON"];
 
             GoogleCredential credential;
 

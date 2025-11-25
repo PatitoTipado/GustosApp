@@ -533,6 +533,7 @@ using (var scope = app.Services.CreateScope())
         logger.LogWarning("⚠️ La sección GeminiSettings no fue encontrada en la configuración.");
     }
 }
+
 // =====================
 //   Pipeline HTTP
 // =====================

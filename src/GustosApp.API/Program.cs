@@ -1,12 +1,15 @@
 using FirebaseAdmin;
-using Google.Api;
 using FluentValidation;
+using FluentValidation.AspNetCore;
+using Google.Api;
 using Google.Apis.Auth.OAuth2;
 using GustosApp.API.Hubs;
 using GustosApp.API.Hubs.GustosApp.API.Hubs;
 using GustosApp.API.Hubs.Services;
 using GustosApp.API.Mapping;
 using GustosApp.API.Middleware;
+using GustosApp.API.Templates.Email;
+using GustosApp.API.Validations.OpinionRestaurantes;
 using GustosApp.Application.Handlers;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.Services;
@@ -17,10 +20,14 @@ using GustosApp.Application.UseCases.GrupoUseCases.ChatGrupoUseCases;
 using GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases;
 using GustosApp.Application.UseCases.NotificacionUseCases;
 using GustosApp.Application.UseCases.RestauranteUseCases;
+using GustosApp.Application.UseCases.RestauranteUseCases.OpinionesRestaurantes;
+using GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestauranteUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
+using GustosApp.Application.UseCases.VotacionUseCases;
+using GustosApp.Application.Validations.Restaurantes;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Infraestructure;
 using GustosApp.Infraestructure.Files;
@@ -31,18 +38,12 @@ using GustosApp.Infraestructure.Repositories;
 using GustosApp.Infraestructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using StackExchange.Redis;
-using GustosApp.Application.UseCases.VotacionUseCases;
-using GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestauranteUseCases;
-using GustosApp.API.Templates.Email;
-using GustosApp.Application.Validations.Restaurantes;
-using FluentValidation.AspNetCore;
-using GustosApp.API.Validations.OpinionRestaurantes;
-using GustosApp.Application.UseCases.RestauranteUseCases.OpinionesRestaurantes;
 
 
 
@@ -288,9 +289,13 @@ builder.Services.AddDbContext<GustosDbContext>(options =>
 builder.Services.AddScoped<IHttpDownloader, HttpDownloader>();
 
 builder.Services.AddScoped<IAuthorizationHandler, RegistroIncompletoHandler>();
+
 builder.Services.AddScoped<ICacheService, RedisCacheService>();
+
 builder.Services.AddScoped<IFileStorageService, FirebaseStorageService>();
+
 builder.Services.AddScoped<IEmailService, EmailService>();
+
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepositoryEF>();
 builder.Services.AddScoped<IRestriccionRepository, RestriccionRepositoryEF>();
 builder.Services.AddScoped<ICondicionMedicaRepository, CondicionMedicaRepositoryEF>();
@@ -300,8 +305,11 @@ builder.Services.AddScoped<IMiembroGrupoRepository, MiembroGrupoRepositoryEF>();
 builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepositoryEF>();
 builder.Services.AddScoped<IGustosGrupoRepository, GustosGrupoRepositoryEF>();
 builder.Services.AddScoped<INotificacionRepository, NotificacionRepositoryEF>();
+
 builder.Services.AddScoped<INotificacionRealtimeService, SignalRNotificacionRealtimeService>();
+
 builder.Services.AddScoped<ISolicitudAmistadRealtimeService, SignalRSolicitudAmistadRealtimeService>();
+
 builder.Services.AddScoped<IUsuariosActivosService, UsuariosActivosService>();
 builder.Services.AddScoped<IOpinionRestauranteRepository, OpinionRestauranteRepositoryEF>();
 builder.Services.AddScoped<IRestauranteEstadisticasRepository, RestauranteEstadisticasRepositoryEF>();
@@ -309,8 +317,10 @@ builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
 builder.Services.AddScoped<IUsuarioRestauranteFavoritoRepository, UsuarioRestauranteFavoritoEF>();
 builder.Services.AddScoped<ISolicitudRestauranteRepository, SolicitudRestauranteRepositoryEF>();
 builder.Services.AddScoped<IRestauranteMenuRepository, RestauranteMenuRepositoryEF>();
+
 builder.Services.AddScoped<IFirebaseAuthService, FirebaseAuthService>();
 builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
+
 builder.Services.AddScoped<ISolicitudAmistadRepository, SolicitudAmistadRepositoryEF>();
 
 // Votaciones
@@ -324,6 +334,7 @@ builder.Services.AddScoped<SeleccionarGanadorRuletaUseCase>();
 
 // Chat repository
 builder.Services.AddScoped<IChatRepository,ChatRepositoryEF>();
+
 builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
 builder.Services.AddScoped<GustosApp.Domain.Interfaces.IChatRepository, GustosApp.Infraestructure.Repositories.ChatRepositoryEF>();
 
@@ -413,6 +424,8 @@ builder.Services.AddSignalR(options =>
 {
     options.EnableDetailedErrors = true;
 });
+
+builder.Services.AddSingleton<IUserIdProvider, FirebaseUserIdProvider>();
 
 // =====================
 //    Restaurantes (DI)

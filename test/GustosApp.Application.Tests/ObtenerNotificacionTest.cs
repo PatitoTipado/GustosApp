@@ -1,4 +1,6 @@
 ﻿using GustosApp.Application.Interfaces;
+using GustosApp.Application.UseCases.NotificacionUseCases;
+using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 using Moq;
 using System;
@@ -19,7 +21,7 @@ namespace GustosApp.Application.Tests.mocks
             .Setup(r => r.ObtenerNotificacionPorUsuarioAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Notificacion> { new Notificacion() });
 
-            var useCase = new ObtenerNotificacionUsuarioUseCase(repoMock.Object);
+            var useCase = new ObtenerNotificacionesUsuarioUseCase(repoMock.Object);
             var result = await useCase.HandleAsync(Guid.NewGuid(), default);
 
             Assert.NotNull(result);
@@ -34,7 +36,7 @@ namespace GustosApp.Application.Tests.mocks
                 .Setup(r => r.ObtenerNotificacionPorUsuarioAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Notificacion>()); // sin resultados
 
-            var useCase = new ObtenerNotificacionUsuarioUseCase(repoMock.Object);
+            var useCase = new ObtenerNotificacionesUsuarioUseCase(repoMock.Object);
 
             var result = await useCase.HandleAsync(Guid.NewGuid(), default);
 

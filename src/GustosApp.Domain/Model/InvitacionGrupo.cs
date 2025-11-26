@@ -6,17 +6,13 @@ using System.Threading.Tasks;
 
 namespace GustosApp.Domain.Model
 {
-    public enum EstadoInvitacion
-    {
-        Pendiente = 0,
-        Aceptada = 1,
-        Rechazada = 2,
-        Expirada = 3
-    }
+   
 
     public class InvitacionGrupo
     {
         public Guid Id { get; private set; } = Guid.NewGuid();
+
+        public Guid? NotificacionId { get; set; }
         public Guid GrupoId { get; private set; }
         public Guid UsuarioInvitadoId { get; private set; }
         public Guid UsuarioInvitadorId { get; private set; }
@@ -30,6 +26,8 @@ namespace GustosApp.Domain.Model
         public Grupo Grupo { get; set; }
         public Usuario UsuarioInvitado { get; set; }
         public Usuario UsuarioInvitador { get; set; }
+
+        public Notificacion? Notificacion { get; set; }
 
         private InvitacionGrupo() { } // Para EF Core
 

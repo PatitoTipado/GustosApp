@@ -1,5 +1,6 @@
-using GustosApp.Application.Services;
+using GustosApp.Application.Interfaces;
 using GustosApp.Infraestructure.Services;
+using GustosApp.Domain.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GustosApp.Infraestructure
@@ -11,6 +12,8 @@ namespace GustosApp.Infraestructure
             services.AddScoped<IServicioRestaurantes, ServicioRestaurantes>();
             // Repositorios de grupos y solicitudes
             services.AddScoped<GustosApp.Domain.Interfaces.ISolicitudAmistadRepository, GustosApp.Infraestructure.Repositories.SolicitudAmistadRepositoryEF>();
+            // Servicio de pagos
+            services.AddScoped<IPagoService, MercadoPagoService>();
             return services;
         }
     }

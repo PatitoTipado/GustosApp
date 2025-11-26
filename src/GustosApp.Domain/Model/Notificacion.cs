@@ -3,15 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GustosApp.Domain.Model.@enum;
 
 namespace GustosApp.Domain.Model
 {
- 
+
     public class Notificacion
     {
         public Guid Id { get; set; } = Guid.NewGuid();
 
         public Guid UsuarioDestinoId { get; set; }
+
+        public Guid? InvitacionId { get; set; }
 
         public string Titulo { get; set; } = string.Empty;
 
@@ -25,5 +28,9 @@ namespace GustosApp.Domain.Model
 
         // Relación opcional con Usuario (si la tenés)
         public Usuario? UsuarioDestino { get; set; }
+        public InvitacionGrupo? Invitacion { get; set; }
+
+
+
     }
 }

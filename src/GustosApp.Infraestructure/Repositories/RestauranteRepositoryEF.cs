@@ -18,11 +18,19 @@ namespace GustosApp.Infraestructure.Repositories
         public async Task<Restaurante?> GetByPlaceIdAsync(string placeId, CancellationToken ct = default)
             => await _db.Restaurantes.AsNoTracking().FirstOrDefaultAsync(r => r.PlaceId == placeId, ct);
 
+        public async Task<Restaurante?> GetRestauranteByIdAsync(Guid id, CancellationToken ct = default)
+            => await _db.Restaurantes.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id, ct);
+
         public async Task AddAsync(Restaurante r, CancellationToken ct = default)
             => await _db.Restaurantes.AddAsync(r, ct);
 
         public Task SaveChangesAsync(CancellationToken ct = default)
             => _db.SaveChangesAsync(ct);
+        public Task UpdateAsync(Restaurante restaurante, CancellationToken ct)
+        {
+            _db.Restaurantes.Update(restaurante);
+            return Task.CompletedTask;
+        }
 
         public async Task<List<Restaurante>> GetNearbyAsync(
     double lat,
@@ -114,6 +122,16 @@ namespace GustosApp.Infraestructure.Repositories
             return query.ToList();
         }
 
+        public async Task ActualizarValoracionAsync(Guid restauranteId, double promedio, CancellationToken cancellationToken)
+        {
+            var restaurante = await _db.Restaurantes.FindAsync(new object[] { restauranteId }, cancellationToken);
+            if (restaurante != null)
+            {
+                restaurante.Valoracion = (decimal)promedio;
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+
+        }
         public async Task<List<Restaurante>> ObtenerRestaurantesPorGustosGrupo(
             List<Guid> gustosIds,
             CancellationToken ct = default)
@@ -135,6 +153,55 @@ namespace GustosApp.Infraestructure.Repositories
             return restaurantes;
         }
 
+        public async Task<List<Restaurante>> BuscarPorTextoAsync(string texto, CancellationToken ct = default)
+        {
+            texto = texto.ToLower();
+
+            var restaurantes = await _db.Restaurantes
+                .AsNoTracking()
+                .Where(r =>
+                    r.Nombre.ToLower().Contains(texto) ||
+                    r.NombreNormalizado.ToLower().Contains(texto) ||
+                    r.Categoria.ToLower().Contains(texto)
+                )
+                .ToListAsync(ct);
+
+            // Ordenamiento por rating y coincidencia de texto
+            var restaurantesOrdenados = restaurantes
+                .Select(r => new
+                {
+                    Restaurante = r,
+                    Prioridad = r.Nombre.ToLower().Contains(texto) ? 3 :
+                                r.NombreNormalizado.ToLower().Contains(texto) ? 2 :
+                                r.Categoria.ToLower().Contains(texto) ? 1 : 0
+                })
+                .OrderByDescending(x => x.Restaurante.Rating) 
+                .ThenByDescending(x => x.Prioridad)          
+                .Select(x => x.Restaurante)
+                .ToList();
+
+            return restaurantesOrdenados;
+        }
+
+        public async Task<Restaurante?> GetByFirebaseUidAsync(string firebaseUid, CancellationToken ct = default)
+        {
+            return await _db.Restaurantes
+        .FirstOrDefaultAsync(r => r.PropietarioUid == firebaseUid, ct);
+        }
+
+          public async Task<Restaurante?> GetByIdAsync(Guid id, CancellationToken ct = default)
+          {
+              return await _db.Restaurantes
+                  .FirstOrDefaultAsync(r => r.Id == id, ct);
+          }
+
+       /* public async Task<Restaurante?> GetByIdAsync(Guid id, CancellationToken ct)
+        {
+            return await _db.Restaurantes.FirstOrDefaultAsync(r => r.Id == id);
+
+        }*/
+
+      
     }
 }
 

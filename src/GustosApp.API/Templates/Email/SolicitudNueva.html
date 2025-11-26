@@ -1,0 +1,56 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Nueva Solicitud de Restaurante</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #fafafa;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            max-width: 600px;
+            margin: auto;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .title {
+            font-size: 22px;
+            color: #ff4d4f;
+            margin-bottom: 10px;
+        }
+
+        .btn {
+            background: #ff4d4f;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2 class="title">📥 Nueva solicitud de restaurante</h2>
+
+        <p>Hola Admin,</p>
+        <p>El usuario <strong>{{USUARIO}}</strong> envió una nueva solicitud.</p>
+
+        <p>
+            <strong>Restaurante:</strong> {{NOMBRE}}<br>
+            <strong>Dirección:</strong> {{DIRECCION}}
+        </p>
+
+        <a class="btn" href="{{LINK}}" target="_blank">
+            Revisar solicitud
+        </a>
+    </div>
+</body>
+</html>

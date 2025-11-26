@@ -1,7 +1,10 @@
 ﻿using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases;
+using GustosApp.Application.UseCases.NotificacionUseCases;
 using GustosApp.Domain;
+using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
+using GustosApp.Domain.Model.@enum;
 using Moq;
 using System;
 using System.Threading;
@@ -15,6 +18,7 @@ namespace GustosApp.Application.Tests
         [Fact]
         public async Task CrearNotificacion()
         {
+          
             var repoMock = new Mock<INotificacionRepository>();
             var useCase = new CrearNotificacionUseCase(repoMock.Object);
 
@@ -39,8 +43,7 @@ namespace GustosApp.Application.Tests
         }
 
 
+        }
+
+
     }
-
-    
-
-}

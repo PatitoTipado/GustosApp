@@ -1,6 +1,7 @@
 ﻿namespace GustosApp.API.Hubs
 {
     using global::GustosApp.Application.UseCases;
+    using global::GustosApp.Application.UseCases.GrupoUseCases.ChatGrupoUseCases;
     using global::GustosApp.Domain.Interfaces;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.SignalR;

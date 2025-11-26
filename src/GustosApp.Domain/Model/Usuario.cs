@@ -3,14 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GustosApp.Domain.Model.@enum;
 
 namespace GustosApp.Domain.Model
 {
-
-    public enum RegistroPaso { Ninguno = 0, Restricciones = 1, Condiciones = 2, Gustos = 3, Verificacion = 4, Finalizado = 5 }
     public class Usuario
     {
+    
         public Guid Id { get;  set; } = Guid.NewGuid();
+
+        public bool EsPrivado { get; set; } = false;
+
 
         // Identidad externa
         public string FirebaseUid { get;  set; }
@@ -23,22 +26,32 @@ namespace GustosApp.Domain.Model
         public DateTime FechaRegistro { get;  set; } = DateTime.UtcNow;
         public bool Activo { get;  set; } = true;
 
+        public bool RegistroInicialCompleto { get; set; }
+
+
+        public RolUsuario Rol { get; set; }
+        public PlanUsuario Plan { get; set; } = PlanUsuario.Free;
+
+
         public ICollection<Gusto> Gustos { get; set; } = new List<Gusto>();
         public ICollection<Restriccion> Restricciones { get; set; } = new List<Restriccion>();
         public ICollection<CondicionMedica> CondicionesMedicas { get; set; } = new List<CondicionMedica>();
+        public ICollection<Restaurante> Restaurantes { get; set; } = new List<Restaurante>();
+        public ICollection<SolicitudRestaurante> SolicitudesRestaurantes { get; set; } = new List<SolicitudRestaurante>();
 
-        public RegistroPaso PasoActual { get; private set; } = RegistroPaso.Ninguno;
 
         // Relaciones con grupos
         public ICollection<Grupo> GruposAdministrados { get; set; } = new List<Grupo>();
         public ICollection<MiembroGrupo> MiembrosGrupos { get; set; } = new List<MiembroGrupo>();
         public ICollection<InvitacionGrupo> InvitacionesRecibidas { get; set; } = new List<InvitacionGrupo>();
         public ICollection<InvitacionGrupo> InvitacionesEnviadas { get; set; } = new List<InvitacionGrupo>();
+        public ICollection<Notificacion> Notificaciones { get; set; } = new List<Notificacion>();
 
-
-        public void AvanzarPaso(RegistroPaso paso)
+        public bool EsPremium() => Plan == PlanUsuario.Plus;
+        
+        public void ActualizarAPlan(PlanUsuario nuevoPlan)
         {
-            if ((int)paso >= (int)PasoActual) PasoActual = paso;
+            Plan = nuevoPlan;
         }
         public Usuario()
         {
@@ -53,6 +66,7 @@ namespace GustosApp.Domain.Model
             IdUsuario = idUsuario ?? throw new ArgumentNullException(nameof(nombre));
             FotoPerfilUrl = fotoPerfilUrl;
         }
+     
         public virtual  List<string> ValidarCompatibilidad()
         {
             var gustosIncompatibles = new List<Gusto>();
@@ -89,7 +103,7 @@ namespace GustosApp.Domain.Model
 
             return gustosIncompatibles.Select(g => g.Nombre).ToList();
         }
-
-
+        public ICollection<UsuarioRestauranteVisitado> Visitados { get; set; } = new List<UsuarioRestauranteVisitado>();
+        public ICollection<UsuarioRestauranteFavorito> RestaurantesFavoritos { get; set; } = new List<UsuarioRestauranteFavorito>();
     }
 }

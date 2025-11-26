@@ -1,193 +1,97 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
-using GustosApp.Application.DTO;
-using GustosApp.Application.DTOs.Restaurantes;
-using GustosApp.Application.Services;
+﻿using Google.Protobuf.WellKnownTypes;
+
+using GustosApp.Application.Interfaces;
+using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
+using GustosApp.Domain.Model.@enum;
+using GustosApp.Infraestructure.Extrerno.GooglePlacesModel;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using System.Net.Http.Json;
+using System.Text.Json;
+
 
 namespace GustosApp.Infraestructure.Services
 {
     public class ServicioRestaurantes : IServicioRestaurantes
     {
         private readonly GustosDbContext _db;
+        private readonly IConfiguration _config;
+        private readonly HttpClient _http;
+        private readonly IRestauranteRepository _repo;
 
-        public ServicioRestaurantes(GustosDbContext db)
+        public ServicioRestaurantes(GustosDbContext db,
+        IConfiguration config, HttpClient http, IRestauranteRepository repo)
         {
             _db = db;
+            _config = config;
+            _http = http;
+            _repo = repo;
         }
 
         private static string NormalizarNombre(string nombre)
             => (nombre ?? string.Empty).Trim().ToLowerInvariant();
 
-        private static RestauranteDto Map(Restaurante r)
+        public async Task<List<Restaurante>> BuscarAsync(
+     double rating,
+     string? tipo,
+     string? plato,
+     double? lat = null,
+     double? lng = null,
+     int? radioMetros = null)
         {
-            object? horarios = null;
-            try
-            {
-                horarios = string.IsNullOrWhiteSpace(r.HorariosJson)
-                    ? null
-                    : JsonSerializer.Deserialize<object>(r.HorariosJson);
-            }
-            catch { horarios = null; }
-
-            return new RestauranteDto
-            {
-                Id = r.Id,
-                PropietarioUid = r.PropietarioUid,
-                Nombre = r.Nombre,
-                Direccion = r.Direccion,
-                Lat = r.Latitud,
-                Lng = r.Longitud,
-                Horarios = horarios,
-                CreadoUtc = r.CreadoUtc,
-                ActualizadoUtc = r.ActualizadoUtc,
-                Tipo = r.Tipo.ToString(),
-                ImagenUrl = r.ImagenUrl,
-                Valoracion = r.Valoracion,
-                Platos = r.Platos.Select(p => p.Plato.ToString()).ToList(),
-
-                //
-                GustosQueSirve = r.GustosQueSirve
-                    .Select(g => new GustoDto
-                    {
-                        Id = g.Id,
-                        Nombre = g.Nombre
-                    })
-                    .ToList(),
-
-                //
-                RestriccionesQueRespeta = r.RestriccionesQueRespeta
-                    .Select(g => new RestriccionResponse(g.Id, g.Nombre))
-                    .ToList()
-            };
-        }
-
-        public async Task<IReadOnlyList<RestauranteDto>> BuscarAsync(
-    string? tipo,
-    string? plato,
-    double? lat = null,
-    double? lng = null,
-    int? radioMetros = null)
-        {
-            // 1. CARGA INICIAL y DEFINICIÓN DE INCLUDES (Ejecución en la BD)
-
-            var q = _db.Restaurantes.AsNoTracking()
-
-                // Incluye Platos (Se asume 1:N o una entidad de unión simple)
-                .Include(r => r.Platos)
-
-                // Carga de Gustos N:N: Cargar la tabla de unión y la entidad final
+            IQueryable<Restaurante> query = _db.Restaurantes
+                .AsNoTracking()
                 .Include(r => r.GustosQueSirve)
-
-                // Carga de Restricciones N:N: Cargar la tabla de unión y la entidad final
                 .Include(r => r.RestriccionesQueRespeta)
+                .Include(r => r.Platos);
 
-                .AsSplitQuery();
-
-            foreach (var r in q)
-            {
-                Console.WriteLine(r.Id);
-                Console.WriteLine(r.Nombre);
-
-                Console.WriteLine(r.GustosQueSirve.Count);
-                Console.WriteLine(r.GustosQueSirve.Count);
-                Console.WriteLine(r.GustosQueSirve.Count);
-
-                foreach (var rr in r.GustosQueSirve)
-                {
-                    Console.WriteLine($"- {rr.Nombre}");
-                }
-            }
-
-            // 1.1. Filtro por Tipo (SQL)
+            // 1️⃣ FILTRAR POR TIPO DIRECTO EN SQL (si se puede mejorar después)
             if (!string.IsNullOrWhiteSpace(tipo))
             {
-                if (!Enum.TryParse<TipoRestaurante>(tipo, ignoreCase: true, out var tipoEnum))
-                    return Array.Empty<RestauranteDto>();
-                q = q.Where(r => r.Tipo == tipoEnum);
+                var t = tipo.Trim().ToLower();
+                query = query.Where(r =>
+                    r.TypesJson != null &&
+                    EF.Functions.Like(r.TypesJson.ToLower(), $"%\"{t}\"%"));
             }
 
-            // 1.2. Filtro por Plato (SQL)
-            if (!string.IsNullOrWhiteSpace(plato))
-            {
-                if (!Enum.TryParse<PlatoComida>(plato, ignoreCase: true, out var platoEnum))
-                    return Array.Empty<RestauranteDto>();
-                q = q.Where(r => r.Platos.Any(p => p.Plato == platoEnum));
-            }
-
-            // Si no hay coordenadas, ordenar por Nombre antes de traer la lista.
-            if (!lat.HasValue || !lng.HasValue || !radioMetros.HasValue || radioMetros.Value <= 0)
-            {
-                q = q.OrderBy(r => r.NombreNormalizado);
-            }
-
-            // MATERIALIZACIÓN TEMPRANA: Ejecutar la consulta SQL y traer los primeros resultados.
-            // Esto es el "Tráete primero la entidad". Traeremos hasta 1000 para luego filtrar.
-            var lista = await q.Take(1000).ToListAsync();
-
-            // --------------------------------------------------------------------------------
-            // 2. FILTRADO Y ORDENACIÓN EN MEMORIA (LINQ to Objects)
-            // --------------------------------------------------------------------------------
-
-            // 2.1. Aplicar Filtro de Proximidad (Bounding Box) y Ordenación en memoria
+            // 2️⃣ FILTRO GEOGRÁFICO USANDO SQL
             if (lat.HasValue && lng.HasValue && radioMetros.HasValue && radioMetros.Value > 0)
             {
-                var latVal = lat.Value;
-                var lngVal = lng.Value;
-                var radioMetrosVal = radioMetros.Value;
+                double latVal = lat.Value;
+                double lngVal = lng.Value;
 
-                // Cálculos de Bounding Box
-                var degLat = radioMetrosVal / 111_000.0;
-                var degLng = radioMetrosVal / (111_000.0 * Math.Cos(latVal * Math.PI / 180.0));
+                double degLat = radioMetros.Value / 111_000.0;
+                double degLng = radioMetros.Value / (111_000.0 * Math.Cos(latVal * Math.PI / 180.0));
 
-                var minLat = latVal - degLat;
-                var maxLat = latVal + degLat;
-                var minLng = lngVal - degLng;
-                var maxLng = lngVal + degLng;
+                double minLat = latVal - degLat;
+                double maxLat = latVal + degLat;
+                double minLng = lngVal - degLng;
+                double maxLng = lngVal + degLng;
 
-                // 2.1.1. Filtrar en memoria por Bounding Box
-                lista = lista.Where(r => r.Latitud >= minLat && r.Latitud <= maxLat
-                                      && r.Longitud >= minLng && r.Longitud <= maxLng)
-                             .ToList();
+                query = query.Where(r =>
+                    r.Latitud >= minLat && r.Latitud <= maxLat &&
+                    r.Longitud >= minLng && r.Longitud <= maxLng &&
+                    r.Rating >= rating);
 
-                // 2.1.2. Aplicar Ordenación por Distancia (Manhattan) en memoria
-                lista = lista
-                    .OrderBy(r => Math.Abs(r.Latitud - latVal) + Math.Abs(r.Longitud - lngVal))
-                    .Take(200) // Limitar a los 200 más cercanos después de la ordenación
-                    .ToList();
+                // Orden + Take también en SQL
+                query = query.OrderBy(r =>
+                    Math.Abs(r.Latitud - latVal) + Math.Abs(r.Longitud - lngVal))
+                    .Take(200);
             }
-
-            Console.WriteLine("Lista");
-            Console.WriteLine("Lista");
-            Console.WriteLine("Lista");
-
-
-            foreach (var r in lista)
+            else
             {
-                Console.WriteLine(r.Id);
-                Console.WriteLine(r.Nombre);
-
-                Console.WriteLine(r.GustosQueSirve.Count);
-                Console.WriteLine(r.GustosQueSirve.Count);
-                Console.WriteLine(r.GustosQueSirve.Count);
-
-                foreach (var rr in r.GustosQueSirve)
-                {
-                    Console.WriteLine($"- {rr.Nombre}");
-                }
+                query = query.Where(r => r.Rating >= rating)
+                    .OrderBy(r => r.NombreNormalizado)
+                    .Take(1000);
             }
 
-            // 3. MAPEAR Y DEVOLVER
-            // Los datos necesarios para Map (GustosQueSirve, RestriccionesQueRespeta, etc.) ya están cargados.
-            return lista.Select(Map).ToList();
+            return await query.ToListAsync();
         }
 
 
-        public async Task<RestauranteDto> CrearAsync(string propietarioUid, CrearRestauranteDto dto)
+
+       /* public async Task<Restaurante> CrearAsync(string propietarioUid, CrearRestauranteDto dto)
         {
             var nombreNorm = NormalizarNombre(dto.Nombre);
             var nombreEnUso = await _db.Restaurantes.AsNoTracking()
@@ -195,13 +99,20 @@ namespace GustosApp.Infraestructure.Services
             if (nombreEnUso)
                 throw new ArgumentException("El nombre ya está en uso.");
 
-            if (!Enum.TryParse<TipoRestaurante>(dto.Tipo, true, out var tipoParsed))
-                throw new ArgumentException("Tipo inválido.");
+            var primaryType = string.IsNullOrWhiteSpace(dto.PrimaryType)
+                ? "restaurant"
+                : dto.PrimaryType!.Trim();
+
+            var typesList = (dto.Types ?? new())
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .Select(t => t.Trim())
+                .Distinct()
+                .ToList();
 
             var platosParsed = (dto.Platos ?? new())
                 .Select(s =>
                 {
-                    if (!Enum.TryParse<PlatoComida>(s, true, out var p))
+                    if (!System.Enum.TryParse<PlatoComida>(s, true, out var p))
                         throw new ArgumentException($"Plato inválido: {s}");
                     return p;
                 })
@@ -209,21 +120,34 @@ namespace GustosApp.Infraestructure.Services
                 .ToList();
 
             var ahora = DateTime.UtcNow;
-            var entidad = new Restaurante
+
+            if (dto.Valoracion is null)
             {
-                Id = Guid.NewGuid(),
-                PropietarioUid = propietarioUid,
-                Nombre = dto.Nombre.Trim(),
-                NombreNormalizado = nombreNorm,
-                Direccion = dto.Direccion.Trim(),
-                Latitud = dto.Latitud,
-                Longitud = dto.Longitud,
-                HorariosJson = dto.Horarios is null ? "{}" : JsonSerializer.Serialize(dto.Horarios),
-                CreadoUtc = ahora,
-                ActualizadoUtc = ahora,
-                Tipo = tipoParsed,
-                ImagenUrl = string.IsNullOrWhiteSpace(dto.ImagenUrl) ? null : dto.ImagenUrl!.Trim(),
-                Valoracion = dto.Valoracion
+                dto.Valoracion = 0;
+            }
+
+            var (latOpt, lngOpt) = dto.Coordenadas;
+            if (latOpt is null || lngOpt is null)
+                throw new ArgumentException("Lat/Lng requeridos en el cuerpo (usa 'lat' y 'lng' o 'latitud' y 'longitud')."); 
+            
+            var entidad = new Restaurante
+                {
+                    Id = Guid.NewGuid(),
+                    PropietarioUid = propietarioUid,
+                    Nombre = dto.Nombre.Trim(),
+                    NombreNormalizado = nombreNorm,
+                    Direccion = dto.Direccion.Trim(),
+                    Latitud = latOpt.Value,
+                    Longitud = lngOpt.Value,
+                    HorariosJson = dto.HorariosComoJson ?? "{}",
+                    CreadoUtc = ahora,
+                    ActualizadoUtc = ahora,
+                    PrimaryType = primaryType,
+                    TypesJson = JsonSerializer.Serialize(typesList),
+                    ImagenUrl = string.IsNullOrWhiteSpace(dto.ImagenUrl) ? null : dto.ImagenUrl!.Trim(),
+                    Valoracion = (decimal?)dto.Valoracion,
+                    Rating= dto.Valoracion,
+                    CantidadResenas = 0
             };
 
             foreach (var p in platosParsed)
@@ -233,26 +157,42 @@ namespace GustosApp.Infraestructure.Services
             await _db.SaveChangesAsync();
             await _db.Entry(entidad).Collection(x => x.Platos).LoadAsync();
 
-            return Map(entidad);
+            return entidad;
         }
 
-        public async Task<RestauranteDto?> ObtenerAsync(Guid id)
+        */
+        public async Task<Restaurante?> ObtenerAsync(Guid id)
         {
             var r = await _db.Restaurantes
-                .Include(x => x.Platos)
-                .FirstOrDefaultAsync(x => x.Id == id);
-            return r is null ? null : Map(r);
+
+         .Include(r => r.Reviews)
+          .ThenInclude(o => o.Usuario)
+         .Include(r => r.Reviews)
+           .ThenInclude(o => o.Fotos)
+
+         .Include(r => r.Imagenes)
+
+         .Include(r => r.Menu)
+
+         // ================================
+         // PLATOS (si los usás en otra parte)
+         // ================================
+         //.Include(r => r.Platos)
+
+         .FirstOrDefaultAsync(r => r.Id == id);
+
+            return r;
         }
 
-        public async Task<RestauranteDto?> ObtenerPorPropietarioAsync(string propietarioUid)
+
+        public async Task<Restaurante?> ObtenerPorPropietarioAsync(Guid DuenoID)
         {
             var r = await _db.Restaurantes.AsNoTracking()
-                .Include(x => x.Platos)
-                .FirstOrDefaultAsync(x => x.PropietarioUid == propietarioUid);
-            return r is null ? null : Map(r);
+                .FirstOrDefaultAsync(x => x.DuenoId == DuenoID);
+            return r is null ? null : r;
         }
 
-        public async Task<IReadOnlyList<RestauranteDto>> ListarCercanosAsync(
+        public async Task<IReadOnlyList<Restaurante>> ListarCercanosAsync(
             double lat, double lng, int radioMetros,
             string? tipo = null,
             IEnumerable<string>? platos = null)
@@ -270,16 +210,16 @@ namespace GustosApp.Infraestructure.Services
                 .Where(r => r.Latitud >= minLat && r.Latitud <= maxLat
                          && r.Longitud >= minLng && r.Longitud <= maxLng);
 
-            if (!string.IsNullOrWhiteSpace(tipo) &&
-                Enum.TryParse<TipoRestaurante>(tipo, true, out var tipoParsed))
+            if (!string.IsNullOrWhiteSpace(tipo))
             {
-                q = q.Where(r => r.Tipo == tipoParsed);
+                var t = tipo.Trim();
+                q = q.Where(r => r.PrimaryType == t || r.TypesJson.Contains($"\"{t}\""));
             }
 
             if (platos is not null)
             {
                 var set = new HashSet<PlatoComida>(
-                    platos.Select(p => Enum.TryParse<PlatoComida>(p, true, out var v) ? v : (PlatoComida?)null)
+                    platos.Select(p => System.Enum.TryParse<PlatoComida>(p, true, out var v) ? v : (PlatoComida?)null)
                           .Where(v => v.HasValue)
                           .Select(v => v!.Value));
                 if (set.Count > 0)
@@ -293,69 +233,9 @@ namespace GustosApp.Infraestructure.Services
                 .Take(200)
                 .ToListAsync();
 
-            return lista.Select(Map).ToList();
+            return lista.ToList();
         }
 
-        public async Task<RestauranteDto?> ActualizarAsync(Guid id, string solicitanteUid, bool esAdmin, ActualizarRestauranteDto dto)
-        {
-            var r = await _db.Restaurantes
-                .Include(x => x.Platos)
-                .FirstOrDefaultAsync(x => x.Id == id);
-            if (r is null) return null;
-
-            if (!esAdmin && r.PropietarioUid != solicitanteUid)
-                throw new UnauthorizedAccessException("No tenés permisos para modificar este restaurante.");
-
-            var nombreNorm = NormalizarNombre(dto.Nombre);
-            var conflictoNombre = await _db.Restaurantes
-                .AnyAsync(x => x.Id != id && x.NombreNormalizado == nombreNorm);
-            if (conflictoNombre)
-                throw new ArgumentException("El nombre ya está en uso.");
-
-            if (!Enum.TryParse<TipoRestaurante>(dto.Tipo, true, out var tipoParsed))
-                throw new ArgumentException("Tipo inválido.");
-
-            var platosParsed = (dto.Platos ?? new())
-                .Select(s =>
-                {
-                    if (!Enum.TryParse<PlatoComida>(s, true, out var p))
-                        throw new ArgumentException($"Plato inválido: {s}");
-                    return p;
-                })
-                .Distinct()
-                .ToList();
-
-            r.Nombre = dto.Nombre.Trim();
-            r.NombreNormalizado = nombreNorm;
-            r.Direccion = dto.Direccion.Trim();
-            r.Latitud = dto.Latitud;
-            r.Longitud = dto.Longitud;
-            r.HorariosJson = dto.Horarios is null ? "{}" : JsonSerializer.Serialize(dto.Horarios);
-            r.ActualizadoUtc = DateTime.UtcNow;
-
-            r.Tipo = tipoParsed;
-            r.ImagenUrl = string.IsNullOrWhiteSpace(dto.ImagenUrl) ? null : dto.ImagenUrl!.Trim();
-            r.Valoracion = dto.Valoracion;
-
-            var actuales = r.Platos.Select(x => x.Plato).ToHashSet();
-            var nuevos = platosParsed.ToHashSet();
-
-            var aAgregar = nuevos.Except(actuales).ToList();
-            var aQuitar = actuales.Except(nuevos).ToList();
-
-            foreach (var p in aQuitar)
-            {
-                var row = r.Platos.First(x => x.Plato == p);
-                _db.RestaurantePlatos.Remove(row);
-            }
-            foreach (var p in aAgregar)
-            {
-                r.Platos.Add(new RestaurantePlato { RestauranteId = r.Id, Plato = p });
-            }
-
-            await _db.SaveChangesAsync();
-            return Map(r);
-        }
 
         public async Task<bool> EliminarAsync(Guid id, string solicitanteUid, bool esAdmin)
         {
@@ -369,6 +249,133 @@ namespace GustosApp.Infraestructure.Services
             await _db.SaveChangesAsync();
             return true;
         }
+
+        public async Task<Restaurante> ObtenerResenasDesdeGooglePlaces(string placeId, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(placeId))
+                throw new ArgumentException("placeId requerido", nameof(placeId));
+
+            var apiKey = _config["GooglePlaces:ApiKey"]
+                ?? throw new InvalidOperationException("Falta GooglePlaces:ApiKey");
+
+            var fieldMask = string.Join(",",
+                "id,displayName,primaryType,types,priceLevel,rating,userRatingCount,",
+                "formattedAddress,internationalPhoneNumber,websiteUri,location,photos.name,",
+                "currentOpeningHours,reviews"
+            );
+
+            var url = $"https://places.googleapis.com/v1/places/{Uri.EscapeDataString(placeId)}?languageCode=es";
+
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            req.Headers.TryAddWithoutValidation("X-Goog-Api-Key", apiKey);
+            req.Headers.TryAddWithoutValidation("X-Goog-FieldMask", fieldMask);
+
+            var resp = await _http.SendAsync(req, ct);
+            if (!resp.IsSuccessStatusCode)
+            {
+                Console.WriteLine($" Google Places API error: {resp.StatusCode}");
+                return await _repo.GetByPlaceIdAsync(placeId, ct)
+                    ?? new Restaurante { PlaceId = placeId, Nombre = "(sin datos)" };
+            }
+
+            var details = await resp.Content.ReadFromJsonAsync<PlaceDetails>(cancellationToken: ct);
+            if (details is null)
+                return await _repo.GetByPlaceIdAsync(placeId, ct)
+                    ?? new Restaurante { PlaceId = placeId, Nombre = "(sin datos)" };
+
+            // Buscar restaurante existente
+            var existente = await _repo.GetByPlaceIdAsync(placeId, ct);
+
+            if (existente is null)
+            {
+                existente = new Restaurante
+                {
+                    Id = Guid.NewGuid(),
+                    PropietarioUid = string.Empty,
+                    Nombre = details.DisplayName?.Text ?? "(sin nombre)",
+                    NombreNormalizado = (details.DisplayName?.Text ?? string.Empty).Trim().ToLowerInvariant(),
+                    Direccion = details.FormattedAddress ?? string.Empty,
+                    Latitud = details.Location?.Latitude ?? 0,
+                    Longitud = details.Location?.Longitude ?? 0,
+                    PlaceId = placeId,
+                    Rating = details.Rating,
+                    CantidadResenas = details.UserRatingCount,
+                    Categoria = details.PrimaryType ?? "restaurant",
+                    UltimaActualizacion = DateTime.UtcNow,
+                    ImagenUrl = GetPhotoUrl(details.Photos?.FirstOrDefault()?.Name, apiKey),
+                    Reviews = new List<OpinionRestaurante>()
+                };
+
+                await _repo.AddAsync(existente, ct);
+            }
+            else
+            {
+                // Actualizar información básica del restaurante
+                existente.Nombre = details.DisplayName?.Text ?? existente.Nombre;
+                existente.Direccion = details.FormattedAddress ?? existente.Direccion;
+                existente.Latitud = details.Location?.Latitude ?? existente.Latitud;
+                existente.Longitud = details.Location?.Longitude ?? existente.Longitud;
+                existente.Rating = details.Rating ?? existente.Rating;
+                existente.CantidadResenas = details.UserRatingCount ?? existente.CantidadResenas;
+                existente.Categoria = details.PrimaryType ?? existente.Categoria;
+                existente.ImagenUrl = GetPhotoUrl(details.Photos?.FirstOrDefault()?.Name, apiKey);
+                existente.ActualizadoUtc = DateTime.UtcNow;
+                existente.UltimaActualizacion = DateTime.UtcNow;
+            }
+
+            // Procesar opiniones desde Google
+            if (details.Reviews is { Count: > 0 })
+            {
+                var opiniones = details.Reviews.Select(r => new OpinionRestaurante
+                {
+                    Id = Guid.NewGuid(),
+                    RestauranteId = existente.Id,
+                    UsuarioId = null, // no aplica para Google
+                    AutorExterno = r.AuthorAttribution?.DisplayName ?? "Anónimo",
+                    FuenteExterna = "GooglePlaces",
+                    ImagenAutorExterno = r.AuthorAttribution?.PhotoUri,
+                    Valoracion = r.Rating ,
+                    Titulo = "Opinión desde Google",
+                    Opinion = r.Text?.Text ?? "",
+                    EsImportada = true,
+                    FechaCreacion = DateTime.UtcNow
+                }).ToList();
+
+                // Evitar duplicados (comparando texto + autor)
+                var existentes = await _db.OpinionesRestaurantes
+                    .Where(x => x.RestauranteId == existente.Id && x.EsImportada)
+                    .Select(x => new { x.AutorExterno, x.Opinion })
+                    .ToListAsync(ct);
+
+                var nuevas = opiniones
+                    .Where(o => !existentes.Any(e =>
+                        string.Equals(e.AutorExterno, o.AutorExterno, StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(e.Opinion, o.Opinion, StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
+
+                if (nuevas.Any())
+                {
+                    await _db.OpinionesRestaurantes.AddRangeAsync(nuevas, ct);
+                    await _db.SaveChangesAsync(ct);
+
+                   
+                    foreach (var nueva in nuevas)
+                    {
+                        existente.Reviews.Add(nueva);
+                    }
+                }
+            }
+
+            await _db.SaveChangesAsync(ct);
+            return existente;
+        }
+
+        private static string? GetPhotoUrl(string? fotoName, string apiKey)
+        {
+            if (string.IsNullOrWhiteSpace(fotoName)) return null;
+            return $"https://places.googleapis.com/v1/{Uri.EscapeDataString(fotoName)}/media?maxWidthPx=800&key={apiKey}";
+        }
+
+        
     }
 }
-

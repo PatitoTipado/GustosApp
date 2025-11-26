@@ -3,243 +3,247 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Moq;
-using Xunit;
-using GustosApp.Application.UseCases;
+using GustosApp.Application.Interfaces;
+using GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
-using GustosApp.Application.Tests.mocks;
-
-
+using GustosApp.Domain.Model.@enum;
+using Moq;
+using Xunit;
 
 public class GuardarCondicionesUseCaseTests
 {
-    private readonly Mock<IUsuarioRepository> _usuarioRepoMock;
-    private readonly Mock<ICondicionMedicaRepository> _condicionRepoMock;
+    private readonly Mock<IUsuarioRepository> _userMock;
+    private readonly Mock<ICondicionMedicaRepository> _condicionesMock;
+    private readonly Mock<ICacheService> _cacheMock;
     private readonly GuardarCondicionesUseCase _useCase;
+    private readonly CancellationToken _ct = CancellationToken.None;
 
     public GuardarCondicionesUseCaseTests()
     {
-        _usuarioRepoMock = new Mock<IUsuarioRepository>();
-        _condicionRepoMock = new Mock<ICondicionMedicaRepository>();
-        _useCase = new GuardarCondicionesUseCase(_condicionRepoMock.Object, _usuarioRepoMock.Object);
+        _userMock = new Mock<IUsuarioRepository>();
+        _condicionesMock = new Mock<ICondicionMedicaRepository>();
+        _cacheMock = new Mock<ICacheService>();
+
+        _useCase = new GuardarCondicionesUseCase(
+            _userMock.Object,
+            _condicionesMock.Object,
+            _cacheMock.Object
+        );
+    }
+
+    private Usuario CrearUsuarioBase(string uid)
+    {
+        return new Usuario
+        {
+            FirebaseUid = uid,
+            Email = "test@user.com",
+            Nombre = "Test",
+            Apellido = "User",
+            IdUsuario = "usr1",
+            Gustos = new List<Gusto>(),
+            Restricciones = new List<Restriccion>(),
+            CondicionesMedicas = new List<CondicionMedica>()
+        };
     }
 
     [Fact]
-    public async Task HandleAsync_DeberiaGuardarRestriccionesYValidarCompatibilidadGustos()
+    public async Task HandleAsync_SkipTrue_LimpiaCondiciones_YGuardaCacheEnRegistro()
     {
         // Arrange
-        var uid = "firebase_123";
-        var ids = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
-        var ct = CancellationToken.None;
+        var uid = "uid-test";
+        var usuario = CrearUsuarioBase(uid);
 
-        var usuario = new Usuario(uid, "user@mail.com", "Juan", "Pérez", "USR1")
-        {
-            Gustos = new List<Gusto> { new Gusto { Id = Guid.NewGuid(), Nombre = "Pizza" } }
-        };
+        usuario.CondicionesMedicas.Add(new CondicionMedica { Id = Guid.NewGuid(), Nombre = "Diabetes" });
 
-        _usuarioRepoMock.Setup(r => r.GetByFirebaseUidAsync(uid, ct))
+        _userMock
+            .Setup(r => r.GetByFirebaseUidAsync(uid, _ct))
             .ReturnsAsync(usuario);
 
-        var condiciones = new List<CondicionMedica>
-        {
-            new CondicionMedica { Id = ids[0], Nombre = "Diabetes" },
-            new CondicionMedica { Id = ids[1], Nombre = "Hipertensión" }
-        };
-
-        _condicionRepoMock.Setup(r => r.GetByIdsAsync(ids, ct))
-            .ReturnsAsync(condiciones);
-
-        _usuarioRepoMock.Setup(r => r.SaveChangesAsync(ct))
-            .Returns(Task.CompletedTask);
-
         // Act
-        var result = await _useCase.HandleAsync(uid, ids, skip: false, ct);
-
-        // Asserts
-        _usuarioRepoMock.Verify(r => r.SaveChangesAsync(ct), Times.Once);
-        Assert.Equal(RegistroPaso.Gustos, usuario.PasoActual);
-        Assert.Equal(2, usuario.CondicionesMedicas.Count);
-       
-    }
-
-    [Fact]
-    public async Task HandleAsync_DeberiaQuitarCondicionesDesmarcadas()
-    {
-        // Arrange
-        var uid = "firebase_123";
-        var ct = CancellationToken.None;
-
-        // Condiciones en la BD (todas las posibles)
-        var diabetes = new CondicionMedica { Id = Guid.NewGuid(), Nombre = "Diabetes" };
-        var hipertension = new CondicionMedica { Id = Guid.NewGuid(), Nombre = "Hipertensión" };
-        var obesidad = new CondicionMedica { Id = Guid.NewGuid(), Nombre = "Obesidad" };
-
-        // Usuario tenía 3 condiciones guardadas
-        var usuario = new UsuarioFake(uid, "user@mail.com", "Juan", "Pérez", "USR1")
-        {
-            CondicionesMedicas = new List<CondicionMedica> { diabetes, hipertension, obesidad }
-        };
-
-        // Pero ahora solo seleccionó 2 (quitó Obesidad)
-        var nuevosIds = new List<Guid> { diabetes.Id, hipertension.Id };
-
-        _usuarioRepoMock
-            .Setup(r => r.GetByFirebaseUidAsync(uid, ct))
-            .ReturnsAsync(usuario);
-
-        _condicionRepoMock
-            .Setup(r => r.GetByIdsAsync(It.IsAny<List<Guid>>(), ct))
-            .ReturnsAsync(new List<CondicionMedica> { diabetes, hipertension });
-
-        _usuarioRepoMock
-            .Setup(r => r.SaveChangesAsync(ct))
-            .Returns(Task.CompletedTask);
-
-        var useCase = new GuardarCondicionesUseCase(_condicionRepoMock.Object, _usuarioRepoMock.Object);
-
-        // Act
-        var result = await useCase.HandleAsync(uid, nuevosIds, skip: false, ct);
+        var result = await _useCase.HandleAsync(
+            uid,
+            new List<Guid> { Guid.NewGuid() },
+            skip: true,
+            modo: ModoPreferencias.Registro,
+            ct: _ct
+        );
 
         // Assert
-        Assert.Equal(2, usuario.CondicionesMedicas.Count);
-        Assert.DoesNotContain(usuario.CondicionesMedicas, c => c.Nombre == "Obesidad");
-        
-        Assert.Equal(RegistroPaso.Gustos, usuario.PasoActual);
-
-        _usuarioRepoMock.Verify(r => r.SaveChangesAsync(ct), Times.Once);
-    }
-    [Fact]
-    public async Task HandleAsync_DeberiaAgregarCondicionMedicaSiHayNuevoIdListGuid()
-    {
-        // Arrange
-        var uid = "firebase_123";
-        var ct = CancellationToken.None;
-
-
-        var diabetes = new CondicionMedica { Id = Guid.NewGuid(), Nombre = "Diabetes" };
-        var hipertension = new CondicionMedica { Id = Guid.NewGuid(), Nombre = "Hipertensión" };
-        var obesidad = new CondicionMedica { Id = Guid.NewGuid(), Nombre = "Obesidad" };
-
-        var sarampion = new CondicionMedica { Id = Guid.NewGuid(), Nombre = "Sarampion" };
-
-        // Usuario tenía 3 condiciones guardadas
-        var usuario = new UsuarioFake(uid, "user@mail.com", "Juan", "Pérez", "USR1")
-        {
-            CondicionesMedicas = new List<CondicionMedica> { diabetes, hipertension, obesidad }
-        };
-
-        // Pero ahora solo seleccionó 4 (Agregó sarampión)
-        var nuevosIds = new List<Guid> { diabetes.Id, hipertension.Id,obesidad.Id,sarampion.Id };
-
-        _usuarioRepoMock
-            .Setup(r => r.GetByFirebaseUidAsync(uid, ct))
-            .ReturnsAsync(usuario);
-
-
-        _condicionRepoMock
-            .Setup(r => r.GetByIdsAsync(It.IsAny<List<Guid>>(), ct))
-            .ReturnsAsync((List<Guid> ids, CancellationToken _) =>
-                new List<CondicionMedica> { diabetes, hipertension, obesidad, sarampion }
-                    .Where(c => ids.Contains(c.Id))
-                    .ToList());
-
-
-        _usuarioRepoMock
-            .Setup(r => r.SaveChangesAsync(ct))
-            .Returns(Task.CompletedTask);
-
-        var useCase = new GuardarCondicionesUseCase(_condicionRepoMock.Object, _usuarioRepoMock.Object);
-
-        // Act
-        var result = await useCase.HandleAsync(uid, nuevosIds, skip: false, ct);
-
-        // Assert
-        Assert.Equal(4, usuario.CondicionesMedicas.Count);
-        Assert.Contains(usuario.CondicionesMedicas, c => c.Nombre == "Sarampion");
-       
-        Assert.Equal(RegistroPaso.Gustos, usuario.PasoActual);
-
-        _usuarioRepoMock.Verify(r => r.SaveChangesAsync(ct), Times.Once);
-    }
-
-    [Fact]
-    public async Task HandleAsync_DeberiaQuitarTodasLasCondicionesSiQuedanDesmarcadasTodas()
-    {
-        // Arrange
-        var uid = "firebase_123";
-        var ct = CancellationToken.None;
-
-        // Condiciones en la BD (todas las posibles)
-        var diabetes = new CondicionMedica { Id = Guid.NewGuid(), Nombre = "Diabetes" };
-        var hipertension = new CondicionMedica { Id = Guid.NewGuid(), Nombre = "Hipertensión" };
-        var obesidad = new CondicionMedica { Id = Guid.NewGuid(), Nombre = "Obesidad" };
-
-        // Usuario tenía 3 condiciones guardadas
-        var usuario = new UsuarioFake(uid, "user@mail.com", "Juan", "Pérez", "USR1")
-        {
-            CondicionesMedicas = new List<CondicionMedica> { diabetes, hipertension, obesidad }
-        };
-
-        
-        var nuevosIds = new List<Guid> {};
-
-        _usuarioRepoMock
-            .Setup(r => r.GetByFirebaseUidAsync(uid, ct))
-            .ReturnsAsync(usuario);
-
-        _condicionRepoMock
-            .Setup(r => r.GetByIdsAsync(It.IsAny<List<Guid>>(), ct))
-            .ReturnsAsync(new List<CondicionMedica> { diabetes, hipertension ,obesidad});
-
-        _usuarioRepoMock
-            .Setup(r => r.SaveChangesAsync(ct))
-            .Returns(Task.CompletedTask);
-
-        var useCase = new GuardarCondicionesUseCase(_condicionRepoMock.Object, _usuarioRepoMock.Object);
-
-        // Act
-        var result = await useCase.HandleAsync(uid, nuevosIds, skip: false, ct);
-
-        // Assert
-
         Assert.Empty(usuario.CondicionesMedicas);
-        Assert.DoesNotContain(usuario.CondicionesMedicas, c => c.Nombre == "Obesidad" 
-        && c.Nombre == "Hipertensión" && c.Nombre == "Diabetes");
-        
-        Assert.Equal(RegistroPaso.Gustos, usuario.PasoActual);
+        _userMock.Verify(r => r.SaveChangesAsync(_ct), Times.Once);
 
-        _usuarioRepoMock.Verify(r => r.SaveChangesAsync(ct), Times.Once);
+        _cacheMock.Verify(c => c.SetAsync(
+            $"registro:{uid}:condiciones",
+            It.Is<List<Guid>>(l => l.Count == 0),
+            It.IsAny<TimeSpan>()),
+            Times.Once
+        );
     }
 
     [Fact]
-    public async Task HandleAsync_DeberiaSkipearCuandoSkipea()
+    public async Task HandleAsync_IdsInvalidos_LanzaArgumentException()
     {
         // Arrange
-        var uid = "firebase_123";
-        var ct = CancellationToken.None;
+        var uid = "uid-test";
+        var usuario = CrearUsuarioBase(uid);
+
+        var ids = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
+
+        _userMock
+            .Setup(r => r.GetByFirebaseUidAsync(uid, _ct))
+            .ReturnsAsync(usuario);
+
+        _condicionesMock
+            .Setup(r => r.GetByIdsAsync(ids, _ct))
+            .ReturnsAsync(new List<CondicionMedica>
+            {
+                new CondicionMedica { Id = ids[0], Nombre = "Diabetes" }
+            });
+
+        // Act + Assert
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            _useCase.HandleAsync(uid, ids, skip: false, modo: ModoPreferencias.Registro, ct: _ct));
+    }
+
+    [Fact]
+    public async Task HandleAsync_SinCambios_ModoRegistro_SoloCache()
+    {
+        // Arrange
+        var uid = "uid-test";
+        var c1Id = Guid.NewGuid();
+        var c2Id = Guid.NewGuid();
+
+        var usuario = CrearUsuarioBase(uid);
+        usuario.CondicionesMedicas = new List<CondicionMedica>
+        {
+            new CondicionMedica { Id = c1Id, Nombre = "Diabetes" },
+            new CondicionMedica { Id = c2Id, Nombre = "Hipertensión" }
+        };
+
+        var ids = new List<Guid> { c1Id, c2Id };
+
+        _userMock
+            .Setup(r => r.GetByFirebaseUidAsync(uid, _ct))
+            .ReturnsAsync(usuario);
+
+        _condicionesMock
+            .Setup(r => r.GetByIdsAsync(ids, _ct))
+            .ReturnsAsync(usuario.CondicionesMedicas.ToList());
 
         // Act
-        var result = await _useCase.HandleAsync(uid, new List<Guid>(), skip: true, ct);
+        var result = await _useCase.HandleAsync(
+            uid,
+            ids,
+            skip: false,
+            modo: ModoPreferencias.Registro,
+            ct: _ct
+        );
 
         // Assert
-       
-        _usuarioRepoMock.Verify(r => r.SaveChangesAsync(ct), Times.Never);
+        Assert.Empty(result);
+        _userMock.Verify(r => r.SaveChangesAsync(_ct), Times.Never);
+
+        _cacheMock.Verify(c => c.SetAsync(
+            $"registro:{uid}:condiciones",
+            It.Is<List<Guid>>(l => l.Count == 2 && l.Contains(c1Id) && l.Contains(c2Id)),
+            It.IsAny<TimeSpan>()),
+            Times.Once
+        );
     }
 
     [Fact]
-    public async Task HandleAsync_DeberiaLanzarThrowCuandoNoEncuentraUsuario()
+    public async Task HandleAsync_Cambios_AgregaYQuitaCorrectamente()
     {
         // Arrange
-        var uid = "firebase_999";
-        var ct = CancellationToken.None;
+        var uid = "uid-test";
+        var c1Id = Guid.NewGuid(); // queda
+        var c2Id = Guid.NewGuid(); // se va
+        var c3Id = Guid.NewGuid(); // entra
 
-        _usuarioRepoMock.Setup(r => r.GetByFirebaseUidAsync(uid, ct))
-            .ReturnsAsync((Usuario?)null);
+        var usuario = CrearUsuarioBase(uid);
+        usuario.CondicionesMedicas = new List<CondicionMedica>
+        {
+            new CondicionMedica { Id = c1Id, Nombre = "Diabetes" },
+            new CondicionMedica { Id = c2Id, Nombre = "Hipertensión" }
+        };
 
-        // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _useCase.HandleAsync(uid, new List<Guid> { Guid.NewGuid() }, false, ct));
+        var ids = new List<Guid> { c1Id, c3Id };
+
+        var c1 = usuario.CondicionesMedicas.First(x => x.Id == c1Id);
+        var c3 = new CondicionMedica { Id = c3Id, Nombre = "Enfermedad celíaca" };
+
+        _userMock
+            .Setup(r => r.GetByFirebaseUidAsync(uid, _ct))
+            .ReturnsAsync(usuario);
+
+        _condicionesMock
+            .Setup(r => r.GetByIdsAsync(ids, _ct))
+            .ReturnsAsync(new List<CondicionMedica> { c1, c3 });
+
+        // Act
+        var result = await _useCase.HandleAsync(
+            uid,
+            ids,
+            skip: false,
+            modo: ModoPreferencias.Registro,
+            ct: _ct
+        );
+
+        // Assert
+        _userMock.Verify(r => r.SaveChangesAsync(_ct), Times.Once);
+
+        Assert.Contains(usuario.CondicionesMedicas, c => c.Id == c1Id);
+        Assert.Contains(usuario.CondicionesMedicas, c => c.Id == c3Id);
+        Assert.DoesNotContain(usuario.CondicionesMedicas, c => c.Id == c2Id);
+    }
+
+    [Fact]
+    public async Task HandleAsync_DevuelveGustosIncompatibles()
+    {
+        // Arrange
+        var uid = "uid-test";
+
+        var tagAzucar = new Tag { Id = Guid.NewGuid(), Nombre = "Azucar" };
+
+        var gustoPizza = new Gusto
+        {
+            Id = Guid.NewGuid(),
+            Nombre = "Pizza",
+            Tags = new List<Tag> { tagAzucar }
+        };
+
+        var usuario = CrearUsuarioBase(uid);
+        usuario.Gustos.Add(gustoPizza);
+
+        var condicionDiabetes = new CondicionMedica
+        {
+            Id = Guid.NewGuid(),
+            Nombre = "Diabetes",
+            TagsCriticos = new List<Tag> { tagAzucar }
+        };
+
+        var ids = new List<Guid> { condicionDiabetes.Id };
+
+        _userMock
+            .Setup(r => r.GetByFirebaseUidAsync(uid, _ct))
+            .ReturnsAsync(usuario);
+
+        _condicionesMock
+            .Setup(r => r.GetByIdsAsync(ids, _ct))
+            .ReturnsAsync(new List<CondicionMedica> { condicionDiabetes });
+
+        // Act
+        var result = await _useCase.HandleAsync(
+            uid,
+            ids,
+            skip: false,
+            modo: ModoPreferencias.Registro,
+            ct: _ct
+        );
+
+        // Assert
+        Assert.Contains("Pizza", result);
+        Assert.DoesNotContain(usuario.Gustos, g => g.Nombre == "Pizza");
     }
 }
-

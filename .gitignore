@@ -2,5 +2,17 @@
 .vs/
 bin/
 obj/
-/src/GustosApp.API/appsettings.Development.json
+
+appsettings.Development.json
+appsettings.*.local.json
+*/appsettings.Development.json
+**/appsettings.Development.json
+
+
 /src/GustosApp.API/secrets/
+
+
+# Resultados de tests y cobertura
+**/TestResults/
+**/coveragereport/
+appsettings.Development.json

@@ -9,7 +9,8 @@ namespace GustosApp.Domain.Interfaces
 {
     public interface IGustosGrupoRepository
     {
-        public Task<bool> AgregarGustosAlGrupo(Guid grupoId, List<Gusto> gustos);
+        Task<bool> AgregarGustosAlGrupo(Guid grupoId, List<Gusto> gustos,Guid idMiembro);
+        Task<bool> EliminarGustosAlGrupo(Guid grupoId, List<Gusto> gustos,Guid miembroGrupoId);
         Task<List<string>> ObtenerGustosDelGrupo(Guid grupoId);
         Task<List<Guid>> ObtenerGustosIdsDelGrupo(Guid grupoId);
     }

@@ -1,22 +1,62 @@
 using FirebaseAdmin;
+using Google.Api;
+using FluentValidation;
 using Google.Apis.Auth.OAuth2;
 using GustosApp.API.Hubs;
 using GustosApp.API.Hubs.GustosApp.API.Hubs;
+using GustosApp.API.Hubs.Services;
 using GustosApp.API.Mapping;
 using GustosApp.API.Middleware;
+using GustosApp.Application.Handlers;
 using GustosApp.Application.Interfaces;
-using GustosApp.Application.Tests.mocks;
+using GustosApp.Application.Services;
 using GustosApp.Application.UseCases;
+using GustosApp.Application.UseCases.AmistadUseCases;
+using GustosApp.Application.UseCases.GrupoUseCases;
+using GustosApp.Application.UseCases.GrupoUseCases.ChatGrupoUseCases;
+using GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases;
+using GustosApp.Application.UseCases.NotificacionUseCases;
+using GustosApp.Application.UseCases.RestauranteUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Infraestructure;
+using GustosApp.Infraestructure.Files;
 using GustosApp.Infraestructure.ML;
+using GustosApp.Infraestructure.Ocr;
+using GustosApp.Infraestructure.Parsing;
 using GustosApp.Infraestructure.Repositories;
+using GustosApp.Infraestructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-// Usar System.Text.Json para manejar el secreto de Firebase
-using System.Text.Json;
+using StackExchange.Redis;
+using GustosApp.Application.Services;
+using GustosApp.Application.UseCases.GrupoUseCases;
+using GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases;
+using GustosApp.Application.UseCases.AmistadUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases;
+using GustosApp.Application.UseCases.GrupoUseCases.ChatGrupoUseCases;
+using GustosApp.Application.UseCases.NotificacionUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.CondicionesMedicasUseCases;
+using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
+using GustosApp.Application.UseCases.VotacionUseCases;
+using GustosApp.Infraestructure.Services;
+using Microsoft.AspNetCore.Authorization;
+using GustosApp.Application.UseCases.RestauranteUseCases.SolicitudRestauranteUseCases;
+using GustosApp.API.Templates.Email;
+using GustosApp.Application.Validations.Restaurantes;
+using FluentValidation.AspNetCore;
+using GustosApp.API.Validations.OpinionRestaurantes;
+using GustosApp.Application.UseCases.RestauranteUseCases.OpinionesRestaurantes;
+using System.Globalization;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,8 +77,9 @@ if (FirebaseApp.DefaultInstance == null)
     });
 }
 
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-builder.Services.AddAutoMapper(typeof(ApiMapeoPerfil));
+
 // Validación de JWT emitidos por Firebase (securetoken)
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -57,11 +98,29 @@ builder.Services
         {
             OnMessageReceived = context =>
             {
-                // Si hay cookie "token", úsala como fuente del JWT
+                // Prioridad 1: Si hay cookie "token", se usa como fuente del JWT (para HTTP normal)
                 if (context.Request.Cookies.ContainsKey("token"))
                 {
                     context.Token = context.Request.Cookies["token"];
+                    return Task.CompletedTask;
                 }
+
+                // Prioridad 2: Leer token del query string "access_token" (para SignalR)
+                var accessToken = context.Request.Query["access_token"];
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    context.Token = accessToken;
+                    return Task.CompletedTask;
+                }
+
+                // Prioridad 3: Leer del header Authorization (para compatibilidad)
+                var authHeader = context.Request.Headers["Authorization"].ToString();
+                if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Token = authHeader.Substring("Bearer ".Length).Trim();
+                    return Task.CompletedTask;
+                }
+
                 return Task.CompletedTask;
             }
         };
@@ -76,7 +135,69 @@ builder.Services.AddSingleton<IEmbeddingService>(sp =>
 });
 
 // Autorización explícita 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", policy =>
+    {
+        policy.RequireClaim("rol", "Admin");
+    });
+
+    options.AddPolicy("DuenoRestaurante", policy =>
+    {
+        policy.RequireClaim("rol", "DuenoRestaurante");
+    });
+
+    options.AddPolicy("PendienteRestaurante", policy =>
+    {
+        policy.RequireClaim("rol", "PendienteRestaurante");
+    });
+});
+
+
+// OCR + Parser
+builder.Services.AddSingleton<IOcrService>(sp =>
+{
+    var env = sp.GetRequiredService<IWebHostEnvironment>();
+
+    var tessdataPath = Path.Combine(env.ContentRootPath, "tessdata");
+
+    Console.WriteLine(" TESSDATA PATH => " + tessdataPath);
+    Console.WriteLine(" Exists? => " + Directory.Exists(tessdataPath));
+
+    foreach (var file in Directory.GetFiles(tessdataPath))
+        Console.WriteLine(" " + file);
+
+    return new TesseractOcrService(tessdataPath);
+});
+
+
+builder.Services.AddScoped<IMenuParser, SimpleMenuParser>();
+
+//Autorizacion para acceder a ciertas rutas si el registro del usuario no esta completo
+builder.Services.AddAuthorization(opt =>
+{
+    opt.AddPolicy("RegistroIncompleto", p =>
+        p.Requirements.Add(new RegistroIncompletoRequirement()));
+});
+
+
+
+
+//REDIS
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var config = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+    return ConnectionMultiplexer.Connect(config);
+});
+
+
+builder.Services
+    .AddFluentValidationAutoValidation()
+    .AddFluentValidationClientsideAdapters();
+builder.Services.AddValidatorsFromAssemblyContaining<CrearSolicitudRestauranteValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CrearOpinionRestauranteValidator>();
+
+
 
 // =====================
 //    Controllers / JSON
@@ -88,15 +209,30 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
+//REDIS
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+});
+
 // =====================
 //   EF Core / SQL Server
 // =====================
 builder.Services.AddDbContext<GustosDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+
 // =====================
 //   Repositorios
 // =====================
+builder.Services.AddScoped<IHttpDownloader, HttpDownloader>();
+builder.Services.AddScoped<IRecomendadorRestaurantes, SugerirGustosSobreUnRadioUseCase>();
+builder.Services.AddScoped<IConstruirPreferencias, ConstruirPreferenciasUseCase>();
+
+builder.Services.AddScoped<IAuthorizationHandler, RegistroIncompletoHandler>();
+builder.Services.AddScoped<ICacheService, RedisCacheService>();
+builder.Services.AddScoped<IFileStorageService, FirebaseStorageService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepositoryEF>();
 builder.Services.AddScoped<IRestriccionRepository, RestriccionRepositoryEF>();
 builder.Services.AddScoped<ICondicionMedicaRepository, CondicionMedicaRepositoryEF>();
@@ -104,13 +240,34 @@ builder.Services.AddScoped<IGustoRepository, GustoRepositoryEF>();
 builder.Services.AddScoped<IGrupoRepository, GrupoRepositoryEF>();
 builder.Services.AddScoped<IMiembroGrupoRepository, MiembroGrupoRepositoryEF>();
 builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepositoryEF>();
-builder.Services.AddScoped<IReviewRepository, ReviewRepositoryEF>();
 builder.Services.AddScoped<IGustosGrupoRepository, GustosGrupoRepositoryEF>();
 builder.Services.AddScoped<INotificacionRepository, NotificacionRepositoryEF>();
+builder.Services.AddScoped<INotificacionRealtimeService, SignalRNotificacionRealtimeService>();
+builder.Services.AddScoped<ISolicitudAmistadRealtimeService, SignalRSolicitudAmistadRealtimeService>();
+builder.Services.AddScoped<IUsuariosActivosService, UsuariosActivosService>();
+builder.Services.AddScoped<IOpinionRestauranteRepository, OpinionRestauranteRepositoryEF>();
+builder.Services.AddScoped<IRestauranteEstadisticasRepository, RestauranteEstadisticasRepositoryEF>();
+builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
+builder.Services.AddScoped<IUsuarioRestauranteFavoritoRepository, UsuarioRestauranteFavoritoEF>();
+builder.Services.AddScoped<ISolicitudRestauranteRepository, SolicitudRestauranteRepositoryEF>();
+builder.Services.AddScoped<IRestauranteMenuRepository, RestauranteMenuRepositoryEF>();
+builder.Services.AddScoped<IFirebaseAuthService, FirebaseAuthService>();
+builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
+builder.Services.AddScoped<ISolicitudAmistadRepository, SolicitudAmistadRepositoryEF>();
+
+// Votaciones
+builder.Services.AddScoped<IVotacionRepository, VotacionRepository>();
+builder.Services.AddScoped<IniciarVotacionUseCase>();
+builder.Services.AddScoped<RegistrarVotoUseCase>();
+builder.Services.AddScoped<ObtenerResultadosVotacionUseCase>();
+builder.Services.AddScoped<CerrarVotacionUseCase>();
+builder.Services.AddScoped<SeleccionarGanadorRuletaUseCase>();
+
 
 // Chat repository
-builder.Services.AddScoped<GustosApp.Domain.Interfaces.IChatRepository, GustosApp.Infraestructure.Repositories.ChatRepositoryEF>();
+builder.Services.AddScoped<IChatRepository,ChatRepositoryEF>();
 builder.Services.AddScoped<IRestauranteRepository, RestauranteRepositoryEF>();
+builder.Services.AddScoped<GustosApp.Domain.Interfaces.IChatRepository, GustosApp.Infraestructure.Repositories.ChatRepositoryEF>();
 
 // =====================
 //    UseCases existentes
@@ -121,6 +278,7 @@ builder.Services.AddScoped<ObtenerCondicionesMedicasUseCase>();
 builder.Services.AddScoped<ObtenerGustosUseCase>();
 builder.Services.AddScoped<ObtenerRestriccionesUseCase>();
 builder.Services.AddScoped<CrearGrupoUseCase>();
+builder.Services.AddScoped<ActualizarNombreGrupoUseCase>();
 builder.Services.AddScoped<InvitarUsuarioGrupoUseCase>();
 builder.Services.AddScoped<UnirseGrupoUseCase>();
 builder.Services.AddScoped<AbandonarGrupoUseCase>();
@@ -134,17 +292,25 @@ builder.Services.AddScoped<GuardarRestriccionesUseCase>();
 builder.Services.AddScoped<ObtenerGustosFiltradosUseCase>();
 builder.Services.AddScoped<ObtenerResumenRegistroUseCase>();
 builder.Services.AddScoped<FinalizarRegistroUseCase>();
-builder.Services.AddScoped<SugerirGustosUseCase>();
-builder.Services.AddScoped<SugerirGustosUseCase>();
-builder.Services.AddScoped<BuscarRestaurantesCercanosUseCase>();
-builder.Services.AddScoped<ActualizarDetallesRestauranteUseCase>();
 builder.Services.AddScoped<RemoverMiembroGrupoUseCase>();
 builder.Services.AddScoped<SugerirGustosSobreUnRadioUseCase>();
 builder.Services.AddScoped<CrearNotificacionUseCase>();
+builder.Services.AddScoped<ObtenerNotificacionesUsuarioUseCase>();
 builder.Services.AddScoped<ObtenerNotificacionUsuarioUseCase>();
 builder.Services.AddScoped<MarcarNotificacionLeidaUseCase>();
+builder.Services.AddScoped<ConstruirPreferenciasUseCase>();
+builder.Services.AddScoped<ActualizarValoracionRestauranteUseCase>();
+builder.Services.AddScoped<CrearSolicitudRestauranteUseCase>();
+builder.Services.AddScoped<AprobarSolicitudRestauranteUseCase>();
+builder.Services.AddScoped<ObtenerSolicitudRestaurantesPorIdUseCase>();
+builder.Services.AddScoped<ObtenerDatosRegistroRestauranteUseCase>();
+builder.Services.AddScoped<ObtenerSolicitudesPorTipoUseCase>();
+builder.Services.AddScoped<RechazarSolicitudRestauranteUseCase>();
+builder.Services.AddScoped<ActualizarValoracionRestauranteUseCase>();
+builder.Services.AddScoped<RecomendacionIAUseCase>();
+ builder.Services.AddScoped<ActualizarPerfilUsuarioUseCase>();
 // UseCases y repositorios de amistad
-builder.Services.AddScoped<GustosApp.Domain.Interfaces.ISolicitudAmistadRepository, GustosApp.Infraestructure.Repositories.SolicitudAmistadRepositoryEF>();
+
 builder.Services.AddScoped<EnviarSolicitudAmistadUseCase>();
 builder.Services.AddScoped<ObtenerSolicitudesPendientesUseCase>();
 builder.Services.AddScoped<AceptarSolicitudUseCase>();
@@ -156,10 +322,39 @@ builder.Services.AddScoped<ObtenerChatGrupoUseCase>();
 builder.Services.AddScoped<EnviarMensajeGrupoUseCase>();
 builder.Services.AddScoped<ActualizarGustosAGrupoUseCase>();
 builder.Services.AddScoped<ObtenerPreferenciasGruposUseCase>();
+builder.Services.AddScoped<EliminarGustosGrupoUseCase>();
+builder.Services.AddScoped<DesactivarMiembroDeGrupoUseCase>();
+builder.Services.AddScoped<IServicioPreferenciasGrupos,ServicioPreferenciasGrupos>();
+builder.Services.AddScoped<EliminarNotificacionUseCase>();
+builder.Services.AddScoped<ObtenerGustosPaginacionUseCase>();
+builder.Services.AddScoped<BuscarGustoPorCoincidenciaUseCase>();
+builder.Services.AddScoped<ObtenerGustosSeleccionadosPorUsuarioYParaFiltrarUseCase>();
+builder.Services.AddScoped<BuscarUsuariosUseCase>();
+builder.Services.AddScoped<ConfirmarAmistadEntreUsuarios>();
+builder.Services.AddScoped<VerificarSiMiembroEstaEnGrupoUseCase>();
 builder.Services.AddScoped<ObtenerRestaurantesAleatoriosGrupoUseCase>();
+builder.Services.AddScoped<ActivarMiembroDeGrupoUseCase>();
+builder.Services.AddScoped<EnviarRecomendacionesUsuariosActivosUseCase>();
+builder.Services.AddScoped<CrearOpinionRestauranteUseCase>();
+builder.Services.AddScoped<NotificacionesInteligentesService>();
+builder.Services.AddScoped<BuscarRestaurantesUseCase>();
+builder.Services.AddScoped<AgregarUsuarioRestauranteFavoritoUseCase>();
+builder.Services.AddScoped<RegistrarTop3IndividualRestaurantesUseCase>();
+builder.Services.AddScoped<RegistrarTop3GrupoRestaurantesUseCase>();
+builder.Services.AddScoped<RegistrarVisitaPerfilRestauranteUseCase>();
+builder.Services.AddScoped<ObtenerMetricasRestauranteUseCase>();
+builder.Services.AddScoped<ActualizarRestauranteDashboardUseCase>();
+builder.Services.AddScoped<ObtenerRestaurantesFavoritosUseCase>();
+builder.Services.AddScoped<ObtenerRestauranteDetalleUseCase>();
+
+builder.Services.AddHttpClient<IRecomendacionAIService, RecomendacionAIService>();
+builder.Services.Configure<GeminiSettings>(builder.Configuration.GetSection("GeminiSettings"));
 
 // Para notificaciones en tiempo real
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = true;
+});
 
 // =====================
 //    Restaurantes (DI)
@@ -213,12 +408,12 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
-
-
-     builder.Services.AddSignalR();
+var culture = CultureInfo.InvariantCulture;
+CultureInfo.DefaultThreadCurrentCulture = culture;
+CultureInfo.DefaultThreadCurrentUICulture = culture;
 
 // =====================
-//    CORS
+//    CORS
 // =====================
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddCors(options =>
@@ -226,11 +421,20 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyAllowSpecificOrigins,
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "http://localhost:5174")
+            policy.WithOrigins("http://localhost:3000", "http://localhost:5174", "https://lois-membranous-glancingly.ngrok-free.dev")
                   .AllowCredentials()
                   .AllowAnyHeader()
-                  .AllowAnyMethod();
+                  .AllowAnyMethod()
+                  .SetIsOriginAllowed(_ => true); // Permitir cualquier origen en desarrollo
         });
+
+    // Política más permisiva para desarrollo
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
 });
 
 /* (Opcional) Exigir role=negocio para crear restaurantes
@@ -242,7 +446,6 @@ builder.Services.AddAuthorization(options =>
 */
 
 var app = builder.Build();
-app.UseRouting();
 
 // =====================
 //   Pipeline HTTP
@@ -253,17 +456,24 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// CORS debe ir antes de UseRouting para SignalR
+app.UseCors(MyAllowSpecificOrigins);
+
 app.UseHttpsRedirection();
 
-app.UseCors(MyAllowSpecificOrigins);
+app.UseStaticFiles(); // Habilitar archivos estáticos
+
+app.UseRouting();
 
 
 app.UseMiddleware<ManejadorErrorMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
+
 app.MapControllers();
 app.MapHub<ChatHub>("/chatHub");
-
+app.MapHub<NotificacionesHub>("/notificacionesHub");
+app.MapHub<SolicitudesAmistadHub>("/solicitudesAmistadHub");
 
 app.Run();

@@ -4,9 +4,11 @@ using GustosApp.Domain.Interfaces;
 using GustosApp.Application.DTO;
 using System.Security.Claims;
 using GustosApp.Domain.Model.@enum;
+using GustosApp.API.DTO;
 
 namespace GustosApp.API.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class PagoController : ControllerBase
@@ -21,7 +23,9 @@ namespace GustosApp.API.Controllers
         }
 
         [HttpPost("crear")]
-        [Authorize]
+        [ProducesResponseType(typeof(CrearPagoResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> CrearPago([FromBody] CrearPagoRequest request, CancellationToken ct)
         {
             try
@@ -84,7 +88,9 @@ namespace GustosApp.API.Controllers
         }
 
         [HttpGet("verificar/{pagoId}")]
-        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> VerificarPago(string pagoId)
         {
             try
@@ -150,7 +156,9 @@ namespace GustosApp.API.Controllers
         }
 
         [HttpGet("verificar-reciente")]
-        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> VerificarPagoReciente()
         {
             try
@@ -179,7 +187,9 @@ namespace GustosApp.API.Controllers
         }
 
         [HttpGet("verificar-estado-premium")]
-        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> VerificarEstadoPremium(CancellationToken ct)
         {
             try
@@ -230,7 +240,9 @@ namespace GustosApp.API.Controllers
         }
 
         [HttpPost("forzar-premium-dev")]
-        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> ForzarPremiumDev(CancellationToken ct)
         {
             try

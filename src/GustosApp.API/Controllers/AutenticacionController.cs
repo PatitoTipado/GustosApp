@@ -1,4 +1,5 @@
 
+using GustosApp.API.DTO;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases.UsuarioUseCases;
 using Microsoft.AspNetCore.Authorization;
@@ -21,16 +22,12 @@ namespace GustosApp.API.Controllers
 
 
         }
-        [HttpGet("quien-soy")]
-        [Authorize]
-        public IActionResult QuienSoy()
-        {
-            var claims = User.Claims.Select(c => new { c.Type, c.Value });
-            return Ok(new { claims });
-        }
-
+       
         [Authorize]
         [HttpPost("refresh-claims")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> RefreshClaims(CancellationToken ct)
         {
             var uid = GetFirebaseUid(); if (uid == null) return Unauthorized("UID inválido");

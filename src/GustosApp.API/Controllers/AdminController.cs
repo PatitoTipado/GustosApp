@@ -37,6 +37,9 @@ namespace GustosApp.API.Controllers
 
  
         [HttpGet("{id:guid}")]
+        [ProducesResponseType(typeof(SolicitudRestauranteDetalleDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GetDetalle(Guid id, CancellationToken ct)
         {
             var result = await _getDetalle.HandleAsync(id, ct);
@@ -46,6 +49,10 @@ namespace GustosApp.API.Controllers
         }
 
         [HttpPost("solicitudes/aprobar/{id:guid}")]
+        [ProducesResponseType(typeof(Restaurante), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+
         public async Task<IActionResult> AprobarSolicitud(Guid id, CancellationToken ct)
         {
             var restaurante = await _aprobarSolicitud.HandleAsync(id, ct);
@@ -54,15 +61,21 @@ namespace GustosApp.API.Controllers
         }
 
         [HttpDelete("{id:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> RechazarSolicitud(Guid id,
-            [FromBody] string motivoRechazo,
-            CancellationToken ct)
+           [FromBody] string motivoRechazo,
+           CancellationToken ct)
         {
             await _rechazarSolicitud.HandleAsync(id, motivoRechazo, ct);
             return Ok(new { message = "Solicitud rechazada correctamente." });
         }
 
         [HttpGet("solicitudes")]
+        [ProducesResponseType(typeof(SolicitudRestaurantePendienteDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GetPorTipo(
          [FromQuery] EstadoSolicitudRestaurante tipo = EstadoSolicitudRestaurante.Pendiente,
          CancellationToken ct = default)

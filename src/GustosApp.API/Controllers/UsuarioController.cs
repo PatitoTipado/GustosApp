@@ -175,6 +175,9 @@ namespace GustosApp.API.Controllers
 
         [Authorize(Policy = "RegistroIncompleto")]
         [HttpPost("finalizar")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Finalizar(CancellationToken ct)
         {
             var uid = GetFirebaseUid();
@@ -185,6 +188,9 @@ namespace GustosApp.API.Controllers
 
         [HttpGet("{username}/perfil")]
         [Authorize]
+        [ProducesResponseType(typeof(UsuarioPerfilResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GetPerfilUsuario(
       [FromRoute] string username,
       CancellationToken ct = default)
@@ -258,6 +264,9 @@ namespace GustosApp.API.Controllers
 
         [Authorize]
         [HttpGet("estado-registro")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> EstadoRegistro(CancellationToken ct)
         {
             var uid = GetFirebaseUid();
@@ -296,6 +305,9 @@ namespace GustosApp.API.Controllers
 
         [Authorize]
         [HttpGet("me")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GetCurrentUser(CancellationToken ct)
         {
             var uid = GetFirebaseUid();

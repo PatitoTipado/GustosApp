@@ -10,7 +10,7 @@ using GustosApp.Domain.Model;
 
 namespace GustosApp.Application.Services
 {
-    public class RecomendadorRestaurantes : IRecomendadorRestaurantes
+    public class RecomendadorRestaurantes 
     {
         private readonly IEmbeddingService _embeddingService;
         private const double UmbralMinimo = 0.1;

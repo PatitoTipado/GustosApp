@@ -98,7 +98,7 @@ builder.Services
         {
             OnMessageReceived = context =>
             {
-                // Prioridad 1: Si hay cookie "token", úsala como fuente del JWT (para HTTP normal)
+                // Prioridad 1: Si hay cookie "token", se usa como fuente del JWT (para HTTP normal)
                 if (context.Request.Cookies.ContainsKey("token"))
                 {
                     context.Token = context.Request.Cookies["token"];
@@ -226,6 +226,8 @@ builder.Services.AddDbContext<GustosDbContext>(options =>
 //   Repositorios
 // =====================
 builder.Services.AddScoped<IHttpDownloader, HttpDownloader>();
+builder.Services.AddScoped<IRecomendadorRestaurantes, SugerirGustosSobreUnRadioUseCase>();
+builder.Services.AddScoped<IConstruirPreferencias, ConstruirPreferenciasUseCase>();
 
 builder.Services.AddScoped<IAuthorizationHandler, RegistroIncompletoHandler>();
 builder.Services.AddScoped<ICacheService, RedisCacheService>();

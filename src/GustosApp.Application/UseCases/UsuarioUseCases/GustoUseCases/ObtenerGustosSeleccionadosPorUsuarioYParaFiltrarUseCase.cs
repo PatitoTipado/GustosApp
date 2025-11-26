@@ -32,6 +32,7 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases
                 .GroupBy(g => g.Id)
                 .Select(g => g.First())
                 .OrderByDescending(g => gustosUsuarioIds.Contains(g.Id))
+                .ThenBy(g => g.Nombre)
                 .Take(10)
                 .ToList();
 

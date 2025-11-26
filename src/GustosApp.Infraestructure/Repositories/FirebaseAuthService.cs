@@ -7,7 +7,7 @@ using FirebaseAdmin.Auth;
 using GustosApp.Application.Interfaces;
 namespace GustosApp.Infraestructure.Repositories
 {
- 
+
 
 
     public class FirebaseAuthService : IFirebaseAuthService
@@ -32,6 +32,18 @@ namespace GustosApp.Infraestructure.Repositories
             await FirebaseAuth.DefaultInstance.UpdateUserAsync(args);
         }
 
+        // Este metodo lo creo par testear el caso de uso AppLoginConFirebaseUseCaseTest
+        public async Task<DecodedToken> VerifyIdTokenAsync(string idToken)
+        {
+            var firebaseTokenReal = await FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(idToken);
+
+            return new DecodedToken
+            {
+                Uid = firebaseTokenReal.Uid,
+                Claims = (Dictionary<string, object>)firebaseTokenReal.Claims 
+            };
+        }
+    
     }
 
 }

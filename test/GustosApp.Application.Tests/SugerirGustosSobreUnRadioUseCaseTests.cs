@@ -4,7 +4,9 @@ namespace GustosApp.Application.Tests
     using GustosApp.Application.Interfaces;
     using GustosApp.Application.UseCases.RestauranteUseCases;
     using GustosApp.Domain.Common;
+    using GustosApp.Domain.Interfaces;
     using GustosApp.Domain.Model;
+    using GustosApp.Infraestructure.Repositories;
     using Microsoft.Extensions.Logging;
     using Moq;
     using Xunit;
@@ -14,15 +16,18 @@ namespace GustosApp.Application.Tests
         private readonly Mock<IEmbeddingService> _mockEmbedding;
         private readonly Mock<ILogger<SugerirGustosSobreUnRadioUseCase>> _mockLogger;
         private readonly SugerirGustosSobreUnRadioUseCase _sut;
+        private readonly Mock<IRestauranteRepository> _mockRepository;
 
         public SugerirGustosSobreUnRadioUseCaseTests()
         {
             _mockEmbedding = new Mock<IEmbeddingService>();
             _mockLogger = new Mock<ILogger<SugerirGustosSobreUnRadioUseCase>>();
+            _mockRepository = new Mock<IRestauranteRepository>();
 
             _sut = new SugerirGustosSobreUnRadioUseCase(
                 _mockEmbedding.Object,
-                _mockLogger.Object
+                _mockLogger.Object,
+                _mockRepository.Object
             );
         }
 

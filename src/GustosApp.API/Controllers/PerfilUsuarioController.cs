@@ -30,6 +30,9 @@ namespace GustosApp.API.Controllers
         
         [HttpPut]
         [Consumes("multipart/form-data")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> EditarDatosPerfil(
            [FromForm] EditarDatosUsuarioDTO dto,
            CancellationToken ct)
@@ -72,6 +75,9 @@ namespace GustosApp.API.Controllers
 
        
         [HttpGet("favoritos")]
+        [ProducesResponseType(typeof(List<RestauranteFavoritoDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GetFavoritos(CancellationToken ct)
         {
             var uid = GetFirebaseUid();

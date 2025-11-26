@@ -3,6 +3,7 @@ using GustosApp.API.DTO;
 using GustosApp.Application.DTO;
 using GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
+using GustosApp.Domain.Model;
 using GustosApp.Domain.Model.@enum;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +13,7 @@ using System.Security.Claims;
 
 namespace GustosApp.API.Controllers
 {
+    [Authorize]
     [Route("[controller]")]
     [ApiController]
     public class GustoController : BaseApiController
@@ -43,6 +45,9 @@ namespace GustosApp.API.Controllers
         
 
         [HttpGet("obtenerGustosPaginados")]
+        [ProducesResponseType(typeof(List<Gusto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> ObtenerGustos(CancellationToken ct, int cantidadInicio,int final)
         {
             var uid = GetFirebaseUid();
@@ -53,6 +58,9 @@ namespace GustosApp.API.Controllers
         }
 
         [HttpGet("buscarGustoPorCoincidencia")]
+        [ProducesResponseType(typeof(List<Gusto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> buscarGustoPorCoincidencia(CancellationToken ct, string gustoNombre)
         {
             var uid = GetFirebaseUid();
@@ -63,6 +71,9 @@ namespace GustosApp.API.Controllers
         }
 
         [HttpGet("obtenerGustoFiltros")]
+        [ProducesResponseType(typeof(List<Gusto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> obtenerGustoFiltros(CancellationToken ct,int inicio,int final)
         {
             var uid = GetFirebaseUid();
@@ -74,7 +85,6 @@ namespace GustosApp.API.Controllers
 
         
 
-        [Authorize]
         [HttpGet]
         [ProducesResponseType(typeof(ObtenerGustosFiltradosResponse),StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]

@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace GustosApp.Application.UseCases.RestauranteUseCases
 {
-    public class SugerirGustosSobreUnRadioUseCase
+    public class SugerirGustosSobreUnRadioUseCase :  IRecomendadorRestaurantes
     {
         private readonly IEmbeddingService _embeddingService;
         private readonly ILogger<SugerirGustosSobreUnRadioUseCase> _logger;

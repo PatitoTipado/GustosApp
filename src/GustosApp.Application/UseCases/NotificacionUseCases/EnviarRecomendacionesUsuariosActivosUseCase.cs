@@ -12,12 +12,12 @@ using GustosApp.Domain.Interfaces;
 
 namespace GustosApp.Application.UseCases.NotificacionUseCases
 {
-    public class EnviarRecomendacionesUsuariosActivosUseCase
+    public class EnviarRecomendacionesUsuariosActivosUseCase 
     {
         private readonly IUsuariosActivosService _usuariosActivos;
         private readonly ICacheService _cache;
-        private readonly SugerirGustosSobreUnRadioUseCase _recomendador;
-        private readonly ConstruirPreferenciasUseCase _construirPreferencias;
+        private readonly IRecomendadorRestaurantes _recomendador;
+        private readonly IConstruirPreferencias _construirPreferencias;
         private readonly IEmailService _email;
         private readonly IUsuarioRepository _usuariosRepo;
         private readonly IServicioRestaurantes _serviceRestaurante;
@@ -25,8 +25,8 @@ namespace GustosApp.Application.UseCases.NotificacionUseCases
         public EnviarRecomendacionesUsuariosActivosUseCase(
             IUsuariosActivosService usuariosActivos,
             ICacheService cache,
-            SugerirGustosSobreUnRadioUseCase recomendador,
-            ConstruirPreferenciasUseCase construirPreferencias,
+            IRecomendadorRestaurantes recomendador,
+            IConstruirPreferencias construirPreferencias,
             IEmailService email,
             IUsuarioRepository usuariosRepo,
             IServicioRestaurantes serviceRestaurante)
@@ -42,57 +42,55 @@ namespace GustosApp.Application.UseCases.NotificacionUseCases
 
 
         //validar q sea moderador usuario rol
-        public async Task<bool> HandleAsync(string firebaseUid,CancellationToken ct)
+        public async Task<bool> HandleAsync(string firebaseUid, CancellationToken ct)
         {
             var activos = _usuariosActivos.GetUsuariosActivos();
-            bool mandoNotif= false;
+            bool mandoNotif = false;
+
             foreach (var uid in activos)
             {
                 var ubicacion = await _cache.GetAsync<UserLocation>($"usuario:{uid}:location");
-                if (ubicacion == null) continue;
+                if (ubicacion == null)
+                    continue;
 
                 var usuario = await _usuariosRepo.GetByFirebaseUidAsync(uid, ct);
-                if (usuario == null) continue;
+                if (usuario == null)
+                    continue;
 
-                var res = await _serviceRestaurante.BuscarAsync(
-                rating: 3.5,
-                tipo: null,
-                plato: "",
-                lat: ubicacion.Lat,
-                lng: ubicacion.Lng,
-                radioMetros: ubicacion.Radio
-            );
+                var restaurantes = await _serviceRestaurante.BuscarAsync(
+                    rating: 3.5,
+                    tipo: null,
+                    plato: "",
+                    lat: ubicacion.Lat,
+                    lng: ubicacion.Lng,
+                    radioMetros: ubicacion.Radio
+                );
 
                 var preferencias = await _construirPreferencias.HandleAsync(
-                    uid,
-                    amigoUsername: null,
-                    grupoId: null,
-                    gustosDelFiltro: null,
-                    ct);
-
-             
+                    uid, null, null, null, ct);
 
                 var recomendaciones = await _recomendador.Handle(
                     preferencias,
-                    res,
+                    restaurantes,
                     1,
                     ct
                 );
 
                 if (!recomendaciones.Any())
-                    throw new Exception("Algo anda mal viejo");
+                    continue;
 
-
+                
                 await _email.EnviarEmailAsync(
                     usuario.Email,
                     "Recomendación personalizada",
                     $"Según tus gustos y ubicación, te recomendamos: {recomendaciones[0].Nombre}"
                 );
+
                 mandoNotif = true;
             }
+
             return mandoNotif;
         }
-       
     }
 
-}
+    }

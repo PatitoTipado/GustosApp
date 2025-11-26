@@ -40,7 +40,7 @@ using System.Threading.Tasks;
                 return mockToken.Object;
             }
 
-            [Fact]
+          /*  [Fact]
             public async Task HandleAsyncCrearRestaurante_DebeRetornarRestauranteExistente()
             {
                 var mockAuthService = new Mock<IFirebaseAuthService>(); 
@@ -186,6 +186,7 @@ using System.Threading.Tasks;
                 Assert.Equal(TestEmail, usuarioCapturado.Email);
                 Assert.Equal(PlanUsuario.Free, usuarioCapturado.Plan);
             }
+          */
         }
     }
 

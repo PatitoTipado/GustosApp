@@ -18,7 +18,7 @@ namespace GustosApp.API.Controllers
     [Route("[controller]")]
     [ApiController]
     [Authorize]
-    public class AmistadController : ControllerBase
+    public class AmistadController : BaseApiController
     {
         private readonly EnviarSolicitudAmistadUseCase _enviarSolicitud;
         private readonly ObtenerSolicitudesPendientesUseCase _obtenerPendientes;
@@ -146,6 +146,9 @@ namespace GustosApp.API.Controllers
 
         [Authorize]
         [HttpGet("amigos")]
+        [ProducesResponseType(typeof(List<UsuarioSimpleResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> ObtenerAmigos(CancellationToken ct)
         {
             var uid = GetFirebaseUid();
@@ -191,16 +194,6 @@ namespace GustosApp.API.Controllers
 
             return Ok(response);
         }
-        private string GetFirebaseUid()
-        {
-            var firebaseUid = User.FindFirst("user_id")?.Value
-                            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                            ?? User.FindFirst("sub")?.Value;
-
-            if (string.IsNullOrWhiteSpace(firebaseUid))
-                throw new UnauthorizedAccessException("No se encontró el UID de Firebase en el token.");
-
-            return firebaseUid;
-        }
+       
     }
 }

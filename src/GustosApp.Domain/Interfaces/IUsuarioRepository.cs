@@ -27,5 +27,7 @@ namespace GustosApp.Domain.Interfaces
         Task<IEnumerable<Usuario>> BuscarPorUsernameAsync(string usernameBuscar, Guid IdExcluir, CancellationToken ct);
 
         Task UpdateAsync(Usuario user, CancellationToken ct);
+        Task MarcarRestauranteComoVisitadoAsync(Guid id, Guid restauranteId, CancellationToken cancellationToken);
+        Task<Usuario?> GetByUsernameWithRestaurantesVisitadosAsync(string? username, CancellationToken ct);
     }
 }

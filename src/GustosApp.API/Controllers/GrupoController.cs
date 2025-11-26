@@ -243,6 +243,8 @@ namespace GustosApp.API.Controllers
         [Authorize]
         [HttpDelete("{grupoId}/miembros/{username}")]
         [ProducesResponseType(typeof(RemoverMiembroResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
 
         public async Task<IActionResult> RemoverMiembro(Guid grupoId, string username, CancellationToken ct)
         {

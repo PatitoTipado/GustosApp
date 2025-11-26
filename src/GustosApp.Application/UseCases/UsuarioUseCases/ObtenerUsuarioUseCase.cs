@@ -17,9 +17,6 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases
             _usuarioRepository = usuarioRepository;
         }
 
-        /// <summary>
-        /// Obtiene un usuario según FirebaseUid, username o Guid Id (según el parámetro disponible)
-        /// </summary>
         public virtual async Task<Usuario> HandleAsync(
             string? FirebaseUid = null,
             string? Username = null,
@@ -42,5 +39,21 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases
 
             return usuario;
         }
+
+   
+        public async Task<Usuario> HandleWithVisitadosAsync(
+            
+            string? Username,
+            CancellationToken ct = default)
+        {
+            Usuario? usuario = null;
+             usuario = await _usuarioRepository.GetByUsernameWithRestaurantesVisitadosAsync(Username, ct);
+         
+            if (usuario == null)
+                throw new Exception("Usuario no encontrado");
+
+            return usuario;
+        }
     }
+
 }

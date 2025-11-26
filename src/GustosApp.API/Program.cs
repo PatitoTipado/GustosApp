@@ -55,6 +55,7 @@ using GustosApp.Application.Validations.Restaurantes;
 using FluentValidation.AspNetCore;
 using GustosApp.API.Validations.OpinionRestaurantes;
 using GustosApp.Application.UseCases.RestauranteUseCases.OpinionesRestaurantes;
+using System.Globalization;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -76,8 +77,9 @@ if (FirebaseApp.DefaultInstance == null)
     });
 }
 
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-builder.Services.AddAutoMapper(typeof(ApiMapeoPerfil));
+
 // Validación de JWT emitidos por Firebase (securetoken)
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -96,11 +98,29 @@ builder.Services
         {
             OnMessageReceived = context =>
             {
-                // Si hay cookie "token", úsala como fuente del JWT
+                // Prioridad 1: Si hay cookie "token", úsala como fuente del JWT (para HTTP normal)
                 if (context.Request.Cookies.ContainsKey("token"))
                 {
                     context.Token = context.Request.Cookies["token"];
+                    return Task.CompletedTask;
                 }
+
+                // Prioridad 2: Leer token del query string "access_token" (para SignalR)
+                var accessToken = context.Request.Query["access_token"];
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    context.Token = accessToken;
+                    return Task.CompletedTask;
+                }
+
+                // Prioridad 3: Leer del header Authorization (para compatibilidad)
+                var authHeader = context.Request.Headers["Authorization"].ToString();
+                if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Token = authHeader.Substring("Bearer ".Length).Trim();
+                    return Task.CompletedTask;
+                }
+
                 return Task.CompletedTask;
             }
         };
@@ -386,6 +406,9 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
+var culture = CultureInfo.InvariantCulture;
+CultureInfo.DefaultThreadCurrentCulture = culture;
+CultureInfo.DefaultThreadCurrentUICulture = culture;
 
 // =====================
 //    CORS

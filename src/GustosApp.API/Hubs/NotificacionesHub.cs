@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Security.Claims;
+using System.Text.RegularExpressions;
 using AutoMapper;
 using Azure.Core;
 using GustosApp.API.DTO;
@@ -50,7 +51,9 @@ namespace GustosApp.API.Hubs
         {
             try
             {
-                var firebaseUid = Context.User?.FindFirst("user_id")?.Value;
+                var firebaseUid = Context.User?.FindFirst("user_id")?.Value
+                 ?? Context.User?.FindFirst("firebase_uid")?.Value
+                ?? Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (string.IsNullOrEmpty(firebaseUid))
                 {
                     Console.WriteLine("⚠️ Usuario conectado sin firebaseUid");

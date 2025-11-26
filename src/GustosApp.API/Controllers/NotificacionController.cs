@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GustosApp.API.Controllers
 {
+ 
     [ApiController]
     [Route("api/[controller]")]
     public class NotificacionController : BaseApiController
@@ -26,9 +27,12 @@ namespace GustosApp.API.Controllers
             _enviarRecomendacion = enviarRecomendacion;
         }
 
-        //(Roles = "Moderador")
-        [Authorize]
+        
+        [Authorize(Policy ="Admin")]
         [HttpPost("recomendar")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Recomendar()
         {
             var uid = GetFirebaseUid();
@@ -37,6 +41,9 @@ namespace GustosApp.API.Controllers
         }
 
         [HttpPost("solicitud")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> CrearNotificacion([FromBody] CrearNotificacionRequest request)
         {
             await _crearNotificacion.HandleAsync(

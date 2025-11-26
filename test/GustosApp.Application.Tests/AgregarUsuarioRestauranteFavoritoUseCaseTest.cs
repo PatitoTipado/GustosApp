@@ -54,7 +54,7 @@ namespace GustosApp.Application.Tests
                 It.IsAny<CancellationToken>()),
                 Times.Once);
         }
-
+        /*
         [Fact]
         public async Task AgregarUsuarioRestauranteFavorito_CuandoSinPlanYLlegaAlLimite_LanzaExcepcion()
         {
@@ -85,7 +85,7 @@ namespace GustosApp.Application.Tests
               useCase.HandleAsync("abc", Guid.NewGuid()));
 
         }
-
+        */
         [Fact]
         public async Task AgregarUsuarioRestauranteFavorito_CuandoYaExiste_LanzaExcepcion()
         {

@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using GustosApp.API.DTO;
 using GustosApp.Application.Common.Exceptions;
-using GustosApp.Application.DTO;
 using GustosApp.Application.UseCases.GrupoUseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
@@ -36,12 +36,12 @@ namespace GustosApp.Application.Tests
                 _gustosGrupoRepositoryMock.Object);
         }
 
-        // Verifica que si el usuario no existe se lanza UnauthorizedAccessException.
+        // Usuario no encontrado → UnauthorizedAccessException
         [Fact]
         public async Task HandleAsync_UsuarioNoEncontrado_LanzaUnauthorizedAccessException()
         {
             var firebaseUid = "uid-inexistente";
-            var request = new UnirseGrupoRequest { CodigoInvitacion = "COD123" };
+            var codigo = "COD123";
             var ct = CancellationToken.None;
 
             _usuarioRepositoryMock
@@ -49,17 +49,17 @@ namespace GustosApp.Application.Tests
                 .ReturnsAsync((Usuario?)null);
 
             var ex = await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
-                _sut.HandleAsync(firebaseUid, request, ct));
+                _sut.HandleAsync(firebaseUid, codigo, ct));
 
             Assert.Equal("Usuario no encontrado", ex.Message);
         }
 
-        // Verifica que si el grupo no se encuentra por código lanza ArgumentException.
+        // Grupo no encontrado → ArgumentException
         [Fact]
         public async Task HandleAsync_GrupoNoEncontradoPorCodigo_LanzaArgumentException()
         {
             var firebaseUid = "uid-valido";
-            var request = new UnirseGrupoRequest { CodigoInvitacion = "COD123" };
+            var codigo = "COD123";
             var ct = CancellationToken.None;
 
             var usuario = CrearUsuario(firebaseUid);
@@ -69,16 +69,16 @@ namespace GustosApp.Application.Tests
                 .ReturnsAsync(usuario);
 
             _grupoRepositoryMock
-                .Setup(r => r.GetByCodigoInvitacionAsync(request.CodigoInvitacion, ct))
+                .Setup(r => r.GetByCodigoInvitacionAsync(codigo, ct))
                 .ReturnsAsync((Grupo?)null);
 
             var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.HandleAsync(firebaseUid, request, ct));
+                _sut.HandleAsync(firebaseUid, codigo, ct));
 
             Assert.Equal("Código de invitación inválido", ex.Message);
         }
 
-        // Verifica que si el código de invitación está expirado lanza ArgumentException.
+        // Código expirado → ArgumentException
         [Fact]
         public async Task HandleAsync_CodigoInvitacionExpirado_LanzaArgumentException()
         {
@@ -88,28 +88,28 @@ namespace GustosApp.Application.Tests
 
             var adminId = Guid.NewGuid();
             var grupo = new Grupo("Grupo Test", adminId);
-            var codigoValido = grupo.CodigoInvitacion!;
 
-            var propFechaExpiracion = typeof(Grupo).GetProperty(nameof(Grupo.FechaExpiracionCodigo));
-            propFechaExpiracion!.SetValue(grupo, DateTime.UtcNow.AddDays(-1));
+            // FORZAR fecha expirada
+            typeof(Grupo).GetProperty(nameof(Grupo.FechaExpiracionCodigo))!
+                .SetValue(grupo, DateTime.UtcNow.AddDays(-1));
 
-            var request = new UnirseGrupoRequest { CodigoInvitacion = codigoValido };
+            var codigo = grupo.CodigoInvitacion!;
 
             _usuarioRepositoryMock
                 .Setup(r => r.GetByFirebaseUidAsync(firebaseUid, ct))
                 .ReturnsAsync(usuario);
 
             _grupoRepositoryMock
-                .Setup(r => r.GetByCodigoInvitacionAsync(request.CodigoInvitacion, ct))
+                .Setup(r => r.GetByCodigoInvitacionAsync(codigo, ct))
                 .ReturnsAsync(grupo);
 
             var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.HandleAsync(firebaseUid, request, ct));
+                _sut.HandleAsync(firebaseUid, codigo, ct));
 
             Assert.Equal("El código de invitación ha expirado", ex.Message);
         }
 
-        // Verifica que si el usuario ya es miembro activo del grupo lanza ArgumentException.
+        // Ya es miembro → ArgumentException
         [Fact]
         public async Task HandleAsync_UsuarioYaEsMiembroActivo_LanzaArgumentException()
         {
@@ -121,8 +121,6 @@ namespace GustosApp.Application.Tests
             var grupo = new Grupo("Grupo Test", adminId);
             var codigo = grupo.CodigoInvitacion!;
 
-            var request = new UnirseGrupoRequest { CodigoInvitacion = codigo };
-
             _usuarioRepositoryMock
                 .Setup(r => r.GetByFirebaseUidAsync(firebaseUid, ct))
                 .ReturnsAsync(usuario);
@@ -136,12 +134,12 @@ namespace GustosApp.Application.Tests
                 .ReturnsAsync(true);
 
             var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.HandleAsync(firebaseUid, request, ct));
+                _sut.HandleAsync(firebaseUid, codigo, ct));
 
             Assert.Equal("Ya eres miembro de este grupo", ex.Message);
         }
 
-        // Verifica que un usuario Free con 3 o más grupos lanza LimiteGruposAlcanzadoException.
+        // Usuario Free con 3+ grupos → LimiteGruposAlcanzadoException
         [Fact]
         public async Task HandleAsync_UsuarioFreeConTresGrupos_LanzaLimiteGruposAlcanzadoException()
         {
@@ -153,64 +151,50 @@ namespace GustosApp.Application.Tests
             var adminId = Guid.NewGuid();
             var grupo = new Grupo("Grupo Test", adminId);
             var codigo = grupo.CodigoInvitacion!;
-            var request = new UnirseGrupoRequest { CodigoInvitacion = codigo };
 
             var gruposUsuario = new List<Grupo>
-            {
-                new Grupo("G1", Guid.NewGuid()),
-                new Grupo("G2", Guid.NewGuid()),
-                new Grupo("G3", Guid.NewGuid())
-            };
+        {
+            new Grupo("G1", Guid.NewGuid()),
+            new Grupo("G2", Guid.NewGuid()),
+            new Grupo("G3", Guid.NewGuid())
+        };
 
-            _usuarioRepositoryMock
-                .Setup(r => r.GetByFirebaseUidAsync(firebaseUid, ct))
-                .ReturnsAsync(usuario);
-
-            _grupoRepositoryMock
-                .Setup(r => r.GetByCodigoInvitacionAsync(codigo, ct))
-                .ReturnsAsync(grupo);
-
-            _miembroGrupoRepositoryMock
-                .Setup(r => r.UsuarioEsMiembroActivoAsync(grupo.Id, usuario.Id, ct))
-                .ReturnsAsync(false);
-
-            _grupoRepositoryMock
-                .Setup(r => r.GetGruposByUsuarioIdAsync(usuario.Id, ct))
-                .ReturnsAsync(gruposUsuario);
+            _usuarioRepositoryMock.Setup(r => r.GetByFirebaseUidAsync(firebaseUid, ct)).ReturnsAsync(usuario);
+            _grupoRepositoryMock.Setup(r => r.GetByCodigoInvitacionAsync(codigo, ct)).ReturnsAsync(grupo);
+            _miembroGrupoRepositoryMock.Setup(r => r.UsuarioEsMiembroActivoAsync(grupo.Id, usuario.Id, ct)).ReturnsAsync(false);
+            _grupoRepositoryMock.Setup(r => r.GetGruposByUsuarioIdAsync(usuario.Id, ct)).ReturnsAsync(gruposUsuario);
 
             var ex = await Assert.ThrowsAsync<LimiteGruposAlcanzadoException>(() =>
-                _sut.HandleAsync(firebaseUid, request, ct));
+                _sut.HandleAsync(firebaseUid, codigo, ct));
 
             Assert.Equal("Free", ex.TipoPlan);
             Assert.Equal(3, ex.LimiteActual);
             Assert.Equal(3, ex.GruposActuales);
         }
 
-        // Verifica que un usuario Premium no valida el límite de grupos y se une correctamente.
+        // Usuario Premium puede unirse sin validar límite
         [Fact]
         public async Task HandleAsync_UsuarioPremium_NoValidaLimiteGruposYSeUneCorrectamente()
         {
             var firebaseUid = "uid-premium";
             var ct = CancellationToken.None;
+
             var usuario = CrearUsuario(firebaseUid);
             usuario.Plan = PlanUsuario.Plus;
+
+            usuario.Gustos = new List<Gusto>
+        {
+            new Gusto { Id = Guid.NewGuid(), Nombre = "Pizzas" },
+            new Gusto { Id = Guid.NewGuid(), Nombre = "Sushi" }
+        };
 
             var adminId = Guid.NewGuid();
             var grupo = new Grupo("Grupo Premium", adminId);
             var codigo = grupo.CodigoInvitacion!;
-            var request = new UnirseGrupoRequest { CodigoInvitacion = codigo };
 
-            _usuarioRepositoryMock
-                .Setup(r => r.GetByFirebaseUidAsync(firebaseUid, ct))
-                .ReturnsAsync(usuario);
-
-            _grupoRepositoryMock
-                .Setup(r => r.GetByCodigoInvitacionAsync(codigo, ct))
-                .ReturnsAsync(grupo);
-
-            _miembroGrupoRepositoryMock
-                .Setup(r => r.UsuarioEsMiembroActivoAsync(grupo.Id, usuario.Id, ct))
-                .ReturnsAsync(false);
+            _usuarioRepositoryMock.Setup(r => r.GetByFirebaseUidAsync(firebaseUid, ct)).ReturnsAsync(usuario);
+            _grupoRepositoryMock.Setup(r => r.GetByCodigoInvitacionAsync(codigo, ct)).ReturnsAsync(grupo);
+            _miembroGrupoRepositoryMock.Setup(r => r.UsuarioEsMiembroActivoAsync(grupo.Id, usuario.Id, ct)).ReturnsAsync(false);
 
             MiembroGrupo? miembroCreado = null;
 
@@ -220,39 +204,30 @@ namespace GustosApp.Application.Tests
                 .ReturnsAsync((MiembroGrupo m, CancellationToken _) => m);
 
             _gustosGrupoRepositoryMock
-            .Setup(r => r.AgregarGustosAlGrupo(
-            grupo.Id,
-            It.IsAny<List<Gusto>>(),
-            It.IsAny<Guid>()))
+                .Setup(r => r.AgregarGustosAlGrupo(grupo.Id, It.IsAny<List<Gusto>>(), It.IsAny<Guid>()))
                 .ReturnsAsync(true);
 
-
             var grupoCompleto = new Grupo("Grupo Premium Completo", adminId);
+
             _grupoRepositoryMock
                 .Setup(r => r.GetByIdAsync(grupo.Id, ct))
                 .ReturnsAsync(grupoCompleto);
 
-            var resultado = await _sut.HandleAsync(firebaseUid, request, ct);
+            var resultado = await _sut.HandleAsync(firebaseUid, codigo, ct);
 
-            _grupoRepositoryMock.Verify(
-                r => r.GetGruposByUsuarioIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
-                Times.Never);
-
-            _miembroGrupoRepositoryMock.Verify(
-                r => r.CreateAsync(It.IsAny<MiembroGrupo>(), ct),
-                Times.Once);
+            _grupoRepositoryMock.Verify(r => r.GetGruposByUsuarioIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
 
             _gustosGrupoRepositoryMock.Verify(
                 r => r.AgregarGustosAlGrupo(
                     grupo.Id,
                     It.Is<List<Gusto>>(l => l.SequenceEqual(usuario.Gustos)),
-                    It.Is<Guid>(id => miembroCreado != null && id == miembroCreado.Id)),
+                    It.Is<Guid>(id => miembroCreado!.Id == id)),
                 Times.Once);
 
             Assert.Same(grupoCompleto, resultado);
         }
 
-        // Verifica que cuando el usuario es Free y tiene menos de 3 grupos se une correctamente.
+        // Free con menos de 3 grupos → éxito
         [Fact]
         public async Task HandleAsync_UsuarioFreeConMenosDeTresGrupos_SeUneCorrectamente()
         {
@@ -261,38 +236,26 @@ namespace GustosApp.Application.Tests
             var usuario = CrearUsuario(firebaseUid);
             usuario.Plan = PlanUsuario.Free;
 
+            usuario.Gustos = new List<Gusto>
+        {
+            new Gusto { Id = Guid.NewGuid(), Nombre = "Pizzas" },
+            new Gusto { Id = Guid.NewGuid(), Nombre = "Pastas" }
+        };
+
             var adminId = Guid.NewGuid();
             var grupo = new Grupo("Grupo Test", adminId);
             var codigo = grupo.CodigoInvitacion!;
-            var request = new UnirseGrupoRequest { CodigoInvitacion = codigo };
 
             var gruposUsuario = new List<Grupo>
-            {
-                new Grupo("G1", Guid.NewGuid()),
-                new Grupo("G2", Guid.NewGuid())
-            };
+        {
+            new Grupo("G1", Guid.NewGuid()),
+            new Grupo("G2", Guid.NewGuid())
+        };
 
-            usuario.Gustos = new List<Gusto>
-            {
-                new Gusto { Id = Guid.NewGuid(), Nombre = "Pizzas" },
-                new Gusto { Id = Guid.NewGuid(), Nombre = "Pastas" }
-            };
-
-            _usuarioRepositoryMock
-                .Setup(r => r.GetByFirebaseUidAsync(firebaseUid, ct))
-                .ReturnsAsync(usuario);
-
-            _grupoRepositoryMock
-                .Setup(r => r.GetByCodigoInvitacionAsync(codigo, ct))
-                .ReturnsAsync(grupo);
-
-            _miembroGrupoRepositoryMock
-                .Setup(r => r.UsuarioEsMiembroActivoAsync(grupo.Id, usuario.Id, ct))
-                .ReturnsAsync(false);
-
-            _grupoRepositoryMock
-                .Setup(r => r.GetGruposByUsuarioIdAsync(usuario.Id, ct))
-                .ReturnsAsync(gruposUsuario);
+            _usuarioRepositoryMock.Setup(r => r.GetByFirebaseUidAsync(firebaseUid, ct)).ReturnsAsync(usuario);
+            _grupoRepositoryMock.Setup(r => r.GetByCodigoInvitacionAsync(codigo, ct)).ReturnsAsync(grupo);
+            _miembroGrupoRepositoryMock.Setup(r => r.UsuarioEsMiembroActivoAsync(grupo.Id, usuario.Id, ct)).ReturnsAsync(false);
+            _grupoRepositoryMock.Setup(r => r.GetGruposByUsuarioIdAsync(usuario.Id, ct)).ReturnsAsync(gruposUsuario);
 
             MiembroGrupo? miembroCreado = null;
 
@@ -302,39 +265,23 @@ namespace GustosApp.Application.Tests
                 .ReturnsAsync((MiembroGrupo m, CancellationToken _) => m);
 
             _gustosGrupoRepositoryMock
-                .Setup(r => r.AgregarGustosAlGrupo(
-                    grupo.Id,
-                    It.IsAny<List<Gusto>>(),
-                    It.IsAny<Guid>()))
+                .Setup(r => r.AgregarGustosAlGrupo(grupo.Id, It.IsAny<List<Gusto>>(), It.IsAny<Guid>()))
                 .ReturnsAsync(true);
 
-
             var grupoCompleto = new Grupo("Grupo Completo", adminId);
+
             _grupoRepositoryMock
                 .Setup(r => r.GetByIdAsync(grupo.Id, ct))
                 .ReturnsAsync(grupoCompleto);
 
-            var resultado = await _sut.HandleAsync(firebaseUid, request, ct);
+            var resultado = await _sut.HandleAsync(firebaseUid, codigo, ct);
 
-            _grupoRepositoryMock.Verify(
-                r => r.GetGruposByUsuarioIdAsync(usuario.Id, ct),
-                Times.Once);
-
-            _miembroGrupoRepositoryMock.Verify(
-                r => r.CreateAsync(It.IsAny<MiembroGrupo>(), ct),
-                Times.Once);
-
-            _gustosGrupoRepositoryMock.Verify(
-                r => r.AgregarGustosAlGrupo(
-                    grupo.Id,
-                    It.Is<List<Gusto>>(l => l.SequenceEqual(usuario.Gustos)),
-                    It.Is<Guid>(id => miembroCreado != null && id == miembroCreado.Id)),
-                Times.Once);
+            _miembroGrupoRepositoryMock.Verify(r => r.CreateAsync(It.IsAny<MiembroGrupo>(), ct), Times.Once);
 
             Assert.Same(grupoCompleto, resultado);
         }
 
-        // Verifica que si GetByIdAsync devuelve null se lanza InvalidOperationException.
+        // GrupoCompleto null → error
         [Fact]
         public async Task HandleAsync_GrupoCompletoNoEncontrado_LanzaInvalidOperationException()
         {
@@ -345,42 +292,22 @@ namespace GustosApp.Application.Tests
             var adminId = Guid.NewGuid();
             var grupo = new Grupo("Grupo Test", adminId);
             var codigo = grupo.CodigoInvitacion!;
-            var request = new UnirseGrupoRequest { CodigoInvitacion = codigo };
 
-            _usuarioRepositoryMock
-                .Setup(r => r.GetByFirebaseUidAsync(firebaseUid, ct))
-                .ReturnsAsync(usuario);
+            _usuarioRepositoryMock.Setup(r => r.GetByFirebaseUidAsync(firebaseUid, ct)).ReturnsAsync(usuario);
+            _grupoRepositoryMock.Setup(r => r.GetByCodigoInvitacionAsync(codigo, ct)).ReturnsAsync(grupo);
+            _miembroGrupoRepositoryMock.Setup(r => r.UsuarioEsMiembroActivoAsync(grupo.Id, usuario.Id, ct)).ReturnsAsync(false);
+            _grupoRepositoryMock.Setup(r => r.GetGruposByUsuarioIdAsync(usuario.Id, ct)).ReturnsAsync(Enumerable.Empty<Grupo>());
+            _miembroGrupoRepositoryMock.Setup(r => r.CreateAsync(It.IsAny<MiembroGrupo>(), ct))
+                                       .ReturnsAsync((MiembroGrupo m, CancellationToken _) => m);
 
-            _grupoRepositoryMock
-                .Setup(r => r.GetByCodigoInvitacionAsync(codigo, ct))
-                .ReturnsAsync(grupo);
+            _gustosGrupoRepositoryMock.Setup(r => r.AgregarGustosAlGrupo(grupo.Id, It.IsAny<List<Gusto>>(), It.IsAny<Guid>()))
+                                      .ReturnsAsync(true);
 
-            _miembroGrupoRepositoryMock
-                .Setup(r => r.UsuarioEsMiembroActivoAsync(grupo.Id, usuario.Id, ct))
-                .ReturnsAsync(false);
-
-            _grupoRepositoryMock
-                .Setup(r => r.GetGruposByUsuarioIdAsync(usuario.Id, ct))
-                .ReturnsAsync(Enumerable.Empty<Grupo>());
-
-            _miembroGrupoRepositoryMock
-                .Setup(r => r.CreateAsync(It.IsAny<MiembroGrupo>(), ct))
-                .ReturnsAsync((MiembroGrupo m, CancellationToken _) => m);
-
-            _gustosGrupoRepositoryMock
-      .Setup(r => r.AgregarGustosAlGrupo(
-          grupo.Id,
-          It.IsAny<List<Gusto>>(),
-          It.IsAny<Guid>()))
-      .ReturnsAsync(true);
-
-
-            _grupoRepositoryMock
-                .Setup(r => r.GetByIdAsync(grupo.Id, ct))
+            _grupoRepositoryMock.Setup(r => r.GetByIdAsync(grupo.Id, ct))
                 .ReturnsAsync((Grupo?)null);
 
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                _sut.HandleAsync(firebaseUid, request, ct));
+                _sut.HandleAsync(firebaseUid, codigo, ct));
 
             Assert.Equal("Error al unirse al grupo", ex.Message);
         }
@@ -399,4 +326,4 @@ namespace GustosApp.Application.Tests
             };
         }
     }
-}
+    }

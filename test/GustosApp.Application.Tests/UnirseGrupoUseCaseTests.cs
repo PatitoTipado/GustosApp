@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using GustosApp.Application.Common.Exceptions;
-using GustosApp.Application.DTO;
+using GustosApp.API.DTO;
 using GustosApp.Application.UseCases.GrupoUseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
@@ -49,7 +49,7 @@ namespace GustosApp.Application.Tests
                 .ReturnsAsync((Usuario?)null);
 
             var ex = await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
-                _sut.HandleAsync(firebaseUid, request, ct));
+                _sut.HandleAsync(firebaseUid, request.CodigoInvitacion, ct));
 
             Assert.Equal("Usuario no encontrado", ex.Message);
         }
@@ -73,7 +73,7 @@ namespace GustosApp.Application.Tests
                 .ReturnsAsync((Grupo?)null);
 
             var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.HandleAsync(firebaseUid, request, ct));
+                _sut.HandleAsync(firebaseUid, request.CodigoInvitacion, ct));
 
             Assert.Equal("Código de invitación inválido", ex.Message);
         }
@@ -104,7 +104,7 @@ namespace GustosApp.Application.Tests
                 .ReturnsAsync(grupo);
 
             var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.HandleAsync(firebaseUid, request, ct));
+                _sut.HandleAsync(firebaseUid, request.CodigoInvitacion, ct));
 
             Assert.Equal("El código de invitación ha expirado", ex.Message);
         }
@@ -136,7 +136,7 @@ namespace GustosApp.Application.Tests
                 .ReturnsAsync(true);
 
             var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.HandleAsync(firebaseUid, request, ct));
+                _sut.HandleAsync(firebaseUid, request.CodigoInvitacion, ct));
 
             Assert.Equal("Ya eres miembro de este grupo", ex.Message);
         }
@@ -179,7 +179,7 @@ namespace GustosApp.Application.Tests
                 .ReturnsAsync(gruposUsuario);
 
             var ex = await Assert.ThrowsAsync<LimiteGruposAlcanzadoException>(() =>
-                _sut.HandleAsync(firebaseUid, request, ct));
+                _sut.HandleAsync(firebaseUid, request.CodigoInvitacion, ct));
 
             Assert.Equal("Free", ex.TipoPlan);
             Assert.Equal(3, ex.LimiteActual);
@@ -232,7 +232,7 @@ namespace GustosApp.Application.Tests
                 .Setup(r => r.GetByIdAsync(grupo.Id, ct))
                 .ReturnsAsync(grupoCompleto);
 
-            var resultado = await _sut.HandleAsync(firebaseUid, request, ct);
+            var resultado = await _sut.HandleAsync(firebaseUid, request.CodigoInvitacion, ct);
 
             _grupoRepositoryMock.Verify(
                 r => r.GetGruposByUsuarioIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
@@ -314,7 +314,7 @@ namespace GustosApp.Application.Tests
                 .Setup(r => r.GetByIdAsync(grupo.Id, ct))
                 .ReturnsAsync(grupoCompleto);
 
-            var resultado = await _sut.HandleAsync(firebaseUid, request, ct);
+            var resultado = await _sut.HandleAsync(firebaseUid, request.CodigoInvitacion, ct);
 
             _grupoRepositoryMock.Verify(
                 r => r.GetGruposByUsuarioIdAsync(usuario.Id, ct),
@@ -380,7 +380,7 @@ namespace GustosApp.Application.Tests
                 .ReturnsAsync((Grupo?)null);
 
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                _sut.HandleAsync(firebaseUid, request, ct));
+                _sut.HandleAsync(firebaseUid, request.CodigoInvitacion, ct));
 
             Assert.Equal("Error al unirse al grupo", ex.Message);
         }

@@ -1,6 +1,5 @@
 using AutoMapper;
 using GustosApp.API.DTO;
-using GustosApp.Application.DTO;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.Handlers;
 using GustosApp.Application.Services;
@@ -15,6 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Text.Json;
 using GustosApp.Application.UseCases.UsuarioUseCases;
+using GustosApp.Application.Model;
 
 namespace GustosApp.API.Controllers
 {
@@ -149,7 +149,7 @@ namespace GustosApp.API.Controllers
         public async Task<IActionResult> UnirseGrupo([FromBody] UnirseGrupoRequest request, CancellationToken ct)
         {
             var firebaseUid = GetFirebaseUid();
-            var grupo = await _unirseGrupoUseCase.HandleAsync(firebaseUid, request, ct);
+            var grupo = await _unirseGrupoUseCase.HandleAsync(firebaseUid, request.CodigoInvitacion, ct);
 
             var response = _mapper.Map<GrupoResponse>(grupo);
 
@@ -449,9 +449,9 @@ namespace GustosApp.API.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(500)]
         public async Task<IActionResult> ObtenerRestaurantesAleatorios(
-            Guid grupoId,
-            [FromBody] ObtenerRestaurantesAleatoriosRequest request,
-            CancellationToken ct)
+    Guid grupoId,
+    [FromBody] ObtenerRestaurantesAleatoriosRequest request,
+    CancellationToken ct)
         {
             try
             {
@@ -466,7 +466,16 @@ namespace GustosApp.API.Controllers
                     return Forbid("No eres miembro de este grupo");
                 }
 
-                var restaurantes = await _obtenerRestaurantesAleatorios.HandleAsync(grupoId, request, ct);
+                // Mapear DTO a RequestModel
+                var requestModel = new ObtenerRestaurantesAleatoriosRequestModel
+                {
+                    Cantidad = request.Cantidad,
+                    Latitud = request.Latitud,
+                    Longitud = request.Longitud,
+                    RadioMetros = request.RadioMetros
+                };
+
+                var restaurantes = await _obtenerRestaurantesAleatorios.HandleAsync(grupoId, requestModel, ct);
                 return Ok(restaurantes);
             }
             catch (ArgumentException ex)

@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace GustosApp.Application.DTO
+namespace GustosApp.Application.Model
 {
-    public class RestauranteAleatorioResponse
+    public class RestauranteAleatorioModel
     {
         public Guid Id { get; set; }
         public string Nombre { get; set; } = string.Empty;
@@ -21,7 +21,7 @@ namespace GustosApp.Application.DTO
         public List<string> Restricciones { get; set; } = new List<string>();
     }
 
-    public class ObtenerRestaurantesAleatoriosRequest
+    public class ObtenerRestaurantesAleatoriosRequestModel
     {
         public int Cantidad { get; set; } = 1;
         public double? Latitud { get; set; }

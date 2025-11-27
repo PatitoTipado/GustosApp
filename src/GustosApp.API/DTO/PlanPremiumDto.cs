@@ -1,6 +1,7 @@
 using System;
+using System.Collections.Generic;
 
-namespace GustosApp.Application.DTO
+namespace GustosApp.API.DTO
 {
     public class LimiteGruposAlcanzadoResponse
     {
@@ -50,27 +51,8 @@ namespace GustosApp.Application.DTO
 
     public class CrearPagoResponse
     {
-        public string Id { get; set; } = string.Empty;
         public string InitPoint { get; set; } = string.Empty;
-        public string SandboxInitPoint { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
-    }
-
-    public class WebhookPagoRequest
-    {
-        public string Action { get; set; } = string.Empty;
-        public string ApiVersion { get; set; } = string.Empty;
-        public WebhookPagoData Data { get; set; } = new WebhookPagoData();
-        public DateTime DateCreated { get; set; }
-        public string Id { get; set; } = string.Empty;
-        public bool LiveMode { get; set; }
-        public string Type { get; set; } = string.Empty;
-        public string UserId { get; set; } = string.Empty;
-    }
-
-    public class WebhookPagoData
-    {
-        public string Id { get; set; } = string.Empty;
     }
 
     public class CrearPagoTestRequest
@@ -78,5 +60,16 @@ namespace GustosApp.Application.DTO
         public string? UsuarioId { get; set; }
         public string? Email { get; set; }
         public string? NombreCompleto { get; set; }
+    }
+
+    public class WebhookPagoRequest
+    {
+        public string Type { get; set; } = string.Empty;
+        public WebhookPagoData Data { get; set; } = new WebhookPagoData();
+    }
+
+    public class WebhookPagoData
+    {
+        public string Id { get; set; } = string.Empty;
     }
 }

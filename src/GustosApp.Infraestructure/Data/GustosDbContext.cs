@@ -1,6 +1,5 @@
 ﻿namespace GustosApp.Infraestructure;
 
-using GustosApp.Application.DTO;
 using GustosApp.Domain.Model;
 using Microsoft.EntityFrameworkCore;
 

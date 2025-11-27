@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using GustosApp.Application.DTO;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.Services;
 using GustosApp.Domain.Interfaces;

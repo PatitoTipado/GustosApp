@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using GustosApp.Application.DTO;
 using GustosApp.Domain.Model;
 
 namespace GustosApp.Application.Interfaces

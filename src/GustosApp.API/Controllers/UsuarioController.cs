@@ -1,7 +1,7 @@
 ﻿
 using Azure.Core;
 using System.Security.Claims;
-using GustosApp.Application.DTO;
+using GustosApp.API.DTO;
 using GustosApp.Infraestructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;

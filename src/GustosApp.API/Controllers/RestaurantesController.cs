@@ -1,6 +1,6 @@
 using AutoMapper;
 using GustosApp.API.DTO;
-using GustosApp.Application.DTO;
+using GustosApp.API.DTO;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases.RestauranteUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases;

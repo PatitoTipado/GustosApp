@@ -20,7 +20,7 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases
             _gustos = gustos;
         }
 
-        public async Task<UsuarioGustos> HandleAsync(string firebaseUid, CancellationToken ct)
+        public async Task<GustosFiltradosResult> HandleAsync(string firebaseUid, CancellationToken ct)
         {
             var usuario = await _usuarios.GetByFirebaseUidAsync(firebaseUid, ct)
                           ?? throw new Exception("Usuario no encontrado");
@@ -40,7 +40,7 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases
                     .Any(t => tagsProhibidos.Contains(t.NombreNormalizado)))
                 .ToList();
 
-            return new UsuarioGustos
+            return new GustosFiltradosResult
             {
                 GustosFiltrados = gustosFiltrados,
                 GustosSeleccionados = usuario.Gustos.Select(g => g.Id).ToList()

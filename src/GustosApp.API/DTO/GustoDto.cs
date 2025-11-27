@@ -1,5 +1,4 @@
-﻿using GustosApp.Domain.Model;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -40,9 +39,5 @@ using System.Threading.Tasks;
         public List<string> GustosIncompatibles { get; set; }
     }
 
-    public class GustosFiltradosUsuarioDTO
-    {
-        public List<Gusto> GustosFiltrados { get; set; } = new();
-        public List<Guid> GustosSeleccionados { get; set; } = new();
-    }
+
 }

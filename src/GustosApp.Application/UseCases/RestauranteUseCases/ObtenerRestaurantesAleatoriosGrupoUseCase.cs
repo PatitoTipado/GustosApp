@@ -1,6 +1,5 @@
 using GustosApp.Application.DTO;
 using GustosApp.Domain.Interfaces;
-using GustosApp.Domain.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,9 +24,9 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
             _grupoRepository = grupoRepository;
         }
 
-        public async Task<List<Restaurante>> HandleAsync(
+        public async Task<List<RestauranteAleatorioResponse>> HandleAsync(
             Guid grupoId,
-            RestauranteAleatorio request,
+            ObtenerRestaurantesAleatoriosRequest request,
             CancellationToken ct)
         {
             // Verificar que el grupo existe
@@ -42,7 +41,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
 
             if (!gustosIds.Any())
             {
-                return new List<Restaurante>();
+                return new List<RestauranteAleatorioResponse>();
             }
 
             // Buscar restaurantes que coincidan con los gustos del grupo
@@ -50,7 +49,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
 
             if (!restaurantes.Any())
             {
-                return new List<Restaurante>();
+                return new List<RestauranteAleatorioResponse>();
             }
 
             // Si se proporcionó ubicación y radio, filtrar por cercanía
@@ -73,8 +72,26 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
                 .Take(cantidad)
                 .ToList();
 
+            // Mapear a DTO
+            var response = restaurantesAleatorios.Select(r => new RestauranteAleatorioResponse
+            {
+                Id = r.Id,
+                Nombre = r.Nombre,
+                Direccion = r.Direccion,
+                Latitud = r.Latitud,
+                Longitud = r.Longitud,
+                Rating = r.Rating,
+                CantidadResenas = r.CantidadResenas,
+                Categoria = r.Categoria,
+                ImagenUrl = r.ImagenUrl,
+                Valoracion = r.Valoracion,
+                WebUrl = r.WebUrl,
+                PlaceId = r.PlaceId,
+                Gustos = r.GustosQueSirve?.Select(g => g.Nombre).ToList() ?? new List<string>(),
+                Restricciones = r.RestriccionesQueRespeta?.Select(res => res.Nombre).ToList() ?? new List<string>()
+            }).ToList();
 
-            return restaurantesAleatorios;
+            return response;
         }
 
         // Método auxiliar para calcular distancia entre dos puntos (fórmula de Haversine)

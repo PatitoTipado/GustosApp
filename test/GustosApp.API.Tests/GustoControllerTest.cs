@@ -1,5 +1,5 @@
 using GustosApp.API.Controllers;
-using GustosApp.Application.DTO;
+
 using GustosApp.Application.UseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace GustosApp.API.DTO
+namespace GustosApp.Application.DTO
 {
     public class RestauranteAleatorioResponse
     {

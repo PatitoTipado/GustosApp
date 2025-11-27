@@ -327,6 +327,8 @@ builder.Services.AddDbContext<GustosDbContext>(options =>
 //   Repositorios
 // =====================
 builder.Services.AddScoped<IHttpDownloader, HttpDownloader>();
+builder.Services.AddScoped<IRecomendadorRestaurantes, SugerirGustosSobreUnRadioUseCase>();
+builder.Services.AddScoped<IConstruirPreferencias, ConstruirPreferenciasUseCase>();
 
 builder.Services.AddScoped<IAuthorizationHandler, RegistroIncompletoHandler>();
 

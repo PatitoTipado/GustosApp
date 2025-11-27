@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace GustosApp.Application.UseCases.RestauranteUseCases
 {
-    public class SugerirGustosSobreUnRadioUseCase
+    public class SugerirGustosSobreUnRadioUseCase :  IRecomendadorRestaurantes
     {
         private readonly IEmbeddingService _embeddingService;
         private readonly ILogger<SugerirGustosSobreUnRadioUseCase> _logger;
@@ -28,13 +28,18 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
             int maxResults = 10,
             CancellationToken ct = default)
         {
-            if (validarUsuarioYRestaurantes(usuario, restaurantesCercanos))
-            {
+            if (ValidarUsuarioYRestaurantes(usuario, restaurantesCercanos))
                 return new List<Restaurante>();
-            }
 
-            var userEmbedding = obtenerEmbeddingDeUsuario(usuario);
+            var userEmbedding = ObtenerEmbeddingDeUsuario(usuario);
 
+            List<(Restaurante rest, double score)> resultados = ObtenerSimilitudUsuarioConRestaurante(usuario, restaurantesCercanos, userEmbedding);
+
+            return ordenarResultado(maxResults, resultados);
+        }
+
+        private List<(Restaurante rest, double score)> ObtenerSimilitudUsuarioConRestaurante(UsuarioPreferencias usuario, List<Restaurante> restaurantesCercanos, float[] userEmbedding)
+        {
             var resultados = new List<(Restaurante rest, double score)>();
 
             foreach (var rest in restaurantesCercanos)
@@ -56,7 +61,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
                 }
             }
 
-            return ordenarResultado(maxResults, resultados);
+            return resultados;
         }
 
         private static List<Restaurante> ordenarResultado(int maxResults, List<(Restaurante rest, double score)> resultados)
@@ -104,7 +109,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
             return _embeddingService.GetEmbedding(textoRestaurante);
         }
 
-        private float[] obtenerEmbeddingDeUsuario(UsuarioPreferencias usuario)
+        private float[] ObtenerEmbeddingDeUsuario(UsuarioPreferencias usuario)
         {
             var textoUsuario = string.Join(" ",
                 usuario.Gustos.Concat(usuario.Restricciones)
@@ -115,7 +120,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
             return _embeddingService.GetEmbedding(textoUsuario);
         }
 
-        private bool validarUsuarioYRestaurantes(UsuarioPreferencias usuario, List<Restaurante> restaurantesCercanos)
+        private bool ValidarUsuarioYRestaurantes(UsuarioPreferencias usuario, List<Restaurante> restaurantesCercanos)
         {
             bool usuarioNoValido = usuario == null || usuario.Gustos == null || !usuario.Gustos.Any();
 

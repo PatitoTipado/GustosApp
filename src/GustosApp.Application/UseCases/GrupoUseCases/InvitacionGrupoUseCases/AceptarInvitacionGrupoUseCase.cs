@@ -1,4 +1,3 @@
-using GustosApp.Application.DTO;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases.NotificacionUseCases;
 using GustosApp.Domain.Interfaces;

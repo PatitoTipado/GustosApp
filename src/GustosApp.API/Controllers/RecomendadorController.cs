@@ -1,5 +1,5 @@
 using GustosApp.API.DTO;
-using GustosApp.Application.DTO;
+using GustosApp.API.DTO;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.Services;
 using GustosApp.Application.UseCases.RestauranteUseCases;
@@ -11,9 +11,10 @@ using System.Threading.Tasks;
 
 namespace GustosApp.API.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+   
     public class RecomendadorController : ControllerBase
     {
         private readonly IUsuarioRepository _usuarioRepository;
@@ -30,6 +31,9 @@ namespace GustosApp.API.Controllers
         }
       
         [HttpGet("{restauranteId}/recomendacion")]
+        [ProducesResponseType(typeof(RecomendacionResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> ObtenerRecomendacion(Guid restauranteId, CancellationToken ct)
         {
             // 1) Obtener UID del usuario autenticado

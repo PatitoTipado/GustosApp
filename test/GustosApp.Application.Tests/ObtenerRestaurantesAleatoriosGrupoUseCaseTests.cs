@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using GustosApp.Application.DTO;
+using GustosApp.Application.Model;
 using GustosApp.Application.UseCases.RestauranteUseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
@@ -31,13 +31,13 @@ namespace GustosApp.Application.Tests
                 _grupoRepositoryMock.Object);
         }
 
-        private static ObtenerRestaurantesAleatoriosRequest CreateRequest(
+        private static ObtenerRestaurantesAleatoriosRequestModel CreateRequest(
             int cantidad = 3,
             double? lat = null,
             double? lng = null,
             int? radioMetros = null)
         {
-            return new ObtenerRestaurantesAleatoriosRequest
+            return new ObtenerRestaurantesAleatoriosRequestModel
             {
                 Cantidad = cantidad,
                 Latitud = lat,

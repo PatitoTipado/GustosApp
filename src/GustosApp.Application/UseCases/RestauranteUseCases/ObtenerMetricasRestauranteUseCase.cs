@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using GustosApp.Application.DTO;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Application.record;
 using System.Data;

@@ -1,4 +1,5 @@
 ﻿using FirebaseAdmin.Auth;
+using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 using GustosApp.Domain.Model.@enum;
@@ -14,13 +15,13 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases
     {
         private readonly IUsuarioRepository _repositorioUsuario;
         private readonly IRestauranteRepository _repositorioRestaurante;
+        private readonly IFirebaseAuthService _authService; // lo uso para el test
 
-
-        public AppLoginConFirebaseUseCase(IUsuarioRepository repositorioUsuario, IRestauranteRepository repositorioRestaurante)
+        public AppLoginConFirebaseUseCase(IUsuarioRepository repositorioUsuario, IRestauranteRepository repositorioRestaurante, IFirebaseAuthService authService)
         {
             _repositorioUsuario = repositorioUsuario;
             _repositorioRestaurante = repositorioRestaurante;
-
+            _authService = authService;
         }
 
         public async Task<string> HandleAsync(string idToken)

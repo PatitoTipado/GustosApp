@@ -1,5 +1,4 @@
-﻿using GustosApp.Application.DTO;
-using GustosApp.Domain.Interfaces;
+﻿using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 
 namespace GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases
@@ -32,6 +31,7 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases.GustoUseCases
                 .GroupBy(g => g.Id)
                 .Select(g => g.First())
                 .OrderByDescending(g => gustosUsuarioIds.Contains(g.Id))
+                .ThenBy(g => g.Nombre)
                 .Take(10)
                 .ToList();
 

@@ -7,7 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using GustosApp.API.DTO;
-using GustosApp.Application.DTO;
+using GustosApp.API.DTO;
 using GustosApp.Domain.Model;
 using GustosApp.Domain.Model.@enum;
 using Microsoft.AspNetCore.Mvc;

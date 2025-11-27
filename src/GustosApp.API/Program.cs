@@ -69,35 +69,80 @@ using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 // =====================
 //   Firebase / Auth
 // =====================
 
-//(en la carpeta /secrets)
-//var firebaseKeyPath = Path.Combine(builder.Environment.ContentRootPath, "secrets", "firebase-key.json");
+// Preparamos logger REAL vía DI
+var firebaseLogger = builder.Services
+    .BuildServiceProvider()
+    .GetRequiredService<ILoggerFactory>()
+    .CreateLogger("Firebase");
 
-var firebaseKeyPath = builder.Configuration["FIREBASE_SERVICE_ACCOUNT_JSON"];
-var firebaseProjectId = builder.Configuration["FIREBASE_PROJECTID"];
+// Intentamos obtener JSON desde Azure (producción)
+var firebaseJson = builder.Configuration["FIREBASE_SERVICE_ACCOUNT_JSON"];
 
-// Inicializar Firebase solo si no está inicializado (Admin SDK: útil p/ scripts, NO requerido para validar JWT)
-/*if (FirebaseApp.DefaultInstance == null)
-{
-    FirebaseApp.Create(new AppOptions()
-    {
-        Credential = GoogleCredential.FromFile(firebaseKeyPath)
-    });
-}*/
+// Project ID con fallback local
+var firebaseProjectId =
+    builder.Configuration["FIREBASE_PROJECTID"]
+    ?? "gustosapp-5c3c9";
+
+// Ruta local para desarrollo
+var localFirebasePath = Path.Combine(
+    builder.Environment.ContentRootPath,
+    "secrets",
+    "firebase-key.json"
+);
+
+firebaseLogger.LogInformation(
+    "🔍 Iniciando configuración de Firebase (Entorno: {Env})",
+    builder.Environment.EnvironmentName
+);
 
 if (FirebaseApp.DefaultInstance == null)
 {
-    FirebaseApp.Create(new AppOptions()
+    try
     {
-        Credential = GoogleCredential.FromJson(firebaseKeyPath)
-    });
+        if (!string.IsNullOrWhiteSpace(firebaseJson))
+        {
+            firebaseLogger.LogInformation("🔥 Inicializando Firebase desde JSON (PRODUCCIÓN)");
+
+            FirebaseApp.Create(new AppOptions
+            {
+                Credential = GoogleCredential.FromJson(firebaseJson)
+            });
+        }
+        else if (File.Exists(localFirebasePath))
+        {
+            firebaseLogger.LogInformation("💻 Inicializando Firebase desde archivo local: {Path}",
+                localFirebasePath);
+
+            FirebaseApp.Create(new AppOptions
+            {
+                Credential = GoogleCredential.FromFile(localFirebasePath)
+            });
+        }
+        else
+        {
+            firebaseLogger.LogError("❌ No se encontró ninguna credencial de Firebase (ni JSON ni archivo)");
+            throw new Exception("No se pueden cargar credenciales Firebase.");
+        }
+
+        firebaseLogger.LogInformation("✅ Firebase inicializado correctamente.");
+    }
+    catch (Exception ex)
+    {
+        firebaseLogger.LogError(ex, "❌ Error inicializando Firebase");
+        throw;
+    }
 }
 
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
+
+// =====================
+//   JWT Bearer
+// =====================
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -114,30 +159,25 @@ builder.Services
             ValidateLifetime = true
         };
 
-        // Unificamos todo en un solo bloque de eventos
         options.Events = new JwtBearerEvents
         {
             OnMessageReceived = context =>
             {
-                // 0. Preparar Logger
                 var logger = context.HttpContext.RequestServices
                     .GetRequiredService<ILoggerFactory>()
                     .CreateLogger("JWT");
 
                 logger.LogInformation("📥 Request a: {Path}", context.Request.Path);
 
-                // Prioridad 1: Cookie "token"
-                if (context.Request.Cookies.ContainsKey("token"))
+                // Prioridad 1: Cookie
+                if (context.Request.Cookies.TryGetValue("token", out var raw))
                 {
-                    var raw = context.Request.Cookies["token"];
-                    logger.LogInformation("🍪 Cookie 'token' encontrada: {TokenInicio}...",
-                        raw?.Substring(0, Math.Min(15, raw.Length)));
-
+                    logger.LogInformation("🍪 Token encontrado en cookie.");
                     context.Token = raw;
                     return Task.CompletedTask;
                 }
 
-                // Prioridad 2: Query string "access_token" (SignalR)
+                // Prioridad 2: Query (SignalR)
                 var accessToken = context.Request.Query["access_token"];
                 if (!string.IsNullOrEmpty(accessToken))
                 {
@@ -146,19 +186,16 @@ builder.Services
                     return Task.CompletedTask;
                 }
 
-                // Prioridad 3: Header Authorization (Manual check)
-                // Nota: Normalmente JWTBearer lo hace solo, pero al sobrescribir este evento 
-                // es seguro mantener tu lógica manual para garantizar que lo lea.
+                // Prioridad 3: Header Authorization
                 var authHeader = context.Request.Headers["Authorization"].ToString();
-                if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                if (!string.IsNullOrEmpty(authHeader) &&
+                    authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
                 {
-                    // No logueamos aquí para no llenar la consola de logs "normales"
                     context.Token = authHeader.Substring("Bearer ".Length).Trim();
                     return Task.CompletedTask;
                 }
 
-                // Si llegamos acá, no se encontró token
-                logger.LogWarning("⚠️ No llegó token en Cookie, QueryString ni Header");
+                logger.LogWarning("⚠️ No se recibió token por Cookie, QueryString ni Header.");
                 return Task.CompletedTask;
             },
 
@@ -168,12 +205,7 @@ builder.Services
                     .GetRequiredService<ILoggerFactory>()
                     .CreateLogger("JWT");
 
-                logger.LogInformation("✅ Token VALIDADO correctamente");
-
-                var claims = context.Principal.Claims
-                    .Select(c => $"{c.Type} = {c.Value}");
-
-                logger.LogInformation("🧩 Claims recibidos:\n{Claims}", string.Join("\n", claims));
+                logger.LogInformation("✅ Token validado correctamente");
 
                 return Task.CompletedTask;
             },
@@ -185,14 +217,48 @@ builder.Services
                     .CreateLogger("JWT");
 
                 logger.LogError(context.Exception,
-                    "❌ Falló la autenticación del JWT: {Error}", context.Exception.Message);
+                    "❌ Error en autenticación JWT: {Error}",
+                    context.Exception.Message);
 
                 return Task.CompletedTask;
             }
         };
     });
 
-builder.Services.AddSingleton<IEmbeddingService>(sp =>
+// =====================
+//      REDIS
+// =====================
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var logger = sp.GetRequiredService<ILogger<IConnectionMultiplexer>>();
+    var redisConfig = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+
+    logger.LogInformation("🚀 Conectando a Redis con: {RedisConnectionString}", redisConfig);
+
+    return ConnectionMultiplexer.Connect(redisConfig);
+});
+
+
+
+builder.Services.AddSingleton<IFileStorageService>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var logger = sp.GetRequiredService<ILogger<FirebaseStorageService>>();
+
+    return new FirebaseStorageService(
+        firebaseJson,
+        localFirebasePath,
+        config,
+        logger
+    );
+});
+
+
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+
+builder.Services.AddScoped<IEmbeddingService>(sp =>
 {
     var env = sp.GetRequiredService<IWebHostEnvironment>();
     var modelPath = Path.Combine(AppContext.BaseDirectory, "ML", "model.onnx");
@@ -247,50 +313,6 @@ builder.Services.AddAuthorization(opt =>
 });
 
 
-
-//##########
-//REDIS
-//############
-builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
-{
-    // 1. Obtener el ILogger<T> del ServiceProvider (sp)
-    //    Usamos ILogger<IConnectionMultiplexer> por convención, ya que es la clase que se está configurando.
-    var logger = sp.GetRequiredService<ILogger<IConnectionMultiplexer>>();
-
-    // 2. Obtener la configuración de la conexión Redis
-    var config = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
-
-    // 3. Registrar el valor de la cadena de conexión
-    //    Usamos LogInformation para registrar que se va a intentar conectar con esta configuración.
-    logger.LogInformation("🚀 Conectando a Redis con la cadena de conexión: {RedisConnectionString}", config);
-
-    // --- CONFIGURACIÓN DE FIREBASE Y LOGGING ---
-    var firebaseKeyPath = builder.Configuration["FIREBASE_SERVICE_ACCOUNT_JSON"];
-    var firebaseProjectId = builder.Configuration["FIREBASE_PROJECTID"];
-
-    // Loguear los valores de Firebase
-    if (!string.IsNullOrEmpty(firebaseKeyPath))
-    {
-        logger.LogInformation("🔑 Ruta del Service Account de Firebase: {FirebaseKeyPath}", firebaseKeyPath);
-    }
-    else
-    {
-        logger.LogWarning("⚠️ La ruta FIREBASE_SERVICE_ACCOUNT_JSON no está configurada.");
-    }
-
-    if (!string.IsNullOrEmpty(firebaseProjectId))
-    {
-        logger.LogInformation("💡 ID del Proyecto de Firebase: {FirebaseProjectId}", firebaseProjectId);
-    }
-    else
-    {
-        logger.LogWarning("⚠️ El ID del Proyecto de Firebase (FIREBASE_PROJECTID) no está configurado.");
-    }
-
-    // 4. Conectar al multiplexer
-    return ConnectionMultiplexer.Connect(config);
-});
-
 builder.Services
     .AddFluentValidationAutoValidation()
     .AddFluentValidationClientsideAdapters();
@@ -333,8 +355,6 @@ builder.Services.AddScoped<IConstruirPreferencias, ConstruirPreferenciasUseCase>
 builder.Services.AddScoped<IAuthorizationHandler, RegistroIncompletoHandler>();
 
 builder.Services.AddScoped<ICacheService, RedisCacheService>();
-
-builder.Services.AddScoped<IFileStorageService, FirebaseStorageService>();
 
 builder.Services.AddScoped<IEmailService, EmailService>();
 
@@ -526,11 +546,15 @@ CultureInfo.DefaultThreadCurrentCulture = culture;
 CultureInfo.DefaultThreadCurrentUICulture = culture;
 
 // =====================
-//    CORS
+//        CORS
 // =====================
+
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
+// Detectamos ambiente
+var isDevelopment = builder.Environment.IsDevelopment();
 
+// Obtenemos origins del env (solo producción)
 var allowedOriginsString = builder.Configuration["CORS_ALLOWED_ORIGINS"];
 
 var allowedOrigins = allowedOriginsString?
@@ -538,18 +562,38 @@ var allowedOrigins = allowedOriginsString?
     .Select(s => s.Trim())
     .ToArray() ?? Array.Empty<string>();
 
-
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: MyAllowSpecificOrigins,
-        policy =>
+    options.AddPolicy(MyAllowSpecificOrigins, policy =>
+    {
+        if (isDevelopment)
         {
-            policy.WithOrigins(allowedOrigins)
-                  .AllowCredentials()
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
-        });
+            // 🌱 LOCAL DEVELOPMENT
+            policy
+                .WithOrigins(
+                    "http://localhost:3000",
+                    "http://localhost:5174",
+                    "https://lois-membranous-glancingly.ngrok-free.dev"
+                )
+                .AllowCredentials()
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        }
+        else
+        {
+            // 🌐 PRODUCTION
+            if (allowedOrigins.Length == 0)
+            {
+                throw new Exception("CORS_ALLOWED_ORIGINS no configurado en producción.");
+            }
 
+            policy
+                .WithOrigins(allowedOrigins)
+                .AllowCredentials()
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        }
+    });
 });
 
 /* (Opcional) Exigir role=negocio para crear restaurantes
@@ -560,7 +604,7 @@ builder.Services.AddAuthorization(options =>
 });
 */
 
-    var app = builder.Build();
+var app = builder.Build();
 
 
 using (var scope = app.Services.CreateScope())

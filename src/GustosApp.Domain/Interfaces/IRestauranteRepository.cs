@@ -30,6 +30,6 @@ namespace GustosApp.Domain.Interfaces
         Task ActualizarValoracionAsync(Guid restauranteId, double promedio, CancellationToken cancellationToken);
         Task UpdateAsync(Restaurante restaurante, CancellationToken ct);
         Task<List<Restaurante>> BuscarPorTextoAsync(string texto, CancellationToken ct = default);
-
+        Task<List<Restaurante>> obtenerRestauranteConResenias(List<Guid> ids);
     }
 }

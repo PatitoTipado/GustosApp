@@ -140,10 +140,10 @@ namespace GustosApp.API.DTO
     }
     public class CrearRestauranteDto
     {
-        public string Nombre { get; set; } = default!;
+        public string? Nombre { get; set; } = default!;
         public string Direccion { get; set; } = default!;
 
-        public string WebsiteUrl { get; set; } = default!;
+        public string ?WebsiteUrl { get; set; } = default!;
 
 
         [JsonPropertyName("lat")]

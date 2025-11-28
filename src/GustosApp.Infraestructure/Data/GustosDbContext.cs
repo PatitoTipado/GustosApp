@@ -531,37 +531,71 @@ public class GustosDbContext : DbContext
                 },
                 ImagenUrl = i switch
                 {
-                    1 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/pizza.jpg?alt=media&token=1e4e7fea-31d3-4e04-ae50-1ebe29fd16f2",
-                    2 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/sushi.jpg?alt=media&token=9dfd9b64-8455-4206-a5ec-090c935e86e7",
-                    3 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/paella.jpg?alt=media&token=5cfd79d4-7e92-452e-a7c4-899b374d3ea8",
+                    1 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%20optimizado%2Fpizza%20(1)%20(1).jpg?alt=media&token=acae5ec9-56ff-4b1e-9f52-c6e3aa1c0465",
+                    2 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%20optimizado%2Fsushi%20(1).jpg?alt=media&token=699bb1f7-9ca8-467c-a07c-c25b85e155dd",
+                    3 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%20optimizado%2Fpaella%20(1)%20(1).jpg?alt=media&token=8d28a0aa-4e53-4552-ad79-4007f27ea6ef",
                     4 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/milanesa-con-papas-fritas.jpg?alt=media&token=d2ca59bc-6360-4378-919a-886b0c0e93e0",
                     5 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/tacos.jpg?alt=media&token=431ae163-15e9-41d0-8fa6-6f79e9862150",
-                    6 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/ensalada-cesar.jpg?alt=media&token=a6b5eaf0-be77-4716-8b11-18f3774f004f",
-                    7 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/ramen.jpg?alt=media&token=886fdc48-3d43-46fd-9911-48b1966da347",
-                    8 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/empanadas.png?alt=media&token=7438d05a-c0be-4da0-aea6-b6ab26f7f621",
+                    6 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%20optimizado%2Fensalada-cesar%20(1).jpg?alt=media&token=c478c0b8-7b06-40d3-b3b6-b4d8a1c7af45",
+                    7 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%20optimizado%2Framen%20(1).jpg?alt=media&token=f50e95b0-8f37-499a-803e-2f9ce530d68a",
+                    8 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%20optimizado%2Fempanadas.jpg?alt=media&token=07a8e917-a280-4345-9717-fe0b707dc8e7",
                     9 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/ceviche.jpg?alt=media&token=ad28a0df-4bc0-4aa8-ae02-610526ac1152",
-                    10 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/helado.jpg?alt=media&token=01be542d-9cc4-47f3-a27f-ae3a1b80d306",
+                    10 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%20optimizado%2Fhelado%20(1).jpg?alt=media&token=eef033a6-344a-41af-904a-7ff1116671c3",
                     11 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/Hamburguesa.jpg?alt=media&token=a0fd669b-ade3-427c-b428-c743338885c8",
                     12 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/papas-fritas.jpg?alt=media&token=5b18bf54-256e-4b36-adc3-e438fa3d374c",
-                    13 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/pollo-grill.jpg?alt=media&token=d60229b3-5e8a-4de6-9ed7-4a9622a2f3e1",
+                    13 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%20optimizado%2Fpollo-grill%20(1)%20(1).jpg?alt=media&token=22febf47-6138-4f88-a0a5-d131ef67f44c",
                     14 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/kebab.jpg?alt=media&token=0acd13ee-654c-4748-bbe4-695a06053f75",
                     15 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/ensalada-verde.jpg?alt=media&token=0bb027c8-de8d-4ac4-99db-ee80fc7d0f1c",
-                    16 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/asado.jpg?alt=media&token=254fbe63-39ba-4529-87bb-556381370c9a",
-                    17 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/sopa-verduras.jpg?alt=media&token=9858f540-0cb8-4759-a7d5-a6743144863e",
+                    16 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%20optimizado%2Fasado%20(1).jpg?alt=media&token=86e67902-4e82-4d36-87df-b6f4973e9b61",
+                    17 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%20optimizado%2Fsopa-verduras%20(1).jpg?alt=media&token=a9f74b05-2726-4a12-89fc-51e9ab99f895",
                     18 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/panquques.jpg?alt=media&token=2b203013-cbcf-40f3-b266-d629466cd0b2",
                     19 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/cafe-con-leche.jpg?alt=media&token=1f3cde3c-e3b9-4ed0-a690-d7e4d6875447",
                     20 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/jugos-naturales.jpg?alt=media&token=b8afeb02-882e-4a3f-8445-14949e5871dd",
                     21 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/Smoothie-frutas.jpg?alt=media&token=17ddc1f6-d60c-40d4-8368-f1f003ddd62b",
-                    22 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/chocolates.jpg?alt=media&token=5f33a2af-cee7-4768-8b47-dda973dd9c4e",
-                    23 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/tarta-manzana.jpg?alt=media&token=c34fa589-0c37-44cb-891e-2e8aaebdb215",
-                    24 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/Pescado-al-horn.png?alt=media&token=953296de-c3be-47a4-826e-31ad29cbae22",
+                    22 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%20optimizado%2Fchocolates%20(1).jpg?alt=media&token=52113b04-41a3-4e40-85bf-c6887227528c",
+                    23 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%20optimizado%2Ftarta-manzana%20(1).jpg?alt=media&token=a16c689c-6cbb-4e77-a9f3-5bf448dc6450",
+                    24 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%20optimizado%2FPescado-al-horn.jpg?alt=media&token=dd7a4dee-6229-4766-83e1-2647ab36b64c",
                     25 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/pasta-bolognesa.jpg?alt=media&token=7893a48f-f693-4a2f-a574-81336f91e62c",
-                    26 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/lomo_a_la_pimienta.png?alt=media&token=4d8495a4-181b-4d50-a9c8-e95010bfb100",
+                    26 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%20optimizado%2Flomo_a_la_pimienta.jpg?alt=media&token=1b1b8e30-083a-4ad2-854b-7903a4f750c9",
                     27 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/ensalada_frutas.jpg?alt=media&token=a13662fa-2ac4-40cd-b1f0-347634a991e9",
                     28 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/sandwich-de-huevo-con-jamon-y-queso.jpg?alt=media&token=8ac9b05d-c316-4a84-a099-9bca4f2d6a9a",
-                    29 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/huevos-revueltos-desayuno.jpeg?alt=media&token=0f21b637-b499-427c-bdb0-f0a841a76a9b",
+                    29 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%20optimizado%2Fhuevos-revueltos-desayuno.jpg?alt=media&token=c08b7124-4f73-4c68-b85e-7f8949b65688",
                     30 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/tipos-de-cerveza.jpg?alt=media&token=1cfa9e77-b663-421a-b649-d52a1ba751d2",
                     31 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/vino_artesanal.jpg?alt=media&token=fd22ec00-7739-4776-b488-63e46c2937c5",
+                    32 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2Fensalada-caprese.jpg?alt=media&token=6bc93fe3-acc5-46b4-be63-c1de7b621854", // Ensalada Caprese
+                    33 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2Ftarta-verduras.jpg?alt=media&token=65092fe1-acfa-4c5a-84c4-ebcf00ad6068", // Tarta de Verduras
+                    34 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2Fomelette-de-verduras.jpg?alt=media&token=25b514e3-5f87-43a0-99b0-83b0b9af243f", // Omelette de vegetales
+                    35 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2Fpizza-margarita.jpg?alt=media&token=0ae93afc-274e-4a4b-879a-8d288cac8d3a", // Pizza Margarita
+                    36 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2FMILANESAS-DE-BERENJENA-CON-PURE-DE-ARVEJAS-05%20(1).jpg?alt=media&token=f21fab62-9138-450d-be46-faf0acf43ef1", // Milanesa de berenjena
+                    37 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2Fnoquis-caseros-con-salsa-de-tomate-1200x900.jpg?alt=media&token=35667f32-5775-41b6-9d29-aed9acf2a64b", // Ñoquis con salsa de tomate
+                    38 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2FRavioles-ricota-espinaca%20(1).jpg?alt=media&token=89d4e8ba-7db8-40d5-8d1a-09cf16216af8", // Ravioles de ricota y espinaca
+                    39 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2Ffideos_con_pesto.jpg?alt=media&token=47cbf2d7-53f2-4710-88a8-ef8b43fb3dfc", // Fideos con pesto
+                    40 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2FPanquequavenarutas.jpg?alt=media&token=0d4dcf14-a9e3-48c1-a6ff-06118c259555", // Panqueques de avena con frutas
+                    41 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2Fempanda_humita.jpg?alt=media&token=862cd874-b8b2-4793-93f5-284268db5f6d", // Empanadas de humita
+                    42 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2FLasa%C3%B1a-vegetariana.jpg?alt=media&token=2ad7e9ef-a341-43d3-b135-9b22b2f9d0ba", // Lasaña vegetariana
+                    43 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2FArrozprimavera.jpg?alt=media&token=3872ad34-aec3-4610-af74-88a5ed01894f", // Arroz primavera
+                    44 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2FPolenta-salsa-tomate.jpg?alt=media&token=9869796e-f39d-4536-afe4-b79131bdcaa9", // Polenta con salsa de tomate
+                    45 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2Fsopa-de-calabaza_web.jpg?alt=media&token=06b7d888-fea8-4f88-8447-c8c4494018e9", // Sopa de calabaza
+                    46 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2Ftortilla-de-papas-con-EPMZH233TBBEBETIIAYLJQ57JU.jpg?alt=media&token=42079a0c-02c9-4de4-8e9e-eff9d9c59d9f", // Tortilla de papas
+                    47 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2FQuesadillas-vegetales.jpg?alt=media&token=2f5fcc35-826f-4134-a50f-a7a81f2e20d2", // Quesadillas de vegetales
+                    48 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2FBruschetta-tomate-albahaca.jpg?alt=media&token=3dc0476c-f168-40f1-afa1-d557e2ab4f90", // Bruschettas con tomate y albahaca
+                    49 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2FPastel-papas-vegetariano.jpg?alt=media&token=81f3f01a-f6cc-4489-91ca-d191d30a5567", // Pastel de papas vegetariano
+                    50 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2FPizza-cuatro-quesos%20(1).jpg?alt=media&token=d92594ca-b9f7-42ac-b2b1-ceb16f269740", // Pizza cuatro quesos
+                    51 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2FEnsalada-de-quinoa-con-verduras.jpg?alt=media&token=aec93b8a-c0ae-431e-b006-8db27840fdc5", // Ensalada de quinoa con vegetales
+                    52 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2Farroz-al-curry-con-2HA57GEWZJFM5CD27MHLFJ6ZMU.jpg?alt=media&token=65998321-d8c5-4dea-ba17-dcb311f2cf77", // Curry de vegetales con arroz
+                    53 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2Fhamburguesa-lentejas-7.jpg?alt=media&token=a418381f-009f-47dc-ac6d-1713c94df7bf", // Hamburguesa de lentejas
+                    54 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2FSopa-crema-zapallo-leche-vegetal.jpg?alt=media&token=fa58ead1-8dbd-4121-a5e0-5f9428713a57", // Sopa crema de zapallo con leche vegetal
+                    55 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2Farroz_frito_con_tofu_62074_orig.jpg?alt=media&token=1e451e0b-8eef-4e0d-a761-c9364e6ec4c9", // Arroz frito con tofu
+                    56 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2FGuiso-lentejas-vegano.jpg?alt=media&token=3ef78d85-c7e4-4fb6-b1cc-8c00b183dea0", // Guiso de lentejas vegano
+                    57 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2Fpan_con_palta_tomate.jpg?alt=media&token=2c63b3e3-4092-46f2-b852-4e382a86f452", // Pan integral con palta y tomate
+                    58 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2FPanqueques-banana-sin-huevo.jpg?alt=media&token=ccea698a-3c15-41d0-82dd-5080f3a91210", // Panqueques de banana sin huevo
+                    59 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2FWrap-falafel-hummus.jpg?alt=media&token=26a4a908-3460-4eb2-b372-077acf14fe1b", // Wrap de falafel con hummus
+                    60 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2FBrownievegano(con%20harina%20integra%20aceite%20de%20coco.jpg?alt=media&token=96a9ce83-43bf-4d92-9fbb-d6c9bdd0701c", // Brownie vegano (con harina integral y aceite de coco)
+                    61 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2Ftarta-de-calabaza-vegana-pumpkin-pie-saludable.jpg?alt=media&token=21f2a9f5-33d6-4968-9963-21615ac588a6", // Tarta vegana de calabaza
+                    62 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2Fempanadillas2-1024x683.jpg?alt=media&token=20a2c707-ca29-4a1e-a194-9be0fa3424dd", // Empanadas veganas
+                    63 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2Ftacos_veganos.jpg?alt=media&token=9437ffc6-8a1f-4c93-89f3-33f0e4d35ebf", // Tacos veganos
+                    64 => "https://firebasestorage.googleapis.com/v0/b/gustosapp-5c3c9.firebasestorage.app/o/gustos1%2FFideos-arrozrerdurassalteadas.jpg?alt=media&token=a17821fc-210e-4078-856a-d892c75b5a93", // Fideos de arroz con verduras salteadas
+
                     _ => null
                 }
             }).ToArray();

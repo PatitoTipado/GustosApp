@@ -360,7 +360,7 @@ namespace GustosApp.API.Controllers
             return Ok(restaurante.Id);
         }
 
-        [Authorize(Policy = "DuenoRestaurante")]
+        
         [HttpPut("{id:guid}/imagenes/destacada")]
         [Consumes("multipart/form-data")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -421,7 +421,6 @@ namespace GustosApp.API.Controllers
 
 
 
-        [Authorize(Policy = "DuenoRestaurante")]
         [HttpPut("{id:guid}/imagenes/logo")]
         [Consumes("multipart/form-data")]
         [ProducesResponseType( StatusCodes.Status200OK)]
@@ -481,7 +480,7 @@ namespace GustosApp.API.Controllers
         }
 
 
-        [Authorize(Policy = "DuenoRestaurante")]
+        
         [HttpPut("{id:guid}/imagenes/interior")]
         [Consumes("multipart/form-data")]
         [ProducesResponseType( StatusCodes.Status200OK)]
@@ -492,7 +491,8 @@ namespace GustosApp.API.Controllers
     [FromForm] ActualizarImagenesRestauranteRequest request,
     CancellationToken ct = default)
         {
-            
+                Console.WriteLine($"[DEBUG] Interior - Archivos.Count = {request.Archivos?.Count ?? 0}, SoloBorrar = {request.SoloBorrar}");
+
             var urlsSubidas = new List<string>();
 
             try
@@ -536,7 +536,6 @@ namespace GustosApp.API.Controllers
 
 
 
-        [Authorize(Policy = "DuenoRestaurante")]
         [HttpPut("{id:guid}/imagenes/comidas")]
         [Consumes("multipart/form-data")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -590,7 +589,7 @@ namespace GustosApp.API.Controllers
         }
 
 
-        [Authorize(Policy = "DuenoRestaurante")]
+        
         [HttpPut("{id:guid}/imagenes/menu")]
         [Consumes("multipart/form-data")]
         [ProducesResponseType(StatusCodes.Status200OK)]

@@ -146,10 +146,20 @@ namespace GustosApp.API.Controllers
         [ProducesResponseType(typeof(LimiteGruposAlcanzadoResponse), StatusCodes.Status402PaymentRequired)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> UnirseGrupo([FromBody] UnirseGrupoRequest request, CancellationToken ct)
         {
             var firebaseUid = GetFirebaseUid();
-            var grupo = await _unirseGrupoUseCase.HandleAsync(firebaseUid, request, ct);
+
+            if (string.IsNullOrEmpty(request.CodigoInvitacion))
+                throw new ArgumentException("El código de invitación es obligatorio");
+
+            if (request.CodigoInvitacion.Length == 8)
+            {
+                throw new ArgumentException("El código debe tener exactamente 8 caracteres");
+            }
+
+            var grupo = await _unirseGrupoUseCase.HandleAsync(firebaseUid, request.CodigoInvitacion, ct);
 
             var response = _mapper.Map<GrupoResponse>(grupo);
 
@@ -348,6 +358,24 @@ namespace GustosApp.API.Controllers
         }
 
         [Authorize]
+        [HttpDelete("eliminarMiGusto")]
+        [ProducesResponseType(typeof(ActualizarGustosGrupoResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> eliminarMiGustoDeGrupo(Guid grupoId, List<string> gustos)
+        {
+            var firebaseUid = GetFirebaseUid();
+            var ok = await _servicioPreferenciasGrupos.EliminarGustosDeGrupo(gustos, grupoId, firebaseUid);
+
+            var response = new ActualizarGustosGrupoResponse
+            {
+                Success = ok,
+                Mensaje = "Gustos eliminados correctamente"
+            };
+            return Ok(response);
+        }
+
+
+        [Authorize]
         [HttpPut("desactivarMiembro")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -418,7 +446,7 @@ namespace GustosApp.API.Controllers
             // registrar Top 3 grupal
             var top3Ids = response
                 .Take(3)
-                .Select(r => r.Id)    
+                .Select(r => r.Id)
                 .ToList();
 
             if (top3Ids.Count > 0)
@@ -466,7 +494,12 @@ namespace GustosApp.API.Controllers
                     return Forbid("No eres miembro de este grupo");
                 }
 
-                var restaurantes = await _obtenerRestaurantesAleatorios.HandleAsync(grupoId, request, ct);
+                var requestMapeada = MapearRequest(request);
+
+                var restaurantes = await _obtenerRestaurantesAleatorios.HandleAsync(grupoId, requestMapeada, ct);
+
+                var response = MapearRestaurantes(restaurantes);
+
                 return Ok(restaurantes);
             }
             catch (ArgumentException ex)
@@ -477,6 +510,45 @@ namespace GustosApp.API.Controllers
             {
                 return StatusCode(500, $"Error al obtener restaurantes: {ex.Message}");
             }
+        }
+
+        private RestauranteAleatorio MapearRequest(ObtenerRestaurantesAleatoriosRequest request)
+        {
+            return new RestauranteAleatorio
+            {
+                RadioMetros= request.RadioMetros,
+                Cantidad=request.Cantidad,
+                Latitud=request.Latitud,
+                Longitud= request.Longitud
+            };
+
+        }
+
+        private List<RestauranteAleatorioResponse> MapearRestaurantes(List<Restaurante> restaurantes)
+        {
+            return restaurantes.Select(r => new RestauranteAleatorioResponse
+            {
+                Id = r.Id,
+                Nombre = r.Nombre,
+                Direccion = r.Direccion,
+                Latitud = r.Latitud,
+                Longitud = r.Longitud,
+                Rating = r.Rating,
+                CantidadResenas = r.CantidadResenas,
+                Categoria = r.Categoria,
+                ImagenUrl = r.ImagenUrl,
+                Valoracion = r.Valoracion,
+                WebUrl = r.WebUrl,
+                PlaceId = r.PlaceId,
+
+                Gustos = r.GustosQueSirve != null
+                    ? r.GustosQueSirve.Select(g => g.Nombre).ToList()
+                    : new List<string>(),
+
+                Restricciones = r.RestriccionesQueRespeta != null
+                    ? r.RestriccionesQueRespeta.Select(res => res.Nombre).ToList()
+                    : new List<string>()
+            }).ToList();
         }
     }
 }

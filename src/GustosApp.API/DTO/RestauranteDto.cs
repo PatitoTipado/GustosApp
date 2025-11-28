@@ -317,7 +317,6 @@ namespace GustosApp.API.DTO
         public double Rating { get; set; }
         public bool EsFavorito { get; set; } = true; 
     }
-
 }
 
 

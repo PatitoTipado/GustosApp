@@ -31,13 +31,13 @@ namespace GustosApp.Application.Tests
                 _grupoRepositoryMock.Object);
         }
 
-        private static ObtenerRestaurantesAleatoriosRequest CreateRequest(
+        private static RestauranteAleatorio CreateRequest(
             int cantidad = 3,
             double? lat = null,
             double? lng = null,
             int? radioMetros = null)
         {
-            return new ObtenerRestaurantesAleatoriosRequest
+            return new RestauranteAleatorio
             {
                 Cantidad = cantidad,
                 Latitud = lat,
@@ -213,10 +213,8 @@ namespace GustosApp.Application.Tests
 
             Assert.All(result, dto =>
             {
-                Assert.NotNull(dto.Gustos);
-                Assert.Contains("Pizza", dto.Gustos);
-                Assert.NotNull(dto.Restricciones);
-                Assert.Contains("Vegano", dto.Restricciones);
+                Assert.NotNull(dto.GustosQueSirve);
+                Assert.NotNull(dto.RestriccionesQueRespeta);
             });
         }
 

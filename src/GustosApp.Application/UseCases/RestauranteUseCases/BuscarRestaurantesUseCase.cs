@@ -18,13 +18,22 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
             _repo = repo;
         }
 
+        /* public async Task<List<Restaurante>> HandleAsync(string texto, CancellationToken ct)
+         {
+             if (string.IsNullOrWhiteSpace(texto))
+                 return new List<Restaurante>();
+
+             var restaurantes = await _repo.BuscarPorTextoAsync(texto, ct);
+             var restaurantes = await _repo.BuscarPorTextoAsync(texto, ct);
+             return restaurantes;
+         }*/
+
         public async Task<List<Restaurante>> HandleAsync(string texto, CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(texto))
-                return new List<Restaurante>();
+            var resultado = await _repo.BuscarPorPrefijo(texto, ct);
 
-            var restaurantes = await _repo.BuscarPorTextoAsync(texto, ct);
-            return restaurantes;
+            return resultado;
+            // return await Task.FromResult(resultado);
         }
     }
     }

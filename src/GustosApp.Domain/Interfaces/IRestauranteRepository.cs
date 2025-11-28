@@ -29,7 +29,7 @@ namespace GustosApp.Domain.Interfaces
             CancellationToken ct = default);
         Task ActualizarValoracionAsync(Guid restauranteId, double promedio, CancellationToken cancellationToken);
         Task UpdateAsync(Restaurante restaurante, CancellationToken ct);
-        Task<List<Restaurante>> BuscarPorTextoAsync(string texto, CancellationToken ct = default);
-
+        Task <List<Restaurante>> BuscarPorPrefijo(string prefijo, CancellationToken ct = default);
+   
     }
 }

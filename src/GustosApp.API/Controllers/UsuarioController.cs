@@ -325,7 +325,9 @@ namespace GustosApp.API.Controllers
                 nombre = usuario.Nombre,
                 apellido = usuario.Apellido,
                 fotoPerfilUrl = usuario.FotoPerfilUrl,
-                esPremium = usuario.EsPremium() 
+                esPremium = usuario.EsPremium() ,
+                esPrivado = usuario.EsPrivado,
+                email = usuario.Email
             };
 
             return Ok(response);

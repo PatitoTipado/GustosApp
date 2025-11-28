@@ -1,6 +1,8 @@
-using System.Text;
-using Tesseract;
+
 using GustosApp.Application.Interfaces;
+using Google.Cloud.Vision.V1;
+using System.Text;
+using Google.Apis.Auth.OAuth2;
 
 namespace GustosApp.Infraestructure.Ocr
 {
@@ -10,69 +12,43 @@ namespace GustosApp.Infraestructure.Ocr
     /// - Tesseract
     /// - Tesseract.runtime.win64 (y compilar/rutime x64)
     /// </summary>
-    public sealed class TesseractOcrService : IOcrService
+    public sealed class GoogleVisionOcrService : IOcrService
     {
-        private readonly string _tessdataPath;
+        private readonly ImageAnnotatorClient _client;
 
-        /// <param name="tessdataPath">
-        /// Ruta absoluta a la carpeta que contiene *.traineddata (por ej.: {ContentRoot}/tessdata).
-        /// </param>
-        public TesseractOcrService(string tessdataPath)
+        public GoogleVisionOcrService(string jsonCredentials)
         {
-            if (string.IsNullOrWhiteSpace(tessdataPath))
-                throw new ArgumentException("tessdataPath no puede ser nulo o vacío.", nameof(tessdataPath));
+            // Convertimos el JSON a Credential real
+            var credential = GoogleCredential.FromJson(jsonCredentials)
+                .CreateScoped(ImageAnnotatorClient.DefaultScopes);
 
-            _tessdataPath = tessdataPath;
+            _client = new ImageAnnotatorClientBuilder
+            {
+                Credential = credential
+            }.Build();
         }
 
         public async Task<string> ReconocerTextoAsync(IEnumerable<Stream> imagenes, string languages = "spa+eng", CancellationToken ct = default)
         {
-            if (!Directory.Exists(_tessdataPath))
-                throw new DirectoryNotFoundException($"No se encontró tessdata: {_tessdataPath}");
-
-            // 🔥 OJO: NO usar AutoOsd —ROMPE TODO—
-            using var engine = new TesseractEngine(_tessdataPath, languages, EngineMode.Default);
-
             var sb = new StringBuilder();
 
             foreach (var img in imagenes)
             {
                 ct.ThrowIfCancellationRequested();
 
-                using var mem = new MemoryStream();
-                await img.CopyToAsync(mem, ct);
-                var bytes = mem.ToArray();
+                using var ms = new MemoryStream();
+                await img.CopyToAsync(ms, ct);
 
-                using var pix = Pix.LoadFromMemory(bytes);
+                var response = await _client.DetectDocumentTextAsync(
+                    Google.Cloud.Vision.V1.Image.FromBytes(ms.ToArray()));
 
-                // 👉 ESTE MODO FUNCIONA PARA MENÚS
-                using var page = engine.Process(pix, PageSegMode.SingleColumn);
-
-                var raw = page.GetText();
-                Console.WriteLine(">>> RAW OCR TEXT:");
-                Console.WriteLine(raw);
-
-                if (!string.IsNullOrWhiteSpace(raw))
-                    sb.AppendLine(Normalizar(raw));
+                sb.AppendLine(response.Text);
             }
 
             return sb.ToString().Trim();
         }
-
-
-        private static string Normalizar(string input)
-        {
-            if (string.IsNullOrWhiteSpace(input)) return string.Empty;
-
-            var lines = input
-                .Replace("\r", "")
-                .Split('\n')
-                .Select(l => l.Trim())
-                .Where(l => l.Length > 0);
-
-            return string.Join(Environment.NewLine, lines);
-        }
     }
+
 }
 
 

@@ -38,20 +38,27 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
             if (restaurante == null)
                 throw new KeyNotFoundException("Restaurante no encontrado");
 
-            // Reviews importadas de Google
+            // Reviews importadas de Google (si no hay reviews aún)
             if (!string.IsNullOrEmpty(restaurante.PlaceId) &&
                 (restaurante.Reviews == null || !restaurante.Reviews.Any()))
             {
-                var actualizado = await _servicioRestaurantes.ObtenerResenasDesdeGooglePlaces(restaurante.PlaceId, ct);
-                if (actualizado != null)
-                    restaurante = actualizado;
+                // 1) Actualiza reviews / datos en BD desde Google Places
+                await _servicioRestaurantes.ObtenerResenasDesdeGooglePlaces(restaurante.PlaceId, ct);
+
+                // 2) Vuelve a cargar el restaurante completo con todos los Includes
+                var recargado = await _servicioRestaurantes.ObtenerAsync(restauranteId);
+                if (recargado != null)
+                    restaurante = recargado;
             }
+
+            // Ordenar reviews (ya con locales + importadas)
             restaurante.Reviews = restaurante.Reviews
-                .OrderBy(r => r.EsImportada)              
-                .ThenByDescending(r => r.FechaCreacion)  
+                .OrderBy(r => r.EsImportada)
+                .ThenByDescending(r => r.FechaCreacion)
                 .ToList();
 
-      
+
+
 
 
             Guid? usuarioId = null;

@@ -39,7 +39,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
             if (validarUsuarioYRestaurantes(usuario, restaurantesCercanos))
                 return new List<Restaurante>();
 
-            float[] userEmbedding = obtenerEmbeddingDeUsuario(usuario);
+            float[] userEmbedding = ObtenerEmbeddingDeUsuario(usuario);
 
             List<(Restaurante rest, double score)> resultados =
                 similitudUsuarioRestauranteResultado(usuario, restaurantesCercanos, userEmbedding);
@@ -183,7 +183,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
             return _embeddingService.GetEmbedding(textoRestaurante);
         }
 
-        private float[] obtenerEmbeddingDeUsuario(UsuarioPreferencias usuario)
+        private float[] ObtenerEmbeddingDeUsuario(UsuarioPreferencias usuario)
         {
             var textoUsuario = string.Join(" ",
                 usuario.Gustos.Concat(usuario.Restricciones)

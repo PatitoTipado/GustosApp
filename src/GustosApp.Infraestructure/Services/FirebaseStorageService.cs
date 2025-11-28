@@ -7,6 +7,7 @@ using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Storage.V1;
 using GustosApp.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace GustosApp.Infraestructure.Services
 {
@@ -14,41 +15,47 @@ namespace GustosApp.Infraestructure.Services
     {
         private readonly StorageClient _storageClient;
         private readonly string _bucketName;
-        private static readonly string[] _allowedMimeTypes = { "image/jpeg", "image/png", "image/webp" };
+        private readonly IConfiguration _config;
+        private readonly ILogger<FirebaseStorageService> _logger;
+        private static readonly string[] _allowedMimeTypes =
+           { "image/jpeg", "image/png", "image/webp" };
 
-        public FirebaseStorageService(IConfiguration config)
+        public FirebaseStorageService(
+            string? firebaseJson,
+            string localFilePath,
+            IConfiguration config,
+            ILogger<FirebaseStorageService> logger)
         {
-            // Intentar cargar desde variable Base64 (producción)
-            var base64 = config["Firebase:CredentialJsonBase64"];
+            _config = config;
+            _logger = logger;
 
             GoogleCredential credential;
 
-            if (!string.IsNullOrEmpty(base64))
+            if (!string.IsNullOrEmpty(firebaseJson))
             {
-                // En Azure o Docker
-                var json = Encoding.UTF8.GetString(Convert.FromBase64String(base64));
-                credential = GoogleCredential.FromJson(json);
+                credential = GoogleCredential.FromJson(firebaseJson);
+                _logger.LogInformation("🔥 Firebase cargado desde JSON (PROD)");
+            }
+            else if (File.Exists(localFilePath))
+            {
+                credential = GoogleCredential.FromFile(localFilePath);
+                _logger.LogInformation("💻 Firebase cargado desde archivo local");
             }
             else
             {
-                //Si no, Cargar desde archivo físico (desarrollo local)
-                var path = config["Firebase:CredentialsPath"];
-
-                if (string.IsNullOrWhiteSpace(path))
-                    throw new Exception("No se encontró Firebase:CredentialsPath ni CredentialJsonBase64.");
-
-                // Ruta física real
-                var fullPath = Path.Combine(AppContext.BaseDirectory, path);
-
-                credential = GoogleCredential.FromFile(fullPath);
+                _logger.LogError("❌ No se encontró ni JSON ni archivo físico de Firebase");
+                throw new InvalidOperationException("Credenciales de Firebase no disponibles.");
             }
 
             _storageClient = StorageClient.Create(credential);
 
-            // StorageBucket NO cambia
-            _bucketName = config["Firebase:StorageBucket"]
+            _bucketName = _config["Firebase:StorageBucket"]
                 ?? throw new InvalidOperationException("Falta Firebase:StorageBucket");
         }
+
+
+        
+
 
         public async Task<string> UploadFileAsync(Stream stream, string fileName, string? folder = null)
         {

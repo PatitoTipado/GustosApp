@@ -1,6 +1,5 @@
 using AutoMapper;
 using GustosApp.API.DTO;
-using GustosApp.Application.DTO;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.Handlers;
 using GustosApp.Application.Services;
@@ -15,6 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Text.Json;
 using GustosApp.Application.UseCases.UsuarioUseCases;
+using GustosApp.Application.Model;
 
 namespace GustosApp.API.Controllers
 {
@@ -477,9 +477,9 @@ namespace GustosApp.API.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(500)]
         public async Task<IActionResult> ObtenerRestaurantesAleatorios(
-            Guid grupoId,
-            [FromBody] ObtenerRestaurantesAleatoriosRequest request,
-            CancellationToken ct)
+    Guid grupoId,
+    [FromBody] ObtenerRestaurantesAleatoriosRequest request,
+    CancellationToken ct)
         {
             try
             {
@@ -494,12 +494,16 @@ namespace GustosApp.API.Controllers
                     return Forbid("No eres miembro de este grupo");
                 }
 
-                var requestMapeada = MapearRequest(request);
+                // Mapear DTO a RequestModel
+                var requestModel = new ObtenerRestaurantesAleatoriosRequestModel
+                {
+                    Cantidad = request.Cantidad,
+                    Latitud = request.Latitud,
+                    Longitud = request.Longitud,
+                    RadioMetros = request.RadioMetros
+                };
 
-                var restaurantes = await _obtenerRestaurantesAleatorios.HandleAsync(grupoId, requestMapeada, ct);
-
-                var response = MapearRestaurantes(restaurantes);
-
+                var restaurantes = await _obtenerRestaurantesAleatorios.HandleAsync(grupoId, requestModel, ct);
                 return Ok(restaurantes);
             }
             catch (ArgumentException ex)
@@ -510,45 +514,6 @@ namespace GustosApp.API.Controllers
             {
                 return StatusCode(500, $"Error al obtener restaurantes: {ex.Message}");
             }
-        }
-
-        private RestauranteAleatorio MapearRequest(ObtenerRestaurantesAleatoriosRequest request)
-        {
-            return new RestauranteAleatorio
-            {
-                RadioMetros= request.RadioMetros,
-                Cantidad=request.Cantidad,
-                Latitud=request.Latitud,
-                Longitud= request.Longitud
-            };
-
-        }
-
-        private List<RestauranteAleatorioResponse> MapearRestaurantes(List<Restaurante> restaurantes)
-        {
-            return restaurantes.Select(r => new RestauranteAleatorioResponse
-            {
-                Id = r.Id,
-                Nombre = r.Nombre,
-                Direccion = r.Direccion,
-                Latitud = r.Latitud,
-                Longitud = r.Longitud,
-                Rating = r.Rating,
-                CantidadResenas = r.CantidadResenas,
-                Categoria = r.Categoria,
-                ImagenUrl = r.ImagenUrl,
-                Valoracion = r.Valoracion,
-                WebUrl = r.WebUrl,
-                PlaceId = r.PlaceId,
-
-                Gustos = r.GustosQueSirve != null
-                    ? r.GustosQueSirve.Select(g => g.Nombre).ToList()
-                    : new List<string>(),
-
-                Restricciones = r.RestriccionesQueRespeta != null
-                    ? r.RestriccionesQueRespeta.Select(res => res.Nombre).ToList()
-                    : new List<string>()
-            }).ToList();
         }
     }
 }

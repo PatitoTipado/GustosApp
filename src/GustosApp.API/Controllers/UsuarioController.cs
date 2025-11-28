@@ -1,7 +1,7 @@
 ﻿
 using Azure.Core;
 using System.Security.Claims;
-using GustosApp.Application.DTO;
+using GustosApp.API.DTO;
 using GustosApp.Infraestructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -325,7 +325,9 @@ namespace GustosApp.API.Controllers
                 nombre = usuario.Nombre,
                 apellido = usuario.Apellido,
                 fotoPerfilUrl = usuario.FotoPerfilUrl,
-                esPremium = usuario.EsPremium() 
+                esPremium = usuario.EsPremium() ,
+                esPrivado = usuario.EsPrivado,
+                email = usuario.Email
             };
 
             return Ok(response);

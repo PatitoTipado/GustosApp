@@ -1,5 +1,4 @@
-﻿using GustosApp.Application.DTO;
-using GustosApp.Domain.Interfaces;
+﻿using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 
 namespace GustosApp.Application.UseCases.AmistadUseCases

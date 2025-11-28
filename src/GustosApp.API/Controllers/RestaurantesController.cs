@@ -1,6 +1,6 @@
 using AutoMapper;
 using GustosApp.API.DTO;
-using GustosApp.Application.DTO;
+using GustosApp.API.DTO;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases.RestauranteUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases;
@@ -131,7 +131,10 @@ namespace GustosApp.API.Controllers
                 radioMetros: radius
               );
 
-
+            if (res==null || !res.Any())
+            {
+                throw new KeyNotFoundException("no se encontraron restaurantes para esa ubicacion");
+            }
 
             await _cache.SetAsync(
              $"usuario:{firebaseUid}:location",
@@ -151,6 +154,11 @@ namespace GustosApp.API.Controllers
                 gustosDelFiltro: gustos,
                 ct);
 
+            if (preferencias.Gustos==null || !preferencias.Gustos.Any())
+            {
+                throw new ArgumentException("los gustos que quiere buscar no son validos");
+            }
+
             //  Algoritmo combinado
             var recommendations = await _sugerirGustos.Handle(
                 preferencias,
@@ -158,6 +166,11 @@ namespace GustosApp.API.Controllers
                 top,
                 ct
             );
+
+            if (recommendations == null || !recommendations.Any())
+            {
+                throw new KeyNotFoundException("no existen coincidencias con sus gustos y preferencias en la zona");
+            }
 
             // DTO
             var response = _mapper.Map<List<RestauranteDTO>>(recommendations);

@@ -1,5 +1,4 @@
 using GustosApp.Application.Common.Exceptions;
-using GustosApp.Application.DTO;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 
@@ -24,7 +23,7 @@ namespace GustosApp.Application.UseCases.GrupoUseCases
             _gustosGrupoRepository = gustosGrupoRepository;
         }
 
-        public async Task<Grupo> HandleAsync(string firebaseUid, string CodigoInvitacion, CancellationToken cancellationToken = default)
+        public async Task<Grupo> HandleAsync(string firebaseUid, string codigoInvitacion, CancellationToken cancellationToken = default)
         {
             // Obtener el usuario
             var usuario = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid, cancellationToken);
@@ -32,12 +31,12 @@ namespace GustosApp.Application.UseCases.GrupoUseCases
                 throw new UnauthorizedAccessException("Usuario no encontrado");
 
             // Buscar el grupo por código de invitación
-            var grupo = await _grupoRepository.GetByCodigoInvitacionAsync(CodigoInvitacion, cancellationToken);
+            var grupo = await _grupoRepository.GetByCodigoInvitacionAsync(codigoInvitacion, cancellationToken);
             if (grupo == null)
                 throw new ArgumentException("Código de invitación inválido");
 
             // Verificar que el código no ha expirado
-            if (!grupo.EsCodigoInvitacionValido(CodigoInvitacion))
+            if (!grupo.EsCodigoInvitacionValido(codigoInvitacion))
                 throw new ArgumentException("El código de invitación ha expirado");
 
             // Verificar que el usuario no es ya miembro del grupo

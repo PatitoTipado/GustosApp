@@ -61,6 +61,11 @@
 		</Content>
 	</ItemGroup>
 
+	<ItemGroup>
+		<Content Include="Templates\**\*">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 
 
 </Project>

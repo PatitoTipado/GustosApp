@@ -43,6 +43,26 @@ namespace GustosApp.Infraestructure.Repositories
                 Claims = (Dictionary<string, object>)firebaseTokenReal.Claims 
             };
         }
+
+        public async Task<FirebaseUserInfo?> GetUserByUidAsync(string firebaseUid)
+        {
+            try
+            {
+                var userRecord = await FirebaseAuth.DefaultInstance.GetUserAsync(firebaseUid);
+                
+                return new FirebaseUserInfo
+                {
+                    Uid = userRecord.Uid,
+                    Email = userRecord.Email,
+                    DisplayName = userRecord.DisplayName,
+                    PhotoUrl = userRecord.PhotoUrl
+                };
+            }
+            catch (FirebaseAuthException)
+            {
+                return null;
+            }
+        }
     
     }
 

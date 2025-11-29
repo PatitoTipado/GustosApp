@@ -105,28 +105,55 @@ namespace GustosApp.Infraestructure.Services
         {
             try
             {
+                Console.WriteLine($"🔔 [Webhook] Procesando notificación de pago ID: {pagoId}");
+                
                 var client = new PaymentClient();
                 var payment = await client.GetAsync(Convert.ToInt64(pagoId));
 
+                Console.WriteLine($"🔔 [Webhook] Payment Status: {payment.Status}");
+                Console.WriteLine($"🔔 [Webhook] External Reference: {payment.ExternalReference}");
+                Console.WriteLine($"🔔 [Webhook] Payer Email: {payment.Payer?.Email}");
+
                 if (payment.Status == "approved" && !string.IsNullOrEmpty(payment.ExternalReference))
                 {
+                    Console.WriteLine($"✅ [Webhook] Pago aprobado, buscando usuario: {payment.ExternalReference}");
+                    
                     // Buscar usuario por Firebase UID (external reference)
                     var usuario = await _usuarioRepository.GetByFirebaseUidAsync(payment.ExternalReference);
+                    
                     if (usuario != null)
                     {
+                        Console.WriteLine($"✅ [Webhook] Usuario encontrado: {usuario.Email}, Plan actual: {usuario.Plan}");
+                        
+                        if (usuario.Plan == PlanUsuario.Plus)
+                        {
+                            Console.WriteLine($"ℹ️ [Webhook] Usuario ya es Premium, no se requiere actualización");
+                            return true;
+                        }
+                        
                         // Actualizar plan del usuario a Premium
+                        Console.WriteLine($"🔄 [Webhook] Actualizando usuario a Premium...");
                         usuario.ActualizarAPlan(PlanUsuario.Plus);
                         await _usuarioRepository.SaveChangesAsync();
+                        Console.WriteLine($"✅ [Webhook] Usuario actualizado a Premium exitosamente");
                         return true;
                     }
+                    else
+                    {
+                        Console.WriteLine($"❌ [Webhook] Usuario no encontrado con FirebaseUid: {payment.ExternalReference}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"⚠️ [Webhook] Pago no aprobado o sin external reference");
                 }
 
                 return false;
             }
             catch (Exception ex)
             {
-                // Log del error (en un escenario real usarías un logger)
-                Console.WriteLine($"Error al procesar notificación de pago {pagoId}: {ex.Message}");
+                Console.WriteLine($"❌ [Webhook] Error al procesar notificación de pago {pagoId}: {ex.Message}");
+                Console.WriteLine($"❌ [Webhook] StackTrace: {ex.StackTrace}");
                 return false;
             }
         }

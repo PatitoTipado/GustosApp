@@ -13,7 +13,7 @@ namespace GustosApp.API.Validations.OpinionRestaurantes
         {
             // VALORACIÓN
             RuleFor(x => x.Valoracion)
-                .InclusiveBetween(0.5, 5.0)
+                .InclusiveBetween(1.0, 5.0)  
                 .WithMessage("La valoración debe estar entre 1 y 5.");
 
             // OPINIÓN (OBLIGATORIA)

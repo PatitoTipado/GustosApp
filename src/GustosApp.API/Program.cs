@@ -403,8 +403,10 @@ builder.Services.AddScoped<IGustosGrupoRepository, GustosGrupoRepositoryEF>();
 builder.Services.AddScoped<INotificacionRepository, NotificacionRepositoryEF>();
 
 builder.Services.AddScoped<INotificacionRealtimeService, SignalRNotificacionRealtimeService>();
-
+builder.Services.AddScoped<IChatRealTimeService, SignalRChatRealtimeService>();
 builder.Services.AddScoped<ISolicitudAmistadRealtimeService, SignalRSolicitudAmistadRealtimeService>();
+
+builder.Services.AddScoped<IEnviarMensajeGrupoUseCase, EnviarMensajeGrupoUseCase>();
 
 builder.Services.AddScoped<IUsuariosActivosService, UsuariosActivosService>();
 builder.Services.AddScoped<IOpinionRestauranteRepository, OpinionRestauranteRepositoryEF>();

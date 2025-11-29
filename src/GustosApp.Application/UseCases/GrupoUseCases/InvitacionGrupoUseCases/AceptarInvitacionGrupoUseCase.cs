@@ -13,7 +13,11 @@ namespace GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases
         private IGustosGrupoRepository _gustosGrupoRepository;
         private readonly EliminarNotificacionUseCase _eliminarNotificacion;
         private readonly INotificacionRealtimeService _notificacionRealtimeService;
+        private readonly IChatRealTimeService _chatRealtime;
         private readonly IGrupoRepository _grupoRepository;
+        private readonly IEnviarMensajeGrupoUseCase _enviarMensaje;
+        private readonly IChatRepository _chatRepository;
+
 
         public AceptarInvitacionGrupoUseCase(IInvitacionGrupoRepository invitacionRepository,
             IUsuarioRepository usuarioRepository,
@@ -21,7 +25,10 @@ namespace GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases
             IGustosGrupoRepository gustosGrupoRepository,
             EliminarNotificacionUseCase eliminarNotificacion,
             INotificacionRealtimeService notificacionRealtimeService,
-            IGrupoRepository grupoRepository)
+            IChatRealTimeService chatRealTimeService,
+            IGrupoRepository grupoRepository,
+            IEnviarMensajeGrupoUseCase enviarMensaje,
+            IChatRepository chatRepository)
         {
             _invitacionRepository = invitacionRepository;
             _usuarioRepository = usuarioRepository;
@@ -29,7 +36,10 @@ namespace GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases
             _gustosGrupoRepository = gustosGrupoRepository;
             _eliminarNotificacion = eliminarNotificacion;
             _notificacionRealtimeService = notificacionRealtimeService;
+            _chatRealtime = chatRealTimeService;
             _grupoRepository = grupoRepository;
+            _enviarMensaje = enviarMensaje;
+            _chatRepository = chatRepository;
         }
 
         public async Task<Grupo> HandleAsync(string firebaseUid, Guid invitacionId, CancellationToken cancellationToken = default)
@@ -102,7 +112,28 @@ namespace GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases
             // Recupera el grupo actualizado con relaciones
             var grupo = invitacion.Grupo ?? await _grupoRepository.GetByIdAsync
                 (invitacion.GrupoId, cancellationToken)
+              
                 ?? throw new InvalidOperationException("Error al aceptar la invitación");
+
+
+            var mensajeSistema = new ChatMensaje
+            {
+                Id = Guid.NewGuid(),
+                GrupoId = invitacion.GrupoId,
+                UsuarioId = Guid.Empty,
+                UsuarioNombre = "Sistema",
+                Mensaje = $"{usuario.IdUsuario} se unió al grupo 👋",
+                FechaEnvio = DateTime.UtcNow
+            };
+
+            await _chatRepository.AddSystemMessageAsync(mensajeSistema, cancellationToken);
+
+            await _chatRealtime.NotificarGrupoChat(
+             invitacion.GrupoId,
+             usuario.Id,
+             usuario.IdUsuario
+);
+
 
             return grupo;
 

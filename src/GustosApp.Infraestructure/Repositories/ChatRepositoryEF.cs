@@ -28,5 +28,12 @@ namespace GustosApp.Infraestructure.Repositories
             await _context.SaveChangesAsync(cancellationToken);
             return message;
         }
+
+        public Task<ChatMensaje> AddSystemMessageAsync(ChatMensaje mensaje, CancellationToken ct)
+        {
+            _context.ChatMessages.Add(mensaje);
+            return _context.SaveChangesAsync(ct).ContinueWith(_ => mensaje, ct);
+        }
+
     }
 }

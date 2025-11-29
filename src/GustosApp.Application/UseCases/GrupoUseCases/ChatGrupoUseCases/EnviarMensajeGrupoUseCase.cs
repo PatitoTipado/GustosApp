@@ -8,7 +8,7 @@ using GustosApp.Domain.Model;
 
 namespace GustosApp.Application.UseCases.GrupoUseCases.ChatGrupoUseCases
 {
-    public class EnviarMensajeGrupoUseCase
+    public class EnviarMensajeGrupoUseCase : IEnviarMensajeGrupoUseCase
     {
         private readonly IChatRepository _chatRepository;
         private readonly IUsuarioRepository _usuarioRepository;
@@ -58,5 +58,6 @@ namespace GustosApp.Application.UseCases.GrupoUseCases.ChatGrupoUseCases
             var saved = await _chatRepository.AddMessageAsync(chat, cancellationToken);
             return saved;
         }
+      
     }
 }

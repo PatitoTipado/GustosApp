@@ -6,5 +6,8 @@ namespace GustosApp.Domain.Interfaces
     {
         Task<IEnumerable<ChatMensaje>> GetMessagesByGrupoIdAsync(Guid grupoId, CancellationToken cancellationToken = default);
         Task<ChatMensaje> AddMessageAsync(ChatMensaje message, CancellationToken cancellationToken = default);
+
+    
+
     }
 }

@@ -21,6 +21,8 @@ namespace GustosApp.Application.Tests
         private readonly Mock<INotificacionRealtimeService> _notificacionRealtimeServiceMock;
         private readonly Mock<IGrupoRepository> _grupoRepositoryMock;
         private readonly Mock<INotificacionRepository> _notificacionRepositoryMock;
+
+        private readonly Mock<IChatRealTimeService> _chatRealtimeServiceMock;
         private readonly EliminarNotificacionUseCase _eliminarNotificacionUseCase;
         private readonly AceptarInvitacionGrupoUseCase _sut;
 
@@ -33,8 +35,8 @@ namespace GustosApp.Application.Tests
             _notificacionRealtimeServiceMock = new Mock<INotificacionRealtimeService>();
             _grupoRepositoryMock = new Mock<IGrupoRepository>();
             _notificacionRepositoryMock = new Mock<INotificacionRepository>();
-
             _eliminarNotificacionUseCase = new EliminarNotificacionUseCase(_notificacionRepositoryMock.Object);
+            _chatRealtimeServiceMock = new Mock<IChatRealTimeService>();
 
             _sut = new AceptarInvitacionGrupoUseCase(
                 _invitacionRepositoryMock.Object,
@@ -43,7 +45,9 @@ namespace GustosApp.Application.Tests
                 _gustosGrupoRepositoryMock.Object,
                 _eliminarNotificacionUseCase,
                 _notificacionRealtimeServiceMock.Object,
-                _grupoRepositoryMock.Object);
+                _chatRealtimeServiceMock.Object,
+                _grupoRepositoryMock.Object 
+            ); 
         }
 
         private static Usuario CreateUsuario(Guid? id = null, string firebaseUid = "firebase-uid", string idUsuario = "usuario1")

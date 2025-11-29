@@ -129,6 +129,24 @@ namespace GustosApp.API.Controllers
             });
         }
 
+        [HttpGet("config")]
+        [AllowAnonymous]
+        public IActionResult GetConfig([FromServices] Microsoft.Extensions.Configuration.IConfiguration config)
+        {
+            var publicKey = config["MercadoPago:PublicKey"];
+            
+            if (string.IsNullOrEmpty(publicKey))
+            {
+                return BadRequest(new { message = "MercadoPago no configurado" });
+            }
+            
+            return Ok(new
+            {
+                publicKey = publicKey,
+                isTestMode = publicKey.StartsWith("TEST-") || publicKey.StartsWith("APP_USR")
+            });
+        }
+
         [HttpPost("crear-test")]
         [AllowAnonymous] // Temporal para pruebas sin autenticación
         public async Task<IActionResult> CrearPagoTest([FromBody] CrearPagoTestRequest request)

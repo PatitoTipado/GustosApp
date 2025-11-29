@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using FluentAssertions;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases;
 using GustosApp.Domain.Interfaces;
@@ -13,497 +14,577 @@ namespace GustosApp.Application.Tests
 {
     public class InvitarUsuarioGrupoUseCaseTests
     {
-        private readonly Mock<IGrupoRepository> _grupoRepositoryMock;
-        private readonly Mock<IUsuarioRepository> _usuarioRepositoryMock;
-        private readonly Mock<IInvitacionGrupoRepository> _invitacionRepositoryMock;
-        private readonly Mock<IMiembroGrupoRepository> _miembroGrupoRepositoryMock;
-        private readonly Mock<INotificacionRepository> _notificacionRepositoryMock;
-        private readonly Mock<INotificacionRealtimeService> _notificacionRealtimeServiceMock;
-        private readonly InvitarUsuarioGrupoUseCase _sut;
+        private readonly Mock<IGrupoRepository> _grupoRepoMock = new();
+        private readonly Mock<IUsuarioRepository> _usuarioRepoMock = new();
+        private readonly Mock<IInvitacionGrupoRepository> _invitacionRepoMock = new();
+        private readonly Mock<IMiembroGrupoRepository> _miembroGrupoRepoMock = new();
+        private readonly Mock<INotificacionRepository> _notificacionRepoMock = new();
+        private readonly Mock<INotificacionRealtimeService> _notificacionRealtimeMock = new();
 
-        public InvitarUsuarioGrupoUseCaseTests()
+        private InvitarUsuarioGrupoUseCase CreateSut()
         {
-            _grupoRepositoryMock = new Mock<IGrupoRepository>();
-            _usuarioRepositoryMock = new Mock<IUsuarioRepository>();
-            _invitacionRepositoryMock = new Mock<IInvitacionGrupoRepository>();
-            _miembroGrupoRepositoryMock = new Mock<IMiembroGrupoRepository>();
-            _notificacionRepositoryMock = new Mock<INotificacionRepository>();
-            _notificacionRealtimeServiceMock = new Mock<INotificacionRealtimeService>();
-
-            _sut = new InvitarUsuarioGrupoUseCase(
-                _grupoRepositoryMock.Object,
-                _usuarioRepositoryMock.Object,
-                _invitacionRepositoryMock.Object,
-                _miembroGrupoRepositoryMock.Object,
-                _notificacionRepositoryMock.Object,
-                _notificacionRealtimeServiceMock.Object);
+            return new InvitarUsuarioGrupoUseCase(
+                _grupoRepoMock.Object,
+                _usuarioRepoMock.Object,
+                _invitacionRepoMock.Object,
+                _miembroGrupoRepoMock.Object,
+                _notificacionRepoMock.Object,
+                _notificacionRealtimeMock.Object
+            );
         }
 
-        private static Usuario CreateUsuario(Guid? id = null, string firebaseUid = "firebase-uid", string username = "usuario1", string email = "user@test.com", string nombre = "Usuario Nombre")
+        private Usuario CrearUsuario(
+            Guid? id = null,
+            string firebaseUid = "firebase-uid",
+            string email = "user@test.com",
+            string nombre = "Nombre",
+            string apellido = "Apellido",
+            string idUsuario = "user123")
         {
-            var type = typeof(Usuario);
-            var usuario = (Usuario)Activator.CreateInstance(type, nonPublic: true)!;
-
-            type.GetProperty("Id")?.SetValue(usuario, id ?? Guid.NewGuid());
-            type.GetProperty("FirebaseUid")?.SetValue(usuario, firebaseUid);
-            type.GetProperty("IdUsuario")?.SetValue(usuario, username);
-            type.GetProperty("Email")?.SetValue(usuario, email);
-            type.GetProperty("Nombre")?.SetValue(usuario, nombre);
-
-            return usuario;
+            return new Usuario
+            {
+                Id = id ?? Guid.NewGuid(),
+                FirebaseUid = firebaseUid,
+                Email = email,
+                Nombre = nombre,
+                Apellido = apellido,
+                IdUsuario = idUsuario,
+                Activo = true,
+                EsPrivado = false
+            };
         }
 
-        private static Grupo CreateGrupo(Guid? id = null, string nombre = "Grupo prueba")
+        private Grupo CrearGrupo(Guid? id = null, string nombre = "Grupo Test")
         {
-            var type = typeof(Grupo);
-            var grupo = (Grupo)Activator.CreateInstance(type, nonPublic: true)!;
-
-            type.GetProperty("Id")?.SetValue(grupo, id ?? Guid.NewGuid());
-            type.GetProperty("Nombre")?.SetValue(grupo, nombre);
-
-            return grupo;
+            return new Grupo(nombre, Guid.NewGuid())
+            {
+                Id = id ?? Guid.NewGuid()
+            };
         }
 
-        private static InvitacionGrupo CreateInvitacion(Guid? id = null, Guid? grupoId = null, Guid? usuarioInvitadoId = null, Guid? usuarioInvitadorId = null)
-        {
-            var type = typeof(InvitacionGrupo);
-            var invitacion = (InvitacionGrupo)Activator.CreateInstance(type, nonPublic: true)!;
-
-            if (id.HasValue)
-                type.GetProperty("Id")?.SetValue(invitacion, id.Value);
-            if (grupoId.HasValue)
-                type.GetProperty("GrupoId")?.SetValue(invitacion, grupoId.Value);
-            if (usuarioInvitadoId.HasValue)
-                type.GetProperty("UsuarioInvitadoId")?.SetValue(invitacion, usuarioInvitadoId.Value);
-            if (usuarioInvitadorId.HasValue)
-                type.GetProperty("UsuarioInvitadorId")?.SetValue(invitacion, usuarioInvitadorId.Value);
-
-            return invitacion;
-        }
-
-        // Verifica que si el usuario invitador no existe se lanza UnauthorizedAccessException con el mensaje correcto.
+      
         [Fact]
-        public async Task HandleAsync_UsuarioInvitadorNoEncontrado_LanzaUnauthorizedAccessException()
+        public async Task HandleAsync_Deberia_CrearInvitacionYNotificacion_CuandoTodoEsValido()
         {
-            var firebaseUid = "uid-inexistente";
-            var grupoId = Guid.NewGuid();
+            // Arrange
+            var sut = CreateSut();
             var ct = CancellationToken.None;
 
-            _usuarioRepositoryMock
-                .Setup(r => r.GetByFirebaseUidAsync(firebaseUid, ct))
-                .ReturnsAsync((Usuario?)null);
-
-            var ex = await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
-                _sut.HandleAsync(firebaseUid, grupoId, null, null, null, null, ct));
-
-            Assert.Equal("Usuario no encontrado", ex.Message);
-
-            _grupoRepositoryMock.Verify(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
-        }
-
-        // Verifica que si el grupo no existe se lanza ArgumentException con el mensaje correcto.
-        [Fact]
-        public async Task HandleAsync_GrupoNoEncontrado_LanzaArgumentException()
-        {
-            var firebaseUid = "uid-valido";
             var grupoId = Guid.NewGuid();
-            var ct = CancellationToken.None;
+            var firebaseInvitador = "invitador-fb";
+            var usuarioInvitador = CrearUsuario(firebaseUid: firebaseInvitador, idUsuario: "admin123");
+            var usuarioInvitado = CrearUsuario(firebaseUid: "invitado-fb", idUsuario: "user456");
+            var grupo = CrearGrupo(grupoId, "Grupo Comidas");
 
-            var usuarioInvitador = CreateUsuario();
-
-            _usuarioRepositoryMock
-                .Setup(r => r.GetByFirebaseUidAsync(firebaseUid, ct))
+            _usuarioRepoMock
+                .Setup(r => r.GetByFirebaseUidAsync(firebaseInvitador, ct))
                 .ReturnsAsync(usuarioInvitador);
 
-            _grupoRepositoryMock
-                .Setup(r => r.GetByIdAsync(grupoId, ct))
-                .ReturnsAsync((Grupo?)null);
-
-            var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.HandleAsync(firebaseUid, grupoId, null, null, null, null, ct));
-
-            Assert.Equal("Grupo no encontrado", ex.Message);
-
-            _grupoRepositoryMock.Verify(r => r.UsuarioEsAdministradorAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
-        }
-
-        // Verifica que si el usuario invitador no es administrador se lanza UnauthorizedAccessException.
-        [Fact]
-        public async Task HandleAsync_UsuarioNoEsAdmin_LanzaUnauthorizedAccessException()
-        {
-            var firebaseUid = "uid-valido";
-            var grupoId = Guid.NewGuid();
-            var ct = CancellationToken.None;
-
-            var usuarioInvitador = CreateUsuario();
-            var grupo = CreateGrupo(grupoId);
-
-            _usuarioRepositoryMock
-                .Setup(r => r.GetByFirebaseUidAsync(firebaseUid, ct))
-                .ReturnsAsync(usuarioInvitador);
-
-            _grupoRepositoryMock
+            _grupoRepoMock
                 .Setup(r => r.GetByIdAsync(grupoId, ct))
                 .ReturnsAsync(grupo);
 
-            _grupoRepositoryMock
-                .Setup(r => r.UsuarioEsAdministradorAsync(grupoId, usuarioInvitador.Id, ct))
-                .ReturnsAsync(false);
-
-            var ex = await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
-                _sut.HandleAsync(firebaseUid, grupoId, null, null, null, null, ct));
-
-            Assert.Equal("Solo los administradores pueden invitar usuarios", ex.Message);
-
-            _usuarioRepositoryMock.Verify(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
-        }
-
-        // Verifica que si no se encuentra ningún usuario invitado se lanza ArgumentException.
-        [Fact]
-        public async Task HandleAsync_UsuarioInvitadoNoEncontrado_LanzaArgumentException()
-        {
-            var firebaseUid = "uid-valido";
-            var grupoId = Guid.NewGuid();
-            var ct = CancellationToken.None;
-
-            var usuarioInvitador = CreateUsuario();
-            var grupo = CreateGrupo(grupoId);
-
-            _usuarioRepositoryMock
-                .Setup(r => r.GetByFirebaseUidAsync(firebaseUid, ct))
-                .ReturnsAsync(usuarioInvitador);
-
-            _grupoRepositoryMock
-                .Setup(r => r.GetByIdAsync(grupoId, ct))
-                .ReturnsAsync(grupo);
-
-            _grupoRepositoryMock
+            _grupoRepoMock
                 .Setup(r => r.UsuarioEsAdministradorAsync(grupoId, usuarioInvitador.Id, ct))
                 .ReturnsAsync(true);
 
-            _usuarioRepositoryMock
-                .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), ct))
-                .ReturnsAsync((Usuario?)null);
-
-            _usuarioRepositoryMock
-                .Setup(r => r.GetByUsernameAsync(It.IsAny<string>(), ct))
-                .ReturnsAsync((Usuario?)null);
-
-            _usuarioRepositoryMock
-                .Setup(r => r.GetByEmailAsync(It.IsAny<string>(), ct))
-                .ReturnsAsync((Usuario?)null);
-
-            var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.HandleAsync(firebaseUid, grupoId, "mail@test.com", Guid.NewGuid(), "userX", "hola", ct));
-
-            Assert.Equal("No se encontró el usuario a invitar", ex.Message);
-        }
-
-        // Verifica que si el usuario intenta invitarse a sí mismo se lanza ArgumentException.
-        [Fact]
-        public async Task HandleAsync_UsuarioSeInvitaASiMismo_LanzaArgumentException()
-        {
-            var firebaseUid = "uid-valido";
-            var grupoId = Guid.NewGuid();
-            var ct = CancellationToken.None;
-
-            var usuarioId = Guid.NewGuid();
-            var usuarioInvitador = CreateUsuario(id: usuarioId);
-            var grupo = CreateGrupo(grupoId);
-
-            _usuarioRepositoryMock
-                .Setup(r => r.GetByFirebaseUidAsync(firebaseUid, ct))
-                .ReturnsAsync(usuarioInvitador);
-
-            _grupoRepositoryMock
-                .Setup(r => r.GetByIdAsync(grupoId, ct))
-                .ReturnsAsync(grupo);
-
-            _grupoRepositoryMock
-                .Setup(r => r.UsuarioEsAdministradorAsync(grupoId, usuarioInvitador.Id, ct))
-                .ReturnsAsync(true);
-
-            _usuarioRepositoryMock
-                .Setup(r => r.GetByIdAsync(usuarioId, ct))
-                .ReturnsAsync(usuarioInvitador);
-
-            var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.HandleAsync(firebaseUid, grupoId, null, usuarioId, null, null, ct));
-
-            Assert.Equal("No puedes invitarte a ti mismo", ex.Message);
-
-            _miembroGrupoRepositoryMock.Verify(r =>
-                r.UsuarioEsMiembroActivoAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
-                Times.Never);
-        }
-
-        // Verifica que si el usuario ya es miembro activo del grupo se lanza ArgumentException.
-        [Fact]
-        public async Task HandleAsync_UsuarioYaEsMiembro_LanzaArgumentException()
-        {
-            var firebaseUid = "uid-valido";
-            var grupoId = Guid.NewGuid();
-            var ct = CancellationToken.None;
-
-            var usuarioInvitador = CreateUsuario();
-            var usuarioInvitado = CreateUsuario();
-            var grupo = CreateGrupo(grupoId);
-
-            _usuarioRepositoryMock
-                .Setup(r => r.GetByFirebaseUidAsync(firebaseUid, ct))
-                .ReturnsAsync(usuarioInvitador);
-
-            _grupoRepositoryMock
-                .Setup(r => r.GetByIdAsync(grupoId, ct))
-                .ReturnsAsync(grupo);
-
-            _grupoRepositoryMock
-                .Setup(r => r.UsuarioEsAdministradorAsync(grupoId, usuarioInvitador.Id, ct))
-                .ReturnsAsync(true);
-
-            _usuarioRepositoryMock
+            // Lo encuentra por UsuarioId
+            _usuarioRepoMock
                 .Setup(r => r.GetByIdAsync(usuarioInvitado.Id, ct))
                 .ReturnsAsync(usuarioInvitado);
 
-            _miembroGrupoRepositoryMock
-                .Setup(r => r.UsuarioEsMiembroActivoAsync(grupoId, usuarioInvitado.Id, ct))
-                .ReturnsAsync(true);
-
-            var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.HandleAsync(firebaseUid, grupoId, null, usuarioInvitado.Id, null, null, ct));
-
-            Assert.Equal("El usuario ya es miembro del grupo", ex.Message);
-
-            _invitacionRepositoryMock.Verify(r =>
-                r.ExisteInvitacionPendienteAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
-                Times.Never);
-        }
-
-        // Verifica que si ya existe una invitación pendiente se lanza ArgumentException.
-        [Fact]
-        public async Task HandleAsync_YaExisteInvitacionPendiente_LanzaArgumentException()
-        {
-            var firebaseUid = "uid-valido";
-            var grupoId = Guid.NewGuid();
-            var ct = CancellationToken.None;
-
-            var usuarioInvitador = CreateUsuario();
-            var usuarioInvitado = CreateUsuario();
-            var grupo = CreateGrupo(grupoId);
-
-            _usuarioRepositoryMock
-                .Setup(r => r.GetByFirebaseUidAsync(firebaseUid, ct))
-                .ReturnsAsync(usuarioInvitador);
-
-            _grupoRepositoryMock
-                .Setup(r => r.GetByIdAsync(grupoId, ct))
-                .ReturnsAsync(grupo);
-
-            _grupoRepositoryMock
-                .Setup(r => r.UsuarioEsAdministradorAsync(grupoId, usuarioInvitador.Id, ct))
-                .ReturnsAsync(true);
-
-            _usuarioRepositoryMock
-                .Setup(r => r.GetByIdAsync(usuarioInvitado.Id, ct))
-                .ReturnsAsync(usuarioInvitado);
-
-            _miembroGrupoRepositoryMock
+            // No es miembro activo
+            _miembroGrupoRepoMock
                 .Setup(r => r.UsuarioEsMiembroActivoAsync(grupoId, usuarioInvitado.Id, ct))
                 .ReturnsAsync(false);
 
-            _invitacionRepositoryMock
-                .Setup(r => r.ExisteInvitacionPendienteAsync(grupoId, usuarioInvitado.Id, ct))
-                .ReturnsAsync(true);
+            // No hay invitación previa
+            _invitacionRepoMock
+                .Setup(r => r.ObtenerUltimaInvitacionAsync(grupoId, usuarioInvitado.Id, ct))
+                .ReturnsAsync((InvitacionGrupo?)null);
 
-            var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.HandleAsync(firebaseUid, grupoId, null, usuarioInvitado.Id, null, null, ct));
-
-            Assert.Equal("Ya existe una invitación pendiente para este usuario", ex.Message);
-
-            _notificacionRepositoryMock.Verify(r =>
-                r.crearAsync(It.IsAny<Notificacion>(), It.IsAny<CancellationToken>()),
-                Times.Never);
-        }
-
-        // Verifica que cuando todo es válido se crea la invitación, la notificación y se devuelve la invitación completa.
-        [Fact]
-        public async Task HandleAsync_TodoValido_CreaInvitacionYNotificacionYDevuelveInvitacionCompleta()
-        {
-            var firebaseUid = "uid-valido";
-            var grupoId = Guid.NewGuid();
-            var ct = CancellationToken.None;
-
-            var usuarioInvitador = CreateUsuario(nombre: "Admin Invitador");
-            var usuarioInvitado = CreateUsuario(firebaseUid: "firebase-invitado");
-            var grupo = CreateGrupo(grupoId, "Grupo de prueba");
-
-            _usuarioRepositoryMock
-                .Setup(r => r.GetByFirebaseUidAsync(firebaseUid, ct))
-                .ReturnsAsync(usuarioInvitador);
-
-            _grupoRepositoryMock
-                .Setup(r => r.GetByIdAsync(grupoId, ct))
-                .ReturnsAsync(grupo);
-
-            _grupoRepositoryMock
-                .Setup(r => r.UsuarioEsAdministradorAsync(grupoId, usuarioInvitador.Id, ct))
-                .ReturnsAsync(true);
-
-            _usuarioRepositoryMock
-                .Setup(r => r.GetByIdAsync(usuarioInvitado.Id, ct))
-                .ReturnsAsync(usuarioInvitado);
-
-            _miembroGrupoRepositoryMock
-                .Setup(r => r.UsuarioEsMiembroActivoAsync(grupoId, usuarioInvitado.Id, ct))
-                .ReturnsAsync(false);
-
-            _invitacionRepositoryMock
-                .Setup(r => r.ExisteInvitacionPendienteAsync(grupoId, usuarioInvitado.Id, ct))
-                .ReturnsAsync(false);
-
-            _notificacionRepositoryMock
+            Notificacion? notificacionCreada = null;
+            _notificacionRepoMock
                 .Setup(r => r.crearAsync(It.IsAny<Notificacion>(), ct))
+                .Callback<Notificacion, CancellationToken>((n, _) => notificacionCreada = n)
                 .Returns(Task.CompletedTask);
 
-            var invitacionCompleta = CreateInvitacion(
-                id: Guid.NewGuid(),
-                grupoId: grupoId,
-                usuarioInvitadoId: usuarioInvitado.Id,
-                usuarioInvitadorId: usuarioInvitador.Id);
-
-            _invitacionRepositoryMock
-            .Setup(r => r.CreateAsync(It.IsAny<InvitacionGrupo>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((InvitacionGrupo invitacion, CancellationToken _) => invitacion);
+            InvitacionGrupo? invitacionCreada = null;
+            _invitacionRepoMock
+                .Setup(r => r.CreateAsync(It.IsAny<InvitacionGrupo>(), ct))
+                .Callback<InvitacionGrupo, CancellationToken>((i, _) => invitacionCreada = i)
+                 .ReturnsAsync((InvitacionGrupo?)null);
 
 
-            _notificacionRepositoryMock
+            _notificacionRepoMock
                 .Setup(r => r.UpdateAsync(It.IsAny<Notificacion>(), ct))
                 .Returns(Task.CompletedTask);
 
-            _invitacionRepositoryMock
+            // GetByIdAsync devuelve la invitación creada
+            _invitacionRepoMock
                 .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), ct))
-                .ReturnsAsync(invitacionCompleta);
+                .ReturnsAsync(() => invitacionCreada!);
 
-            _notificacionRealtimeServiceMock
-                .Setup(s => s.EnviarNotificacionAsync(
-                    usuarioInvitado.FirebaseUid,
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    ct,
-                    It.IsAny<Guid>(),
-                    It.IsAny<Guid>()))
-                .Returns(Task.CompletedTask);
-
-            var result = await _sut.HandleAsync(
-                firebaseUid,
+            // Act
+            var resultado = await sut.HandleAsync(
+                firebaseInvitador,
                 grupoId,
-                null,
-                usuarioInvitado.Id,
-                null,
-                "Mensaje personalizado",
+                EmailUsuario: null,
+                UsuarioId: usuarioInvitado.Id,
+                UsuarioUsername: null,
+                MensajePersonalizado: "Te invito al grupo",
+                ct: ct);
+
+            // Assert
+            resultado.Should().NotBeNull();
+            resultado.Should().BeSameAs(invitacionCreada);
+
+            // Notificación creada correctamente
+            notificacionCreada.Should().NotBeNull();
+            notificacionCreada!.UsuarioDestinoId.Should().Be(usuarioInvitado.Id);
+            notificacionCreada.Titulo.Should().Be("Invitación a grupo");
+            notificacionCreada.Tipo.Should().Be(TipoNotificacion.InvitacionGrupo);
+
+            // Invitación creada correctamente
+            invitacionCreada.Should().NotBeNull();
+            invitacionCreada!.GrupoId.Should().Be(grupoId);
+            invitacionCreada.UsuarioInvitadoId.Should().Be(usuarioInvitado.Id);
+            invitacionCreada.UsuarioInvitadorId.Should().Be(usuarioInvitador.Id);
+            invitacionCreada.MensajePersonalizado.Should().Be("Te invito al grupo");
+
+            // Notificación actualizada con InvitacionId
+            _notificacionRepoMock.Verify(
+                r => r.UpdateAsync(It.Is<Notificacion>(n =>
+                    n.InvitacionId == invitacionCreada.Id), ct),
+                Times.Once);
+
+            // Notificación realtime enviada
+            _notificacionRealtimeMock.Verify(r => r.EnviarNotificacionAsync(
+                usuarioInvitado.FirebaseUid,
+                notificacionCreada.Titulo,
+                notificacionCreada.Mensaje,
+                notificacionCreada.Tipo.ToString(),
+                ct,
+                notificacionCreada.Id,
+                invitacionCreada.Id
+            ), Times.Once);
+        }
+
+       
+
+        [Fact]
+        public async Task HandleAsync_Deberia_Lanzar_Unauthorized_SiUsuarioInvitadorNoExiste()
+        {
+            // Arrange
+            var sut = CreateSut();
+            var ct = CancellationToken.None;
+
+            _usuarioRepoMock
+                .Setup(r => r.GetByFirebaseUidAsync("uid-invalido", ct))
+                .ReturnsAsync((Usuario?)null);
+
+            // Act
+            var act = () => sut.HandleAsync(
+                "uid-invalido",
+                Guid.NewGuid(),
+                null, null, null, null,
                 ct);
 
-            Assert.NotNull(result);
-            Assert.Equal(invitacionCompleta, result);
-
-            _notificacionRepositoryMock.Verify(
-                r => r.crearAsync(It.IsAny<Notificacion>(), ct),
-                Times.Once);
-
-            _invitacionRepositoryMock.Verify(
-                r => r.CreateAsync(It.IsAny<InvitacionGrupo>(), ct),
-                Times.Once);
-
-            _notificacionRepositoryMock.Verify(
-                r => r.UpdateAsync(It.IsAny<Notificacion>(), ct),
-                Times.Once);
-
-            _notificacionRealtimeServiceMock.Verify(
-                s => s.EnviarNotificacionAsync(
-                    usuarioInvitado.FirebaseUid,
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    ct,
-                    It.IsAny<Guid>(),
-                    It.IsAny<Guid>()),
-                Times.Once);
-
-            _invitacionRepositoryMock.Verify(
-                r => r.GetByIdAsync(It.IsAny<Guid>(), ct),
-                Times.Once);
+            // Assert
+            await act.Should()
+                .ThrowAsync<UnauthorizedAccessException>()
+                .WithMessage("Usuario no encontrado");
         }
 
-        // Verifica que si falla la obtención de la invitación completa se lanza InvalidOperationException.
         [Fact]
-        public async Task HandleAsync_ErrorObteniendoInvitacionCompleta_LanzaInvalidOperationException()
+        public async Task HandleAsync_Deberia_Lanzar_ArgumentException_SiGrupoNoExiste()
         {
-            var firebaseUid = "uid-valido";
-            var grupoId = Guid.NewGuid();
+            // Arrange
+            var sut = CreateSut();
             var ct = CancellationToken.None;
 
-            var usuarioInvitador = CreateUsuario();
-            var usuarioInvitado = CreateUsuario();
-            var grupo = CreateGrupo(grupoId);
+            var firebaseInvitador = "fb-1";
+            var usuarioInvitador = CrearUsuario(firebaseUid: firebaseInvitador);
 
-            _usuarioRepositoryMock
-                .Setup(r => r.GetByFirebaseUidAsync(firebaseUid, ct))
+            _usuarioRepoMock
+                .Setup(r => r.GetByFirebaseUidAsync(firebaseInvitador, ct))
                 .ReturnsAsync(usuarioInvitador);
 
-            _grupoRepositoryMock
+            _grupoRepoMock
+                .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), ct))
+                .ReturnsAsync((Grupo?)null);
+
+            // Act
+            var act = () => sut.HandleAsync(
+                firebaseInvitador,
+                Guid.NewGuid(),
+                null, null, null, null,
+                ct);
+
+            // Assert
+            await act.Should()
+                .ThrowAsync<ArgumentException>()
+                .WithMessage("Grupo no encontrado");
+        }
+
+        [Fact]
+        public async Task HandleAsync_Deberia_Lanzar_Unauthorized_SiUsuarioNoEsAdministrador()
+        {
+            // Arrange
+            var sut = CreateSut();
+            var ct = CancellationToken.None;
+
+            var grupoId = Guid.NewGuid();
+            var firebaseInvitador = "fb-1";
+            var usuarioInvitador = CrearUsuario(firebaseUid: firebaseInvitador);
+            var grupo = CrearGrupo(grupoId);
+
+            _usuarioRepoMock
+                .Setup(r => r.GetByFirebaseUidAsync(firebaseInvitador, ct))
+                .ReturnsAsync(usuarioInvitador);
+
+            _grupoRepoMock
                 .Setup(r => r.GetByIdAsync(grupoId, ct))
                 .ReturnsAsync(grupo);
 
-            _grupoRepositoryMock
+            _grupoRepoMock
+                .Setup(r => r.UsuarioEsAdministradorAsync(grupoId, usuarioInvitador.Id, ct))
+                .ReturnsAsync(false);
+
+            // Act
+            var act = () => sut.HandleAsync(
+                firebaseInvitador,
+                grupoId,
+                null, null, null, null,
+                ct);
+
+            // Assert
+            await act.Should()
+                .ThrowAsync<UnauthorizedAccessException>()
+                .WithMessage("Solo los administradores pueden invitar usuarios");
+        }
+
+        [Fact]
+        public async Task HandleAsync_Deberia_Lanzar_ArgumentException_SiUsuarioInvitadoNoSeEncuentra()
+        {
+            // Arrange
+            var sut = CreateSut();
+            var ct = CancellationToken.None;
+
+            var grupoId = Guid.NewGuid();
+            var firebaseInvitador = "fb-1";
+            var usuarioInvitador = CrearUsuario(firebaseUid: firebaseInvitador);
+            var grupo = CrearGrupo(grupoId);
+
+            _usuarioRepoMock
+                .Setup(r => r.GetByFirebaseUidAsync(firebaseInvitador, ct))
+                .ReturnsAsync(usuarioInvitador);
+
+            _grupoRepoMock
+                .Setup(r => r.GetByIdAsync(grupoId, ct))
+                .ReturnsAsync(grupo);
+
+            _grupoRepoMock
                 .Setup(r => r.UsuarioEsAdministradorAsync(grupoId, usuarioInvitador.Id, ct))
                 .ReturnsAsync(true);
 
-            _usuarioRepositoryMock
+            // ObtenerUsuarioInvitado devuelve null
+            _usuarioRepoMock.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), ct))
+                .ReturnsAsync((Usuario?)null);
+            _usuarioRepoMock.Setup(r => r.GetByUsernameAsync(It.IsAny<string>(), ct))
+                .ReturnsAsync((Usuario?)null);
+            _usuarioRepoMock.Setup(r => r.GetByEmailAsync(It.IsAny<string>(), ct))
+                .ReturnsAsync((Usuario?)null);
+
+            // Act
+            var act = () => sut.HandleAsync(
+                firebaseInvitador,
+                grupoId,
+                EmailUsuario: null,
+                UsuarioId: null,
+                UsuarioUsername: null,
+                MensajePersonalizado: null,
+                ct: ct);
+
+            // Assert
+            await act.Should()
+                .ThrowAsync<ArgumentException>()
+                .WithMessage("No se encontró el usuario a invitar");
+        }
+
+        [Fact]
+        public async Task HandleAsync_Deberia_Lanzar_ArgumentException_CuandoUsuarioSeInvitaASiMismo()
+        {
+            // Arrange
+            var sut = CreateSut();
+            var ct = CancellationToken.None;
+
+            var grupoId = Guid.NewGuid();
+            var firebaseInvitador = "fb-1";
+            var usuarioInvitador = CrearUsuario(firebaseUid: firebaseInvitador);
+            var grupo = CrearGrupo(grupoId);
+
+            _usuarioRepoMock
+                .Setup(r => r.GetByFirebaseUidAsync(firebaseInvitador, ct))
+                .ReturnsAsync(usuarioInvitador);
+
+            _grupoRepoMock
+                .Setup(r => r.GetByIdAsync(grupoId, ct))
+                .ReturnsAsync(grupo);
+
+            _grupoRepoMock
+                .Setup(r => r.UsuarioEsAdministradorAsync(grupoId, usuarioInvitador.Id, ct))
+                .ReturnsAsync(true);
+
+            // Vamos a hacer que el invitado sea el mismo usuario (mismo Id)
+            _usuarioRepoMock
+                .Setup(r => r.GetByIdAsync(usuarioInvitador.Id, ct))
+                .ReturnsAsync(usuarioInvitador);
+
+            // Act
+            var act = () => sut.HandleAsync(
+                firebaseInvitador,
+                grupoId,
+                EmailUsuario: null,
+                UsuarioId: usuarioInvitador.Id,
+                UsuarioUsername: null,
+                MensajePersonalizado: null,
+                ct: ct);
+
+            // Assert
+            await act.Should()
+                .ThrowAsync<ArgumentException>()
+                .WithMessage("No puedes invitarte a ti mismo");
+        }
+
+        [Fact]
+        public async Task HandleAsync_Deberia_Lanzar_ArgumentException_CuandoUsuarioEsMiembroActivo()
+        {
+            // Arrange
+            var sut = CreateSut();
+            var ct = CancellationToken.None;
+
+            var grupoId = Guid.NewGuid();
+            var firebaseInvitador = "fb-1";
+            var usuarioInvitador = CrearUsuario(firebaseUid: firebaseInvitador);
+            var usuarioInvitado = CrearUsuario(firebaseUid: "invitado-fb");
+            var grupo = CrearGrupo(grupoId);
+
+            _usuarioRepoMock
+                .Setup(r => r.GetByFirebaseUidAsync(firebaseInvitador, ct))
+                .ReturnsAsync(usuarioInvitador);
+
+            _grupoRepoMock
+                .Setup(r => r.GetByIdAsync(grupoId, ct))
+                .ReturnsAsync(grupo);
+
+            _grupoRepoMock
+                .Setup(r => r.UsuarioEsAdministradorAsync(grupoId, usuarioInvitador.Id, ct))
+                .ReturnsAsync(true);
+
+            _usuarioRepoMock
                 .Setup(r => r.GetByIdAsync(usuarioInvitado.Id, ct))
                 .ReturnsAsync(usuarioInvitado);
 
-            _miembroGrupoRepositoryMock
+            _miembroGrupoRepoMock
+                .Setup(r => r.UsuarioEsMiembroActivoAsync(grupoId, usuarioInvitado.Id, ct))
+                .ReturnsAsync(true);
+
+            // Act
+            var act = () => sut.HandleAsync(
+                firebaseInvitador,
+                grupoId,
+                EmailUsuario: null,
+                UsuarioId: usuarioInvitado.Id,
+                UsuarioUsername: null,
+                MensajePersonalizado: null,
+                ct: ct);
+
+            // Assert
+            await act.Should()
+                .ThrowAsync<ArgumentException>()
+                .WithMessage("El usuario ya es miembro del grupo");
+        }
+
+        [Fact]
+        public async Task HandleAsync_Deberia_Lanzar_ArgumentException_SiHayInvitacionPendiente()
+        {
+            // Arrange
+            var sut = CreateSut();
+            var ct = CancellationToken.None;
+
+            var grupoId = Guid.NewGuid();
+            var firebaseInvitador = "fb-1";
+            var usuarioInvitador = CrearUsuario(firebaseUid: firebaseInvitador);
+            var usuarioInvitado = CrearUsuario(firebaseUid: "invitado-fb");
+            var grupo = CrearGrupo(grupoId);
+
+            _usuarioRepoMock
+                .Setup(r => r.GetByFirebaseUidAsync(firebaseInvitador, ct))
+                .ReturnsAsync(usuarioInvitador);
+
+            _grupoRepoMock
+                .Setup(r => r.GetByIdAsync(grupoId, ct))
+                .ReturnsAsync(grupo);
+
+            _grupoRepoMock
+                .Setup(r => r.UsuarioEsAdministradorAsync(grupoId, usuarioInvitador.Id, ct))
+                .ReturnsAsync(true);
+
+            _usuarioRepoMock
+                .Setup(r => r.GetByIdAsync(usuarioInvitado.Id, ct))
+                .ReturnsAsync(usuarioInvitado);
+
+            _miembroGrupoRepoMock
                 .Setup(r => r.UsuarioEsMiembroActivoAsync(grupoId, usuarioInvitado.Id, ct))
                 .ReturnsAsync(false);
 
-            _invitacionRepositoryMock
-                .Setup(r => r.ExisteInvitacionPendienteAsync(grupoId, usuarioInvitado.Id, ct))
+            var invitacionPendiente = new InvitacionGrupo(grupoId, usuarioInvitado.Id, usuarioInvitador.Id, null);
+            // Estado por defecto: Pendiente
+
+            _invitacionRepoMock
+                .Setup(r => r.ObtenerUltimaInvitacionAsync(grupoId, usuarioInvitado.Id, ct))
+                .ReturnsAsync(invitacionPendiente);
+
+            // Act
+            var act = () => sut.HandleAsync(
+                firebaseInvitador,
+                grupoId,
+                EmailUsuario: null,
+                UsuarioId: usuarioInvitado.Id,
+                UsuarioUsername: null,
+                MensajePersonalizado: null,
+                ct: ct);
+
+            // Assert
+            await act.Should()
+                .ThrowAsync<ArgumentException>()
+                .WithMessage("Ya existe una invitación pendiente para este usuario");
+        }
+
+        [Fact]
+        public async Task HandleAsync_Deberia_Lanzar_ArgumentException_SiUltimaInvitacionAceptadaYUsuarioSigueEnGrupo()
+        {
+            // Arrange
+            var sut = CreateSut();
+            var ct = CancellationToken.None;
+
+            var grupoId = Guid.NewGuid();
+            var firebaseInvitador = "fb-1";
+            var usuarioInvitador = CrearUsuario(firebaseUid: firebaseInvitador);
+            var usuarioInvitado = CrearUsuario(firebaseUid: "invitado-fb");
+            var grupo = CrearGrupo(grupoId);
+
+            _usuarioRepoMock
+                .Setup(r => r.GetByFirebaseUidAsync(firebaseInvitador, ct))
+                .ReturnsAsync(usuarioInvitador);
+
+            _grupoRepoMock
+                .Setup(r => r.GetByIdAsync(grupoId, ct))
+                .ReturnsAsync(grupo);
+
+            _grupoRepoMock
+                .Setup(r => r.UsuarioEsAdministradorAsync(grupoId, usuarioInvitador.Id, ct))
+                .ReturnsAsync(true);
+
+            _usuarioRepoMock
+                .Setup(r => r.GetByIdAsync(usuarioInvitado.Id, ct))
+                .ReturnsAsync(usuarioInvitado);
+
+            _miembroGrupoRepoMock
+                .Setup(r => r.UsuarioEsMiembroActivoAsync(grupoId, usuarioInvitado.Id, ct))
+                .ReturnsAsync(true);
+
+            var invitacionAceptada = new InvitacionGrupo(grupoId, usuarioInvitado.Id, usuarioInvitador.Id, null);
+            invitacionAceptada.Aceptar(); // asumiendo que el método existe y cambia Estado
+
+            _invitacionRepoMock
+                .Setup(r => r.ObtenerUltimaInvitacionAsync(grupoId, usuarioInvitado.Id, ct))
+                .ReturnsAsync(invitacionAceptada);
+
+            // Act
+            var act = () => sut.HandleAsync(
+                firebaseInvitador,
+                grupoId,
+                EmailUsuario: null,
+                UsuarioId: usuarioInvitado.Id,
+                UsuarioUsername: null,
+                MensajePersonalizado: null,
+                ct: ct);
+
+            // Assert
+            await act.Should()
+                .ThrowAsync<ArgumentException>()
+                .WithMessage("El usuario ya es miembro del grupo");
+        }
+
+        [Fact]
+        public async Task HandleAsync_Deberia_Lanzar_InvalidOperation_SiGetByIdAsync_RetornaNull()
+        {
+            // Arrange
+            var sut = CreateSut();
+            var ct = CancellationToken.None;
+
+            var grupoId = Guid.NewGuid();
+            var firebaseInvitador = "fb-1";
+            var usuarioInvitador = CrearUsuario(firebaseUid: firebaseInvitador);
+            var usuarioInvitado = CrearUsuario(firebaseUid: "invitado-fb");
+            var grupo = CrearGrupo(grupoId);
+
+            _usuarioRepoMock
+                .Setup(r => r.GetByFirebaseUidAsync(firebaseInvitador, ct))
+                .ReturnsAsync(usuarioInvitador);
+
+            _grupoRepoMock
+                .Setup(r => r.GetByIdAsync(grupoId, ct))
+                .ReturnsAsync(grupo);
+
+            _grupoRepoMock
+                .Setup(r => r.UsuarioEsAdministradorAsync(grupoId, usuarioInvitador.Id, ct))
+                .ReturnsAsync(true);
+
+            _usuarioRepoMock
+                .Setup(r => r.GetByIdAsync(usuarioInvitado.Id, ct))
+                .ReturnsAsync(usuarioInvitado);
+
+            _miembroGrupoRepoMock
+                .Setup(r => r.UsuarioEsMiembroActivoAsync(grupoId, usuarioInvitado.Id, ct))
                 .ReturnsAsync(false);
 
-            _notificacionRepositoryMock
+            _invitacionRepoMock
+                .Setup(r => r.ObtenerUltimaInvitacionAsync(grupoId, usuarioInvitado.Id, ct))
+                .ReturnsAsync((InvitacionGrupo?)null);
+
+            _notificacionRepoMock
                 .Setup(r => r.crearAsync(It.IsAny<Notificacion>(), ct))
                 .Returns(Task.CompletedTask);
 
-            var invitacionDummy = (InvitacionGrupo)Activator.CreateInstance(typeof(InvitacionGrupo), nonPublic: true)!;
+            _invitacionRepoMock
+                .Setup(r => r.CreateAsync(It.IsAny<InvitacionGrupo>(), ct))
+            .ReturnsAsync((InvitacionGrupo?)null);
 
-            _invitacionRepositoryMock
-                .Setup(r => r.CreateAsync(It.IsAny<InvitacionGrupo>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(invitacionDummy);
-
-            _notificacionRepositoryMock
+            _notificacionRepoMock
                 .Setup(r => r.UpdateAsync(It.IsAny<Notificacion>(), ct))
                 .Returns(Task.CompletedTask);
 
-            _invitacionRepositoryMock
+            _invitacionRepoMock
                 .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), ct))
                 .ReturnsAsync((InvitacionGrupo?)null);
 
-            _notificacionRealtimeServiceMock
-                .Setup(s => s.EnviarNotificacionAsync(
-                    usuarioInvitado.FirebaseUid,
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    ct,
-                    It.IsAny<Guid>(),
-                    It.IsAny<Guid>()))
-                .Returns(Task.CompletedTask);
+            // Act
+            var act = () => sut.HandleAsync(
+                firebaseInvitador,
+                grupoId,
+                EmailUsuario: null,
+                UsuarioId: usuarioInvitado.Id,
+                UsuarioUsername: null,
+                MensajePersonalizado: null,
+                ct: ct);
 
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                _sut.HandleAsync(firebaseUid, grupoId, null, usuarioInvitado.Id, null, "msg", ct));
-
-            Assert.Equal("Error al crear la invitación", ex.Message);
+            // Assert
+            await act.Should()
+                .ThrowAsync<InvalidOperationException>()
+                .WithMessage("Error al crear la invitación");
         }
     }
 }

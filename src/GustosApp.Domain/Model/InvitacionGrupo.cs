@@ -13,14 +13,14 @@ namespace GustosApp.Domain.Model
         public Guid Id { get; private set; } = Guid.NewGuid();
 
         public Guid? NotificacionId { get; set; }
-        public Guid GrupoId { get; private set; }
-        public Guid UsuarioInvitadoId { get; private set; }
-        public Guid UsuarioInvitadorId { get; private set; }
-        public DateTime FechaInvitacion { get; private set; } = DateTime.UtcNow;
-        public DateTime? FechaRespuesta { get; private set; }
-        public EstadoInvitacion Estado { get; private set; } = EstadoInvitacion.Pendiente;
-        public string? MensajePersonalizado { get; private set; }
-        public DateTime FechaExpiracion { get; private set; }
+        public Guid GrupoId { get;  set; }
+        public Guid UsuarioInvitadoId { get;set; }
+        public Guid UsuarioInvitadorId { get;  set; }
+        public DateTime FechaInvitacion { get; set; } = DateTime.UtcNow;
+        public DateTime? FechaRespuesta { get; set; }
+        public EstadoInvitacion Estado { get; set; } = EstadoInvitacion.Pendiente;
+        public string? MensajePersonalizado { get; set; }
+        public DateTime FechaExpiracion { get; set; }
 
         // Navegación
         public Grupo Grupo { get; set; }

@@ -15,5 +15,10 @@ namespace GustosApp.Domain.Interfaces
         Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default);
         Task<bool> ExisteInvitacionPendienteAsync(Guid grupoId, Guid usuarioId, CancellationToken cancellationToken = default);
         Task MarcarInvitacionesExpiradasAsync(CancellationToken cancellationToken = default);
+
+        Task<InvitacionGrupo?> ObtenerUltimaInvitacionAsync(Guid grupoId, Guid usuarioInvitadoId, CancellationToken ct);
+     
+
+
     }
 }

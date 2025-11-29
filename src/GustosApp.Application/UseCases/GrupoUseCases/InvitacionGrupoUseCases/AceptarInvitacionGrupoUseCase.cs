@@ -103,9 +103,6 @@ namespace GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases
                     invitacion.NotificacionId.Value
                 );
             }
-
-
-
             // Recupera el grupo actualizado con relaciones
             var grupo = invitacion.Grupo ?? await _grupoRepository.GetByIdAsync
                 (invitacion.GrupoId, cancellationToken)
@@ -116,17 +113,11 @@ namespace GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases
             await _chatRealtime.UsuarioSeUnio(
                invitacion.GrupoId,
                  usuario.Id,
-             usuario.IdUsuario
+             usuario.IdUsuario,
+             usuario.FotoPerfilUrl
                 );
 
-
-
-
             return grupo;
-
-
-
-
         }
     }
 }

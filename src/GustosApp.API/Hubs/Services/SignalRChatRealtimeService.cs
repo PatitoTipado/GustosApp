@@ -14,13 +14,14 @@ namespace GustosApp.API.Hubs.Services
             _hubContext = hubContext;
         }
 
-        public async Task UsuarioSeUnio(Guid grupoId, Guid usuarioId, string nombre)
+        public async Task UsuarioSeUnio(Guid grupoId, Guid usuarioId, string nombre, string? fotourl)
         {
             await _hubContext.Clients.Group(grupoId.ToString())
                 .SendAsync("UsuarioSeUnio", new
                 {
                     usuarioId,
-                    nombre
+                    nombre,
+                    fotourl
                 });
 
 

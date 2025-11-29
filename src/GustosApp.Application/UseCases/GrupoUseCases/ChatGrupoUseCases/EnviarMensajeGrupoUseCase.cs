@@ -58,22 +58,6 @@ namespace GustosApp.Application.UseCases.GrupoUseCases.ChatGrupoUseCases
             var saved = await _chatRepository.AddMessageAsync(chat, cancellationToken);
             return saved;
         }
-        public async Task<ChatMensaje> HandleSystemMessageAsync(Guid grupoId, string mensaje, CancellationToken cancellationToken = default)
-        {
-            var chat = new ChatMensaje
-            {
-                Id = Guid.NewGuid(),
-                GrupoId = grupoId,
-                UsuarioId = Guid.Empty,               
-                UsuarioNombre = "Sistema",
-                Mensaje = mensaje,
-                FechaEnvio = DateTime.UtcNow
-                
-                                    
-            };
-
-            return await _chatRepository.AddMessageAsync(chat, cancellationToken);
-        }
-
+      
     }
 }

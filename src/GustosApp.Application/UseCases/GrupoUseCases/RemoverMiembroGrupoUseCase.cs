@@ -1,3 +1,4 @@
+using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 
@@ -8,14 +9,17 @@ namespace GustosApp.Application.UseCases.GrupoUseCases
         private readonly IGrupoRepository _grupoRepository;
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IMiembroGrupoRepository _miembroGrupoRepository;
-
+        private readonly IChatRealTimeService _chatRealtime;
         public RemoverMiembroGrupoUseCase(IGrupoRepository grupoRepository,
             IUsuarioRepository usuarioRepository,
-            IMiembroGrupoRepository miembroGrupoRepository)
+            IMiembroGrupoRepository miembroGrupoRepository
+,
+            IChatRealTimeService chatRealtime)
         {
             _grupoRepository = grupoRepository;
             _usuarioRepository = usuarioRepository;
             _miembroGrupoRepository = miembroGrupoRepository;
+            _chatRealtime = chatRealtime;
         }
 
         public async Task<bool> HandleAsync(string firebaseUid, Guid grupoId, string username, CancellationToken cancellationToken = default)
@@ -50,6 +54,13 @@ namespace GustosApp.Application.UseCases.GrupoUseCases
             // marcar como abandonado (inactivar)
             miembro.AbandonarGrupo();
             await _miembroGrupoRepository.UpdateAsync(miembro, cancellationToken);
+
+           
+            await _chatRealtime.UsuarioExpulsadoDelGrupo(
+                grupo.Id,
+                miembro.Usuario.FirebaseUid, 
+                grupo.Nombre
+            );
 
             return true;
         }

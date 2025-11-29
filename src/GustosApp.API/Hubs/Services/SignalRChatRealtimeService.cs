@@ -7,34 +7,53 @@ namespace GustosApp.API.Hubs.Services
 {
     public class SignalRChatRealtimeService : IChatRealTimeService
     {
-
         private readonly IHubContext<ChatHub> _hubContext;
 
         public SignalRChatRealtimeService(IHubContext<ChatHub> hubContext)
         {
             _hubContext = hubContext;
         }
-        public async Task NotificarGrupoChat(Guid grupoId, Guid usuarioId, string nombre)
+
+        public async Task UsuarioSeUnio(Guid grupoId, Guid usuarioId, string nombre)
         {
             await _hubContext.Clients.Group(grupoId.ToString())
-                .SendAsync("GroupMemberJoined", new
+                .SendAsync("UsuarioSeUnio", new
                 {
-                    GroupId = grupoId,
-                    UserId = usuarioId,
-                    UserName = nombre
+                    usuarioId,
+                    nombre
                 });
 
-            // También mensaje de sistema al chat
-            await _hubContext.Clients.Group(grupoId.ToString())
-             .SendAsync("ReceiveMessage", new
-             {
-                 usuario = "Sistema",
-                 mensaje = $"{nombre} se unió al grupo 👋",
-                 fecha = DateTime.UtcNow
-             });
+
         }
 
+        public async Task UsuarioExpulsadoDelGrupo(Guid grupoId, string firebaseUid, string nombreGrupo)
+        {
+            
+            await _hubContext.Clients.User(firebaseUid).SendAsync("KickedFromGroup", new
+            {
+                grupoId,
+                nombreGrupo
+            });
+        }
 
+        public async Task UsuarioAbandono(Guid grupoId, Guid usuarioId, string nombre, string firebaseUid)
+        {
+       
+            await _hubContext.Clients.Group(grupoId.ToString())
+                .SendAsync("UsuarioAbandonoGrupo", new
+                {
+                    usuarioId,
+                    nombre,
+                    firebaseUid
+                });
+
+            await _hubContext.Groups.RemoveFromGroupAsync(
+                firebaseUid,           
+                grupoId.ToString()
+            );
+
+
+        }
 
     }
 }

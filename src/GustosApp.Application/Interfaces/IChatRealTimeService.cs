@@ -8,9 +8,12 @@ namespace GustosApp.Application.Interfaces
 {
     public interface IChatRealTimeService
     {
-      
 
-        Task NotificarGrupoChat(Guid grupoId, Guid usuarioId, string nombre);
+
+        Task UsuarioSeUnio(Guid grupoId, Guid usuarioId, string nombre);
+        Task UsuarioExpulsadoDelGrupo(Guid grupoId, string firebaseUid, string nombreGrupo);
+
+        Task UsuarioAbandono(Guid grupoId, Guid usuarioId, string IdUser, string firebaseUid);
     }
 
 }

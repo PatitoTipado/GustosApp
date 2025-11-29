@@ -12,7 +12,6 @@ namespace GustosApp.Domain.Interfaces
         Task<ChatMensaje> HandleAsync(string firebaseUid, Guid grupoId, string mensaje
             , CancellationToken cancellationToken = default);
 
-        Task<ChatMensaje> HandleSystemMessageAsync(Guid grupoId, string mensaje, CancellationToken cancellationToken = default);
         
 
     }

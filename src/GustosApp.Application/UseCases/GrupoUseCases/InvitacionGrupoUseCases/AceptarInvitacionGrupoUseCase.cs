@@ -15,7 +15,6 @@ namespace GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases
         private readonly INotificacionRealtimeService _notificacionRealtimeService;
         private readonly IChatRealTimeService _chatRealtime;
         private readonly IGrupoRepository _grupoRepository;
-        private readonly IEnviarMensajeGrupoUseCase _enviarMensaje;
         private readonly IChatRepository _chatRepository;
 
 
@@ -27,7 +26,6 @@ namespace GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases
             INotificacionRealtimeService notificacionRealtimeService,
             IChatRealTimeService chatRealTimeService,
             IGrupoRepository grupoRepository,
-            IEnviarMensajeGrupoUseCase enviarMensaje,
             IChatRepository chatRepository)
         {
             _invitacionRepository = invitacionRepository;
@@ -38,7 +36,6 @@ namespace GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases
             _notificacionRealtimeService = notificacionRealtimeService;
             _chatRealtime = chatRealTimeService;
             _grupoRepository = grupoRepository;
-            _enviarMensaje = enviarMensaje;
             _chatRepository = chatRepository;
         }
 
@@ -116,23 +113,13 @@ namespace GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases
                 ?? throw new InvalidOperationException("Error al aceptar la invitación");
 
 
-            var mensajeSistema = new ChatMensaje
-            {
-                Id = Guid.NewGuid(),
-                GrupoId = invitacion.GrupoId,
-                UsuarioId = Guid.Empty,
-                UsuarioNombre = "Sistema",
-                Mensaje = $"{usuario.IdUsuario} se unió al grupo 👋",
-                FechaEnvio = DateTime.UtcNow
-            };
-
-            await _chatRepository.AddSystemMessageAsync(mensajeSistema, cancellationToken);
-
-            await _chatRealtime.NotificarGrupoChat(
-             invitacion.GrupoId,
-             usuario.Id,
+            await _chatRealtime.UsuarioSeUnio(
+               invitacion.GrupoId,
+                 usuario.Id,
              usuario.IdUsuario
-);
+                );
+
+
 
 
             return grupo;

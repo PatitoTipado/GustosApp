@@ -30,14 +30,16 @@ namespace GustosApp.Infraestructure.Services
         {
             try
             {
-                var webhookUrl = _configuration["MercadoPago:WebhookUrl"];
-                var successUrl = _configuration["MercadoPago:SuccessUrl"] ?? $"{_baseUrl}pago/exito";
-                var failureUrl = _configuration["MercadoPago:FailureUrl"] ?? $"{_baseUrl}pago/fallo";
-                var pendingUrl = _configuration["MercadoPago:PendingUrl"] ?? $"{_baseUrl}pago/pendiente";
+                var webhookUrl = _configuration["MercadoPago:WebhookUrl"] ?? "https://gustosapp-web-bugzg8d8ajh2hncq.chilecentral-01.azurewebsites.net/api/pago/webhook";
+                var successUrl = _configuration["MercadoPago:SuccessUrl"] ?? "https://gusto-dusky.vercel.app/pago/exito";
+                var failureUrl = _configuration["MercadoPago:FailureUrl"] ?? "https://gusto-dusky.vercel.app/pago/fallo";
+                var pendingUrl = _configuration["MercadoPago:PendingUrl"] ?? "https://gusto-dusky.vercel.app/pago/pendiente";
                 
                 Console.WriteLine($"🔧 [MercadoPago] Creando preferencia de pago para {email}");
                 Console.WriteLine($"🔧 [MercadoPago] WebhookUrl: {webhookUrl}");
                 Console.WriteLine($"🔧 [MercadoPago] SuccessUrl: {successUrl}");
+                Console.WriteLine($"🔧 [MercadoPago] FailureUrl: {failureUrl}");
+                Console.WriteLine($"🔧 [MercadoPago] PendingUrl: {pendingUrl}");
                 
                 var request = new PreferenceRequest
                 {

@@ -31,6 +31,13 @@ namespace GustosApp.Infraestructure.Services
             try
             {
                 var webhookUrl = _configuration["MercadoPago:WebhookUrl"];
+                var successUrl = _configuration["MercadoPago:SuccessUrl"] ?? $"{_baseUrl}pago/exito";
+                var failureUrl = _configuration["MercadoPago:FailureUrl"] ?? $"{_baseUrl}pago/fallo";
+                var pendingUrl = _configuration["MercadoPago:PendingUrl"] ?? $"{_baseUrl}pago/pendiente";
+                
+                Console.WriteLine($"🔧 [MercadoPago] Creando preferencia de pago para {email}");
+                Console.WriteLine($"🔧 [MercadoPago] WebhookUrl: {webhookUrl}");
+                Console.WriteLine($"🔧 [MercadoPago] SuccessUrl: {successUrl}");
                 
                 var request = new PreferenceRequest
                 {
@@ -54,19 +61,24 @@ namespace GustosApp.Infraestructure.Services
                     NotificationUrl = webhookUrl,
                     BackUrls = new PreferenceBackUrlsRequest
                     {
-                        Success = "https://gustosapp.com/pago/exito",
-                        Failure = "https://gustosapp.com/pago/fallo",
-                        Pending = "https://gustosapp.com/pago/pendiente"
-                    }
+                        Success = successUrl,
+                        Failure = failureUrl,
+                        Pending = pendingUrl
+                    },
+                    AutoReturn = "approved"  // Redirección automática al aprobar el pago
                 };
 
                 var client = new PreferenceClient();
                 var preference = await client.CreateAsync(request);
 
+                Console.WriteLine($"✅ [MercadoPago] Preferencia creada: {preference.Id}");
+                Console.WriteLine($"✅ [MercadoPago] InitPoint: {preference.InitPoint}");
+
                 return preference.InitPoint;
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"❌ [MercadoPago] Error al crear preferencia: {ex.Message}");
                 throw new Exception($"Error al crear preferencia de pago: {ex.Message}", ex);
             }
         }

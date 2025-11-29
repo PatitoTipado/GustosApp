@@ -30,7 +30,32 @@ namespace GustosApp.Infraestructure.Services
         {
             try
             {
-                var webhookUrl = _configuration["MercadoPago:WebhookUrl"];
+                // Leer variables de configuración (Azure usa __ pero .NET lo convierte a :)
+                var webhookUrlRaw = _configuration["MercadoPago:WebhookUrl"];
+                var successUrlRaw = _configuration["MercadoPago:SuccessUrl"];
+                var failureUrlRaw = _configuration["MercadoPago:FailureUrl"];
+                var pendingUrlRaw = _configuration["MercadoPago:PendingUrl"];
+                
+                // Log RAW para debugging
+                Console.WriteLine($"📋 [MercadoPago] RAW WebhookUrl: '{webhookUrlRaw ?? "NULL"}'");
+                Console.WriteLine($"📋 [MercadoPago] RAW SuccessUrl: '{successUrlRaw ?? "NULL"}'");
+                Console.WriteLine($"📋 [MercadoPago] RAW FailureUrl: '{failureUrlRaw ?? "NULL"}'");
+                Console.WriteLine($"📋 [MercadoPago] RAW PendingUrl: '{pendingUrlRaw ?? "NULL"}'");
+                
+                // Asegurar que webhook tenga protocolo https://
+                var webhookUrl = string.IsNullOrEmpty(webhookUrlRaw) 
+                    ? "https://gustosapp-web-bugzg8d8ajh2hncq.chilecentral-01.azurewebsites.net/api/pago/webhook"
+                    : (webhookUrlRaw.StartsWith("http") ? webhookUrlRaw : $"https://{webhookUrlRaw}");
+                    
+                var successUrl = successUrlRaw ?? "https://gusto-dusky.vercel.app/pago/exito";
+                var failureUrl = failureUrlRaw ?? "https://gusto-dusky.vercel.app/pago/fallo";
+                var pendingUrl = pendingUrlRaw ?? "https://gusto-dusky.vercel.app/pago/pendiente";
+                
+                Console.WriteLine($"🔧 [MercadoPago] Creando preferencia de pago para {email}");
+                Console.WriteLine($"🔧 [MercadoPago] WebhookUrl: {webhookUrl}");
+                Console.WriteLine($"🔧 [MercadoPago] SuccessUrl: {successUrl}");
+                Console.WriteLine($"🔧 [MercadoPago] FailureUrl: {failureUrl}");
+                Console.WriteLine($"🔧 [MercadoPago] PendingUrl: {pendingUrl}");
                 
                 var request = new PreferenceRequest
                 {
@@ -54,19 +79,24 @@ namespace GustosApp.Infraestructure.Services
                     NotificationUrl = webhookUrl,
                     BackUrls = new PreferenceBackUrlsRequest
                     {
-                        Success = "https://gustosapp.com/pago/exito",
-                        Failure = "https://gustosapp.com/pago/fallo",
-                        Pending = "https://gustosapp.com/pago/pendiente"
-                    }
+                        Success = successUrl,
+                        Failure = failureUrl,
+                        Pending = pendingUrl
+                    },
+                    AutoReturn = "approved"  // Redirección automática al aprobar el pago
                 };
 
                 var client = new PreferenceClient();
                 var preference = await client.CreateAsync(request);
 
+                Console.WriteLine($"✅ [MercadoPago] Preferencia creada: {preference.Id}");
+                Console.WriteLine($"✅ [MercadoPago] InitPoint: {preference.InitPoint}");
+
                 return preference.InitPoint;
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"❌ [MercadoPago] Error al crear preferencia: {ex.Message}");
                 throw new Exception($"Error al crear preferencia de pago: {ex.Message}", ex);
             }
         }
@@ -75,28 +105,55 @@ namespace GustosApp.Infraestructure.Services
         {
             try
             {
+                Console.WriteLine($"🔔 [Webhook] Procesando notificación de pago ID: {pagoId}");
+                
                 var client = new PaymentClient();
                 var payment = await client.GetAsync(Convert.ToInt64(pagoId));
 
+                Console.WriteLine($"🔔 [Webhook] Payment Status: {payment.Status}");
+                Console.WriteLine($"🔔 [Webhook] External Reference: {payment.ExternalReference}");
+                Console.WriteLine($"🔔 [Webhook] Payer Email: {payment.Payer?.Email}");
+
                 if (payment.Status == "approved" && !string.IsNullOrEmpty(payment.ExternalReference))
                 {
+                    Console.WriteLine($"✅ [Webhook] Pago aprobado, buscando usuario: {payment.ExternalReference}");
+                    
                     // Buscar usuario por Firebase UID (external reference)
                     var usuario = await _usuarioRepository.GetByFirebaseUidAsync(payment.ExternalReference);
+                    
                     if (usuario != null)
                     {
+                        Console.WriteLine($"✅ [Webhook] Usuario encontrado: {usuario.Email}, Plan actual: {usuario.Plan}");
+                        
+                        if (usuario.Plan == PlanUsuario.Plus)
+                        {
+                            Console.WriteLine($"ℹ️ [Webhook] Usuario ya es Premium, no se requiere actualización");
+                            return true;
+                        }
+                        
                         // Actualizar plan del usuario a Premium
+                        Console.WriteLine($"🔄 [Webhook] Actualizando usuario a Premium...");
                         usuario.ActualizarAPlan(PlanUsuario.Plus);
                         await _usuarioRepository.SaveChangesAsync();
+                        Console.WriteLine($"✅ [Webhook] Usuario actualizado a Premium exitosamente");
                         return true;
                     }
+                    else
+                    {
+                        Console.WriteLine($"❌ [Webhook] Usuario no encontrado con FirebaseUid: {payment.ExternalReference}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"⚠️ [Webhook] Pago no aprobado o sin external reference");
                 }
 
                 return false;
             }
             catch (Exception ex)
             {
-                // Log del error (en un escenario real usarías un logger)
-                Console.WriteLine($"Error al procesar notificación de pago {pagoId}: {ex.Message}");
+                Console.WriteLine($"❌ [Webhook] Error al procesar notificación de pago {pagoId}: {ex.Message}");
+                Console.WriteLine($"❌ [Webhook] StackTrace: {ex.StackTrace}");
                 return false;
             }
         }

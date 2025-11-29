@@ -13,6 +13,8 @@ namespace GustosApp.Application.Interfaces
         Task UpdateUserEmailAsync(string firebaseUid, string Email);
 
         Task<DecodedToken> VerifyIdTokenAsync(string idToken);
+
+        Task<FirebaseUserInfo?> GetUserByUidAsync(string firebaseUid);
     }
 
     // Esto es para testear el caso de uso AppLoginConFirebaseUseCase
@@ -20,5 +22,13 @@ namespace GustosApp.Application.Interfaces
     {
         public virtual string Uid { get; set; }
         public virtual Dictionary<string, object> Claims { get; set; }
+    }
+
+    public class FirebaseUserInfo
+    {
+        public string Uid { get; set; }
+        public string? Email { get; set; }
+        public string? DisplayName { get; set; }
+        public string? PhotoUrl { get; set; }
     }
 }

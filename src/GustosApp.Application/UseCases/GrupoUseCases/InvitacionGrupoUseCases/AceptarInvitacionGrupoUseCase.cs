@@ -15,7 +15,7 @@ namespace GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases
         private readonly INotificacionRealtimeService _notificacionRealtimeService;
         private readonly IChatRealTimeService _chatRealtime;
         private readonly IGrupoRepository _grupoRepository;
-        private readonly IChatRepository _chatRepository;
+     
 
 
         public AceptarInvitacionGrupoUseCase(IInvitacionGrupoRepository invitacionRepository,
@@ -25,8 +25,8 @@ namespace GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases
             EliminarNotificacionUseCase eliminarNotificacion,
             INotificacionRealtimeService notificacionRealtimeService,
             IChatRealTimeService chatRealTimeService,
-            IGrupoRepository grupoRepository,
-            IChatRepository chatRepository)
+            IGrupoRepository grupoRepository
+            )
         {
             _invitacionRepository = invitacionRepository;
             _usuarioRepository = usuarioRepository;
@@ -36,7 +36,7 @@ namespace GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases
             _notificacionRealtimeService = notificacionRealtimeService;
             _chatRealtime = chatRealTimeService;
             _grupoRepository = grupoRepository;
-            _chatRepository = chatRepository;
+          
         }
 
         public async Task<Grupo> HandleAsync(string firebaseUid, Guid invitacionId, CancellationToken cancellationToken = default)

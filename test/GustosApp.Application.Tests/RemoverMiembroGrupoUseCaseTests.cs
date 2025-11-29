@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases.GrupoUseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
@@ -17,17 +18,20 @@ namespace GustosApp.Application.Tests
         private readonly Mock<IUsuarioRepository> _usuarioRepositoryMock;
         private readonly Mock<IMiembroGrupoRepository> _miembroGrupoRepositoryMock;
         private readonly RemoverMiembroGrupoUseCase _sut;
-
+        private readonly Mock<IChatRealTimeService> _chatrealtime;
         public RemoverMiembroGrupoUseCaseTests()
         {
             _grupoRepositoryMock = new Mock<IGrupoRepository>();
             _usuarioRepositoryMock = new Mock<IUsuarioRepository>();
             _miembroGrupoRepositoryMock = new Mock<IMiembroGrupoRepository>();
+            _chatrealtime = new Mock<IChatRealTimeService>();
 
             _sut = new RemoverMiembroGrupoUseCase(
                 _grupoRepositoryMock.Object,
                 _usuarioRepositoryMock.Object,
-                _miembroGrupoRepositoryMock.Object);
+                _miembroGrupoRepositoryMock.Object,
+                _chatrealtime.Object
+                );
         }
 
         private static Usuario CreateUsuario(Guid? id = null, string firebaseUid = "firebase-uid")
@@ -51,13 +55,14 @@ namespace GustosApp.Application.Tests
             return grupo;
         }
 
-        private static MiembroGrupo CreateMiembroGrupo(bool activo = true, bool esAdministrador = false)
+        private static MiembroGrupo CreateMiembroGrupo(bool activo = true, bool esAdministrador = false, Usuario? usuario = null)
         {
             var type = typeof(MiembroGrupo);
             var miembro = (MiembroGrupo)Activator.CreateInstance(type, nonPublic: true)!;
 
             type.GetProperty("Activo")?.SetValue(miembro, activo);
             type.GetProperty("EsAdministrador")?.SetValue(miembro, esAdministrador);
+            type.GetProperty("Usuario")?.SetValue(miembro, usuario ?? CreateUsuario());
 
             return miembro;
         }
@@ -227,7 +232,6 @@ namespace GustosApp.Application.Tests
                 Times.Never);
         }
 
-        // Verifica que cuando todo es válido se marca al miembro como inactivo y se actualiza en el repositorio.
         [Fact]
         public async Task HandleAsync_CaminoFeliz_RemueveMiembroYDevuelveTrue()
         {
@@ -249,7 +253,8 @@ namespace GustosApp.Application.Tests
                 .Setup(r => r.UsuarioEsAdministradorAsync(grupoId, usuarioActor.Id, ct))
                 .ReturnsAsync(true);
 
-            var miembro = CreateMiembroGrupo(activo: true, esAdministrador: false);
+            var usuarioMiembro = CreateUsuario();
+            var miembro = CreateMiembroGrupo(activo: true, esAdministrador: false, usuario: usuarioMiembro);
 
             _miembroGrupoRepositoryMock
                 .Setup(r => r.GetByGrupoYUsuarioAsync(grupoId, "miembro-a-remover", ct))
@@ -268,7 +273,6 @@ namespace GustosApp.Application.Tests
                 Times.Once);
         }
 
-        // Verifica que cuando hay más de un administrador activo se permite remover a uno de ellos.
         [Fact]
         public async Task HandleAsync_AdminPeroHayMasDeUnAdministrador_PermiteRemover()
         {
@@ -290,8 +294,11 @@ namespace GustosApp.Application.Tests
                 .Setup(r => r.UsuarioEsAdministradorAsync(grupoId, usuarioActor.Id, ct))
                 .ReturnsAsync(true);
 
-            var adminAEliminar = CreateMiembroGrupo(activo: true, esAdministrador: true);
-            var otroAdmin = CreateMiembroGrupo(activo: true, esAdministrador: true);
+            var usuarioAdminAEliminar = CreateUsuario();
+            var adminAEliminar = CreateMiembroGrupo(activo: true, esAdministrador: true, usuario: usuarioAdminAEliminar);
+
+            var usuarioOtroAdmin = CreateUsuario();
+            var otroAdmin = CreateMiembroGrupo(activo: true, esAdministrador: true, usuario: usuarioOtroAdmin);
 
             _miembroGrupoRepositoryMock
                 .Setup(r => r.GetByGrupoYUsuarioAsync(grupoId, "admin-a-remover", ct))
@@ -314,4 +321,4 @@ namespace GustosApp.Application.Tests
                 Times.Once);
         }
     }
-}
+    }

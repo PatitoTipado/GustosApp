@@ -10,7 +10,6 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
     public class SugerirGustosSobreUnRadioUseCase :  IRecomendadorRestaurantes
     {
         private readonly IEmbeddingService _embeddingService;
-        private readonly ILogger<SugerirGustosSobreUnRadioUseCase> _logger;
         private readonly IRestauranteRepository _restauranteRepository;
 
         private const double UmbralMinimo = 0.05;
@@ -23,11 +22,9 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
 
         public SugerirGustosSobreUnRadioUseCase(
             IEmbeddingService embeddingService,
-            ILogger<SugerirGustosSobreUnRadioUseCase> logger,
             IRestauranteRepository restauranteRepository)
         {
             _embeddingService = embeddingService;
-            _logger = logger;
             _restauranteRepository = restauranteRepository;
         }
 

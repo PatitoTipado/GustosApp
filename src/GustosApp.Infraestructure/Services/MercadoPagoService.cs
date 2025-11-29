@@ -157,19 +157,6 @@ namespace GustosApp.Infraestructure.Services
                 return false;
             }
         }
-                        return true;
-                    }
-                }
-
-                return false;
-            }
-            catch (Exception ex)
-            {
-                // Log del error (en un escenario real usarías un logger)
-                Console.WriteLine($"Error al procesar notificación de pago {pagoId}: {ex.Message}");
-                return false;
-            }
-        }
 
         public async Task<bool> VerificarEstadoPagoAsync(string pagoId)
         {

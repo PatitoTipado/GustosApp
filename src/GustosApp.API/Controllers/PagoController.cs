@@ -69,7 +69,6 @@ namespace GustosApp.API.Controllers
             {
                 Console.WriteLine($"🔔 [WebhookController] Notificación recibida");
                 Console.WriteLine($"🔔 [WebhookController] Type: {request.Type}");
-                Console.WriteLine($"🔔 [WebhookController] Action: {request.Action}");
                 Console.WriteLine($"🔔 [WebhookController] Data.Id: {request.Data?.Id}");
                 
                 // Verificar que es una notificación de pago

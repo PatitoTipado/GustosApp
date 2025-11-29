@@ -26,15 +26,25 @@ namespace GustosApp.API.Hubs.Services
 
         }
 
-        public async Task UsuarioExpulsadoDelGrupo(Guid grupoId, string firebaseUid, string nombreGrupo)
+        public async Task UsuarioExpulsadoDelGrupo(Guid grupoId, Guid usuarioId, string firebaseUid, string nombre)
         {
-            
+            // 1. Avisar solo al expulsado
             await _hubContext.Clients.User(firebaseUid).SendAsync("KickedFromGroup", new
             {
                 grupoId,
-                nombreGrupo
+                nombreGrupo = nombre
             });
+
+            // 2. Avisar al resto del grupo (actualizar miembro eliminado)
+            await _hubContext.Clients.Group(grupoId.ToString())
+                .SendAsync("UsuarioExpulsado", new
+                {
+                    usuarioId,
+                    firebaseUid,
+                    nombre
+                });
         }
+
 
         public async Task UsuarioAbandono(Guid grupoId, Guid usuarioId, string nombre, string firebaseUid)
         {

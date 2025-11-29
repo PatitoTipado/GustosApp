@@ -58,8 +58,9 @@ namespace GustosApp.Application.UseCases.GrupoUseCases
            
             await _chatRealtime.UsuarioExpulsadoDelGrupo(
                 grupo.Id,
+                miembro.UsuarioId,
                 miembro.Usuario.FirebaseUid, 
-                grupo.Nombre
+                miembro.Usuario.IdUsuario
             );
 
             return true;

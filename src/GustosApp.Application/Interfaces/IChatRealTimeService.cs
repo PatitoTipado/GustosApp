@@ -11,8 +11,7 @@ namespace GustosApp.Application.Interfaces
 
 
         Task UsuarioSeUnio(Guid grupoId, Guid usuarioId, string nombre);
-        Task UsuarioExpulsadoDelGrupo(Guid grupoId, string firebaseUid, string nombreGrupo);
-
+        Task UsuarioExpulsadoDelGrupo(Guid grupoId, Guid usuarioId, string firebaseUid, string nombre);
         Task UsuarioAbandono(Guid grupoId, Guid usuarioId, string IdUser, string firebaseUid);
     }
 

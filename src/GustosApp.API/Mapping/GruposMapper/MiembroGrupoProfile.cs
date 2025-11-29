@@ -16,7 +16,9 @@ namespace GustosApp.API.Mapping.GruposMapper
                 .ForMember(dest => dest.UsuarioUsername, opt => opt.MapFrom(src => src.Usuario.IdUsuario))
                 .ForMember(dest => dest.FechaUnion, opt => opt.MapFrom(src => src.FechaUnion))
                 .ForMember(dest => dest.afectarRecomendacion, opt => opt.MapFrom(src => src.afectarRecomendacion))
-                .ForMember(dest => dest.EsAdministrador, opt => opt.MapFrom(src => src.EsAdministrador));
+                .ForMember(dest => dest.EsAdministrador, opt => opt.MapFrom(src => src.EsAdministrador))
+                   .ForMember(dest => dest.FotoPerfilUrl,
+                opt => opt.MapFrom(src => src.Usuario.FotoPerfilUrl));;
         }
     }
 }

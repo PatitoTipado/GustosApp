@@ -476,6 +476,8 @@ builder.Services.AddScoped<RechazarSolicitudRestauranteUseCase>();
 builder.Services.AddScoped<ActualizarValoracionRestauranteUseCase>();
 builder.Services.AddScoped<RecomendacionIAUseCase>();
  builder.Services.AddScoped<ActualizarPerfilUsuarioUseCase>();
+builder.Services.AddScoped<RechazarInvitacionAGrupoUseCase>();
+
 // UseCases y repositorios de amistad
 
 builder.Services.AddScoped<EnviarSolicitudAmistadUseCase>();

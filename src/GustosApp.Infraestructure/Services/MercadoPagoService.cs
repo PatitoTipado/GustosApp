@@ -30,10 +30,26 @@ namespace GustosApp.Infraestructure.Services
         {
             try
             {
-                var webhookUrl = _configuration["MercadoPago:WebhookUrl"] ?? "https://gustosapp-web-bugzg8d8ajh2hncq.chilecentral-01.azurewebsites.net/api/pago/webhook";
-                var successUrl = _configuration["MercadoPago:SuccessUrl"] ?? "https://gusto-dusky.vercel.app/pago/exito";
-                var failureUrl = _configuration["MercadoPago:FailureUrl"] ?? "https://gusto-dusky.vercel.app/pago/fallo";
-                var pendingUrl = _configuration["MercadoPago:PendingUrl"] ?? "https://gusto-dusky.vercel.app/pago/pendiente";
+                // Leer variables de configuración (Azure usa __ pero .NET lo convierte a :)
+                var webhookUrlRaw = _configuration["MercadoPago:WebhookUrl"];
+                var successUrlRaw = _configuration["MercadoPago:SuccessUrl"];
+                var failureUrlRaw = _configuration["MercadoPago:FailureUrl"];
+                var pendingUrlRaw = _configuration["MercadoPago:PendingUrl"];
+                
+                // Log RAW para debugging
+                Console.WriteLine($"📋 [MercadoPago] RAW WebhookUrl: '{webhookUrlRaw ?? "NULL"}'");
+                Console.WriteLine($"📋 [MercadoPago] RAW SuccessUrl: '{successUrlRaw ?? "NULL"}'");
+                Console.WriteLine($"📋 [MercadoPago] RAW FailureUrl: '{failureUrlRaw ?? "NULL"}'");
+                Console.WriteLine($"📋 [MercadoPago] RAW PendingUrl: '{pendingUrlRaw ?? "NULL"}'");
+                
+                // Asegurar que webhook tenga protocolo https://
+                var webhookUrl = string.IsNullOrEmpty(webhookUrlRaw) 
+                    ? "https://gustosapp-web-bugzg8d8ajh2hncq.chilecentral-01.azurewebsites.net/api/pago/webhook"
+                    : (webhookUrlRaw.StartsWith("http") ? webhookUrlRaw : $"https://{webhookUrlRaw}");
+                    
+                var successUrl = successUrlRaw ?? "https://gusto-dusky.vercel.app/pago/exito";
+                var failureUrl = failureUrlRaw ?? "https://gusto-dusky.vercel.app/pago/fallo";
+                var pendingUrl = pendingUrlRaw ?? "https://gusto-dusky.vercel.app/pago/pendiente";
                 
                 Console.WriteLine($"🔧 [MercadoPago] Creando preferencia de pago para {email}");
                 Console.WriteLine($"🔧 [MercadoPago] WebhookUrl: {webhookUrl}");

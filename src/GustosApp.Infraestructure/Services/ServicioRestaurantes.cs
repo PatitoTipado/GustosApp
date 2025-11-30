@@ -3,6 +3,7 @@ using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 using GustosApp.Domain.Model.@enum;
+using GustosApp.Infraestructure.Extrerno.GooglePlacesLegacy;
 using GustosApp.Infraestructure.Extrerno.GooglePlacesModel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -26,6 +27,62 @@ namespace GustosApp.Infraestructure.Services
             _config = config;
             _http = http;
             _repo = repo;
+        }
+        public async Task ActualizarReviewsDesdeGoogleLegacyAsync(
+    Guid restauranteId,
+    string placeId,
+    CancellationToken ct)
+        {
+            var apiKey = _config["GooglePlaces:ApiKey"]
+                ?? throw new InvalidOperationException("Falta GooglePlaces:ApiKey");
+
+            var url =
+                $"https://maps.googleapis.com/maps/api/place/details/json" +
+                $"?place_id={Uri.EscapeDataString(placeId)}" +
+                $"&fields=review" +
+                $"&language=es" +
+                $"&key={apiKey}";
+
+            var resp = await _http.GetAsync(url, ct);
+
+            if (!resp.IsSuccessStatusCode)
+                return;
+
+            var json = await resp.Content.ReadFromJsonAsync<GoogleLegacyDetailsResponse>(cancellationToken: ct);
+            if (json?.Result?.Reviews == null || json.Result.Reviews.Count == 0)
+                return;
+
+            // Obtener reviews existentes para evitar duplicados
+            var existentes = await _db.OpinionesRestaurantes
+                .Where(x => x.RestauranteId == restauranteId && x.EsImportada)
+                .Select(x => new { x.AutorExterno, x.Opinion })
+                .ToListAsync(ct);
+
+            var nuevas = json.Result.Reviews
+                .Where(r => !existentes.Any(e =>
+                    e.AutorExterno == r.AuthorName &&
+                    e.Opinion == r.Text))
+                .Select(r => new OpinionRestaurante
+                {
+                    Id = Guid.NewGuid(),
+                    RestauranteId = restauranteId,
+                    UsuarioId = null,
+                    AutorExterno = r.AuthorName,
+                    FuenteExterna = "GooglePlaces",
+                    ImagenAutorExterno = r.ProfilePhotoUrl,
+                    Valoracion = r.Rating,
+                    Titulo = null,
+                    Opinion = r.Text,
+                    EsImportada = true,
+                    FechaCreacion = DateTime.UtcNow
+                })
+                .ToList();
+
+            if (nuevas.Any())
+            {
+                await _db.OpinionesRestaurantes.AddRangeAsync(nuevas, ct);
+                await _db.SaveChangesAsync(ct);
+            }
         }
 
         private static string NormalizarNombre(string nombre)

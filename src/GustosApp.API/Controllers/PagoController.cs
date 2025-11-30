@@ -67,22 +67,38 @@ namespace GustosApp.API.Controllers
         {
             try
             {
+                Console.WriteLine($"🔔 [WebhookController] Notificación recibida");
+                Console.WriteLine($"🔔 [WebhookController] Type: {request.Type}");
+                Console.WriteLine($"🔔 [WebhookController] Data.Id: {request.Data?.Id}");
+                
                 // Verificar que es una notificación de pago
                 if (request.Type == "payment")
                 {
+                    Console.WriteLine($"🔔 [WebhookController] Es notificación de pago, procesando...");
+                    
                     var procesado = await _pagoService.ProcesarNotificacionPagoAsync(request.Data.Id);
+                    
                     if (procesado)
                     {
+                        Console.WriteLine($"✅ [WebhookController] Pago procesado correctamente");
                         return Ok(new { message = "Pago procesado correctamente" });
                     }
+                    else
+                    {
+                        Console.WriteLine($"⚠️ [WebhookController] Pago no procesado (posiblemente no aprobado o ya procesado)");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"ℹ️ [WebhookController] Tipo de notificación no es payment: {request.Type}");
                 }
 
                 return Ok(new { message = "Notificación recibida" });
             }
             catch (Exception ex)
             {
-                // En un escenario real, registrarías este error
-                Console.WriteLine($"Error en webhook: {ex.Message}");
+                Console.WriteLine($"❌ [WebhookController] Error en webhook: {ex.Message}");
+                Console.WriteLine($"❌ [WebhookController] StackTrace: {ex.StackTrace}");
                 return Ok(); // Siempre devolver 200 para evitar que MercadoPago reenvíe
             }
         }
@@ -126,6 +142,24 @@ namespace GustosApp.API.Controllers
                 hasPublicKey = !string.IsNullOrEmpty(publicKey),
                 publicKeyPrefix = publicKey?.Substring(0, Math.Min(15, publicKey.Length)),
                 isProduction = accessToken?.StartsWith("APP_USR") ?? false
+            });
+        }
+
+        [HttpGet("config")]
+        [AllowAnonymous]
+        public IActionResult GetConfig([FromServices] Microsoft.Extensions.Configuration.IConfiguration config)
+        {
+            var publicKey = config["MercadoPago:PublicKey"];
+            
+            if (string.IsNullOrEmpty(publicKey))
+            {
+                return BadRequest(new { message = "MercadoPago no configurado" });
+            }
+            
+            return Ok(new
+            {
+                publicKey = publicKey,
+                isTestMode = publicKey.StartsWith("TEST-") || publicKey.StartsWith("APP_USR")
             });
         }
 

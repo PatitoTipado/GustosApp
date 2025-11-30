@@ -102,6 +102,8 @@ namespace GustosApp.API.DTO
         public DateTime FechaUnion { get; set; }
         public bool EsAdministrador { get; set; }
         public bool afectarRecomendacion { get; set; }
+
+        public string? FotoPerfilUrl { get; set; }
         public MiembroGrupoResponse() { }
 
         public MiembroGrupoResponse(
@@ -113,7 +115,8 @@ namespace GustosApp.API.DTO
             string usuarioUsername,
             DateTime fechaUnion,
             bool esAdministrador,
-            bool afectarRecomendacion)
+            bool afectarRecomendacion,
+           string? FotoPerfilUrl)
         {
             Id = id;
             UsuarioId = usuarioId;
@@ -124,6 +127,7 @@ namespace GustosApp.API.DTO
             FechaUnion = fechaUnion;
             EsAdministrador = esAdministrador;
             this.afectarRecomendacion = afectarRecomendacion;
+            this.FotoPerfilUrl = FotoPerfilUrl;
         }
     }
 

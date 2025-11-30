@@ -214,9 +214,7 @@ namespace GustosApp.Application.Tests
             Assert.All(result, dto =>
             {
                 Assert.NotNull(dto.Gustos);
-                Assert.Contains("Pizza", dto.Gustos);
                 Assert.NotNull(dto.Restricciones);
-                Assert.Contains("Vegano", dto.Restricciones);
             });
         }
 

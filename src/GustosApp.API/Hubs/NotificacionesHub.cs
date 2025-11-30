@@ -4,17 +4,19 @@ using AutoMapper;
 using Azure.Core;
 using GustosApp.API.DTO;
 using GustosApp.Application.Interfaces;
+using GustosApp.Application.UseCases.AmistadUseCases;
 using GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases;
 using GustosApp.Application.UseCases.NotificacionUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 using GustosApp.Infraestructure.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
 namespace GustosApp.API.Hubs
 {
-
+    [Authorize]
     public class NotificacionesHub : Hub
     {
         private readonly ObtenerNotificacionesUsuarioUseCase _obtenerNotificaciones;
@@ -25,6 +27,7 @@ namespace GustosApp.API.Hubs
         private readonly ObtenerNotificacionUsuarioUseCase _obtenerNotificacion;
         private readonly IMapper _mapper;
         private readonly IUsuariosActivosService _usuariosActivos;
+        private readonly RechazarInvitacionAGrupoUseCase _rechazarInvitacion;
 
 
         public NotificacionesHub(
@@ -34,7 +37,8 @@ namespace GustosApp.API.Hubs
                 ObtenerUsuarioUseCase obtenerUsuario,
                 AceptarInvitacionGrupoUseCase aceptar,
                 ObtenerNotificacionUsuarioUseCase obtenerNotificacion,
-                IMapper mapper, IUsuariosActivosService usuariosActivos)
+                IMapper mapper, IUsuariosActivosService usuariosActivos,
+               RechazarInvitacionAGrupoUseCase rechazarInvitacion)
         {
             _obtenerNotificaciones = obtenerNotificaciones;
             _marcarLeida = marcarLeida;
@@ -44,6 +48,7 @@ namespace GustosApp.API.Hubs
             _obtenerNotificacion = obtenerNotificacion;
             _mapper = mapper;
             _usuariosActivos = usuariosActivos;
+            _rechazarInvitacion = rechazarInvitacion;
         }
 
         // Se ejecuta al conectarse un usuario
@@ -107,9 +112,16 @@ namespace GustosApp.API.Hubs
 
         public async Task RechazarInvitacion(Guid notificacionId)
         {
-            await _eliminarNotificacion.HandleAsync(notificacionId, CancellationToken.None);
+            var uid = Context.User?.FindFirst("user_id")?.Value;
+            if (uid == null) return;
+
+
+            await _rechazarInvitacion.HandleAsync(uid, notificacionId,CancellationToken.None);
+
+            // Avisar al cliente
             await Clients.Caller.SendAsync("NotificacionEliminada", notificacionId);
         }
+
 
         public async Task AceptarInvitacion(Guid notificacionId)
         {

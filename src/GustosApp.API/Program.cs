@@ -505,7 +505,6 @@ builder.Services.AddScoped<ObtenerRestaurantesAleatoriosGrupoUseCase>();
 builder.Services.AddScoped<ActivarMiembroDeGrupoUseCase>();
 builder.Services.AddScoped<EnviarRecomendacionesUsuariosActivosUseCase>();
 builder.Services.AddScoped<CrearOpinionRestauranteUseCase>();
-builder.Services.AddScoped<NotificacionesInteligentesService>();
 builder.Services.AddScoped<BuscarRestaurantesUseCase>();
 builder.Services.AddScoped<AgregarUsuarioRestauranteFavoritoUseCase>();
 builder.Services.AddScoped<RegistrarTop3IndividualRestaurantesUseCase>();

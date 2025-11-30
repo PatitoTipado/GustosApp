@@ -955,7 +955,7 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.HasIndex("UsuarioId");
 
-                    b.ToTable("ChatMessages");
+                    b.ToTable("ChatMessages", (string)null);
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.CondicionMedica", b =>
@@ -970,7 +970,7 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("CondicionesMedicas");
+                    b.ToTable("CondicionesMedicas", (string)null);
 
                     b.HasData(
                         new
@@ -1081,7 +1081,7 @@ namespace GustosApp.Infraestructure.Migrations
                         .IsUnique()
                         .HasFilter("[CodigoInvitacion] IS NOT NULL");
 
-                    b.ToTable("Grupos");
+                    b.ToTable("Grupos", (string)null);
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.GrupoGusto", b =>
@@ -1107,7 +1107,7 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.HasIndex("MiembroId");
 
-                    b.ToTable("GrupoGustos");
+                    b.ToTable("GrupoGustos", (string)null);
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.Gusto", b =>
@@ -1125,7 +1125,7 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Gustos");
+                    b.ToTable("Gustos", (string)null);
 
                     b.HasData(
                         new
@@ -1555,7 +1555,7 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.HasIndex("UsuarioInvitadorId");
 
-                    b.ToTable("InvitacionesGrupos");
+                    b.ToTable("InvitacionesGrupos", (string)null);
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.MiembroGrupo", b =>
@@ -1589,7 +1589,7 @@ namespace GustosApp.Infraestructure.Migrations
                     b.HasIndex("GrupoId", "UsuarioId")
                         .IsUnique();
 
-                    b.ToTable("MiembrosGrupos");
+                    b.ToTable("MiembrosGrupos", (string)null);
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.Notificacion", b =>
@@ -1654,7 +1654,7 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.HasIndex("OpinionRestauranteId");
 
-                    b.ToTable("OpinionesFotos");
+                    b.ToTable("OpinionesFotos", (string)null);
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.OpinionRestaurante", b =>
@@ -1708,7 +1708,7 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.HasIndex("UsuarioId");
 
-                    b.ToTable("OpinionRestaurante");
+                    b.ToTable("OpinionRestaurante", (string)null);
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.Restaurante", b =>
@@ -1847,7 +1847,7 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.HasIndex("RestauranteId");
 
-                    b.ToTable("RestauranteEspecialidades");
+                    b.ToTable("RestauranteEspecialidades", (string)null);
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.RestauranteEstadisticas", b =>
@@ -1965,7 +1965,7 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Restricciones");
+                    b.ToTable("Restricciones", (string)null);
 
                     b.HasData(
                         new
@@ -2060,7 +2060,7 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.HasIndex("RemitenteId");
 
-                    b.ToTable("SolicitudesAmistad");
+                    b.ToTable("SolicitudesAmistad", (string)null);
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.SolicitudRestaurante", b =>
@@ -2117,7 +2117,7 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.HasIndex("UsuarioId");
 
-                    b.ToTable("SolicitudesRestaurantes");
+                    b.ToTable("SolicitudesRestaurantes", (string)null);
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.SolicitudRestauranteImagen", b =>
@@ -2140,7 +2140,7 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.HasIndex("SolicitudId");
 
-                    b.ToTable("SolicitudRestauranteImagenes");
+                    b.ToTable("SolicitudRestauranteImagenes", (string)null);
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.Tag", b =>
@@ -2159,7 +2159,7 @@ namespace GustosApp.Infraestructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Tags");
+                    b.ToTable("Tags", (string)null);
 
                     b.HasData(
                         new
@@ -2342,7 +2342,7 @@ namespace GustosApp.Infraestructure.Migrations
                     b.HasIndex("IdUsuario")
                         .IsUnique();
 
-                    b.ToTable("Usuarios");
+                    b.ToTable("Usuarios", (string)null);
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.UsuarioRestauranteFavorito", b =>
@@ -2369,7 +2369,7 @@ namespace GustosApp.Infraestructure.Migrations
                     b.HasIndex("UsuarioId", "RestauranteId")
                         .IsUnique();
 
-                    b.ToTable("UsuarioRestauranteFavoritos");
+                    b.ToTable("UsuarioRestauranteFavoritos", (string)null);
                 });
 
             modelBuilder.Entity("GustosApp.Domain.Model.UsuarioRestauranteVisitado", b =>

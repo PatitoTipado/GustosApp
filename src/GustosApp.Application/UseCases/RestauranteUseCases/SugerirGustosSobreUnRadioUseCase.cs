@@ -7,18 +7,17 @@ using Microsoft.Extensions.Logging;
 
 namespace GustosApp.Application.UseCases.RestauranteUseCases
 {
-    public class SugerirGustosSobreUnRadioUseCase :  IRecomendadorRestaurantes
+    public class SugerirGustosSobreUnRadioUseCase : IRecomendadorRestaurantes
     {
         private readonly IEmbeddingService _embeddingService;
         private readonly IRestauranteRepository _restauranteRepository;
 
-        private const double UmbralMinimo = 0.05;
-        private const double UmbralRelevanciaResena = 0.60;
-        private const double FactorPenalizacion = 0.15;
+        private const double UMBRAL_MINIMO = 0.05;
+        private const double UMBRAL_RELEVANCIA_RESENA = 0.60;
+        private const double FACTOR_PENALIZACION = 0.15;
 
-        // impacto final de reseñas
-        private const double BoostPositivo = 1.02;   // +2%
-        private const double PenalizacionNegativa = 0.95; // -5%
+        private const double BOOST_POSITIVO = 1.02;
+        private const double PENALIZACION_NEGATIVA = 0.95;
 
         public SugerirGustosSobreUnRadioUseCase(
             IEmbeddingService embeddingService,
@@ -28,55 +27,61 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
             _restauranteRepository = restauranteRepository;
         }
 
-        public async Task<List<Restaurante>> Handle(UsuarioPreferencias usuario,
+        public async Task<List<Restaurante>> Handle(
+            UsuarioPreferencias usuario,
             List<Restaurante> restaurantesCercanos,
-            int maxResults = 10,
+            int maxResultados = 10,
             CancellationToken ct = default)
         {
-            if (validarUsuarioYRestaurantes(usuario, restaurantesCercanos))
-                return new List<Restaurante>();
+            if (ValidarEntrada(usuario, restaurantesCercanos))
+                throw new KeyNotFoundException(
+                    "No se encontraron restaurantes cercanos que coincidan con los gustos del usuario o el usuario no tiene gustos validos");
 
-            float[] userEmbedding = ObtenerEmbeddingDeUsuario(usuario);
+            float[] embeddingUsuario = ObtenerEmbeddingUsuario(usuario);
 
-            List<(Restaurante rest, double score)> resultados =
-                similitudUsuarioRestauranteResultado(usuario, restaurantesCercanos, userEmbedding);
+            List<(Restaurante rest, double puntuacion)> resultados =
+                CalcularSimilitudUsuarioRestaurante(usuario, restaurantesCercanos, embeddingUsuario);
 
-            if (!resultados.Any()) return new List<Restaurante>();
+            if (!resultados.Any())
+                throw new KeyNotFoundException("No se obtuvo ningun restaurante en la zona para el usuario");
 
-            List<Restaurante> restaurantesConResenias = await consultarRestaurantesConResenias(resultados);
+            List<Restaurante> restaurantesConResenas =
+                await ConsultarRestaurantesConResenas(resultados);
 
-            resultadosValoracionPorResenias(userEmbedding, resultados, restaurantesConResenias);
+            AjustarPuntuacionPorResenas(embeddingUsuario, resultados, restaurantesConResenas);
 
-            return ordenarResultado(maxResults, resultados);
+            return OrdenarResultados(maxResultados, resultados);
         }
 
-        private void resultadosValoracionPorResenias(float[] userEmbedding, List<(Restaurante rest, double score)> resultados, List<Restaurante> restaurantesConResenias)
+        private void AjustarPuntuacionPorResenas(
+            float[] embeddingUsuario,
+            List<(Restaurante rest, double puntuacion)> resultados,
+            List<Restaurante> restaurantesConResenas)
         {
-            foreach (var restConRes in restaurantesConResenias)
+            foreach (var restConResenas in restaurantesConResenas)
             {
-                var item = resultados.FirstOrDefault(x => x.rest.Id == restConRes.Id);
+                var item = resultados.FirstOrDefault(x => x.rest.Id == restConResenas.Id);
                 if (item.rest == null) continue;
 
-                double ajuste = calcularAjustePorResenas(restConRes, userEmbedding);
+                double ajuste = CalcularAjustePorResenas(restConResenas, embeddingUsuario);
 
-                double nuevoScore = item.score * ajuste;
+                double nuevaPuntuacion = item.puntuacion * ajuste;
 
-                item.rest.Score = nuevoScore;
+                item.rest.Score = nuevaPuntuacion;
 
-                resultados.RemoveAll(x => x.rest.Id == restConRes.Id);
-                resultados.Add((item.rest, nuevoScore));
+                resultados.RemoveAll(x => x.rest.Id == restConResenas.Id);
+                resultados.Add((item.rest, nuevaPuntuacion));
             }
         }
 
-        private async Task<List<Restaurante>> consultarRestaurantesConResenias(List<(Restaurante rest, double score)> resultados)
+        private async Task<List<Restaurante>> ConsultarRestaurantesConResenas(
+            List<(Restaurante rest, double puntuacion)> resultados)
         {
             var ids = resultados.Select(r => r.rest.Id).ToList();
-            List<Restaurante> restaurantesConResenias =
-                await _restauranteRepository.obtenerRestauranteConResenias(ids);
-            return restaurantesConResenias;
+            return await _restauranteRepository.obtenerRestauranteConResenias(ids);
         }
 
-        private double calcularAjustePorResenas(Restaurante rest, float[] userEmbedding)
+        private double CalcularAjustePorResenas(Restaurante rest, float[] embeddingUsuario)
         {
             if (rest.Reviews == null || !rest.Reviews.Any())
                 return 1.0;
@@ -90,83 +95,82 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
 
                 float[] embeddingResena = _embeddingService.GetEmbedding(resena.Opinion);
 
-                double relevancia = CosineSimilarity.Coseno(userEmbedding, embeddingResena);
+                double relevancia = CosineSimilarity.Coseno(embeddingUsuario, embeddingResena);
 
-                if (relevancia < UmbralRelevanciaResena)
-                    continue; 
+                if (relevancia < UMBRAL_RELEVANCIA_RESENA)
+                    continue;
 
                 if (resena.Valoracion >= 3)
-                    ajustes.Add(BoostPositivo);
+                    ajustes.Add(BOOST_POSITIVO);
                 else
-                    ajustes.Add(PenalizacionNegativa);
+                    ajustes.Add(PENALIZACION_NEGATIVA);
             }
 
-            if (!ajustes.Any()) return 1.0;
-
-            return ajustes.Average();
+            return ajustes.Any() ? ajustes.Average() : 1.0;
         }
 
-        private List<(Restaurante rest, double score)> similitudUsuarioRestauranteResultado(
+        private List<(Restaurante rest, double puntuacion)> CalcularSimilitudUsuarioRestaurante(
             UsuarioPreferencias usuario,
             List<Restaurante> restaurantesCercanos,
-            float[] userEmbedding)
+            float[] embeddingUsuario)
         {
-            var resultados = new List<(Restaurante rest, double score)>();
+            var resultados = new List<(Restaurante rest, double puntuacion)>();
 
             foreach (var rest in restaurantesCercanos)
             {
-                var restEmbedding = obtenerRestauranteEmbedding(rest);
-                if (restEmbedding == null) continue;
+                var embeddingRest = ObtenerEmbeddingRestaurante(rest);
+                if (embeddingRest == null) continue;
 
-                var similitud = CosineSimilarity.Coseno(userEmbedding, restEmbedding);
+                var similitud = CosineSimilarity.Coseno(embeddingUsuario, embeddingRest);
 
-                double penalizacion = obtenerPenalizacion(usuario, rest);
+                double penalizacion = CalcularPenalizacion(usuario, rest);
 
-                double scoreFinal = similitud * (1 - penalizacion);
+                double puntuacionFinal = similitud * (1 - penalizacion);
 
-                if (scoreFinal >= UmbralMinimo)
+                if (puntuacionFinal >= UMBRAL_MINIMO)
                 {
-                    rest.Score = scoreFinal;
-                    resultados.Add((rest, scoreFinal));
+                    rest.Score = puntuacionFinal;
+                    resultados.Add((rest, puntuacionFinal));
                 }
             }
 
             return resultados;
         }
 
-        private static List<Restaurante> ordenarResultado(int maxResults,
-            List<(Restaurante rest, double score)> resultados)
+        private static List<Restaurante> OrdenarResultados(
+            int maxResultados,
+            List<(Restaurante rest, double puntuacion)> resultados)
         {
             return resultados
                 .GroupBy(x => x.rest.Id)
                 .Select(g => g.First())
-                .OrderByDescending(x => x.score)
-                .Take(maxResults)
+                .OrderByDescending(x => x.puntuacion)
+                .Take(maxResultados)
                 .Select(x => x.rest)
                 .ToList();
         }
 
-        private static double obtenerPenalizacion(UsuarioPreferencias usuario, Restaurante rest)
+        private static double CalcularPenalizacion(UsuarioPreferencias usuario, Restaurante rest)
         {
             int gustosFaltantes = usuario.Gustos.Count(g =>
                 !rest.GustosQueSirve.Any(e =>
                     e.Nombre != null &&
                     e.Nombre.Contains(g, StringComparison.OrdinalIgnoreCase)));
 
-            int restriccionesNoCumple = usuario.Restricciones.Count(r =>
+            int restriccionesIncumplidas = usuario.Restricciones.Count(r =>
                 !rest.RestriccionesQueRespeta.Any(e =>
                     e.Nombre != null &&
                     e.Nombre.Contains(r, StringComparison.OrdinalIgnoreCase)));
 
             double penalizacion =
-                (gustosFaltantes + restriccionesNoCumple)
-                * FactorPenalizacion
+                (gustosFaltantes + restriccionesIncumplidas)
+                * FACTOR_PENALIZACION
                 / (usuario.Gustos.Count + usuario.Restricciones.Count);
 
             return penalizacion;
         }
 
-        private float[] obtenerRestauranteEmbedding(Restaurante rest)
+        private float[] ObtenerEmbeddingRestaurante(Restaurante rest)
         {
             var textoRestaurante = string.Join(" ",
                 rest.GustosQueSirve.Select(g => g.Nombre)
@@ -180,7 +184,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
             return _embeddingService.GetEmbedding(textoRestaurante);
         }
 
-        private float[] ObtenerEmbeddingDeUsuario(UsuarioPreferencias usuario)
+        private float[] ObtenerEmbeddingUsuario(UsuarioPreferencias usuario)
         {
             var textoUsuario = string.Join(" ",
                 usuario.Gustos.Concat(usuario.Restricciones)
@@ -190,14 +194,13 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
             return _embeddingService.GetEmbedding(textoUsuario);
         }
 
-        private bool validarUsuarioYRestaurantes(UsuarioPreferencias usuario,
+        private bool ValidarEntrada(UsuarioPreferencias usuario,
             List<Restaurante> restaurantesCercanos)
         {
             bool usuarioNoValido = usuario == null || usuario.Gustos == null || !usuario.Gustos.Any();
-            bool restauranteNoValido = restaurantesCercanos == null || !restaurantesCercanos.Any();
+            bool restaurantesInvalidos = restaurantesCercanos == null || !restaurantesCercanos.Any();
 
-            return usuarioNoValido || restauranteNoValido;
+            return usuarioNoValido || restaurantesInvalidos;
         }
     }
-
 }

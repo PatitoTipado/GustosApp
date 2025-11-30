@@ -117,18 +117,32 @@ namespace GustosApp.API.Controllers
             [FromQuery] int top = 10
   )
         {
+            Console.WriteLine(DateTime.Now.ToString("HH:mm:ss"));
 
             var firebaseUid = GetFirebaseUid();
+
+            var preferencias = await _construirPreferencias.HandleAsync(
+                firebaseUid,
+                amigoUsername: amigoUsername,
+                grupoId: null,
+                gustosDelFiltro: gustos,
+                ct);
+            Console.WriteLine(DateTime.Now.ToString("HH:mm:ss"));
 
             // Filtrar restaurantes cercanos
             var res = await _servicio.BuscarAsync(
                 rating: rating,
-                tipo: tipoDeRestaurante,
-                plato: "",
                 lat: lat,
                 lng: lng,
-                radioMetros: radius
+                radioMetros: radius,
+                gustos: preferencias.Gustos,
+                restricciones: preferencias.Restricciones
               );
+
+            Console.WriteLine(res.Count());
+            Console.WriteLine(res.Count());
+            Console.WriteLine(res.Count());
+            Console.WriteLine(DateTime.Now.ToString("HH:mm:ss"));
 
             if (res == null || !res.Any())
             {
@@ -146,17 +160,11 @@ namespace GustosApp.API.Controllers
              ),
               TimeSpan.FromMinutes(10));
 
-            var preferencias = await _construirPreferencias.HandleAsync(
-                firebaseUid,
-                amigoUsername: amigoUsername,
-                grupoId: null,
-                gustosDelFiltro: gustos,
-                ct);
-
             if (preferencias.Gustos == null || !preferencias.Gustos.Any())
             {
                 throw new ArgumentException("los gustos que quiere buscar no son validos");
             }
+            Console.WriteLine("modelo inicio " + DateTime.Now.ToString("HH:mm:ss"));
 
             //  Algoritmo combinado
             var recommendations = await _sugerirGustos.Handle(
@@ -165,6 +173,7 @@ namespace GustosApp.API.Controllers
                 top,
                 ct
             );
+            Console.WriteLine("modelo final " + DateTime.Now.ToString("HH:mm:ss"));
 
             if (recommendations == null || !recommendations.Any())
             {

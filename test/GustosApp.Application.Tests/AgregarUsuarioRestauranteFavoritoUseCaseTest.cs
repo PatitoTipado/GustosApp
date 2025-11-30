@@ -1,4 +1,5 @@
-﻿using GustosApp.Application.UseCases.UsuarioUseCases;
+﻿using GustosApp.Application.Common.Exceptions;
+using GustosApp.Application.UseCases.UsuarioUseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 using GustosApp.Domain.Model.@enum;
@@ -54,7 +55,7 @@ namespace GustosApp.Application.Tests
                 It.IsAny<CancellationToken>()),
                 Times.Once);
         }
-        /*
+       
         [Fact]
         public async Task AgregarUsuarioRestauranteFavorito_CuandoSinPlanYLlegaAlLimite_LanzaExcepcion()
         {
@@ -81,11 +82,11 @@ namespace GustosApp.Application.Tests
                 usuarioRepoMock.Object
                 );
 
-            await Assert.ThrowsAsync<Exception>(() =>
+            await Assert.ThrowsAsync<LimiteFavoritosAlcanzadoException>(() =>
               useCase.HandleAsync("abc", Guid.NewGuid()));
 
         }
-        */
+        
         [Fact]
         public async Task AgregarUsuarioRestauranteFavorito_CuandoYaExiste_LanzaExcepcion()
         {

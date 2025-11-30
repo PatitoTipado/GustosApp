@@ -1,4 +1,4 @@
-using GustosApp.Application.DTO;
+using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 
@@ -9,14 +9,17 @@ namespace GustosApp.Application.UseCases.GrupoUseCases
         private readonly IGrupoRepository _grupoRepository;
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IMiembroGrupoRepository _miembroGrupoRepository;
+        private readonly IChatRealTimeService _chatRealTime;
 
         public AbandonarGrupoUseCase(IGrupoRepository grupoRepository,
             IUsuarioRepository usuarioRepository,
-            IMiembroGrupoRepository miembroGrupoRepository)
+            IMiembroGrupoRepository miembroGrupoRepository,
+             IChatRealTimeService chatRealTime)
         {
             _grupoRepository = grupoRepository;
             _usuarioRepository = usuarioRepository;
             _miembroGrupoRepository = miembroGrupoRepository;
+            _chatRealTime = chatRealTime;
         }
 
         public async Task<bool> HandleAsync(string firebaseUid, Guid grupoId, CancellationToken cancellationToken = default)
@@ -49,6 +52,9 @@ namespace GustosApp.Application.UseCases.GrupoUseCases
             // Abandonar el grupo
             miembro.AbandonarGrupo();
             await _miembroGrupoRepository.UpdateAsync(miembro, cancellationToken);
+         
+
+            await _chatRealTime.UsuarioAbandono(grupoId, usuario.Id,usuario.IdUsuario,usuario.FirebaseUid);
 
             return true;
         }

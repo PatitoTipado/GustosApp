@@ -10,7 +10,7 @@ using GustosApp.Domain.Interfaces;
 
 namespace GustosApp.Application.UseCases.UsuarioUseCases
 {
-    public class ConstruirPreferenciasUseCase
+    public class ConstruirPreferenciasUseCase : IConstruirPreferencias
     {
         private readonly ObtenerUsuarioUseCase _obtenerUsuario;
         private readonly ObtenerGustosUseCase _obtenerGustosUser;

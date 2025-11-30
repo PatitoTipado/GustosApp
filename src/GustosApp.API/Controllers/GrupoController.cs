@@ -1,6 +1,5 @@
 using AutoMapper;
 using GustosApp.API.DTO;
-using GustosApp.Application.DTO;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.Handlers;
 using GustosApp.Application.Services;
@@ -15,6 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Text.Json;
 using GustosApp.Application.UseCases.UsuarioUseCases;
+using GustosApp.Application.Model;
 
 namespace GustosApp.API.Controllers
 {
@@ -146,10 +146,20 @@ namespace GustosApp.API.Controllers
         [ProducesResponseType(typeof(LimiteGruposAlcanzadoResponse), StatusCodes.Status402PaymentRequired)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> UnirseGrupo([FromBody] UnirseGrupoRequest request, CancellationToken ct)
         {
             var firebaseUid = GetFirebaseUid();
-            var grupo = await _unirseGrupoUseCase.HandleAsync(firebaseUid, request, ct);
+
+            if (string.IsNullOrEmpty(request.CodigoInvitacion))
+                throw new ArgumentException("El código de invitación es obligatorio");
+
+            if (request.CodigoInvitacion.Length == 8)
+            {
+                throw new ArgumentException("El código debe tener exactamente 8 caracteres");
+            }
+
+            var grupo = await _unirseGrupoUseCase.HandleAsync(firebaseUid, request.CodigoInvitacion, ct);
 
             var response = _mapper.Map<GrupoResponse>(grupo);
 
@@ -348,6 +358,24 @@ namespace GustosApp.API.Controllers
         }
 
         [Authorize]
+        [HttpDelete("eliminarMiGusto")]
+        [ProducesResponseType(typeof(ActualizarGustosGrupoResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> eliminarMiGustoDeGrupo(Guid grupoId, List<string> gustos)
+        {
+            var firebaseUid = GetFirebaseUid();
+            var ok = await _servicioPreferenciasGrupos.EliminarGustosDeGrupo(gustos, grupoId, firebaseUid);
+
+            var response = new ActualizarGustosGrupoResponse
+            {
+                Success = ok,
+                Mensaje = "Gustos eliminados correctamente"
+            };
+            return Ok(response);
+        }
+
+
+        [Authorize]
         [HttpPut("desactivarMiembro")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -418,7 +446,7 @@ namespace GustosApp.API.Controllers
             // registrar Top 3 grupal
             var top3Ids = response
                 .Take(3)
-                .Select(r => r.Id)    
+                .Select(r => r.Id)
                 .ToList();
 
             if (top3Ids.Count > 0)
@@ -449,9 +477,9 @@ namespace GustosApp.API.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(500)]
         public async Task<IActionResult> ObtenerRestaurantesAleatorios(
-            Guid grupoId,
-            [FromBody] ObtenerRestaurantesAleatoriosRequest request,
-            CancellationToken ct)
+    Guid grupoId,
+    [FromBody] ObtenerRestaurantesAleatoriosRequest request,
+    CancellationToken ct)
         {
             try
             {
@@ -466,7 +494,16 @@ namespace GustosApp.API.Controllers
                     return Forbid("No eres miembro de este grupo");
                 }
 
-                var restaurantes = await _obtenerRestaurantesAleatorios.HandleAsync(grupoId, request, ct);
+                // Mapear DTO a RequestModel
+                var requestModel = new ObtenerRestaurantesAleatoriosRequestModel
+                {
+                    Cantidad = request.Cantidad,
+                    Latitud = request.Latitud,
+                    Longitud = request.Longitud,
+                    RadioMetros = request.RadioMetros
+                };
+
+                var restaurantes = await _obtenerRestaurantesAleatorios.HandleAsync(grupoId, requestModel, ct);
                 return Ok(restaurantes);
             }
             catch (ArgumentException ex)

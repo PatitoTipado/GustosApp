@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using System.Text.Json;
 using GustosApp.Application.Common.Exceptions;
-using GustosApp.Application.DTO;
+using GustosApp.API.DTO;
 
 namespace GustosApp.API.Middleware
 {

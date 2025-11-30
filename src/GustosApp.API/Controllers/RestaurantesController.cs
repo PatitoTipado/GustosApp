@@ -1,6 +1,5 @@
 using AutoMapper;
 using GustosApp.API.DTO;
-using GustosApp.Application.DTO;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases.RestauranteUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases;
@@ -42,7 +41,7 @@ namespace GustosApp.API.Controllers
         private readonly IServicioRestaurantes _servicio;
         private readonly ObtenerUsuarioUseCase _obtenerUsuario;
         private readonly SugerirGustosSobreUnRadioUseCase _sugerirGustos;
-    
+
         private readonly ConstruirPreferenciasUseCase _construirPreferencias;
         private readonly CrearSolicitudRestauranteUseCase _solicitudesRestaurantes;
         private readonly BuscarRestaurantesUseCase _buscarRestaurante;
@@ -71,7 +70,7 @@ namespace GustosApp.API.Controllers
     IFileStorageService firebaseStorage,
       CrearSolicitudRestauranteUseCase solicitudesRestaurantes,
       ObtenerDatosRegistroRestauranteUseCase getDatosRegistroRestaurante,
-        ICacheService cache,IMapper mapper, BuscarRestaurantesUseCase buscarRestaurante,
+        ICacheService cache, IMapper mapper, BuscarRestaurantesUseCase buscarRestaurante,
        AgregarUsuarioRestauranteFavoritoUseCase agregarUsuarioRestauranteFavoritoUseCase,
       RegistrarTop3IndividualRestaurantesUseCase registrarTop3IndividualUseCase,
     RegistrarVisitaPerfilRestauranteUseCase registrarVisitaPerfilUseCase,
@@ -101,7 +100,7 @@ namespace GustosApp.API.Controllers
 
         }
 
-       
+
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -118,20 +117,30 @@ namespace GustosApp.API.Controllers
             [FromQuery] int top = 10
   )
         {
-
             var firebaseUid = GetFirebaseUid();
+
+            var preferencias = await _construirPreferencias.HandleAsync(
+                firebaseUid,
+                amigoUsername: amigoUsername,
+                grupoId: null,
+                gustosDelFiltro: gustos,
+                ct);
 
             // Filtrar restaurantes cercanos
             var res = await _servicio.BuscarAsync(
                 rating: rating,
-                tipo: tipoDeRestaurante,
-                plato: "",
                 lat: lat,
                 lng: lng,
-                radioMetros: radius
+                radioMetros: radius,
+                gustos: preferencias.Gustos,
+                restricciones: preferencias.Restricciones
               );
 
 
+            if (res == null || !res.Any())
+            {
+                throw new KeyNotFoundException("no se encontraron restaurantes para esa ubicacion");
+            }
 
             await _cache.SetAsync(
              $"usuario:{firebaseUid}:location",
@@ -144,12 +153,10 @@ namespace GustosApp.API.Controllers
              ),
               TimeSpan.FromMinutes(10));
 
-            var preferencias = await _construirPreferencias.HandleAsync(
-                firebaseUid,
-                amigoUsername: amigoUsername,
-                grupoId: null,
-                gustosDelFiltro: gustos,
-                ct);
+            if (preferencias.Gustos == null || !preferencias.Gustos.Any())
+            {
+                throw new ArgumentException("los gustos que quiere buscar no son validos");
+            }
 
             //  Algoritmo combinado
             var recommendations = await _sugerirGustos.Handle(
@@ -158,6 +165,11 @@ namespace GustosApp.API.Controllers
                 top,
                 ct
             );
+
+            if (recommendations == null || !recommendations.Any())
+            {
+                throw new KeyNotFoundException("no existen coincidencias con sus gustos y preferencias en la zona");
+            }
 
             // DTO
             var response = _mapper.Map<List<RestauranteDTO>>(recommendations);
@@ -276,7 +288,7 @@ namespace GustosApp.API.Controllers
             }
         }
 
-      
+
         [HttpGet("registro-datos")]
         [ProducesResponseType(typeof(DatosSolicitudRestauranteDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -331,7 +343,7 @@ namespace GustosApp.API.Controllers
         }
 
 
-       
+
 
         [Authorize(Policy = "DuenoRestaurante")]
         [HttpGet("mio")]
@@ -340,14 +352,14 @@ namespace GustosApp.API.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> ObtenerRestauranteIdDueñoRestaurante()
         {
-            var firebaseuid= GetFirebaseUid();
-            var usuario= await _obtenerUsuario.HandleAsync(FirebaseUid: firebaseuid, ct: CancellationToken.None);
+            var firebaseuid = GetFirebaseUid();
+            var usuario = await _obtenerUsuario.HandleAsync(FirebaseUid: firebaseuid, ct: CancellationToken.None);
             var restaurante = await _servicio.ObtenerPorPropietarioAsync(usuario.Id);
 
             return Ok(restaurante.Id);
         }
 
-        [Authorize(Policy = "DuenoRestaurante")]
+
         [HttpPut("{id:guid}/imagenes/destacada")]
         [Consumes("multipart/form-data")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -408,10 +420,9 @@ namespace GustosApp.API.Controllers
 
 
 
-        [Authorize(Policy = "DuenoRestaurante")]
         [HttpPut("{id:guid}/imagenes/logo")]
         [Consumes("multipart/form-data")]
-        [ProducesResponseType( StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> ActualizarLogo(
@@ -468,10 +479,10 @@ namespace GustosApp.API.Controllers
         }
 
 
-        [Authorize(Policy = "DuenoRestaurante")]
+
         [HttpPut("{id:guid}/imagenes/interior")]
         [Consumes("multipart/form-data")]
-        [ProducesResponseType( StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> ActualizarImagenesInterior(
@@ -479,7 +490,8 @@ namespace GustosApp.API.Controllers
     [FromForm] ActualizarImagenesRestauranteRequest request,
     CancellationToken ct = default)
         {
-            
+            Console.WriteLine($"[DEBUG] Interior - Archivos.Count = {request.Archivos?.Count ?? 0}, SoloBorrar = {request.SoloBorrar}");
+
             var urlsSubidas = new List<string>();
 
             try
@@ -523,7 +535,6 @@ namespace GustosApp.API.Controllers
 
 
 
-        [Authorize(Policy = "DuenoRestaurante")]
         [HttpPut("{id:guid}/imagenes/comidas")]
         [Consumes("multipart/form-data")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -577,7 +588,7 @@ namespace GustosApp.API.Controllers
         }
 
 
-        [Authorize(Policy = "DuenoRestaurante")]
+
         [HttpPut("{id:guid}/imagenes/menu")]
         [Consumes("multipart/form-data")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -650,7 +661,7 @@ namespace GustosApp.API.Controllers
             return ok ? NoContent() : NotFound();
         }
 
-        
+
         [HttpGet("buscar")]
         [ProducesResponseType(typeof(RestauranteResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -698,9 +709,9 @@ namespace GustosApp.API.Controllers
         public async Task<IActionResult> EliminarFavorito(Guid restauranteId)
         {
             var firebaseUid = GetFirebaseUid();
-                await _agregarFavoritoUseCase.HandleAsyncDelete(firebaseUid, restauranteId);
+            await _agregarFavoritoUseCase.HandleAsyncDelete(firebaseUid, restauranteId);
 
-                return Ok();
+            return Ok();
 
         }
 

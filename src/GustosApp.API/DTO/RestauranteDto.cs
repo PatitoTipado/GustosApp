@@ -7,7 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using GustosApp.API.DTO;
-using GustosApp.Application.DTO;
+using GustosApp.API.DTO;
 using GustosApp.Domain.Model;
 using GustosApp.Domain.Model.@enum;
 using Microsoft.AspNetCore.Mvc;
@@ -140,10 +140,10 @@ namespace GustosApp.API.DTO
     }
     public class CrearRestauranteDto
     {
-        public string Nombre { get; set; } = default!;
+        public string? Nombre { get; set; } = default!;
         public string Direccion { get; set; } = default!;
 
-        public string WebsiteUrl { get; set; } = default!;
+        public string ?WebsiteUrl { get; set; } = default!;
 
 
         [JsonPropertyName("lat")]
@@ -317,7 +317,6 @@ namespace GustosApp.API.DTO
         public double Rating { get; set; }
         public bool EsFavorito { get; set; } = true; 
     }
-
 }
 
 

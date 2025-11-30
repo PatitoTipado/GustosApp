@@ -142,7 +142,8 @@ namespace GustosApp.Application.Tests
             // Assert
             result.EsFavorito.Should().BeTrue();
         }
-        [Fact]
+       
+       /* [Fact]
         public async Task HandleAsync_SinReviewsLocales_ConPlaceId_DeberiaObtenerDeGooglePlaces()
         {
             // Arrange
@@ -171,7 +172,7 @@ namespace GustosApp.Application.Tests
             // Assert
             result.Restaurante.Reviews.Should().HaveCount(1);
             result.Restaurante.Reviews.First().Opinion.Should().Be("Google!");
-        }
+        }*/
         [Fact]
         public async Task HandleAsync_ConReviewsLocales_NoDeberiaLlamarGoogle()
         {

@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using GustosApp.Application.DTO;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 

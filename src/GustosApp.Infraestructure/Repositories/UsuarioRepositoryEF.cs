@@ -1,5 +1,6 @@
 ﻿using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
+using GustosApp.Domain.Model.@enum;
 using Microsoft.EntityFrameworkCore;
 
 namespace GustosApp.Infraestructure.Repositories
@@ -98,6 +99,7 @@ namespace GustosApp.Infraestructure.Repositories
             return await _db.Usuarios
                 .Where(u => u.Id != excludeId &&
                             u.Activo &&
+                            u.Rol == RolUsuario.Usuario && 
                             u.IdUsuario.ToLower().Contains(normalized))
                 .OrderBy(u => u.IdUsuario)
                 .Take(50)

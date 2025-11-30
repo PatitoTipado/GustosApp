@@ -1,4 +1,3 @@
-using GustosApp.Application.DTO;
 using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
@@ -58,8 +57,19 @@ namespace GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases
             if (await _miembroGrupoRepository.UsuarioEsMiembroActivoAsync(grupoId, usuarioInvitado.Id, ct))
                 throw new ArgumentException("El usuario ya es miembro del grupo");
 
-            if (await _invitacionRepository.ExisteInvitacionPendienteAsync(grupoId, usuarioInvitado.Id, ct))
+
+            var ultimaInvitacion = await _invitacionRepository.ObtenerUltimaInvitacionAsync(grupoId, usuarioInvitado.Id, ct);
+
+            if (ultimaInvitacion?.Estado == EstadoInvitacion.Pendiente)
                 throw new ArgumentException("Ya existe una invitación pendiente para este usuario");
+
+            if (ultimaInvitacion?.Estado == EstadoInvitacion.Aceptada &&
+                await _miembroGrupoRepository.UsuarioEsMiembroActivoAsync(grupoId, usuarioInvitado.Id, ct))
+                throw new ArgumentException("El usuario ya es miembro del grupo");
+
+            // si llegó hasta acá → se puede crear una nueva invitación
+
+
 
             // 5. Crear notificación
             var notificacion = new Notificacion

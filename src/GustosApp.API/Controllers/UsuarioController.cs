@@ -1,7 +1,7 @@
 ﻿
 using Azure.Core;
 using System.Security.Claims;
-using GustosApp.Application.DTO;
+using GustosApp.API.DTO;
 using GustosApp.Infraestructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -283,17 +283,26 @@ namespace GustosApp.API.Controllers
             }
             else
             {
-                //  Si no existe en redis → consulto DB
-                var usuario = await _obtenerUsuario.HandleAsync(FirebaseUid: uid,ct:ct);
+                try
+                {
+                    //  Si no existe en redis → consulto DB
+                    var usuario = await _obtenerUsuario.HandleAsync(FirebaseUid: uid, ct: ct);
 
-                registroCompleto = usuario.Gustos.Count >= 3;
+                    registroCompleto = usuario.Gustos.Count >= 3;
 
-                //  Guardar en redis para próximas requests
-                await _cache.SetAsync(
-                    cacheKey,
-                    registroCompleto,
-                    TimeSpan.FromHours(12)
-                );
+                    //  Guardar en redis para próximas requests
+                    await _cache.SetAsync(
+                        cacheKey,
+                        registroCompleto,
+                        TimeSpan.FromHours(12)
+                    );
+                }
+                catch (Exception ex) when (ex.Message == "Usuario no encontrado")
+                {
+                    // Si el usuario no existe en la BD, su registro claramente no está completo
+                    Console.WriteLine($"[EstadoRegistro] Usuario {uid} no existe en BD, retornando registroCompleto=false");
+                    registroCompleto = false;
+                }
             }
 
             return Ok(new
@@ -325,7 +334,9 @@ namespace GustosApp.API.Controllers
                 nombre = usuario.Nombre,
                 apellido = usuario.Apellido,
                 fotoPerfilUrl = usuario.FotoPerfilUrl,
-                esPremium = usuario.EsPremium() 
+                esPremium = usuario.EsPremium() ,
+                esPrivado = usuario.EsPrivado,
+                email = usuario.Email
             };
 
             return Ok(response);

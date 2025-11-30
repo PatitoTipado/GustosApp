@@ -1,5 +1,4 @@
-﻿using GustosApp.Application.DTO;
-using GustosApp.Domain.Common;
+﻿using GustosApp.Domain.Common;
 using GustosApp.Domain.Interfaces;
 using System;
 using System.Collections.Generic;

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using GustosApp.Application.DTO;
 using GustosApp.Domain.Model;
 
 namespace GustosApp.Application.Interfaces
@@ -30,5 +29,6 @@ namespace GustosApp.Application.Interfaces
         Task<Restaurante> ObtenerResenasDesdeGooglePlaces(string placeId, CancellationToken ct);
         Task<GooglePlacesDto?> ObtenerMetricasGooglePlaces(string placeId, CancellationToken ct);
 
+        Task<List<Restaurante>> BuscarAsync(double rating, double? lat, double? lng, int? radioMetros, List<string> gustos, List<string> restricciones);
     }
 }

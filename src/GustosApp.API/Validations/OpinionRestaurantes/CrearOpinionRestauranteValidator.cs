@@ -6,7 +6,7 @@ namespace GustosApp.API.Validations.OpinionRestaurantes
 
     public class CrearOpinionRestauranteValidator : AbstractValidator<CrearOpinionRestauranteRequest>
     {
-        private const long MaxSize = 3 * 1024 * 1024; // 3MB
+        private const long MaxSize = 2 * 1024 * 1024; // 2MB
         private static readonly string[] AllowedExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
 
         public CrearOpinionRestauranteValidator()
@@ -45,7 +45,7 @@ namespace GustosApp.API.Validations.OpinionRestaurantes
 
             RuleForEach(x => x.Imagenes)
                 .Must(f => f != null && f.Length <= MaxSize)
-                .WithMessage("Una imagen supera los 3MB.")
+                .WithMessage("Una imagen supera los 2MB.")
                 .Must(f => f != null && AllowedExtensions.Contains(Path.GetExtension(f.FileName).ToLower()))
                 .WithMessage("Formato de imagen inválido (solo jpg, jpeg, png o webp).");
 

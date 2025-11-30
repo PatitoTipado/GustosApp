@@ -1,7 +1,7 @@
 ﻿using System.Security.Claims;
 using AutoMapper;
 using GustosApp.API.DTO;
-using GustosApp.Application.DTO;
+using GustosApp.API.DTO;
 using GustosApp.Application.UseCases.UsuarioUseCases;
 using GustosApp.Application.UseCases.UsuarioUseCases.RestriccionesUseCases;
 using GustosApp.Domain.Model.@enum;

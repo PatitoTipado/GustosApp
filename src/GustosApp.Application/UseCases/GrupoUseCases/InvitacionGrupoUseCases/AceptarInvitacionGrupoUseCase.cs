@@ -1,4 +1,3 @@
-using GustosApp.Application.DTO;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases.NotificacionUseCases;
 using GustosApp.Domain.Interfaces;
@@ -14,7 +13,10 @@ namespace GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases
         private IGustosGrupoRepository _gustosGrupoRepository;
         private readonly EliminarNotificacionUseCase _eliminarNotificacion;
         private readonly INotificacionRealtimeService _notificacionRealtimeService;
+        private readonly IChatRealTimeService _chatRealtime;
         private readonly IGrupoRepository _grupoRepository;
+     
+
 
         public AceptarInvitacionGrupoUseCase(IInvitacionGrupoRepository invitacionRepository,
             IUsuarioRepository usuarioRepository,
@@ -22,7 +24,9 @@ namespace GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases
             IGustosGrupoRepository gustosGrupoRepository,
             EliminarNotificacionUseCase eliminarNotificacion,
             INotificacionRealtimeService notificacionRealtimeService,
-            IGrupoRepository grupoRepository)
+            IChatRealTimeService chatRealTimeService,
+            IGrupoRepository grupoRepository
+            )
         {
             _invitacionRepository = invitacionRepository;
             _usuarioRepository = usuarioRepository;
@@ -30,7 +34,9 @@ namespace GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases
             _gustosGrupoRepository = gustosGrupoRepository;
             _eliminarNotificacion = eliminarNotificacion;
             _notificacionRealtimeService = notificacionRealtimeService;
+            _chatRealtime = chatRealTimeService;
             _grupoRepository = grupoRepository;
+          
         }
 
         public async Task<Grupo> HandleAsync(string firebaseUid, Guid invitacionId, CancellationToken cancellationToken = default)
@@ -97,19 +103,21 @@ namespace GustosApp.Application.UseCases.GrupoUseCases.InvitacionGrupoUseCases
                     invitacion.NotificacionId.Value
                 );
             }
-
-
-
             // Recupera el grupo actualizado con relaciones
             var grupo = invitacion.Grupo ?? await _grupoRepository.GetByIdAsync
                 (invitacion.GrupoId, cancellationToken)
+              
                 ?? throw new InvalidOperationException("Error al aceptar la invitación");
 
+
+            await _chatRealtime.UsuarioSeUnio(
+               invitacion.GrupoId,
+                 usuario.Id,
+             usuario.IdUsuario,
+             usuario.FotoPerfilUrl
+                );
+
             return grupo;
-
-
-
-
         }
     }
 }

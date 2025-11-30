@@ -96,6 +96,13 @@ namespace GustosApp.Infraestructure.Repositories
             return await _context.InvitacionesGrupos
                 .AnyAsync(i => i.GrupoId == grupoId && i.UsuarioInvitadoId == usuarioId && i.Estado == EstadoInvitacion.Pendiente, cancellationToken);
         }
+        public async Task<InvitacionGrupo?> ObtenerUltimaInvitacionAsync(Guid grupoId, Guid usuarioInvitadoId, CancellationToken ct)
+        {
+            return await _context.InvitacionesGrupos
+                .Where(i => i.GrupoId == grupoId && i.UsuarioInvitadoId == usuarioInvitadoId)
+                .OrderByDescending(i => i.FechaInvitacion)
+                .FirstOrDefaultAsync(ct);
+        }
 
         public async Task MarcarInvitacionesExpiradasAsync(CancellationToken cancellationToken = default)
         {

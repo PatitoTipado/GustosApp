@@ -46,17 +46,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-  <Content Include="tessdata\**\*">
-    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-  </Content>
-</ItemGroup>
-
-	<ItemGroup>
-	  <Compile Include="..\GustosApp.Domain\Model\ReseñaRestaurante.cs" Link="ReseñaRestaurante.cs" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Content Update="tessdata\**\*">
+		<Content Include="Templates\**\*">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
@@ -64,7 +54,6 @@
 	<ItemGroup>
 	  <Folder Include="wwwroot\" />
 	</ItemGroup>
-
 
 
 </Project>

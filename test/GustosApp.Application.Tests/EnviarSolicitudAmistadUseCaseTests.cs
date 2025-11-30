@@ -144,7 +144,7 @@ namespace GustosApp.Application.Tests
 
             // Assert
             await act.Should().ThrowAsync<ArgumentException>()
-                .WithMessage("Ya existe una amistad activa con este usuario");
+                .WithMessage("Ya son amigos");
         }
 
         [Fact]
@@ -173,9 +173,9 @@ namespace GustosApp.Application.Tests
 
             // Assert
             await act.Should().ThrowAsync<ArgumentException>()
-                .WithMessage("Ya existe una solicitud pendiente entre estos usuarios");
+                .WithMessage("Ya existe una solicitud pendiente entre ustedes");
         }
-
+       
         [Fact]
         public async Task HandleAsync_DeberiaFallar_SiExistePendiente_BHaciaA()
         {
@@ -206,9 +206,9 @@ namespace GustosApp.Application.Tests
 
             // Assert
             await act.Should().ThrowAsync<ArgumentException>()
-                .WithMessage("Ya existe una solicitud pendiente entre estos usuarios");
+                .WithMessage("Ya existe una solicitud pendiente entre ustedes");
         }
-
+     
         [Fact]
         public async Task HandleAsync_DeberiaCrearSolicitudCorrectamente()
         {

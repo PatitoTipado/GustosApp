@@ -30,5 +30,6 @@ namespace GustosApp.Application.Interfaces
         Task<List<Restaurante>> BuscarAsync(double rating, double? lat, double? lng, int? radioMetros, List<string> gustos, List<string> restricciones);
         Task<GooglePlacesDto?> ObtenerMetricasGooglePlaces(string placeId, CancellationToken ct);
 
+        Task<List<Restaurante>> BuscarAsync(double rating, double? lat, double? lng, int? radioMetros, List<string> gustos, List<string> restricciones);
     }
 }

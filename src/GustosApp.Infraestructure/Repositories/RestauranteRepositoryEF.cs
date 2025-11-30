@@ -216,6 +216,37 @@ namespace GustosApp.Infraestructure.Repositories
                 return Task.FromResult(new List<Restaurante>());
             }
 
+            prefijo = prefijo.ToLower();
+
+            if(_index.TryGetValue(prefijo, out var lista))
+                return Task.FromResult(lista);
+              
+           return Task.FromResult(new List<Restaurante>());
+        }
+
+        private void Indexar(Restaurante r)
+        {
+            var nombre = r.Nombre.ToLower();
+
+            for (int i = 1; i <= nombre.Length; i++)
+            {
+                var prefijo = nombre.Substring(0, i);
+
+                if (!_index.ContainsKey(prefijo))
+                    _index[prefijo] = new List<Restaurante>();
+
+                _index[prefijo].Add(r);
+            }
+        }
+
+      
+        /* public async Task<Restaurante?> GetByIdAsync(Guid id, CancellationToken ct)
+{
+    return await _db.Restaurantes.FirstOrDefaultAsync(r => r.Id == id);
+
+}*/
+
+
         public Task<List<Restaurante>> obtenerRestauranteConResenias(List<Guid> ids)
         {
             return _db.Restaurantes

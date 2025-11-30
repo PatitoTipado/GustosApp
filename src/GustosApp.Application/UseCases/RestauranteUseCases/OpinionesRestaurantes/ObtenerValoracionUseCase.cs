@@ -20,7 +20,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.OpinionesRestaurant
             _opinionRestauranteRepository = opinionRestauranteRepository;
             _servicioRestaurantes = servicioRestaurantes;
         }
-
+        /*
         public async Task<ValoracionCombinadaResult> HandleAsync(Guid restauranteId, CancellationToken ct)
         {
             var restaurante = await _restauranteRepository.GetRestauranteByIdAsync(restauranteId, ct);
@@ -108,7 +108,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases.OpinionesRestaurant
                 }
             };
         }
-
+*/
          public record ValoracionCombinadaResult
          {
         public Guid RestauranteId { get; init; }

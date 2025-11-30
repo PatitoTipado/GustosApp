@@ -21,6 +21,23 @@ namespace GustosApp.API.Mapping.RestaurantesMapper
                         src.Fotos != null
                             ? src.Fotos.Select(f => f.Url).ToList()
                             : new List<string>()));
+
+            CreateMap<OpinionRestaurante, CrearOpinionRestauranteResponse>()
+                .ForMember(dest => dest.Valoracion, opt => opt.MapFrom(src => (int)src.Valoracion))
+                .ForMember(dest => dest.Img, opt => opt.MapFrom(src => 
+                    src.Fotos != null && src.Fotos.Any() 
+                        ? src.Fotos.FirstOrDefault()!.Url 
+                        : null))
+                .ForMember(dest => dest.UsuarioNombre, opt => opt.MapFrom(src => 
+                    src.Usuario != null ? src.Usuario.Nombre : null))
+                .ForMember(dest => dest.UsuarioApellido, opt => opt.MapFrom(src => 
+                    src.Usuario != null ? src.Usuario.Apellido : null))
+                .ForMember(dest => dest.RestauranteNombre, opt => opt.MapFrom(src => 
+                    src.Restaurante != null ? src.Restaurante.Nombre : null))
+                .ForMember(dest => dest.RestauranteLatitud, opt => opt.MapFrom(src => 
+                    src.Restaurante != null ? src.Restaurante.Latitud : (double?)null))
+                .ForMember(dest => dest.RestauranteLongitud, opt => opt.MapFrom(src => 
+                    src.Restaurante != null ? src.Restaurante.Longitud : (double?)null));
         }
     }
 }

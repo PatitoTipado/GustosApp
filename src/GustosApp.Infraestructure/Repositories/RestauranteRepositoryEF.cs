@@ -13,7 +13,21 @@ namespace GustosApp.Infraestructure.Repositories
     public class RestauranteRepositoryEF : IRestauranteRepository
     {
         private readonly GustosDbContext _db;
-        public RestauranteRepositoryEF(GustosDbContext db) => _db = db;
+        private readonly Dictionary<string, List<Restaurante>> _index = new();
+
+        public RestauranteRepositoryEF(GustosDbContext db)
+        {
+            _db = db;
+            ConstruirIndice();
+        }
+        private void ConstruirIndice()
+        {
+            var restaurantes = _db.Restaurantes.ToList();
+            foreach (var restaurante in restaurantes)
+            {
+                Indexar(restaurante);
+            }
+        }
 
         public async Task<Restaurante?> GetByPlaceIdAsync(string placeId, CancellationToken ct = default)
             => await _db.Restaurantes.AsNoTracking().FirstOrDefaultAsync(r => r.PlaceId == placeId, ct);
@@ -195,6 +209,13 @@ namespace GustosApp.Infraestructure.Repositories
                   .FirstOrDefaultAsync(r => r.Id == id, ct);
           }
 
+        public Task<List<Restaurante>> BuscarPorPrefijo(string prefijo, CancellationToken ct = default)
+        {
+            if(string.IsNullOrWhiteSpace(prefijo))
+            {
+                return Task.FromResult(new List<Restaurante>());
+            }
+
         public Task<List<Restaurante>> obtenerRestauranteConResenias(List<Guid> ids)
         {
             return _db.Restaurantes
@@ -204,11 +225,6 @@ namespace GustosApp.Infraestructure.Repositories
         }
 
 
-        /* public async Task<Restaurante?> GetByIdAsync(Guid id, CancellationToken ct)
-         {
-             return await _db.Restaurantes.FirstOrDefaultAsync(r => r.Id == id);
-
-         }*/
 
 
     }

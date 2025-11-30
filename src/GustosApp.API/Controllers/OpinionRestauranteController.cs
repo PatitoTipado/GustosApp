@@ -78,7 +78,7 @@ namespace GustosApp.API.Controllers
             return Ok(response);
         }
 
-        [HttpGet("google-metrica/{placeId}")]
+      /*  [HttpGet("google-metrica/{placeId}")]
         [ProducesResponseType(typeof(GooglePlacesDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> ObtenerMetricasGooglePrueba(string placeId, CancellationToken ct)
@@ -104,8 +104,8 @@ namespace GustosApp.API.Controllers
 
             return Ok(response);
         }
-
-        [HttpGet("valoracion/{restauranteId}")]
+*/
+     /*   [HttpGet("valoracion/{restauranteId}")]
         [ProducesResponseType(typeof(ValoracionCombinadaResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> ObtenerValoracionCombinada(Guid restauranteId, CancellationToken ct)
@@ -144,6 +144,6 @@ namespace GustosApp.API.Controllers
                 return StatusCode(500, $"Error al obtener valoración combinada: {ex.Message}");
             }
         }
-
+*/
     }
 }

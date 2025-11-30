@@ -11,11 +11,12 @@ using GustosApp.Application.UseCases.UsuarioUseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 using GustosApp.Infraestructure.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
 namespace GustosApp.API.Hubs
 {
-
+    [Authorize]
     public class NotificacionesHub : Hub
     {
         private readonly ObtenerNotificacionesUsuarioUseCase _obtenerNotificaciones;

@@ -13,7 +13,21 @@ namespace GustosApp.Infraestructure.Repositories
     public class RestauranteRepositoryEF : IRestauranteRepository
     {
         private readonly GustosDbContext _db;
-        public RestauranteRepositoryEF(GustosDbContext db) => _db = db;
+        private readonly Dictionary<string, List<Restaurante>> _index = new();
+
+        public RestauranteRepositoryEF(GustosDbContext db)
+        {
+            _db = db;
+            ConstruirIndice();
+        }
+        private void ConstruirIndice()
+        {
+            var restaurantes = _db.Restaurantes.ToList();
+            foreach (var restaurante in restaurantes)
+            {
+                Indexar(restaurante);
+            }
+        }
 
         public async Task<Restaurante?> GetByPlaceIdAsync(string placeId, CancellationToken ct = default)
             => await _db.Restaurantes.AsNoTracking().FirstOrDefaultAsync(r => r.PlaceId == placeId, ct);
@@ -195,13 +209,55 @@ namespace GustosApp.Infraestructure.Repositories
                   .FirstOrDefaultAsync(r => r.Id == id, ct);
           }
 
-       /* public async Task<Restaurante?> GetByIdAsync(Guid id, CancellationToken ct)
+        public Task<List<Restaurante>> BuscarPorPrefijo(string prefijo, CancellationToken ct = default)
         {
-            return await _db.Restaurantes.FirstOrDefaultAsync(r => r.Id == id);
+            if(string.IsNullOrWhiteSpace(prefijo))
+            {
+                return Task.FromResult(new List<Restaurante>());
+            }
 
-        }*/
+            prefijo = prefijo.ToLower();
+
+            if(_index.TryGetValue(prefijo, out var lista))
+                return Task.FromResult(lista);
+              
+           return Task.FromResult(new List<Restaurante>());
+        }
+
+        private void Indexar(Restaurante r)
+        {
+            var nombre = r.Nombre.ToLower();
+
+            for (int i = 1; i <= nombre.Length; i++)
+            {
+                var prefijo = nombre.Substring(0, i);
+
+                if (!_index.ContainsKey(prefijo))
+                    _index[prefijo] = new List<Restaurante>();
+
+                _index[prefijo].Add(r);
+            }
+        }
 
       
+        /* public async Task<Restaurante?> GetByIdAsync(Guid id, CancellationToken ct)
+{
+    return await _db.Restaurantes.FirstOrDefaultAsync(r => r.Id == id);
+
+}*/
+
+
+        public Task<List<Restaurante>> obtenerRestauranteConResenias(List<Guid> ids)
+        {
+            return _db.Restaurantes
+                .Where(r => ids.Contains(r.Id))
+                .Include(r => r.Reviews) // si se llama distinto, decímelo
+                .ToListAsync();
+        }
+
+
+
+
     }
 }
 

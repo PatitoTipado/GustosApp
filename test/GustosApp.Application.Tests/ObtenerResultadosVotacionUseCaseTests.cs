@@ -483,5 +483,66 @@ namespace GustosApp.Application.Tests
             Assert.NotNull(resultado);
             Assert.Equal(1, resultado.MiembrosActivos);
         }
+
+        [Fact]
+        public async Task HandleAsync_ConGanadorPorRuleta_RetornaGanadorRuleta()
+        {
+            // Arrange
+            var firebaseUid = "firebase123";
+            var votacionId = Guid.NewGuid();
+            var grupoId = Guid.NewGuid();
+            var restaurante1Id = Guid.NewGuid();
+            var restaurante2Id = Guid.NewGuid();
+            var ganadorRuletaId = restaurante2Id;
+            var usuario1Id = Guid.NewGuid();
+            var usuario2Id = Guid.NewGuid();
+
+            var usuario1 = new Usuario
+            {
+                Id = usuario1Id,
+                FirebaseUid = "user1FirebaseUid",
+                Email = "user1@test.com",
+                Nombre = "User",
+                Apellido = "1"
+            };
+            
+            var grupo = new Grupo("Test Grupo", Guid.NewGuid()) { Id = grupoId };
+            var miembro1 = new MiembroGrupo(grupoId, usuario1Id, false);
+            var miembro2 = new MiembroGrupo(grupoId, usuario2Id, false);
+            typeof(MiembroGrupo).GetProperty("afectarRecomendacion")!.SetValue(miembro1, true);
+            typeof(MiembroGrupo).GetProperty("afectarRecomendacion")!.SetValue(miembro2, true);
+            grupo.Miembros.Add(miembro1);
+            grupo.Miembros.Add(miembro2);
+            
+            var votacion = new VotacionGrupo(grupoId) { Grupo = grupo };
+            typeof(VotacionGrupo).GetProperty("Id")!.SetValue(votacion, votacionId);
+            
+            // Empate en votos
+            votacion.Votos.Add(new VotoRestaurante(votacionId, usuario1Id, restaurante1Id, null));
+            votacion.Votos.Add(new VotoRestaurante(votacionId, usuario2Id, restaurante2Id, null));
+            
+            // Establecer ganador por ruleta
+            votacion.EstablecerGanadorRuleta(ganadorRuletaId);
+
+            _mockUsuarioRepository
+                .Setup(x => x.GetByFirebaseUidAsync(firebaseUid, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(usuario1);
+
+            _mockVotacionRepository
+                .Setup(x => x.ObtenerPorIdAsync(votacionId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(votacion);
+
+            _mockGrupoRepository
+                .Setup(x => x.UsuarioEsMiembroAsync(grupoId, firebaseUid, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
+
+            // Act
+            var resultado = await _useCase.HandleAsync(firebaseUid, votacionId);
+
+            // Assert
+            Assert.NotNull(resultado);
+            Assert.Equal(ganadorRuletaId, resultado.GanadorId);
+            Assert.False(resultado.HayEmpate);
+        }
     }
 }

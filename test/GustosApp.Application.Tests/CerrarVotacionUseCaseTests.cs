@@ -338,7 +338,99 @@ namespace GustosApp.Application.Tests
             Assert.Equal(EstadoVotacion.Cerrada, resultado.Estado);
             Assert.Equal(restaurante1Id, resultado.RestauranteGanadorId);
             var restaurantesEmpatados = resultado.ObtenerRestaurantesEmpatados();
-            Assert.Single(restaurantesEmpatados); // No hay empate
+            Assert.Single(restaurantesEmpatados); // Un solo ganador
+            Assert.Equal(restaurante1Id, restaurantesEmpatados.First());
+        }
+
+        [Fact]
+        public async Task HandleAsync_SinVotos_CierraSinGanador()
+        {
+            // Arrange
+            var firebaseUid = "firebase123";
+            var votacionId = Guid.NewGuid();
+            var grupoId = Guid.NewGuid();
+            var adminId = Guid.NewGuid();
+            
+            var admin = new Usuario
+            {
+                Id = adminId,
+                FirebaseUid = "firebase123",
+                Email = "admin@test.com",
+                Nombre = "Admin",
+                Apellido = "User"
+            };
+            
+            var grupo = new Grupo("Test Grupo", adminId) { Id = grupoId };
+            var votacion = new VotacionGrupo(grupoId) { Grupo = grupo };
+
+            _mockUsuarioRepository
+                .Setup(x => x.GetByFirebaseUidAsync(firebaseUid, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(admin);
+
+            _mockVotacionRepository
+                .Setup(x => x.ObtenerPorIdAsync(votacionId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(votacion);
+
+            _mockVotacionRepository
+                .Setup(x => x.ActualizarVotacionAsync(It.IsAny<VotacionGrupo>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            // Act
+            var resultado = await _useCase.HandleAsync(firebaseUid, votacionId);
+
+            // Assert
+            Assert.NotNull(resultado);
+            Assert.Equal(EstadoVotacion.Cerrada, resultado.Estado);
+            Assert.Null(resultado.RestauranteGanadorId);
+            _mockVotacionRepository.Verify(
+                x => x.ActualizarVotacionAsync(votacion, It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task HandleAsync_ConGanadorManual_EstableceGanadorEspecificado()
+        {
+            // Arrange
+            var firebaseUid = "firebase123";
+            var votacionId = Guid.NewGuid();
+            var grupoId = Guid.NewGuid();
+            var adminId = Guid.NewGuid();
+            var restauranteManualId = Guid.NewGuid();
+            
+            var admin = new Usuario
+            {
+                Id = adminId,
+                FirebaseUid = "firebase123",
+                Email = "admin@test.com",
+                Nombre = "Admin",
+                Apellido = "User"
+            };
+            
+            var grupo = new Grupo("Test Grupo", adminId) { Id = grupoId };
+            var votacion = new VotacionGrupo(grupoId) { Grupo = grupo };
+
+            _mockUsuarioRepository
+                .Setup(x => x.GetByFirebaseUidAsync(firebaseUid, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(admin);
+
+            _mockVotacionRepository
+                .Setup(x => x.ObtenerPorIdAsync(votacionId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(votacion);
+
+            _mockVotacionRepository
+                .Setup(x => x.ActualizarVotacionAsync(It.IsAny<VotacionGrupo>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            // Act
+            var resultado = await _useCase.HandleAsync(firebaseUid, votacionId, restauranteManualId);
+
+            // Assert
+            Assert.NotNull(resultado);
+            Assert.Equal(EstadoVotacion.Cerrada, resultado.Estado);
+            Assert.Equal(restauranteManualId, resultado.RestauranteGanadorId);
+            _mockVotacionRepository.Verify(
+                x => x.ActualizarVotacionAsync(votacion, It.IsAny<CancellationToken>()),
+                Times.Once);
         }
     }
 }

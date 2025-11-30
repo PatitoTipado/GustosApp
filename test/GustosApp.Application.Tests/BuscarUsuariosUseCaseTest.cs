@@ -60,26 +60,5 @@ namespace GustosApp.Application.Tests
                Times.Once);
         }
 
-        [Fact]
-        public async Task HandleAsync_UsernameMuyCorto_LanzaExcepcion()
-        {
-            var usuario = new Usuario
-            {
-                Id = Guid.NewGuid(),
-                FirebaseUid = "uid"
-            };
-
-            var usuarioRepo = new Mock<IUsuarioRepository>();
-
-            usuarioRepo.Setup(r => r.GetByFirebaseUidAsync("uid", It.IsAny<CancellationToken>()))
-                .ReturnsAsync(usuario);
-
-            var casoDeUso = new BuscarUsuariosUseCase(usuarioRepo.Object);
-
-            await Assert.ThrowsAsync<ArgumentException>(async () =>
-            {
-                await casoDeUso.HandleAsync("uid", "a", CancellationToken.None);
-            });
-        }
     }
 }

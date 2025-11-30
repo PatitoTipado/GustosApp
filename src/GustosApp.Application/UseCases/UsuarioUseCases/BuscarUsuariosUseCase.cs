@@ -30,9 +30,6 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases
                 return await _usuarioRepository.GetAllExceptAsync(usuarioActual.Id, 50, ct);
             }
 
-            if (username.Length < 2)
-                throw new ArgumentException("El nombre de usuario debe tener al menos 2 caracteres.");
-
             return await _usuarioRepository.BuscarPorUsernameAsync(username, usuarioActual.Id, ct);
         }
     }

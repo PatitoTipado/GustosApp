@@ -27,5 +27,6 @@ namespace GustosApp.Application.Interfaces
             double lat, double lng, int radioMetros, string? tipo = null, IEnumerable<string>? platos = null);
        
         Task<Restaurante> ObtenerResenasDesdeGooglePlaces(string placeId, CancellationToken ct);
+        Task ActualizarReviewsDesdeGoogleLegacyAsync(Guid id, string placeId, CancellationToken ct);
     }
 }

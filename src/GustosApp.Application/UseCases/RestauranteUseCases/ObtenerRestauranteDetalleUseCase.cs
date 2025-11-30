@@ -7,6 +7,7 @@ using FluentValidation.Validators;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.Model;
 using GustosApp.Domain.Interfaces;
+using GustosApp.Domain.Model;
 
 namespace GustosApp.Application.UseCases.RestauranteUseCases
 {
@@ -30,36 +31,24 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
         }
 
         public async Task<RestauranteDetalleResult> HandleAsync(
-            Guid restauranteId,
-            string? firebaseUid,
-            CancellationToken ct)
+        Guid restauranteId,
+        string? firebaseUid,
+        CancellationToken ct)
         {
             var restaurante = await _servicioRestaurantes.ObtenerAsync(restauranteId);
             if (restaurante == null)
                 throw new KeyNotFoundException("Restaurante no encontrado");
 
-            // Reviews importadas de Google (si no hay reviews aún)
+            // Si no hay reviews, importar las de Google
             if (!string.IsNullOrEmpty(restaurante.PlaceId) &&
                 (restaurante.Reviews == null || !restaurante.Reviews.Any()))
             {
-                // 1) Actualiza reviews / datos en BD desde Google Places
-                await _servicioRestaurantes.ObtenerResenasDesdeGooglePlaces(restaurante.PlaceId, ct);
+                await _servicioRestaurantes.ActualizarReviewsDesdeGoogleLegacyAsync(
+                    restaurante.Id, restaurante.PlaceId, ct);
 
-                // 2) Vuelve a cargar el restaurante completo con todos los Includes
-                var recargado = await _servicioRestaurantes.ObtenerAsync(restauranteId);
-                if (recargado != null)
-                    restaurante = recargado;
+                restaurante = await _servicioRestaurantes.ObtenerAsync(restauranteId)
+                              ?? restaurante;
             }
-
-            // Ordenar reviews (ya con locales + importadas)
-            restaurante.Reviews = restaurante.Reviews
-                .OrderBy(r => r.EsImportada)
-                .ThenByDescending(r => r.FechaCreacion)
-                .ToList();
-
-
-
-
 
             Guid? usuarioId = null;
             bool esFavorito = false;
@@ -77,6 +66,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
 
             return new RestauranteDetalleResult(restaurante, esFavorito);
         }
-    }
 
+
+    }
 }

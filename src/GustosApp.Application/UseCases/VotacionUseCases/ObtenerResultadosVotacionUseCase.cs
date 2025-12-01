@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 
@@ -13,15 +14,18 @@ namespace GustosApp.Application.UseCases.VotacionUseCases
         private readonly IVotacionRepository _votacionRepository;
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IGrupoRepository _grupoRepository;
+        private readonly INotificacionesVotacionService _notificaciones;
 
         public ObtenerResultadosVotacionUseCase(
             IVotacionRepository votacionRepository,
             IUsuarioRepository usuarioRepository,
-            IGrupoRepository grupoRepository)
+            IGrupoRepository grupoRepository,
+            INotificacionesVotacionService notificaciones)
         {
             _votacionRepository = votacionRepository;
             _usuarioRepository = usuarioRepository;
             _grupoRepository = grupoRepository;
+            _notificaciones = notificaciones;
         }
 
         public async Task<ResultadoVotacion> HandleAsync(
@@ -106,6 +110,10 @@ namespace GustosApp.Application.UseCases.VotacionUseCases
                 else
                 {
                     empatados = restaurantesConMaxVotos;
+                    await _notificaciones.NotificarEmpate(
+                    votacion.GrupoId,
+                       votacion.Id
+                       );
                 }
             }
 

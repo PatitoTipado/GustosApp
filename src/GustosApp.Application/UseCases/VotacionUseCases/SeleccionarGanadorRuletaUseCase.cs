@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 
@@ -11,13 +12,16 @@ namespace GustosApp.Application.UseCases.VotacionUseCases
     {
         private readonly IVotacionRepository _votacionRepository;
         private readonly IUsuarioRepository _usuarioRepository;
+        private readonly INotificacionesVotacionService _notificaciones;
 
         public SeleccionarGanadorRuletaUseCase(
             IVotacionRepository votacionRepository,
-            IUsuarioRepository usuarioRepository)
+            IUsuarioRepository usuarioRepository,
+           INotificacionesVotacionService notificaciones)
         {
             _votacionRepository = votacionRepository;
             _usuarioRepository = usuarioRepository;
+            _notificaciones = notificaciones;
         }
 
         public async Task<VotacionGrupo> HandleAsync(
@@ -72,6 +76,9 @@ namespace GustosApp.Application.UseCases.VotacionUseCases
 
             // 9. Asignar ganador por ruleta (dominio)
             votacion.EstablecerGanadorRuleta(restauranteGanadorId);
+
+            await _notificaciones.NotificarGanador(votacion.GrupoId, votacion.Id, restauranteGanadorId);
+
 
             // 10. Guardar
             await _votacionRepository.ActualizarVotacionAsync(votacion, ct);

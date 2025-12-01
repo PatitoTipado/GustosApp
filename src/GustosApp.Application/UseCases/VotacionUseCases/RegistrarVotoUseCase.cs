@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 
@@ -13,17 +14,20 @@ namespace GustosApp.Application.UseCases.VotacionUseCases
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IGrupoRepository _grupoRepository;
         private readonly IRestauranteRepository _restauranteRepository;
+        private readonly INotificacionesVotacionService _notificaciones;
 
         public RegistrarVotoUseCase(
             IVotacionRepository votacionRepository,
             IUsuarioRepository usuarioRepository,
             IGrupoRepository grupoRepository,
-            IRestauranteRepository restauranteRepository)
+            IRestauranteRepository restauranteRepository,
+           INotificacionesVotacionService notificaciones)
         {
             _votacionRepository = votacionRepository;
             _usuarioRepository = usuarioRepository;
             _grupoRepository = grupoRepository;
             _restauranteRepository = restauranteRepository;
+            _notificaciones = notificaciones;
         }
 
         public async Task<VotoRestaurante> HandleAsync(
@@ -75,11 +79,19 @@ namespace GustosApp.Application.UseCases.VotacionUseCases
                 // Actualizar
                 votoExistente.ActualizarVoto(restauranteId, comentario);
                 await _votacionRepository.ActualizarVotoAsync(votoExistente, ct);
+
+                await _notificaciones.NotificarVotoRegistrado(votacion.GrupoId, votacionId);
+                await _notificaciones.NotificarResultadosActualizados(votacion.GrupoId, votacionId);
+
                 return votoExistente;
             }
 
             // 8. Crear voto nuevo
             var nuevoVoto = new VotoRestaurante(votacionId, usuario.Id, restauranteId, comentario);
+
+            await _notificaciones.NotificarVotoRegistrado(votacion.GrupoId, votacionId);
+            await _notificaciones.NotificarResultadosActualizados(votacion.GrupoId, votacionId);
+
             return await _votacionRepository.RegistrarVotoAsync(nuevoVoto, ct);
         }
 

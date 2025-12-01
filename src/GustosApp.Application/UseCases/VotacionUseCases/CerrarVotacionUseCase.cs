@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 
@@ -12,15 +13,18 @@ namespace GustosApp.Application.UseCases.VotacionUseCases
         private readonly IVotacionRepository _votacionRepository;
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IGrupoRepository _grupoRepository;
+        private readonly INotificacionesVotacionService _notificaciones;
 
         public CerrarVotacionUseCase(
             IVotacionRepository votacionRepository,
             IUsuarioRepository usuarioRepository,
-            IGrupoRepository grupoRepository)
+            IGrupoRepository grupoRepository,
+            INotificacionesVotacionService notificaciones)
         {
             _votacionRepository = votacionRepository;
             _usuarioRepository = usuarioRepository;
             _grupoRepository = grupoRepository;
+            _notificaciones = notificaciones;
         }
 
         public async Task<VotacionGrupo> HandleAsync(
@@ -88,6 +92,9 @@ namespace GustosApp.Application.UseCases.VotacionUseCases
 
             // 7. Guardar
             await _votacionRepository.ActualizarVotacionAsync(votacion, ct);
+
+            await _notificaciones.NotificarVotacionCerrada(votacion.GrupoId, votacion.Id, restauranteGanadorId);
+
 
             return votacion;
         }

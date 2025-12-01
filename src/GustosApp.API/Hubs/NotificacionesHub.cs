@@ -13,6 +13,7 @@ using GustosApp.Domain.Model;
 using GustosApp.Infraestructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using GustosApp.Application.UseCases.GrupoUseCases;
 
 namespace GustosApp.API.Hubs
 {

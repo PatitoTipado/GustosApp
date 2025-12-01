@@ -63,6 +63,7 @@ using GustosApp.Application.Validations.Restaurantes;
 using FluentValidation.AspNetCore;
 using GustosApp.API.Validations.OpinionRestaurantes;
 using GustosApp.Application.UseCases.RestauranteUseCases.OpinionesRestaurantes;
+using GustosApp.Application.UseCases.RestauranteUseCases.OpinionesRestaurantes;
 using System.Globalization;
 
 
@@ -505,6 +506,7 @@ builder.Services.AddScoped<ObtenerRestaurantesAleatoriosGrupoUseCase>();
 builder.Services.AddScoped<ActivarMiembroDeGrupoUseCase>();
 builder.Services.AddScoped<EnviarRecomendacionesUsuariosActivosUseCase>();
 builder.Services.AddScoped<CrearOpinionRestauranteUseCase>();
+builder.Services.AddScoped<ObtenerValoracionUseCase>();
 builder.Services.AddScoped<BuscarRestaurantesUseCase>();
 builder.Services.AddScoped<AgregarUsuarioRestauranteFavoritoUseCase>();
 builder.Services.AddScoped<RegistrarTop3IndividualRestaurantesUseCase>();

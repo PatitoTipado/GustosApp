@@ -15,35 +15,91 @@ namespace GustosApp.Application.Tests
 {
     public class CrearNotificacionUseCaseTest
     {
-        [Fact]
-        public async Task CrearNotificacion()
+        private readonly Mock<INotificacionRepository> _repo;
+        private readonly CrearNotificacionUseCase _sut;
+
+        public CrearNotificacionUseCaseTest()
         {
-          
-            var repoMock = new Mock<INotificacionRepository>();
-            var useCase = new CrearNotificacionUseCase(repoMock.Object);
+            _repo = new Mock<INotificacionRepository>();
+            _sut = new CrearNotificacionUseCase(_repo.Object);
+        }
 
-            var usuarioDestino = Guid.NewGuid();
-            var nombreUsuario = "Gaston";
-            var nombreGrupo = "GrupoTest";
-
-            await useCase.HandleAsync(
-                usuarioDestino,
-                TipoNotificacion.InvitacionGrupo,
-                nombreUsuario,
-                nombreGrupo,
-                CancellationToken.None
-                );
-
-            repoMock.Verify(r => r.crearAsync(
+        private void AssertRepoCalled(Guid usuarioDestino, TipoNotificacion tipo, string mensajeEsperado)
+        {
+            _repo.Verify(r => r.crearAsync(
                 It.Is<Notificacion>(n =>
-                n.UsuarioDestinoId == usuarioDestino &&
-                n.Tipo == TipoNotificacion.InvitacionGrupo),It.IsAny<CancellationToken>()), Times.Once);
+                    n.UsuarioDestinoId == usuarioDestino &&
+                    n.Tipo == tipo &&
+                    n.Mensaje == mensajeEsperado &&
+                    n.Leida == false &&
+                    n.Titulo == tipo.ToString()
+                ),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
 
-             repoMock.Verify(r => r.crearAsync(It.IsAny<Notificacion>(),default),Times.Once);
+            _repo.Invocations.Clear();
         }
 
+        [Fact]
+        public async Task CrearNotificacion_SolicitudAmistad()
+        {
+            var usuario = Guid.NewGuid();
 
+            await _sut.HandleAsync(usuario, TipoNotificacion.SolicitudAmistad, "Juan", "NoImporta", CancellationToken.None);
+
+            AssertRepoCalled(usuario,
+                TipoNotificacion.SolicitudAmistad,
+                "Juan te ha enviado una solicitud de amistad.");
         }
 
+        [Fact]
+        public async Task CrearNotificacion_InvitacionGrupo()
+        {
+            var usuario = Guid.NewGuid();
 
+            await _sut.HandleAsync(usuario, TipoNotificacion.InvitacionGrupo, "Laura", "GrupoX", CancellationToken.None);
+
+            AssertRepoCalled(usuario,
+                TipoNotificacion.InvitacionGrupo,
+                "Laura te ha invitado a unirte al grupo GrupoX.");
+        }
+
+        [Fact]
+        public async Task CrearNotificacion_RecordatorioEvento()
+        {
+            var usuario = Guid.NewGuid();
+
+            await _sut.HandleAsync(usuario, TipoNotificacion.RecordatorioEvento, "", "", CancellationToken.None);
+
+            AssertRepoCalled(usuario,
+                TipoNotificacion.RecordatorioEvento,
+                "Recordatorio: Tienes un evento pendiente.");
+        }
+
+        [Fact]
+        public async Task CrearNotificacion_MensajeNuevo()
+        {
+            var usuario = Guid.NewGuid();
+
+            await _sut.HandleAsync(usuario, TipoNotificacion.MensajeNuevo, "Sofia", "", CancellationToken.None);
+
+            AssertRepoCalled(usuario,
+                TipoNotificacion.MensajeNuevo,
+                "Nuevo mensaje de Sofia.");
+        }
+
+        [Fact]
+        public async Task CrearNotificacion_Default()
+        {
+            var usuario = Guid.NewGuid();
+
+            var tipo = (TipoNotificacion)999;
+
+            await _sut.HandleAsync(usuario, tipo, "", "", CancellationToken.None);
+
+            AssertRepoCalled(usuario,
+                tipo,
+                "Tienes una nueva notificación.");
+        }
+    }
     }

@@ -62,10 +62,9 @@ namespace GustosApp.Application.UseCases.UsuarioUseCases
 
             var existe = await _repositorioFavorito.ExistsAsync(usuario.Id, restauranteId, ct);
 
-            // Si no existe, simplemente retornar sin hacer nada (idempotente)
             if (!existe)
             {
-                return; // Ya no está en favoritos, operación exitosa
+                return; 
             }
 
             await _repositorioFavorito.EliminarAsync(usuario.Id, restauranteId, ct);

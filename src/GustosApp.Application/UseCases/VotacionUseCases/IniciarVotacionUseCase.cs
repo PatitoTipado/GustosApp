@@ -23,27 +23,45 @@ namespace GustosApp.Application.UseCases.VotacionUseCases
         }
 
         public async Task<VotacionGrupo> HandleAsync(
-            string firebaseUid,
-            Guid grupoId,
-            string? descripcion = null,
-            CancellationToken ct = default)
+         string firebaseUid,
+         Guid grupoId,
+         string? descripcion,
+         List<Guid> restaurantesCandidatos,
+         CancellationToken ct = default)
         {
-            // Verificar que el usuario sea miembro del grupo
+            // 1. Verificar que el usuario existe
             var usuario = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid, ct)
                 ?? throw new UnauthorizedAccessException("Usuario no encontrado");
 
+            // 2. Validar que sea miembro del grupo
             var esMiembro = await _grupoRepository.UsuarioEsMiembroAsync(grupoId, firebaseUid, ct);
             if (!esMiembro)
                 throw new UnauthorizedAccessException("No eres miembro de este grupo");
 
-            // Verificar que no haya una votación activa
+            // 3. No permitir dos votaciones simultáneas
             var votacionActiva = await _votacionRepository.ObtenerVotacionActivaAsync(grupoId, ct);
             if (votacionActiva != null)
                 throw new InvalidOperationException("Ya existe una votación activa en este grupo");
 
-            // Crear nueva votación
+            if (restaurantesCandidatos == null || restaurantesCandidatos.Count == 0)
+                throw new InvalidOperationException("Debe seleccionar al menos un restaurante candidato.");
+
+
+            // 4. Crear votación
             var votacion = new VotacionGrupo(grupoId, descripcion);
-            return await _votacionRepository.CrearVotacionAsync(votacion, ct);
+
+            // 5. Agregar restaurantes candidatos
+            foreach (var restauranteId in restaurantesCandidatos)
+            {
+                votacion.RestaurantesCandidatos.Add(
+                    new VotacionRestaurante(votacion.Id, restauranteId)
+                );
+            }
+
+            // 6. Guardar votación completa
+            await _votacionRepository.CrearVotacionAsync(votacion, ct);
+
+            return votacion;
         }
     }
-}
+    }

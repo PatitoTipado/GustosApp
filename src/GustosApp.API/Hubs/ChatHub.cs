@@ -12,7 +12,7 @@
         [Authorize]
         public class ChatHub : Hub
         {
-            private static readonly Dictionary<string, string> Connections = new();
+         
 
             private static readonly HashSet<string> Conectados = new();
             private readonly EnviarMensajeGrupoUseCase _enviarMensajeUseCase;

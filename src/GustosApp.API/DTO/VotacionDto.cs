@@ -8,6 +8,9 @@ namespace GustosApp.API.DTO
     {
         public Guid GrupoId { get; set; }
         public string? Descripcion { get; set; }
+
+        // Los restaurantes DEFINIDOS por el iniciador de la votación
+        public List<Guid> RestaurantesCandidatos { get; set; } = new();
     }
 
     public class RegistrarVotoRequest
@@ -56,6 +59,7 @@ namespace GustosApp.API.DTO
         public int MiembrosActivos { get; set; }
         public int TotalVotos { get; set; }
         public List<RestauranteVotadoDto> RestaurantesVotados { get; set; } = new();
+        public List<RestauranteCandidatoDto> RestaurantesCandidatos { get; set; } = new();
         public Guid? GanadorId { get; set; }
         public bool HayEmpate { get; set; }
         public List<Guid> RestaurantesEmpatados { get; set; } = new();
@@ -76,8 +80,20 @@ namespace GustosApp.API.DTO
     public class VotanteInfoDto
     {
         public Guid UsuarioId { get; set; }
+
         public string UsuarioNombre { get; set; } = "";
         public string UsuarioFoto { get; set; } = "";
         public string? Comentario { get; set; }
+
+
     }
+
+    public class RestauranteCandidatoDto
+    {
+        public Guid RestauranteId { get; set; }
+        public string Nombre { get; set; } = "";
+        public string Direccion { get; set; } = "";
+        public string ImagenUrl { get; set; } = "";
+    }
+
 }

@@ -23,6 +23,8 @@ namespace GustosApp.API.Controllers
         private readonly CerrarVotacionUseCase _cerrarVotacionUseCase;
         private readonly SeleccionarGanadorRuletaUseCase _seleccionarGanadorRuletaUseCase;
         private readonly IVotacionRepository _votacionRepository;
+        private readonly IGrupoRepository _grupoRepository;
+        private readonly IUsuarioRepository _usuarioRepository;
 
         public VotacionController(
             IniciarVotacionUseCase iniciarVotacionUseCase,
@@ -30,7 +32,9 @@ namespace GustosApp.API.Controllers
             ObtenerResultadosVotacionUseCase obtenerResultadosUseCase,
             CerrarVotacionUseCase cerrarVotacionUseCase,
             SeleccionarGanadorRuletaUseCase seleccionarGanadorRuletaUseCase,
-            IVotacionRepository votacionRepository)
+            IVotacionRepository votacionRepository,
+           IGrupoRepository grupoRepository,
+             IUsuarioRepository usuarioRepository )
         {
             _iniciarVotacionUseCase = iniciarVotacionUseCase;
             _registrarVotoUseCase = registrarVotoUseCase;
@@ -38,6 +42,8 @@ namespace GustosApp.API.Controllers
             _cerrarVotacionUseCase = cerrarVotacionUseCase;
             _seleccionarGanadorRuletaUseCase = seleccionarGanadorRuletaUseCase;
             _votacionRepository = votacionRepository;
+            _grupoRepository = grupoRepository;
+           _usuarioRepository = usuarioRepository;
         }
 
         [HttpPost("iniciar")]
@@ -53,7 +59,11 @@ namespace GustosApp.API.Controllers
                 firebaseUid,
                 request.GrupoId,
                 request.Descripcion,
-                ct);
+                request.RestaurantesCandidatos,
+                ct
+            );
+
+
 
             var response = new VotacionResponse
             {
@@ -100,23 +110,41 @@ namespace GustosApp.API.Controllers
         [ProducesResponseType(typeof(ResultadoVotacionResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> ObtenerVotacionActiva(
-            Guid grupoId,
-            CancellationToken ct)
+        public async Task<IActionResult> ObtenerVotacionActiva(Guid grupoId, CancellationToken ct)
         {
             var firebaseUid = GetFirebaseUid();
-            
-            // Primero obtenemos la votación activa del grupo
-            var votacionActiva = await _votacionRepository.ObtenerVotacionActivaAsync(grupoId, ct);
-            
-            if (votacionActiva == null)
-                return NotFound(new { message = "No hay votación activa en este grupo" });
+            var usuario = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid, ct)
+                ?? throw new UnauthorizedAccessException("Usuario no encontrado");
 
-            // Luego obtenemos los resultados de esa votación
+            // obtener grupo
+            var grupo = await _grupoRepository.GetByIdAsync(grupoId, ct)
+                ?? throw new ArgumentException("Grupo no encontrado");
+
+            bool soyAdmin = grupo.AdministradorId == usuario.Id;
+
+            // buscar votación activa
+            var votacionActiva = await _votacionRepository.ObtenerVotacionActivaAsync(grupoId, ct);
+
+            // ❗ SI NO HAY VOTACIÓN, NO DEVOLVÉS 404 — DEVUELVES ESTO:
+            if (votacionActiva == null)
+            {
+                return Ok(new
+                {
+                    hayVotacionActiva = false,
+                    soyAdministrador = soyAdmin,
+                    votacion = (object?)null
+                });
+            }
+
+            // SI HAY VOTACIÓN → devolver resultados
             var resultado = await _obtenerResultadosUseCase.HandleAsync(firebaseUid, votacionActiva.Id, ct);
-            
-            var response = MapToResponse(resultado);
-            return Ok(response);
+
+            return Ok(new
+            {
+                hayVotacionActiva = true,
+                soyAdministrador = soyAdmin,
+                votacion = MapToResponse(resultado)
+            });
         }
 
         [HttpGet("{votacionId}/resultados")]
@@ -139,9 +167,9 @@ namespace GustosApp.API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> CerrarVotacion(
-            Guid votacionId,
-            [FromBody] CerrarVotacionRequest? request,
-            CancellationToken ct)
+         Guid votacionId,
+         [FromBody] CerrarVotacionRequest? request = null,
+         CancellationToken ct = default)
         {
             var firebaseUid = GetFirebaseUid();
             var votacion = await _cerrarVotacionUseCase.HandleAsync(
@@ -194,7 +222,7 @@ namespace GustosApp.API.Controllers
             return Ok(response);
         }
 
-        private ResultadoVotacionResponse MapToResponse(Application.UseCases.VotacionUseCases.ResultadoVotacion resultado)
+        private ResultadoVotacionResponse MapToResponse(ResultadoVotacion resultado)
         {
             return new ResultadoVotacionResponse
             {
@@ -204,6 +232,7 @@ namespace GustosApp.API.Controllers
                 TodosVotaron = resultado.TodosVotaron,
                 MiembrosActivos = resultado.MiembrosActivos,
                 TotalVotos = resultado.TotalVotos,
+
                 RestaurantesVotados = resultado.RestaurantesVotados.Select(r => new RestauranteVotadoDto
                 {
                     RestauranteId = r.RestauranteId,
@@ -219,6 +248,17 @@ namespace GustosApp.API.Controllers
                         Comentario = v.Comentario
                     }).ToList()
                 }).ToList(),
+
+                RestaurantesCandidatos = resultado.RestaurantesCandidatos
+                    .Select(rc => new RestauranteCandidatoDto
+                    {
+                        RestauranteId = rc.RestauranteId,
+                        Nombre = rc.Nombre,
+                        Direccion = rc.Direccion,
+                        ImagenUrl = rc.ImagenUrl
+                    })
+                    .ToList(),
+
                 GanadorId = resultado.GanadorId,
                 HayEmpate = resultado.HayEmpate,
                 RestaurantesEmpatados = resultado.RestaurantesEmpatados,
@@ -227,4 +267,4 @@ namespace GustosApp.API.Controllers
             };
         }
     }
-}
+    }

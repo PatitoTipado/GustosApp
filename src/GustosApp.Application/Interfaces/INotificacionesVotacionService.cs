@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GustosApp.Domain.Model;
 
 namespace GustosApp.Application.Interfaces
 {
@@ -13,6 +14,8 @@ namespace GustosApp.Application.Interfaces
         Task NotificarEmpate(Guid grupoId, Guid votacionId);
         Task NotificarGanador(Guid grupoId, Guid votacionId, Guid restauranteGanadorId);
         Task NotificarVotacionCerrada(Guid grupoId, Guid votacionId, Guid? restauranteGanadorId);
+
+        Task NotificarVotacionIniciada(VotacionGrupo votacion);
     }
 
 }

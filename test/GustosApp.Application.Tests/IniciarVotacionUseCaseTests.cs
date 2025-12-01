@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases.VotacionUseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
@@ -14,6 +15,7 @@ namespace GustosApp.Application.Tests
         private readonly Mock<IVotacionRepository> _mockVotacionRepository;
         private readonly Mock<IGrupoRepository> _mockGrupoRepository;
         private readonly Mock<IUsuarioRepository> _mockUsuarioRepository;
+        private readonly Mock<INotificacionesVotacionService> _mockNotificaciones;
         private readonly IniciarVotacionUseCase _useCase;
 
         public IniciarVotacionUseCaseTests()
@@ -21,11 +23,13 @@ namespace GustosApp.Application.Tests
             _mockVotacionRepository = new Mock<IVotacionRepository>();
             _mockGrupoRepository = new Mock<IGrupoRepository>();
             _mockUsuarioRepository = new Mock<IUsuarioRepository>();
-
+            _mockNotificaciones = new Mock<INotificacionesVotacionService>();
             _useCase = new IniciarVotacionUseCase(
                 _mockVotacionRepository.Object,
                 _mockGrupoRepository.Object,
-                _mockUsuarioRepository.Object);
+                _mockUsuarioRepository.Object,
+                _mockNotificaciones.Object
+                );
         }
 
       

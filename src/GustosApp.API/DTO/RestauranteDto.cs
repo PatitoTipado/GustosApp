@@ -198,6 +198,8 @@ namespace GustosApp.API.DTO
         public string? WebUrl { get; set; }
 
         public double? Rating { get; set; }
+
+        public double RatingCalculado { get; set; }
         public int? CantidadResenas { get; set; }
         public string? Categoria { get; set; }
         public string PrimaryType { get; set; } = "restaurant";

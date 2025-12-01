@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases.VotacionUseCases;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
@@ -14,478 +15,300 @@ namespace GustosApp.Application.Tests
     {
         private readonly Mock<IVotacionRepository> _mockVotacionRepository;
         private readonly Mock<IUsuarioRepository> _mockUsuarioRepository;
+        private readonly Mock<INotificacionesVotacionService> _mockNotificaciones;
         private readonly SeleccionarGanadorRuletaUseCase _useCase;
 
         public SeleccionarGanadorRuletaUseCaseTests()
         {
             _mockVotacionRepository = new Mock<IVotacionRepository>();
             _mockUsuarioRepository = new Mock<IUsuarioRepository>();
+            _mockNotificaciones = new Mock<INotificacionesVotacionService>();
 
             _useCase = new SeleccionarGanadorRuletaUseCase(
                 _mockVotacionRepository.Object,
-                _mockUsuarioRepository.Object);
+                _mockUsuarioRepository.Object,
+                _mockNotificaciones.Object
+            );
         }
 
+       
+     
         [Fact]
         public async Task HandleAsync_UsuarioNoEncontrado_LanzaUnauthorizedAccessException()
         {
-            // Arrange
             var firebaseUid = "firebase123";
             var votacionId = Guid.NewGuid();
-            var restauranteGanadorId = Guid.NewGuid();
 
             _mockUsuarioRepository
                 .Setup(x => x.GetByFirebaseUidAsync(firebaseUid, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((Usuario?)null);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<UnauthorizedAccessException>(
-                () => _useCase.HandleAsync(firebaseUid, votacionId, restauranteGanadorId));
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+                _useCase.HandleAsync(firebaseUid, votacionId, Guid.NewGuid()));
         }
 
         [Fact]
         public async Task HandleAsync_VotacionNoEncontrada_LanzaArgumentException()
         {
-            // Arrange
             var firebaseUid = "firebase123";
             var votacionId = Guid.NewGuid();
-            var restauranteGanadorId = Guid.NewGuid();
-            var usuario = new Usuario
-            {
-                Id = Guid.NewGuid(),
-                FirebaseUid = "testFirebaseUid",
-                Email = "test@test.com",
-                Nombre = "Test",
-                Apellido = "User"
-            };
+            var usuario = new Usuario { Id = Guid.NewGuid(), FirebaseUid = firebaseUid };
 
             _mockUsuarioRepository
                 .Setup(x => x.GetByFirebaseUidAsync(firebaseUid, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(usuario);
 
             _mockVotacionRepository
-                .Setup(x => x.ObtenerPorIdAsync(votacionId, It.IsAny<CancellationToken>()))
+                .Setup(x => x.ObtenerPorIdConCandidatosAsync(votacionId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((VotacionGrupo?)null);
 
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<ArgumentException>(
-                () => _useCase.HandleAsync(firebaseUid, votacionId, restauranteGanadorId));
+            var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
+                _useCase.HandleAsync(firebaseUid, votacionId, Guid.NewGuid()));
 
-            Assert.Equal("Votación no encontrada", exception.Message);
+            Assert.Equal("Votación no encontrada", ex.Message);
         }
 
+ 
         [Fact]
-        public async Task HandleAsync_UsuarioNoEsMiembro_LanzaUnauthorizedAccessException()
+        public async Task HandleAsync_UsuarioNoEsAdmin_LanzaUnauthorizedAccessException()
         {
-            // Arrange
             var firebaseUid = "firebase123";
             var votacionId = Guid.NewGuid();
-            var restauranteGanadorId = Guid.NewGuid();
-            var grupoId = Guid.NewGuid();
-            var adminId = Guid.NewGuid();
-            var usuario = new Usuario
-            {
-                Id = Guid.NewGuid(),
-                FirebaseUid = "testFirebaseUid",
-                Email = "test@test.com",
-                Nombre = "Test",
-                Apellido = "User"
-            };
-            var grupo = new Grupo("Test Grupo", adminId) { Id = grupoId };
-            var votacion = new VotacionGrupo(grupoId) { Grupo = grupo };
 
-            _mockUsuarioRepository
-                .Setup(x => x.GetByFirebaseUidAsync(firebaseUid, It.IsAny<CancellationToken>()))
+            var usuario = new Usuario { Id = Guid.NewGuid(), FirebaseUid = firebaseUid };
+            var grupo = new Grupo("Test", Guid.NewGuid()) { Id = Guid.NewGuid() }; // otro admin
+            var votacion = new VotacionGrupo(grupo.Id) { Grupo = grupo };
+
+            _mockUsuarioRepository.Setup(x => x.GetByFirebaseUidAsync(firebaseUid, default))
                 .ReturnsAsync(usuario);
 
-            _mockVotacionRepository
-                .Setup(x => x.ObtenerPorIdAsync(votacionId, It.IsAny<CancellationToken>()))
+            _mockVotacionRepository.Setup(x => x.ObtenerPorIdConCandidatosAsync(votacionId, default))
                 .ReturnsAsync(votacion);
 
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<UnauthorizedAccessException>(
-                () => _useCase.HandleAsync(firebaseUid, votacionId, restauranteGanadorId));
+            var ex = await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+                _useCase.HandleAsync(firebaseUid, votacionId, Guid.NewGuid()));
 
-            Assert.Equal("No eres miembro de este grupo", exception.Message);
+            Assert.Equal("Solo el administrador puede seleccionar el ganador", ex.Message);
         }
 
+ 
         [Fact]
         public async Task HandleAsync_VotacionNoActiva_LanzaInvalidOperationException()
         {
-            // Arrange
             var firebaseUid = "firebase123";
             var votacionId = Guid.NewGuid();
-            var restauranteGanadorId = Guid.NewGuid();
-            var grupoId = Guid.NewGuid();
-            var usuario = new Usuario
-            {
-                Id = Guid.NewGuid(),
-                FirebaseUid = "firebase123",
-                Email = "test@test.com",
-                Nombre = "Test",
-                Apellido = "User"
-            };
-            var grupo = new Grupo("Test Grupo", usuario.Id) { Id = grupoId };
-            
-            var miembro = new MiembroGrupo(grupoId, usuario.Id, false);
-            grupo.Miembros.Add(miembro);
-            
-            var votacion = new VotacionGrupo(grupoId) { Grupo = grupo };
+
+            var usuario = new Usuario { Id = Guid.NewGuid(), FirebaseUid = firebaseUid };
+            var grupo = new Grupo("Test", usuario.Id) { Id = Guid.NewGuid() };
+            var votacion = new VotacionGrupo(grupo.Id) { Grupo = grupo };
+
             votacion.CerrarVotacion();
 
-            _mockUsuarioRepository
-                .Setup(x => x.GetByFirebaseUidAsync(firebaseUid, It.IsAny<CancellationToken>()))
+            _mockUsuarioRepository.Setup(x => x.GetByFirebaseUidAsync(firebaseUid, default))
                 .ReturnsAsync(usuario);
 
-            _mockVotacionRepository
-                .Setup(x => x.ObtenerPorIdAsync(votacionId, It.IsAny<CancellationToken>()))
+            _mockVotacionRepository.Setup(x => x.ObtenerPorIdConCandidatosAsync(votacionId, default))
                 .ReturnsAsync(votacion);
 
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-                () => _useCase.HandleAsync(firebaseUid, votacionId, restauranteGanadorId));
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _useCase.HandleAsync(firebaseUid, votacionId, Guid.NewGuid()));
 
-            Assert.Equal("La votación no está activa", exception.Message);
+            Assert.Equal("La votación no está activa", ex.Message);
+        }
+
+ 
+        [Fact]
+        public async Task HandleAsync_GanadorYaSeleccionado_LanzaInvalidOperationException()
+        {
+            var firebaseUid = "firebase123";
+            var restaurante1 = Guid.NewGuid();
+
+            var usuario = new Usuario { Id = Guid.NewGuid(), FirebaseUid = firebaseUid };
+            var grupo = new Grupo("Test", usuario.Id) { Id = Guid.NewGuid() };
+            var votacion = new VotacionGrupo(grupo.Id) { Grupo = grupo };
+
+            votacion.EstablecerGanadorRuleta(restaurante1);
+
+            _mockUsuarioRepository.Setup(x => x.GetByFirebaseUidAsync(firebaseUid, default))
+                .ReturnsAsync(usuario);
+
+            _mockVotacionRepository.Setup(x => x.ObtenerPorIdConCandidatosAsync(It.IsAny<Guid>(), default))
+                .ReturnsAsync(votacion);
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _useCase.HandleAsync(firebaseUid, Guid.NewGuid(), Guid.NewGuid()));
+
+            Assert.Equal("Ya se seleccionó un ganador para esta votación", ex.Message);
         }
 
         [Fact]
         public async Task HandleAsync_NoHayEmpate_LanzaInvalidOperationException()
         {
-            // Arrange
             var firebaseUid = "firebase123";
-            var votacionId = Guid.NewGuid();
-            var restauranteGanadorId = Guid.NewGuid();
-            var grupoId = Guid.NewGuid();
-            var usuario = new Usuario
-            {
-                Id = Guid.NewGuid(),
-                FirebaseUid = "firebase123",
-                Email = "test@test.com",
-                Nombre = "Test",
-                Apellido = "User"
-            };
-            var grupo = new Grupo("Test Grupo", usuario.Id) { Id = grupoId };
-            
-            var miembro = new MiembroGrupo(grupoId, usuario.Id, false);
-            grupo.Miembros.Add(miembro);
-            
-            var votacion = new VotacionGrupo(grupoId) { Grupo = grupo };
-            // Sin votos, no hay empate
+            var usuario = new Usuario { Id = Guid.NewGuid(), FirebaseUid = firebaseUid };
+            var grupo = new Grupo("Test", usuario.Id) { Id = Guid.NewGuid() };
+            var votacion = new VotacionGrupo(grupo.Id) { Grupo = grupo }; // sin votos → no hay empate
 
-            _mockUsuarioRepository
-                .Setup(x => x.GetByFirebaseUidAsync(firebaseUid, It.IsAny<CancellationToken>()))
+            _mockUsuarioRepository.Setup(x => x.GetByFirebaseUidAsync(firebaseUid, default))
                 .ReturnsAsync(usuario);
 
-            _mockVotacionRepository
-                .Setup(x => x.ObtenerPorIdAsync(votacionId, It.IsAny<CancellationToken>()))
+            _mockVotacionRepository.Setup(x => x.ObtenerPorIdConCandidatosAsync(It.IsAny<Guid>(), default))
                 .ReturnsAsync(votacion);
 
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-                () => _useCase.HandleAsync(firebaseUid, votacionId, restauranteGanadorId));
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _useCase.HandleAsync(firebaseUid, Guid.NewGuid(), Guid.NewGuid()));
 
-            Assert.Equal("No hay empate en esta votación", exception.Message);
+            Assert.Equal("No hay empate en esta votación", ex.Message);
         }
 
         [Fact]
-        public async Task HandleAsync_GanadorYaSeleccionado_LanzaInvalidOperationException()
+        public async Task HandleAsync_RestauranteNoEmpatado_LanzaArgumentException()
         {
-            // Arrange
             var firebaseUid = "firebase123";
             var votacionId = Guid.NewGuid();
-            var restauranteGanadorId = Guid.NewGuid();
-            var restaurante1Id = Guid.NewGuid();
-            var restaurante2Id = Guid.NewGuid();
-            var grupoId = Guid.NewGuid();
-            var usuario1 = new Usuario
-            {
-                Id = Guid.NewGuid(),
-                FirebaseUid = "user1FirebaseUid",
-                Email = "user1@test.com",
-                Nombre = "User",
-                Apellido = "One"
-            };
-            var usuario2 = new Usuario
-            {
-                Id = Guid.NewGuid(),
-                FirebaseUid = "user2FirebaseUid",
-                Email = "user2@test.com",
-                Nombre = "User",
-                Apellido = "Two"
-            };
-            var grupo = new Grupo("Test Grupo", usuario1.Id) { Id = grupoId };
-            
-            var miembro1 = new MiembroGrupo(grupoId, usuario1.Id, false);
-            var miembro2 = new MiembroGrupo(grupoId, usuario2.Id, false);
-            grupo.Miembros.Add(miembro1);
-            grupo.Miembros.Add(miembro2);
-            
-            var votacion = new VotacionGrupo(grupoId) { Grupo = grupo };
-            
-            // Crear empate
-            votacion.Votos.Add(new VotoRestaurante(votacionId, usuario1.Id, restaurante1Id, null));
-            votacion.Votos.Add(new VotoRestaurante(votacionId, usuario2.Id, restaurante2Id, null));
-            
-            // Ya tiene ganador seleccionado
-            votacion.EstablecerGanadorRuleta(restaurante1Id);
 
-            _mockUsuarioRepository
-                .Setup(x => x.GetByFirebaseUidAsync(firebaseUid, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(usuario1);
+            var usuario = new Usuario { Id = Guid.NewGuid(), FirebaseUid = firebaseUid };
+            var grupo = new Grupo("Test", usuario.Id) { Id = Guid.NewGuid() };
 
-            _mockVotacionRepository
-                .Setup(x => x.ObtenerPorIdAsync(votacionId, It.IsAny<CancellationToken>()))
+            var r1 = Guid.NewGuid();
+            var r2 = Guid.NewGuid();
+            var noEmpatado = Guid.NewGuid();
+
+            var votacion = new VotacionGrupo(grupo.Id) { Grupo = grupo };
+
+            votacion.Votos.Add(new VotoRestaurante(votacionId, usuario.Id, r1, null));
+            votacion.Votos.Add(new VotoRestaurante(votacionId, Guid.NewGuid(), r2, null));
+
+            votacion.RestaurantesCandidatos.Add(new VotacionRestaurante(votacion.Id, r1));
+            votacion.RestaurantesCandidatos.Add(new VotacionRestaurante(votacion.Id, r2));
+
+            _mockUsuarioRepository.Setup(x => x.GetByFirebaseUidAsync(firebaseUid, default))
+                .ReturnsAsync(usuario);
+
+            _mockVotacionRepository.Setup(x => x.ObtenerPorIdConCandidatosAsync(votacionId, default))
                 .ReturnsAsync(votacion);
 
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-                () => _useCase.HandleAsync(firebaseUid, votacionId, restauranteGanadorId));
+            var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
+                _useCase.HandleAsync(firebaseUid, votacionId, noEmpatado));
 
-            Assert.Equal("Ya se seleccionó un ganador para esta votación", exception.Message);
+            Assert.Equal("El restaurante seleccionado no está entre los empatados", ex.Message);
         }
 
+
         [Fact]
-        public async Task HandleAsync_RestauranteNoEnEmpate_LanzaArgumentException()
+        public async Task HandleAsync_RestauranteNoEsCandidato_LanzaInvalidOperationException()
         {
-            // Arrange
             var firebaseUid = "firebase123";
             var votacionId = Guid.NewGuid();
-            var restauranteNoEmpatadoId = Guid.NewGuid();
-            var restaurante1Id = Guid.NewGuid();
-            var restaurante2Id = Guid.NewGuid();
-            var grupoId = Guid.NewGuid();
-            var usuario1 = new Usuario
-            {
-                Id = Guid.NewGuid(),
-                FirebaseUid = "user1FirebaseUid",
-                Email = "user1@test.com",
-                Nombre = "User",
-                Apellido = "One"
-            };
-            var usuario2 = new Usuario
-            {
-                Id = Guid.NewGuid(),
-                FirebaseUid = "user2FirebaseUid",
-                Email = "user2@test.com",
-                Nombre = "User",
-                Apellido = "Two"
-            };
-            var grupo = new Grupo("Test Grupo", usuario1.Id) { Id = grupoId };
-            
-            var miembro1 = new MiembroGrupo(grupoId, usuario1.Id, false);
-            var miembro2 = new MiembroGrupo(grupoId, usuario2.Id, false);
-            grupo.Miembros.Add(miembro1);
-            grupo.Miembros.Add(miembro2);
-            
-            var votacion = new VotacionGrupo(grupoId) { Grupo = grupo };
-            
-            // Crear empate entre restaurante1 y restaurante2
-            votacion.Votos.Add(new VotoRestaurante(votacionId, usuario1.Id, restaurante1Id, null));
-            votacion.Votos.Add(new VotoRestaurante(votacionId, usuario2.Id, restaurante2Id, null));
 
-            _mockUsuarioRepository
-                .Setup(x => x.GetByFirebaseUidAsync(firebaseUid, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(usuario1);
+            var usuario = new Usuario { Id = Guid.NewGuid(), FirebaseUid = firebaseUid };
+            var grupo = new Grupo("Test", usuario.Id) { Id = Guid.NewGuid() };
 
-            _mockVotacionRepository
-                .Setup(x => x.ObtenerPorIdAsync(votacionId, It.IsAny<CancellationToken>()))
+            var r1 = Guid.NewGuid();
+            var r2 = Guid.NewGuid();
+            var ganador = r1;
+
+            var votacion = new VotacionGrupo(grupo.Id) { Grupo = grupo };
+
+            // Empate real
+            votacion.Votos.Add(new VotoRestaurante(votacionId, usuario.Id, r1, null));
+            votacion.Votos.Add(new VotoRestaurante(votacionId, Guid.NewGuid(), r2, null));
+
+            // NO agrego candidatos → r1 NO es válido
+
+            _mockUsuarioRepository.Setup(x => x.GetByFirebaseUidAsync(firebaseUid, default))
+                .ReturnsAsync(usuario);
+
+            _mockVotacionRepository.Setup(x => x.ObtenerPorIdConCandidatosAsync(votacionId, default))
                 .ReturnsAsync(votacion);
 
-            // Act & Assert - intentar seleccionar restaurante que NO está en empate
-            var exception = await Assert.ThrowsAsync<ArgumentException>(
-                () => _useCase.HandleAsync(firebaseUid, votacionId, restauranteNoEmpatadoId));
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _useCase.HandleAsync(firebaseUid, votacionId, ganador));
 
-            Assert.Equal("El restaurante seleccionado no está entre los empatados", exception.Message);
+            Assert.Equal("El restaurante seleccionado no es un candidato válido", ex.Message);
         }
 
+    
         [Fact]
-        public async Task HandleAsync_TodoValido_SeleccionaGanadorRuleta()
+        public async Task HandleAsync_TodoValido_SeleccionaGanador()
         {
-            // Arrange
             var firebaseUid = "firebase123";
             var votacionId = Guid.NewGuid();
-            var restaurante1Id = Guid.NewGuid();
-            var restaurante2Id = Guid.NewGuid();
-            var grupoId = Guid.NewGuid();
-            var usuario1 = new Usuario
-            {
-                Id = Guid.NewGuid(),
-                FirebaseUid = "user1FirebaseUid",
-                Email = "user1@test.com",
-                Nombre = "User",
-                Apellido = "One"
-            };
-            var usuario2 = new Usuario
-            {
-                Id = Guid.NewGuid(),
-                FirebaseUid = "user2FirebaseUid",
-                Email = "user2@test.com",
-                Nombre = "User",
-                Apellido = "Two"
-            };
-            var grupo = new Grupo("Test Grupo", usuario1.Id) { Id = grupoId };
-            
-            var miembro1 = new MiembroGrupo(grupoId, usuario1.Id, false);
-            var miembro2 = new MiembroGrupo(grupoId, usuario2.Id, false);
-            grupo.Miembros.Add(miembro1);
-            grupo.Miembros.Add(miembro2);
-            
-            var votacion = new VotacionGrupo(grupoId) { Grupo = grupo };
-            
-            // Crear empate
-            votacion.Votos.Add(new VotoRestaurante(votacionId, usuario1.Id, restaurante1Id, null));
-            votacion.Votos.Add(new VotoRestaurante(votacionId, usuario2.Id, restaurante2Id, null));
 
-            _mockUsuarioRepository
-                .Setup(x => x.GetByFirebaseUidAsync(firebaseUid, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(usuario1);
+            var usuario = new Usuario { Id = Guid.NewGuid(), FirebaseUid = firebaseUid };
+            var grupo = new Grupo("Test", usuario.Id) { Id = Guid.NewGuid() };
 
-            _mockVotacionRepository
-                .Setup(x => x.ObtenerPorIdAsync(votacionId, It.IsAny<CancellationToken>()))
+            var r1 = Guid.NewGuid();
+            var r2 = Guid.NewGuid();
+
+            var votacion = new VotacionGrupo(grupo.Id) { Grupo = grupo };
+
+            // Empate real
+            votacion.Votos.Add(new VotoRestaurante(votacionId, usuario.Id, r1, null));
+            votacion.Votos.Add(new VotoRestaurante(votacionId, Guid.NewGuid(), r2, null));
+
+            // candidatos oficiales
+            votacion.RestaurantesCandidatos.Add(new VotacionRestaurante(votacion.Id, r1));
+            votacion.RestaurantesCandidatos.Add(new VotacionRestaurante(votacion.Id, r2));
+
+            _mockUsuarioRepository.Setup(x => x.GetByFirebaseUidAsync(firebaseUid, default))
+                .ReturnsAsync(usuario);
+
+            _mockVotacionRepository.Setup(x => x.ObtenerPorIdConCandidatosAsync(votacionId, default))
                 .ReturnsAsync(votacion);
 
             _mockVotacionRepository
-                .Setup(x => x.ActualizarVotacionAsync(It.IsAny<VotacionGrupo>(), It.IsAny<CancellationToken>()))
+                .Setup(x => x.ActualizarVotacionAsync(It.IsAny<VotacionGrupo>(), default))
                 .Returns(Task.CompletedTask);
 
-            // Act - seleccionar uno de los empatados
-            var resultado = await _useCase.HandleAsync(firebaseUid, votacionId, restaurante1Id);
+            // Act
+            var result = await _useCase.HandleAsync(firebaseUid, votacionId, r1);
 
             // Assert
-            Assert.NotNull(resultado);
-            Assert.Equal(restaurante1Id, resultado.RestauranteGanadorId);
-            Assert.Equal(EstadoVotacion.Activa, resultado.Estado);
-            _mockVotacionRepository.Verify(
-                x => x.ActualizarVotacionAsync(It.IsAny<VotacionGrupo>(), It.IsAny<CancellationToken>()),
+            Assert.Equal(r1, result.RestauranteGanadorId);
+            _mockNotificaciones.Verify(
+                n => n.NotificarGanador(grupo.Id, votacion.Id, r1),
                 Times.Once);
         }
 
+  
         [Fact]
-        public async Task HandleAsync_SeleccionarOtroRestauranteEmpatado_Funciona()
+        public async Task HandleAsync_EmpateMultiple_PermiteSeleccionarCualquiera()
         {
-            // Arrange
             var firebaseUid = "firebase123";
             var votacionId = Guid.NewGuid();
-            var restaurante1Id = Guid.NewGuid();
-            var restaurante2Id = Guid.NewGuid();
-            var grupoId = Guid.NewGuid();
-            var usuario1 = new Usuario
-            {
-                Id = Guid.NewGuid(),
-                FirebaseUid = "user1FirebaseUid",
-                Email = "user1@test.com",
-                Nombre = "User",
-                Apellido = "One"
-            };
-            var usuario2 = new Usuario
-            {
-                Id = Guid.NewGuid(),
-                FirebaseUid = "user2FirebaseUid",
-                Email = "user2@test.com",
-                Nombre = "User",
-                Apellido = "Two"
-            };
-            var grupo = new Grupo("Test Grupo", usuario1.Id) { Id = grupoId };
-            
-            var miembro1 = new MiembroGrupo(grupoId, usuario1.Id, false);
-            var miembro2 = new MiembroGrupo(grupoId, usuario2.Id, false);
-            grupo.Miembros.Add(miembro1);
-            grupo.Miembros.Add(miembro2);
-            
-            var votacion = new VotacionGrupo(grupoId) { Grupo = grupo };
-            
-            // Crear empate
-            votacion.Votos.Add(new VotoRestaurante(votacionId, usuario1.Id, restaurante1Id, null));
-            votacion.Votos.Add(new VotoRestaurante(votacionId, usuario2.Id, restaurante2Id, null));
 
-            _mockUsuarioRepository
-                .Setup(x => x.GetByFirebaseUidAsync(firebaseUid, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(usuario1);
+            var usuario = new Usuario { Id = Guid.NewGuid(), FirebaseUid = firebaseUid };
+            var grupo = new Grupo("Test", usuario.Id) { Id = Guid.NewGuid() };
 
-            _mockVotacionRepository
-                .Setup(x => x.ObtenerPorIdAsync(votacionId, It.IsAny<CancellationToken>()))
+            var r1 = Guid.NewGuid();
+            var r2 = Guid.NewGuid();
+            var r3 = Guid.NewGuid();
+
+            var votacion = new VotacionGrupo(grupo.Id) { Grupo = grupo };
+
+            votacion.Votos.Add(new VotoRestaurante(votacionId, usuario.Id, r1, null));
+            votacion.Votos.Add(new VotoRestaurante(votacionId, Guid.NewGuid(), r2, null));
+            votacion.Votos.Add(new VotoRestaurante(votacionId, Guid.NewGuid(), r3, null));
+
+            votacion.RestaurantesCandidatos.Add(new VotacionRestaurante(votacion.Id, r1));
+            votacion.RestaurantesCandidatos.Add(new VotacionRestaurante(votacion.Id, r2));
+            votacion.RestaurantesCandidatos.Add(new VotacionRestaurante(votacion.Id, r3));
+
+            _mockUsuarioRepository.Setup(x => x.GetByFirebaseUidAsync(firebaseUid, default))
+                .ReturnsAsync(usuario);
+
+            _mockVotacionRepository.Setup(x => x.ObtenerPorIdConCandidatosAsync(votacionId, default))
                 .ReturnsAsync(votacion);
 
             _mockVotacionRepository
-                .Setup(x => x.ActualizarVotacionAsync(It.IsAny<VotacionGrupo>(), It.IsAny<CancellationToken>()))
+                .Setup(x => x.ActualizarVotacionAsync(It.IsAny<VotacionGrupo>(), default))
                 .Returns(Task.CompletedTask);
 
-            // Act - seleccionar el segundo restaurante empatado
-            var resultado = await _useCase.HandleAsync(firebaseUid, votacionId, restaurante2Id);
+            var result = await _useCase.HandleAsync(firebaseUid, votacionId, r3);
 
-            // Assert
-            Assert.NotNull(resultado);
-            Assert.Equal(restaurante2Id, resultado.RestauranteGanadorId);
-        }
-
-        [Fact]
-        public async Task HandleAsync_EmpateDeMultiples_PermiteSeleccionarCualquiera()
-        {
-            // Arrange
-            var firebaseUid = "firebase123";
-            var votacionId = Guid.NewGuid();
-            var restaurante1Id = Guid.NewGuid();
-            var restaurante2Id = Guid.NewGuid();
-            var restaurante3Id = Guid.NewGuid();
-            var grupoId = Guid.NewGuid();
-            var usuario1 = new Usuario
-            {
-                Id = Guid.NewGuid(),
-                FirebaseUid = "user1FirebaseUid",
-                Email = "user1@test.com",
-                Nombre = "User",
-                Apellido = "1"
-            };
-            var usuario2 = new Usuario
-            {
-                Id = Guid.NewGuid(),
-                FirebaseUid = "user2FirebaseUid",
-                Email = "user2@test.com",
-                Nombre = "User",
-                Apellido = "2"
-            };
-            var usuario3 = new Usuario
-            {
-                Id = Guid.NewGuid(),
-                FirebaseUid = "user3FirebaseUid",
-                Email = "user3@test.com",
-                Nombre = "User",
-                Apellido = "3"
-            };
-            var grupo = new Grupo("Test Grupo", usuario1.Id) { Id = grupoId };
-            
-            var miembro1 = new MiembroGrupo(grupoId, usuario1.Id, false);
-            var miembro2 = new MiembroGrupo(grupoId, usuario2.Id, false);
-            var miembro3 = new MiembroGrupo(grupoId, usuario3.Id, false);
-            grupo.Miembros.Add(miembro1);
-            grupo.Miembros.Add(miembro2);
-            grupo.Miembros.Add(miembro3);
-            
-            var votacion = new VotacionGrupo(grupoId) { Grupo = grupo };
-            
-            // Crear empate triple
-            votacion.Votos.Add(new VotoRestaurante(votacionId, usuario1.Id, restaurante1Id, null));
-            votacion.Votos.Add(new VotoRestaurante(votacionId, usuario2.Id, restaurante2Id, null));
-            votacion.Votos.Add(new VotoRestaurante(votacionId, usuario3.Id, restaurante3Id, null));
-
-            _mockUsuarioRepository
-                .Setup(x => x.GetByFirebaseUidAsync(firebaseUid, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(usuario1);
-
-            _mockVotacionRepository
-                .Setup(x => x.ObtenerPorIdAsync(votacionId, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(votacion);
-
-            _mockVotacionRepository
-                .Setup(x => x.ActualizarVotacionAsync(It.IsAny<VotacionGrupo>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.CompletedTask);
-
-            // Act - seleccionar el tercero
-            var resultado = await _useCase.HandleAsync(firebaseUid, votacionId, restaurante3Id);
-
-            // Assert
-            Assert.NotNull(resultado);
-            Assert.Equal(restaurante3Id, resultado.RestauranteGanadorId);
+            Assert.Equal(r3, result.RestauranteGanadorId);
         }
     }
 }
+

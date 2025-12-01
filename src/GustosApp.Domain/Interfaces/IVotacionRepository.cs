@@ -17,5 +17,7 @@ namespace GustosApp.Domain.Interfaces
         Task ActualizarVotacionAsync(VotacionGrupo votacion, CancellationToken ct = default);
         Task<Dictionary<Guid, int>> ObtenerResultadosAsync(Guid votacionId, CancellationToken ct = default);
         Task<bool> UsuarioYaVotoAsync(Guid votacionId, Guid usuarioId, CancellationToken ct = default);
+        Task<VotacionGrupo?> ObtenerPorIdConCandidatosAsync(Guid votacionId, CancellationToken ct);
+        Task ActualizarVotoAsync(VotoRestaurante votoExistente, CancellationToken ct);
     }
 }

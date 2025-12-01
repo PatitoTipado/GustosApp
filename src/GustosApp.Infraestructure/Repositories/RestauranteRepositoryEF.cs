@@ -206,6 +206,8 @@ namespace GustosApp.Infraestructure.Repositories
           public async Task<Restaurante?> GetByIdAsync(Guid id, CancellationToken ct = default)
           {
               return await _db.Restaurantes
+                 .Include(r => r.GustosQueSirve)
+                  .Include(r => r.RestriccionesQueRespeta)
                   .FirstOrDefaultAsync(r => r.Id == id, ct);
           }
 

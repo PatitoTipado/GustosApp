@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 
@@ -13,15 +14,18 @@ namespace GustosApp.Application.UseCases.VotacionUseCases
         private readonly IVotacionRepository _votacionRepository;
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IGrupoRepository _grupoRepository;
+        private readonly INotificacionesVotacionService _notificaciones;
 
         public ObtenerResultadosVotacionUseCase(
             IVotacionRepository votacionRepository,
             IUsuarioRepository usuarioRepository,
-            IGrupoRepository grupoRepository)
+            IGrupoRepository grupoRepository,
+            INotificacionesVotacionService notificaciones)
         {
             _votacionRepository = votacionRepository;
             _usuarioRepository = usuarioRepository;
             _grupoRepository = grupoRepository;
+            _notificaciones = notificaciones;
         }
 
         public async Task<ResultadoVotacion> HandleAsync(
@@ -34,8 +38,13 @@ namespace GustosApp.Application.UseCases.VotacionUseCases
                 ?? throw new UnauthorizedAccessException("Usuario no encontrado");
 
             // Obtener votación
-            var votacion = await _votacionRepository.ObtenerPorIdAsync(votacionId, ct)
+            var votacion = await _votacionRepository.ObtenerPorIdConCandidatosAsync(votacionId, ct)
                 ?? throw new ArgumentException("Votación no encontrada");
+
+            var miembro = votacion.Grupo.Miembros.FirstOrDefault(m => m.UsuarioId == usuario.Id);
+
+            if (miembro == null || !miembro.Activo)
+                throw new UnauthorizedAccessException("No eres un miembro activo del grupo.");
 
             // Verificar que el usuario sea miembro del grupo
             var esMiembro = await _grupoRepository.UsuarioEsMiembroAsync(votacion.GrupoId, firebaseUid, ct);
@@ -46,6 +55,17 @@ namespace GustosApp.Application.UseCases.VotacionUseCases
             var resultados = votacion.ObtenerResultados();
             var miembrosActivos = votacion.Grupo.Miembros.Count(m => m.afectarRecomendacion && m.Activo);
             var todosVotaron = votacion.TodosHanVotado(miembrosActivos);
+
+            var candidatos = votacion.RestaurantesCandidatos
+            .Select(rc => new RestauranteCandidato
+             {
+                   RestauranteId = rc.RestauranteId,
+                  Nombre = rc.Restaurante?.Nombre ?? "",
+                  Direccion = rc.Restaurante?.Direccion ?? "",
+                      ImagenUrl = rc.Restaurante?.ImagenUrl ?? ""
+                      })
+             .ToList();
+
 
             // Obtener información de los restaurantes votados
             var restaurantesVotados = votacion.Votos
@@ -90,6 +110,10 @@ namespace GustosApp.Application.UseCases.VotacionUseCases
                 else
                 {
                     empatados = restaurantesConMaxVotos;
+                    await _notificaciones.NotificarEmpate(
+                    votacion.GrupoId,
+                       votacion.Id
+                       );
                 }
             }
 
@@ -102,13 +126,26 @@ namespace GustosApp.Application.UseCases.VotacionUseCases
                 MiembrosActivos = miembrosActivos,
                 TotalVotos = votacion.Votos.Count,
                 RestaurantesVotados = restaurantesVotados,
+
+                RestaurantesCandidatos = candidatos,
+
                 GanadorId = ganadorId,
                 HayEmpate = empatados.Count > 1,
                 RestaurantesEmpatados = empatados,
                 FechaInicio = votacion.FechaInicio,
                 FechaCierre = votacion.FechaCierre
             };
+
         }
+    }
+
+
+    public class RestauranteCandidato
+    {
+        public Guid RestauranteId { get; set; }
+        public string Nombre { get; set; } = "";
+        public string Direccion { get; set; } = "";
+        public string ImagenUrl { get; set; } = "";
     }
 
     public class ResultadoVotacion
@@ -119,13 +156,19 @@ namespace GustosApp.Application.UseCases.VotacionUseCases
         public bool TodosVotaron { get; set; }
         public int MiembrosActivos { get; set; }
         public int TotalVotos { get; set; }
+
         public List<RestauranteVotado> RestaurantesVotados { get; set; } = new();
+
+        public List<RestauranteCandidato> RestaurantesCandidatos { get; set; } = new();
+
         public Guid? GanadorId { get; set; }
         public bool HayEmpate { get; set; }
         public List<Guid> RestaurantesEmpatados { get; set; } = new();
+
         public DateTime FechaInicio { get; set; }
         public DateTime? FechaCierre { get; set; }
     }
+
 
     public class RestauranteVotado
     {

@@ -12,6 +12,13 @@ namespace GustosApp.API.Mapping.RestaurantesMapper
         {
             CreateMap<Restaurante, RestauranteDetalleDto>()
 
+                   .ForMember(dest => dest.RatingCalculado,
+                           opt => opt.MapFrom(src =>
+                          src.Reviews != null && src.Reviews.Any()
+                        ? Math.Round(src.Reviews.Average(r => r.Valoracion), 1)
+                        : (src.Rating ?? 0)
+                ))
+
                 .ForMember(dest => dest.Latitud, opt => opt.MapFrom(src => src.Latitud))
                 .ForMember(dest => dest.Longitud, opt => opt.MapFrom(src => src.Longitud))
 

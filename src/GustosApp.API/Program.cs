@@ -402,6 +402,7 @@ builder.Services.AddScoped<IMiembroGrupoRepository, MiembroGrupoRepositoryEF>();
 builder.Services.AddScoped<IInvitacionGrupoRepository, InvitacionGrupoRepositoryEF>();
 builder.Services.AddScoped<IGustosGrupoRepository, GustosGrupoRepositoryEF>();
 builder.Services.AddScoped<INotificacionRepository, NotificacionRepositoryEF>();
+builder.Services.AddScoped<INotificacionesVotacionService, NotificacionesVotacionService>();
 
 builder.Services.AddScoped<INotificacionRealtimeService, SignalRNotificacionRealtimeService>();
 builder.Services.AddScoped<IChatRealTimeService, SignalRChatRealtimeService>();
@@ -700,5 +701,6 @@ app.MapControllers();
 app.MapHub<ChatHub>("/chatHub");
 app.MapHub<NotificacionesHub>("/notificacionesHub");
 app.MapHub<SolicitudesAmistadHub>("/solicitudesAmistadHub");
+app.MapHub<VotacionesHub>("/votacionesHub");
 
 app.Run();

@@ -58,8 +58,10 @@ public class GustosDbContext : DbContext
     public DbSet<VotacionGrupo> Votaciones { get; set; }
     public DbSet<VotoRestaurante> Votos { get; set; }
 
+    public DbSet<VotacionRestaurante> VotacionRestaurantes { get; set; }
     public DbSet<OpinionRestaurante> OpinionesRestaurante { get; set; }
     public DbSet<UsuarioRestauranteFavorito> UsuarioRestauranteFavoritos { get; set; }
+ 
 
 
     public GustosDbContext(DbContextOptions<GustosDbContext> options)

@@ -24,6 +24,10 @@ namespace GustosApp.Domain.Model
         // Navegación
         public Grupo Grupo { get; set; }
         public ICollection<VotoRestaurante> Votos { get; set; } = new List<VotoRestaurante>();
+
+        public ICollection<VotacionRestaurante> RestaurantesCandidatos { get; set; }
+         = new List<VotacionRestaurante>();
+
         public Restaurante? RestauranteGanador { get; set; }
 
         private VotacionGrupo() { } // Para EF Core

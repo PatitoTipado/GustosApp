@@ -53,7 +53,11 @@ namespace GustosApp.API.Controllers
                 firebaseUid,
                 request.GrupoId,
                 request.Descripcion,
-                ct);
+                request.RestaurantesCandidatos,
+                ct
+            );
+
+
 
             var response = new VotacionResponse
             {
@@ -105,16 +109,16 @@ namespace GustosApp.API.Controllers
             CancellationToken ct)
         {
             var firebaseUid = GetFirebaseUid();
-            
+
             // Primero obtenemos la votación activa del grupo
             var votacionActiva = await _votacionRepository.ObtenerVotacionActivaAsync(grupoId, ct);
-            
+
             if (votacionActiva == null)
                 return NotFound(new { message = "No hay votación activa en este grupo" });
 
             // Luego obtenemos los resultados de esa votación
             var resultado = await _obtenerResultadosUseCase.HandleAsync(firebaseUid, votacionActiva.Id, ct);
-            
+
             var response = MapToResponse(resultado);
             return Ok(response);
         }
@@ -139,9 +143,9 @@ namespace GustosApp.API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> CerrarVotacion(
-            Guid votacionId,
-            [FromBody] CerrarVotacionRequest? request,
-            CancellationToken ct)
+         Guid votacionId,
+         [FromBody] CerrarVotacionRequest? request = null,
+         CancellationToken ct = default)
         {
             var firebaseUid = GetFirebaseUid();
             var votacion = await _cerrarVotacionUseCase.HandleAsync(
@@ -194,7 +198,7 @@ namespace GustosApp.API.Controllers
             return Ok(response);
         }
 
-        private ResultadoVotacionResponse MapToResponse(Application.UseCases.VotacionUseCases.ResultadoVotacion resultado)
+        private ResultadoVotacionResponse MapToResponse(ResultadoVotacion resultado)
         {
             return new ResultadoVotacionResponse
             {
@@ -204,6 +208,7 @@ namespace GustosApp.API.Controllers
                 TodosVotaron = resultado.TodosVotaron,
                 MiembrosActivos = resultado.MiembrosActivos,
                 TotalVotos = resultado.TotalVotos,
+
                 RestaurantesVotados = resultado.RestaurantesVotados.Select(r => new RestauranteVotadoDto
                 {
                     RestauranteId = r.RestauranteId,
@@ -219,6 +224,17 @@ namespace GustosApp.API.Controllers
                         Comentario = v.Comentario
                     }).ToList()
                 }).ToList(),
+
+                RestaurantesCandidatos = resultado.RestaurantesCandidatos
+                    .Select(rc => new RestauranteCandidatoDto
+                    {
+                        RestauranteId = rc.RestauranteId,
+                        Nombre = rc.Nombre,
+                        Direccion = rc.Direccion,
+                        ImagenUrl = rc.ImagenUrl
+                    })
+                    .ToList(),
+
                 GanadorId = resultado.GanadorId,
                 HayEmpate = resultado.HayEmpate,
                 RestaurantesEmpatados = resultado.RestaurantesEmpatados,
@@ -227,4 +243,4 @@ namespace GustosApp.API.Controllers
             };
         }
     }
-}
+    }

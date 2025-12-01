@@ -42,6 +42,8 @@ namespace GustosApp.Infraestructure.Repositories
         public async Task<VotacionGrupo?> ObtenerVotacionActivaAsync(Guid grupoId, CancellationToken ct = default)
         {
             return await _context.Votaciones
+                .Include(v => v.RestaurantesCandidatos)
+                    .ThenInclude(rc => rc.Restaurante)
                 .Include(v => v.Votos)
                     .ThenInclude(vo => vo.Usuario)
                 .Include(v => v.Votos)
@@ -53,6 +55,7 @@ namespace GustosApp.Infraestructure.Repositories
                 .OrderByDescending(v => v.FechaInicio)
                 .FirstOrDefaultAsync(ct);
         }
+
 
         public async Task<List<VotacionGrupo>> ObtenerHistorialVotacionesAsync(Guid grupoId, CancellationToken ct = default)
         {
@@ -101,5 +104,28 @@ namespace GustosApp.Infraestructure.Repositories
             return await _context.Votos
                 .AnyAsync(v => v.VotacionId == votacionId && v.UsuarioId == usuarioId, ct);
         }
+
+        public async Task<VotacionGrupo?> ObtenerPorIdConCandidatosAsync(Guid votacionId, CancellationToken ct = default)
+        {
+            return await _context.Votaciones
+                .Include(v => v.RestaurantesCandidatos)
+                    .ThenInclude(rc => rc.Restaurante)
+                .Include(v => v.Votos)
+                    .ThenInclude(vo => vo.Usuario)
+                .Include(v => v.Votos)
+                    .ThenInclude(vo => vo.Restaurante)
+                .Include(v => v.Grupo)
+                    .ThenInclude(g => g.Miembros)
+                        .ThenInclude(m => m.Usuario)
+                .FirstOrDefaultAsync(v => v.Id == votacionId, ct);
+        }
+
+
+        public async Task ActualizarVotoAsync(VotoRestaurante voto, CancellationToken ct = default)
+        {
+            _context.Votos.Update(voto);
+            await _context.SaveChangesAsync(ct);
+        }
+
     }
 }

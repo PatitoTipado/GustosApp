@@ -27,25 +27,25 @@ namespace GustosApp.Application.UseCases.VotacionUseCases
         }
 
         public async Task<VotoRestaurante> HandleAsync(
-            string firebaseUid,
-            Guid votacionId,
-            Guid restauranteId,
-            string? comentario = null,
-            CancellationToken ct = default)
+         string firebaseUid,
+         Guid votacionId,
+         Guid restauranteId,
+         string? comentario = null,
+         CancellationToken ct = default)
         {
-            // Obtener usuario
+            // 1. Obtener usuario
             var usuario = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid, ct)
                 ?? throw new UnauthorizedAccessException("Usuario no encontrado");
 
-            // Obtener votación
-            var votacion = await _votacionRepository.ObtenerPorIdAsync(votacionId, ct)
+            // 2. Obtener votación con CANDIDATOS
+            var votacion = await _votacionRepository.ObtenerPorIdConCandidatosAsync(votacionId, ct)
                 ?? throw new ArgumentException("Votación no encontrada");
 
-            // Verificar que la votación esté activa
+            // 3. Verificar estado activo
             if (votacion.Estado != EstadoVotacion.Activa)
                 throw new InvalidOperationException("La votación no está activa");
 
-            // Verificar que el usuario sea miembro del grupo y tenga afectarRecomendacion = true
+            // 4. Verificar que el usuario es miembro y tiene afectarRecomendacion = true
             var grupo = votacion.Grupo;
             var miembro = grupo.Miembros.FirstOrDefault(m => m.UsuarioId == usuario.Id);
 
@@ -55,27 +55,33 @@ namespace GustosApp.Application.UseCases.VotacionUseCases
             if (!miembro.afectarRecomendacion)
                 throw new InvalidOperationException("No puedes votar porque no estás marcado para asistir a la reunión");
 
-            // Verificar que el restaurante existe
+            // 5. VALIDAR QUE EL RESTAURANTE SEA CANDIDATO
+            bool esCandidato = votacion.RestaurantesCandidatos
+                .Any(rc => rc.RestauranteId == restauranteId);
+
+            if (!esCandidato)
+                throw new InvalidOperationException("Este restaurante no es candidato en esta votación.");
+
+            // 6. Verificar que el restaurante existe
             var restaurante = await _restauranteRepository.GetRestauranteByIdAsync(restauranteId, ct);
             if (restaurante == null)
                 throw new ArgumentException("Restaurante no encontrado");
 
-            // Verificar si el usuario ya votó
+            // 7. Verificar si el usuario ya votó
             var votoExistente = await _votacionRepository.ObtenerVotoUsuarioAsync(votacionId, usuario.Id, ct);
 
             if (votoExistente != null)
             {
-                // Actualizar voto existente
+                // Actualizar
                 votoExistente.ActualizarVoto(restauranteId, comentario);
-                await _votacionRepository.ActualizarVotacionAsync(votacion, ct);
+                await _votacionRepository.ActualizarVotoAsync(votoExistente, ct);
                 return votoExistente;
             }
-            else
-            {
-                // Crear nuevo voto
-                var nuevoVoto = new VotoRestaurante(votacionId, usuario.Id, restauranteId, comentario);
-                return await _votacionRepository.RegistrarVotoAsync(nuevoVoto, ct);
-            }
+
+            // 8. Crear voto nuevo
+            var nuevoVoto = new VotoRestaurante(votacionId, usuario.Id, restauranteId, comentario);
+            return await _votacionRepository.RegistrarVotoAsync(nuevoVoto, ct);
         }
+
     }
 }

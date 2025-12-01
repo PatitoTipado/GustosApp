@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using GustosApp.Application.Interfaces;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 
@@ -11,15 +12,18 @@ namespace GustosApp.Application.UseCases.VotacionUseCases
         private readonly IVotacionRepository _votacionRepository;
         private readonly IGrupoRepository _grupoRepository;
         private readonly IUsuarioRepository _usuarioRepository;
+        private readonly INotificacionesVotacionService _notificadorVotaciones;
 
         public IniciarVotacionUseCase(
             IVotacionRepository votacionRepository,
             IGrupoRepository grupoRepository,
-            IUsuarioRepository usuarioRepository)
+            IUsuarioRepository usuarioRepository,
+           INotificacionesVotacionService notificadorVotaciones)
         {
             _votacionRepository = votacionRepository;
             _grupoRepository = grupoRepository;
             _usuarioRepository = usuarioRepository;
+            _notificadorVotaciones = notificadorVotaciones;
         }
 
         public async Task<VotacionGrupo> HandleAsync(
@@ -60,7 +64,8 @@ namespace GustosApp.Application.UseCases.VotacionUseCases
 
             // 6. Guardar votación completa
             await _votacionRepository.CrearVotacionAsync(votacion, ct);
-
+            // 7. Notificar inicio de votación
+            await _notificadorVotaciones.NotificarVotacionIniciada(votacion);
             return votacion;
         }
     }

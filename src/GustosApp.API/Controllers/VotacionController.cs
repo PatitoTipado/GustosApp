@@ -243,6 +243,7 @@ namespace GustosApp.API.Controllers
                     Votantes = r.Votantes.Select(v => new VotanteInfoDto
                     {
                         UsuarioId = v.UsuarioId,
+                        FirebaseUid = v.FirebaseUid,
                         UsuarioNombre = v.UsuarioNombre,
                         UsuarioFoto = v.UsuarioFoto,
                         Comentario = v.Comentario

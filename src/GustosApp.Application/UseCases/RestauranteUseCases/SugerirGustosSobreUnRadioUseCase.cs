@@ -39,6 +39,11 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
 
             float[] embeddingUsuario = ObtenerEmbeddingUsuario(usuario);
 
+            if (embeddingUsuario ==null)
+            {
+                throw new KeyNotFoundException("usuario invalido");
+            }
+
             List<(Restaurante rest, double puntuacion)> resultados =
                 CalcularSimilitudUsuarioRestaurante(usuario, restaurantesCercanos, embeddingUsuario);
 
@@ -94,6 +99,8 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
                     continue;
 
                 float[] embeddingResena = _embeddingService.GetEmbedding(resena.Opinion);
+
+                if (embeddingResena == null) continue;
 
                 double relevancia = CosineSimilarity.Coseno(embeddingUsuario, embeddingResena);
 

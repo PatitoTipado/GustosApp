@@ -81,6 +81,7 @@ namespace GustosApp.API.DTO
     {
         public Guid UsuarioId { get; set; }
 
+        public string? FirebaseUid { get; set; } 
         public string UsuarioNombre { get; set; } = "";
         public string UsuarioFoto { get; set; } = "";
         public string? Comentario { get; set; }

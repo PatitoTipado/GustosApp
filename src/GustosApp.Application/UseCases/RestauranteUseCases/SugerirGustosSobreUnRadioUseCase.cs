@@ -16,7 +16,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
         private const double UMBRAL_RELEVANCIA_RESENA = 0.60;
         private const double FACTOR_PENALIZACION = 0.15;
 
-        private const double BOOST_POSITIVO = 1.02;
+        private const double BONIFICADOR_POSITIVO = 1.02;
         private const double PENALIZACION_NEGATIVA = 0.95;
 
         public SugerirGustosSobreUnRadioUseCase(
@@ -101,7 +101,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
                     continue;
 
                 if (resena.Valoracion >= 3)
-                    ajustes.Add(BOOST_POSITIVO);
+                    ajustes.Add(BONIFICADOR_POSITIVO);
                 else
                     ajustes.Add(PENALIZACION_NEGATIVA);
             }

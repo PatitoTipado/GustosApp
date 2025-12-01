@@ -440,31 +440,32 @@ namespace GustosApp.Infraestructure.Services
             List<string> gustos,
             List<string> restricciones)
         {
-            var baseQuery = _db.Restaurantes
-                .AsNoTracking();
+            var baseQuery = _db.Restaurantes.AsNoTracking();
 
-            if (gustos is { Count: > 0 })
+            // Normalización
+            var gustosNorm = gustos?.Select(g => g.Trim().ToLower()).ToList() ?? new();
+            var restNorm = restricciones?.Select(r => r.Trim().ToLower()).ToList() ?? new();
+
+            bool filtrarGustos = gustosNorm.Count > 0;
+            bool filtrarRest = restNorm.Count > 0;
+
+            // Si hay filtros
+            if (filtrarGustos || filtrarRest)
             {
-                var gustosNorm = gustos
-                    .Select(g => g.Trim().ToLower())
-                    .ToList();
-
                 baseQuery = baseQuery.Where(r =>
-                    r.GustosQueSirve.Any(g =>
-                        gustosNorm.Contains(g.Nombre.ToLower())));
+                    (
+                        filtrarGustos &&
+                        r.GustosQueSirve.Any(g => gustosNorm.Contains(g.Nombre.ToLower()))
+                    )
+                    ||
+                    (
+                        filtrarRest &&
+                        r.RestriccionesQueRespeta.Any(res => restNorm.Contains(res.Nombre.ToLower()))
+                    )
+                );
             }
 
-            if (restricciones is { Count: > 0 })
-            {
-                var restNorm = restricciones
-                    .Select(r => r.Trim().ToLower())
-                    .ToList();
-
-                baseQuery = baseQuery.Where(r =>
-                    r.RestriccionesQueRespeta.Any(res =>
-                        restNorm.Contains(res.Nombre.ToLower())));
-            }
-
+            // Resto del filtrado (ubicación / rating)
             if (lat.HasValue && lng.HasValue && radioMetros is > 0)
             {
                 double latVal = lat.Value;
@@ -484,8 +485,8 @@ namespace GustosApp.Infraestructure.Services
                     r.Rating >= rating);
 
                 baseQuery = baseQuery.OrderBy(r =>
-                    Math.Abs(r.Latitud - latVal) +
-                    Math.Abs(r.Longitud - lngVal))
+                        Math.Abs(r.Latitud - latVal) +
+                        Math.Abs(r.Longitud - lngVal))
                     .Take(200);
             }
             else
@@ -496,10 +497,10 @@ namespace GustosApp.Infraestructure.Services
                     .Take(1000);
             }
 
-            return await baseQuery.Include(r => r.GustosQueSirve)
+            return await baseQuery
+                .Include(r => r.GustosQueSirve)
                 .Include(r => r.RestriccionesQueRespeta)
-.ToListAsync();
+                .ToListAsync();
         }
-
     }
 }

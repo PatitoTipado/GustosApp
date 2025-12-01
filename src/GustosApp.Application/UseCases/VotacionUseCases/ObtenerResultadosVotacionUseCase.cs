@@ -81,6 +81,7 @@ namespace GustosApp.Application.UseCases.VotacionUseCases
                         .Select(vo => new VotanteInfo
                         {
                             UsuarioId = vo.UsuarioId,
+                            FirebaseUid = vo.Usuario?.FirebaseUid ,
                             UsuarioNombre = vo.Usuario?.Nombre ?? "",
                             UsuarioFoto = vo.Usuario?.FotoPerfilUrl ?? "",
                             Comentario = vo.Comentario
@@ -183,6 +184,8 @@ namespace GustosApp.Application.UseCases.VotacionUseCases
     public class VotanteInfo
     {
         public Guid UsuarioId { get; set; }
+
+        public string? FirebaseUid { get; set; }
         public string UsuarioNombre { get; set; } = "";
         public string UsuarioFoto { get; set; } = "";
         public string? Comentario { get; set; }

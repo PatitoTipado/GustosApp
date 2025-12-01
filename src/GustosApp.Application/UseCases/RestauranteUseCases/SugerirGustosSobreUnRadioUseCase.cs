@@ -16,7 +16,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
         private const double UMBRAL_RELEVANCIA_RESENA = 0.60;
         private const double FACTOR_PENALIZACION = 0.15;
 
-        private const double BOOST_POSITIVO = 1.02;
+        private const double BONIFICADOR_POSITIVO = 1.02;
         private const double PENALIZACION_NEGATIVA = 0.95;
 
         public SugerirGustosSobreUnRadioUseCase(
@@ -38,6 +38,11 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
                     "No se encontraron restaurantes cercanos que coincidan con los gustos del usuario o el usuario no tiene gustos validos");
 
             float[] embeddingUsuario = ObtenerEmbeddingUsuario(usuario);
+
+            if (embeddingUsuario ==null)
+            {
+                throw new KeyNotFoundException("usuario invalido");
+            }
 
             List<(Restaurante rest, double puntuacion)> resultados =
                 CalcularSimilitudUsuarioRestaurante(usuario, restaurantesCercanos, embeddingUsuario);
@@ -95,13 +100,15 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
 
                 float[] embeddingResena = _embeddingService.GetEmbedding(resena.Opinion);
 
+                if (embeddingResena == null) continue;
+
                 double relevancia = CosineSimilarity.Coseno(embeddingUsuario, embeddingResena);
 
                 if (relevancia < UMBRAL_RELEVANCIA_RESENA)
                     continue;
 
                 if (resena.Valoracion >= 3)
-                    ajustes.Add(BOOST_POSITIVO);
+                    ajustes.Add(BONIFICADOR_POSITIVO);
                 else
                     ajustes.Add(PENALIZACION_NEGATIVA);
             }

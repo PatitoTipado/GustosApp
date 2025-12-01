@@ -33,31 +33,38 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
         private string ConstruirPrompt(Usuario usuario, Restaurante restaurante)
         {
             var gustosUsuario = usuario.Gustos.Select(g => g.Nombre).ToList();
-            var restriccionesUsuario = usuario.Restricciones.Select(r => r.Nombre).ToList();
-            var condicionesUsuario = usuario.CondicionesMedicas.Select(c => c.Nombre).ToList();
-
             var gustosRestaurante = restaurante.GustosQueSirve.Select(g => g.Nombre).ToList();
-            var restriccionesRestaurante = restaurante.RestriccionesQueRespeta.Select(r => r.Nombre).ToList();
-            var estadoMenu = (bool)restaurante.MenuProcesado ? "Sí (Menú detallado disponible)" : "No (Solo datos generales)";
 
-            return $@"Sos una IA que recomienda restaurantes basándote en preferencias reales del usuario.
+            var restriccionesUsuario = usuario.Restricciones.Select(r => r.Nombre).ToList();
+            var restriccionesRestaurante = restaurante.RestriccionesQueRespeta.Select(r => r.Nombre).ToList();
+
+            // Cálculo real
+            var gustosCoinciden = gustosUsuario.Intersect(gustosRestaurante).ToList();
+            var gustosNoCoinciden = gustosUsuario.Except(gustosRestaurante).ToList();
+
+            var restriccionesCumple = restriccionesUsuario.Intersect(restriccionesRestaurante).ToList();
+            var restriccionesNoCumple = restriccionesUsuario.Except(restriccionesRestaurante).ToList();
+
+            return
+        $@"Quiero que analices si este restaurante es adecuado para el usuario basándote solamente en gustos y restricciones.
+
             USUARIO:
             - Nombre: {usuario.Nombre} {usuario.Apellido}
-            - Gustos: {string.Join(", ", gustosUsuario)}
-            - Restricciones: {string.Join(", ", restriccionesUsuario)}
-             - Condiciones médicas: {string.Join(", ", condicionesUsuario)}
+- Gustos del usuario: {string.Join(", ", gustosUsuario)}
+- Restricciones del usuario: {string.Join(", ", restriccionesUsuario)}
 
-            RESTAURANTE:
-            - Nombre: {restaurante.Nombre}
-            - Ofrece: {string.Join(", ", gustosRestaurante)}
-            - Respeta: {string.Join(", ", restriccionesRestaurante)}
-            - Valoración media: {restaurante.Rating?.ToString("N1") ?? "Sin Reseñas"} 
-            - Cantidad de Reseñas: {restaurante.CantidadResenas ?? 0} 
-            - Disponibilidad del Menú Detallado: {estadoMenu}
-            - Horarios (JSON Parcial): {restaurante.HorariosJson.Substring(0, Math.Min(restaurante.HorariosJson.Length, 100))} 
-           
-            Basado en el perfil del usuario, la oferta y la valoración del restaurante, explicále al usuario si este restaurante es una buena coincidencia. **Incluye una mención a la valoración y al horario si es relevant";
+RESTAURANTE:
+- Gustos que ofrece: {string.Join(", ", gustosRestaurante)}
+- Restricciones que respeta: {string.Join(", ", restriccionesRestaurante)}
+
+ANÁLISIS:
+- Gustos que coinciden entre usuario y restaurante: {string.Join(", ", gustosCoinciden)}
+- Gustos del usuario que el restaurante no ofrece: {string.Join(", ", gustosNoCoinciden)}
+- Restricciones que el restaurante sí cumple: {string.Join(", ", restriccionesCumple)}
+- Restricciones que NO cumple: {string.Join(", ", restriccionesNoCumple)}
+
+Con esta información, generá una recomendación clara y simple para el usuario, en texto plano, sin markdown, explicándole si este restaurante es una buena opción o no.";
         }
-    }
 
+    }
 }

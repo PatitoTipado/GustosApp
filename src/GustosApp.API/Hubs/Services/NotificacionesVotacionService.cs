@@ -1,4 +1,6 @@
 ﻿using GustosApp.Application.Interfaces;
+using GustosApp.Domain.Common;
+using GustosApp.Domain.Model;
 using Microsoft.AspNetCore.SignalR;
 
 namespace GustosApp.API.Hubs.Services
@@ -12,10 +14,10 @@ namespace GustosApp.API.Hubs.Services
             _hub = hub;
         }
 
-        public Task NotificarVotoRegistrado(Guid grupoId, Guid votacionId)
+        public Task NotificarVotoRegistrado(Guid grupoId, EventoVotoRegistrado evento)
         {
             return _hub.Clients.Group(grupoId.ToString())
-                .SendAsync("VotoRegistrado", new { votacionId });
+                .SendAsync("VotoRegistrado", evento);
         }
 
         public Task NotificarResultadosActualizados(Guid grupoId, Guid votacionId)
@@ -40,6 +42,19 @@ namespace GustosApp.API.Hubs.Services
         {
             return _hub.Clients.Group(grupoId.ToString())
                 .SendAsync("VotacionCerrada", new { votacionId, restauranteGanadorId });
+        }
+
+        public async Task NotificarVotacionIniciada(VotacionGrupo votacion)
+        {
+            await _hub.Clients.Group(votacion.GrupoId.ToString())
+                .SendAsync("VotacionIniciada", new
+                {
+                    votacionId = votacion.Id,
+                    grupoId = votacion.GrupoId,
+                    descripcion = votacion.Descripcion,
+                    fechaInicio = votacion.FechaInicio,
+                   
+                });
         }
     }
 

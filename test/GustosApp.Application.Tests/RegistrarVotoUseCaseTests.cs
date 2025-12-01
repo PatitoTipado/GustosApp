@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using GustosApp.Application.Interfaces;
 using GustosApp.Application.UseCases.VotacionUseCases;
+using GustosApp.Domain.Common;
 using GustosApp.Domain.Interfaces;
 using GustosApp.Domain.Model;
 using Moq;
@@ -261,7 +262,9 @@ namespace GustosApp.Application.Tests
                 Times.Once);
 
             _mockNotificaciones.Verify(n =>
-                n.NotificarVotoRegistrado(grupoId, votacion.Id), Times.Once);
+                n.NotificarVotoRegistrado(grupoId, It.IsAny<EventoVotoRegistrado>()),
+              Times.Once);
+
 
             _mockNotificaciones.Verify(n =>
                 n.NotificarResultadosActualizados(grupoId, votacion.Id), Times.Once);
@@ -310,7 +313,9 @@ namespace GustosApp.Application.Tests
             Assert.Equal(votoExistente, result);
 
             _mockNotificaciones.Verify(n =>
-                n.NotificarVotoRegistrado(grupoId, votacion.Id), Times.Once);
+               n.NotificarVotoRegistrado(grupoId, It.IsAny<EventoVotoRegistrado>()),
+                  Times.Once);
+
 
             _mockNotificaciones.Verify(n =>
                 n.NotificarResultadosActualizados(grupoId, votacion.Id), Times.Once);

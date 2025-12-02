@@ -35,12 +35,20 @@ namespace GustosApp.API.Hubs.Services
                 await _hubContext.Clients.User(firebaseUid)
                     .SendAsync("KickedFromGroup", new { grupoId, nombreGrupo = nombre });
             }
-            catch { }  // usuario ya no puede recibirlo
+            catch { }
+
+          
+            await Task.Delay(250);
 
             try
             {
                 await _hubContext.Clients.Group(grupoId.ToString())
-                    .SendAsync("UsuarioExpulsado", new { usuarioId, firebaseUid, nombre });
+                    .SendAsync("UsuarioExpulsado", new
+                    {
+                        usuarioId,
+                        firebaseUid,
+                        nombre
+                    });
             }
             catch { }
         }

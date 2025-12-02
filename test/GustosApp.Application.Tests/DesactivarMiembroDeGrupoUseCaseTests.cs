@@ -13,11 +13,12 @@ namespace GustosApp.Application.Tests
             var mockGrupoRepo = new Mock<IGrupoRepository>();
             var mockUsuarioRepo = new Mock<IUsuarioRepository>();
             var mockMiembroRepo = new Mock<IMiembroGrupoRepository>();
-
+           var mockVotacionRepo = new Mock<IVotacionRepository>();
             var useCase = new DesactivarMiembroDeGrupoUseCase(
                 mockGrupoRepo.Object,
                 mockUsuarioRepo.Object,
-                mockMiembroRepo.Object
+                mockMiembroRepo.Object,
+                mockVotacionRepo.Object
             );
 
             mockUsuarioRepo.Setup(r => r.GetByFirebaseUidAsync("uid",It.IsAny<CancellationToken>())).ReturnsAsync((Usuario)null);
@@ -32,11 +33,12 @@ namespace GustosApp.Application.Tests
             var mockGrupoRepo = new Mock<IGrupoRepository>();
             var mockUsuarioRepo = new Mock<IUsuarioRepository>();
             var mockMiembroRepo = new Mock<IMiembroGrupoRepository>();
-
+            var mockVotacionRepo = new Mock<IVotacionRepository>();
             var useCase = new DesactivarMiembroDeGrupoUseCase(
                 mockGrupoRepo.Object,
                 mockUsuarioRepo.Object,
                 mockMiembroRepo.Object
+                , mockVotacionRepo.Object
             );
 
             var solicitante = new Usuario { Id = Guid.NewGuid() };
@@ -59,11 +61,12 @@ namespace GustosApp.Application.Tests
             var mockGrupoRepo = new Mock<IGrupoRepository>();
             var mockUsuarioRepo = new Mock<IUsuarioRepository>();
             var mockMiembroRepo = new Mock<IMiembroGrupoRepository>();
-
+            var mockVotacionRepo = new Mock<IVotacionRepository>();
             var useCase = new DesactivarMiembroDeGrupoUseCase(
                 mockGrupoRepo.Object,
                 mockUsuarioRepo.Object,
                 mockMiembroRepo.Object
+                , mockVotacionRepo.Object
             );
 
             var solicitante = new Usuario { Id = Guid.NewGuid() };
@@ -91,11 +94,12 @@ namespace GustosApp.Application.Tests
             var mockGrupoRepo = new Mock<IGrupoRepository>();
             var mockUsuarioRepo = new Mock<IUsuarioRepository>();
             var mockMiembroRepo = new Mock<IMiembroGrupoRepository>();
-
+            var mockVotacionRepo = new Mock<IVotacionRepository>();
             var useCase = new DesactivarMiembroDeGrupoUseCase(
                 mockGrupoRepo.Object,
                 mockUsuarioRepo.Object,
-                mockMiembroRepo.Object
+                mockMiembroRepo.Object,
+                  mockVotacionRepo.Object
             );
 
             var solicitante = new Usuario { Id = Guid.NewGuid() };
@@ -128,11 +132,12 @@ namespace GustosApp.Application.Tests
             var mockGrupoRepo = new Mock<IGrupoRepository>();
             var mockUsuarioRepo = new Mock<IUsuarioRepository>();
             var mockMiembroRepo = new Mock<IMiembroGrupoRepository>();
-
+            var mockVotacionRepo = new Mock<IVotacionRepository>();
             var useCase = new DesactivarMiembroDeGrupoUseCase(
                 mockGrupoRepo.Object,
                 mockUsuarioRepo.Object,
-                mockMiembroRepo.Object
+                mockMiembroRepo.Object,
+              mockVotacionRepo.Object
             );
 
             var solicitante = new Usuario { Id = Guid.NewGuid() };
@@ -164,11 +169,12 @@ namespace GustosApp.Application.Tests
             var mockGrupoRepo = new Mock<IGrupoRepository>();
             var mockUsuarioRepo = new Mock<IUsuarioRepository>();
             var mockMiembroRepo = new Mock<IMiembroGrupoRepository>();
-
+            var mockVotacionRepo = new Mock<IVotacionRepository>();
             var useCase = new DesactivarMiembroDeGrupoUseCase(
                 mockGrupoRepo.Object,
                 mockUsuarioRepo.Object,
-                mockMiembroRepo.Object
+                mockMiembroRepo.Object,
+                mockVotacionRepo.Object
             );
 
             var solicitante = new Usuario { Id = Guid.NewGuid() };
@@ -201,11 +207,12 @@ namespace GustosApp.Application.Tests
             var mockGrupoRepo = new Mock<IGrupoRepository>();
             var mockUsuarioRepo = new Mock<IUsuarioRepository>();
             var mockMiembroRepo = new Mock<IMiembroGrupoRepository>();
-
+            var mockVotacionRepo = new Mock<IVotacionRepository>();
             var useCase = new DesactivarMiembroDeGrupoUseCase(
                 mockGrupoRepo.Object,
                 mockUsuarioRepo.Object,
-                mockMiembroRepo.Object
+                mockMiembroRepo.Object,
+                mockVotacionRepo.Object
             );
 
             var solicitante = new Usuario { Id = Guid.NewGuid() };

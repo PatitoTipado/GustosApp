@@ -29,10 +29,19 @@ namespace GustosApp.Infraestructure.ML
         public float[] GetEmbedding(string text)
         {
             // El código de GetEmbedding de tu clase original, limpio y encapsulado
+            const int MAX_TOKENS = 512; // o el máximo real de tu modelo
 
             // 1. Tokenización
             // Usamos el Tokenizer estático. maxLen ya no se pasa como parámetro sino como constante.
             var encodings = _tokenizer.Encode(text, true, includeTypeIds: true, includeAttentionMask: true).First();
+
+            // si supera el máximo del modelo -> truncar
+            if (encodings.Ids.Count >= MAX_TOKENS)
+            {
+                return null;
+            }
+
+
             var sequenceLength = encodings.Ids.Count;
 
             // 2. Creación de Tensores

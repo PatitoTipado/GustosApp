@@ -27,6 +27,7 @@ namespace GustosApp.Application.UseCases.RestauranteUseCases
             _restauranteRepository = restauranteRepository;
         }
 
+
         public async Task<List<Restaurante>> Handle(
             UsuarioPreferencias usuario,
             List<Restaurante> restaurantesCercanos,

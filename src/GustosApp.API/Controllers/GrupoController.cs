@@ -298,21 +298,17 @@ namespace GustosApp.API.Controllers
         public async Task<IActionResult> ObtenerGrupo(string grupoId, CancellationToken ct)
         {
             var firebaseUid = GetFirebaseUid();
-            Console.WriteLine($"[GrupoController] ObtenerGrupo - FirebaseUid: {firebaseUid}, GrupoId: {grupoId}");
 
             if (!Guid.TryParse(grupoId, out var gid))
             {
                 Console.WriteLine($"[GrupoController] Invalid GUID: {grupoId}");
                 return BadRequest("El id de grupo no es un GUID válido");
             }
-
-
             bool esMiembro = await _verificacionMiembroGrupo.HandleAsync(firebaseUid, gid, ct);
-            Console.WriteLine($"[GrupoController] Usuario {firebaseUid} es miembro del grupo {gid}: {esMiembro}");
 
             if (!esMiembro)
             {
-                Console.WriteLine($"[GrupoController] Returning 403 - User not member of group");
+               
                 return StatusCode(StatusCodes.Status403Forbidden, new { message = "No eres miembro de este grupo." });
             }
 

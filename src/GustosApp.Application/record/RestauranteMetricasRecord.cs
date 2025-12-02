@@ -10,6 +10,6 @@ namespace GustosApp.Application.record
     public record RestauranteMetricasRecord(
         Guid RestauranteId,
         RestauranteEstadisticas Estadisticas,
-        int TotalFavoritos
+        List<UsuarioRestauranteFavorito> TotalFavoritos
     );
 }

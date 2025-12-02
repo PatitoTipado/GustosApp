@@ -229,7 +229,8 @@ namespace GustosApp.Infraestructure.Services
          .Include(r => r.Imagenes)
 
          .Include(r => r.Menu)
-
+         .Include(r=>r.RestriccionesQueRespeta)
+         .Include(r => r.GustosQueSirve)
          // ================================
          // PLATOS (si los usás en otra parte)
          // ================================

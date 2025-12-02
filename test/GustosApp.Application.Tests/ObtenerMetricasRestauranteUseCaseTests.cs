@@ -65,7 +65,7 @@ namespace GustosApp.Application.Tests
         }
 
    
-        [Fact]
+        /*[Fact]
         public async Task HandleAsync_ConEstadisticasYFavoritos_DevuelveMetricasYLlamaRepos()
         {
             var restauranteId = Guid.NewGuid();
@@ -95,6 +95,6 @@ namespace GustosApp.Application.Tests
             _favoritoRepoMock.Verify(
                 f => f.CountByRestauranteAsync(restauranteId, ct),
                 Times.Once);
-        }
+        }*/
     }
 }

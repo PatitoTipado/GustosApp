@@ -1,4 +1,10 @@
-﻿using System;
+﻿using GustosApp.API.DTO;
+using GustosApp.API.DTO;
+using GustosApp.Domain.Model;
+using GustosApp.Domain.Model.@enum;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -6,11 +12,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using GustosApp.API.DTO;
-using GustosApp.API.DTO;
-using GustosApp.Domain.Model;
-using GustosApp.Domain.Model.@enum;
-using Microsoft.AspNetCore.Mvc;
 
 
 namespace GustosApp.API.DTO
@@ -227,6 +228,8 @@ namespace GustosApp.API.DTO
         // ==================
         public List<OpinionRestauranteDto> ReviewsLocales { get; set; } = new();
         public List<OpinionRestauranteDto> ReviewsGoogle { get; set; } = new();
+        public ICollection<GustoDto> GustosQueSirve { get; set; }
+        public ICollection<RestriccionResponse> RestriccionesQueRespeta { get; set; }
 
         public bool esFavorito { get; set; }
 
@@ -294,10 +297,72 @@ namespace GustosApp.API.DTO
 
         public int TotalVisitasPerfil { get; set; }
 
+        //public List<UsuarioRestauranteFavoritoDTO> RestauranteFavoritos { get; set; }
 
-        public int TotalFavoritosHistorico { get; set; }
+        public List<FavoritosPorDiaDto> FavoritosPorDia { get;set;}
 
-        public int TotalFavoritosActual { get; set; }
+        public static List<FavoritosPorDiaDto> CountFavoritosPorDiaAsync(List<UsuarioRestauranteFavoritoDTO> lista)
+        {
+            var query = lista
+                .GroupBy(x => x.FechaAgregado.Date)
+                .Select(g => new FavoritosPorDiaDto
+                {
+                    Fecha = g.Key,
+                    Cantidad = g.Count()
+                })
+                .OrderBy(r => r.Fecha)
+                .ToList();
+
+            return query;
+        }
+
+
+        public static List<UsuarioRestauranteFavoritoDTO> convertidorDeFavoritos(List<UsuarioRestauranteFavorito> entity)
+        {
+            List<UsuarioRestauranteFavoritoDTO> lista = new List<UsuarioRestauranteFavoritoDTO>();
+
+            if (entity!=null)
+            {
+                foreach(var fav in entity)
+                {
+                    lista.Add(FromEntity(fav));
+                }
+            }
+
+            return lista;
+        }
+
+        public static UsuarioRestauranteFavoritoDTO FromEntity(UsuarioRestauranteFavorito entity)
+        {
+            if (entity == null) return null;
+
+            return new UsuarioRestauranteFavoritoDTO
+            {
+                Id = entity.Id,
+                UsuarioId = entity.UsuarioId,
+                RestauranteId = entity.RestauranteId,
+                FechaAgregado = entity.FechaAgregado,
+                UsuarioNombre = entity.Usuario?.Nombre,          // suponiendo que Usuario tiene Nombre
+                RestauranteNombre = entity.Restaurante?.Nombre   // suponiendo que Restaurante tiene Nombre
+            };
+        }
+
+
+    }
+
+    public class UsuarioRestauranteFavoritoDTO
+    {
+        public int Id { get; set; }
+        public Guid UsuarioId { get; set; }
+        public Guid RestauranteId { get; set; }
+        public DateTime FechaAgregado { get; set; }
+        public string UsuarioNombre { get; set; }
+        public string RestauranteNombre { get; set; }
+    }
+    public class FavoritosPorDiaDto
+    {
+        public DateTime Fecha { get; set; }
+        public int Cantidad { get; set; }
     }
 
     public class BuscarRestaurantesRequest

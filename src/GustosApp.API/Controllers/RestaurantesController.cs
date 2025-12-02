@@ -725,14 +725,15 @@ namespace GustosApp.API.Controllers
         {
             var metricas = await _obtenerMetricasRestauranteUseCase.HandleAsync(id, ct);
 
+            var favUsuario = RestauranteMetricasDashboardResponse.convertidorDeFavoritos(metricas.TotalFavoritos);
+
             var rest = new RestauranteMetricasDashboardResponse
             {
                 RestauranteId = metricas.RestauranteId,
                 TotalTop3Individual = metricas.Estadisticas?.TotalTop3Individual ?? 0,
                 TotalTop3Grupo = metricas.Estadisticas?.TotalTop3Grupo ?? 0,
                 TotalVisitasPerfil = metricas.Estadisticas?.TotalVisitasPerfil ?? 0,
-                TotalFavoritosHistorico = metricas.TotalFavoritos,
-                TotalFavoritosActual = metricas.TotalFavoritos
+                FavoritosPorDia = RestauranteMetricasDashboardResponse.CountFavoritosPorDiaAsync(favUsuario),
             };
 
             return Ok(rest);

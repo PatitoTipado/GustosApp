@@ -64,7 +64,21 @@ namespace GustosApp.API.Mapping.RestaurantesMapper
                     opt => opt.MapFrom(src =>
                         src.Reviews
                             .Where(r => r.EsImportada)
-                            .OrderByDescending(r => r.FechaCreacion)));
+                            .OrderByDescending(r => r.FechaCreacion)))
+                .ForMember(dest => dest.GustosQueSirve,
+                    opt => opt.MapFrom(src =>
+                        src.GustosQueSirve != null
+                            ? src.GustosQueSirve.Select(g => new GustoDto
+                            {
+                                Id = g.Id,
+                                Nombre = g.Nombre
+                            }).ToList()
+                    : new List<GustoDto>()
+                    ))
+
+                .ForMember(dest => dest.RestriccionesQueRespeta, opt => opt.MapFrom(src =>
+                    src.RestriccionesQueRespeta.Select(r => new RestriccionResponse(r.Id, r.Nombre))
+                    ));
         }
 
         private static RestauranteMenuDto? DeserializeMenu(Restaurante r)

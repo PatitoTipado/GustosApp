@@ -19,11 +19,12 @@ namespace GustosApp.Application.Tests
             var mockGrupoRepo = new Mock<IGrupoRepository>();
             var mockUsuarioRepo = new Mock<IUsuarioRepository>();
             var mockMiembroRepo = new Mock<IMiembroGrupoRepository>();
-
+            var mockVotacionRepo = new Mock<IVotacionRepository>();
             var useCase = new ActivarMiembroDeGrupoUseCase(
                 mockGrupoRepo.Object,
                 mockUsuarioRepo.Object,
-                mockMiembroRepo.Object
+                mockMiembroRepo.Object,
+                mockVotacionRepo.Object
             );
 
             mockUsuarioRepo
@@ -40,11 +41,12 @@ namespace GustosApp.Application.Tests
             var mockGrupoRepo = new Mock<IGrupoRepository>();
             var mockUsuarioRepo = new Mock<IUsuarioRepository>();
             var mockMiembroRepo = new Mock<IMiembroGrupoRepository>();
-
+            var mockVotacionRepo = new Mock<IVotacionRepository>();
             var useCase = new ActivarMiembroDeGrupoUseCase(
                 mockGrupoRepo.Object,
                 mockUsuarioRepo.Object,
-                mockMiembroRepo.Object
+                mockMiembroRepo.Object,
+                  mockVotacionRepo.Object
             );
 
             var solicitante = new Usuario { Id = Guid.NewGuid() };
@@ -67,11 +69,12 @@ namespace GustosApp.Application.Tests
             var mockGrupoRepo = new Mock<IGrupoRepository>();
             var mockUsuarioRepo = new Mock<IUsuarioRepository>();
             var mockMiembroRepo = new Mock<IMiembroGrupoRepository>();
-
+            var mockVotacionRepo = new Mock<IVotacionRepository>();
             var useCase = new ActivarMiembroDeGrupoUseCase(
                 mockGrupoRepo.Object,
                 mockUsuarioRepo.Object,
-                mockMiembroRepo.Object
+                mockMiembroRepo.Object,
+                  mockVotacionRepo.Object
             );
 
             var solicitante = new Usuario { Id = Guid.NewGuid() };
@@ -99,11 +102,12 @@ namespace GustosApp.Application.Tests
             var mockGrupoRepo = new Mock<IGrupoRepository>();
             var mockUsuarioRepo = new Mock<IUsuarioRepository>();
             var mockMiembroRepo = new Mock<IMiembroGrupoRepository>();
-
+            var mockVotacionRepo = new Mock<IVotacionRepository>();
             var useCase = new ActivarMiembroDeGrupoUseCase(
                 mockGrupoRepo.Object,
                 mockUsuarioRepo.Object,
-                mockMiembroRepo.Object
+                mockMiembroRepo.Object,
+                    mockVotacionRepo.Object
             );
 
             var solicitante = new Usuario { Id = Guid.NewGuid() };
@@ -138,11 +142,13 @@ namespace GustosApp.Application.Tests
             var mockGrupoRepo = new Mock<IGrupoRepository>();
             var mockUsuarioRepo = new Mock<IUsuarioRepository>();
             var mockMiembroRepo = new Mock<IMiembroGrupoRepository>();
-
+            var mockVotacionRepo = new Mock<IVotacionRepository>();
             var useCase = new ActivarMiembroDeGrupoUseCase(
                 mockGrupoRepo.Object,
                 mockUsuarioRepo.Object,
-                mockMiembroRepo.Object
+                mockMiembroRepo.Object,
+                    mockVotacionRepo.Object
+
             );
 
             var solicitante = new Usuario { Id = Guid.NewGuid() };
@@ -181,11 +187,12 @@ namespace GustosApp.Application.Tests
             var mockGrupoRepo = new Mock<IGrupoRepository>();
             var mockUsuarioRepo = new Mock<IUsuarioRepository>();
             var mockMiembroRepo = new Mock<IMiembroGrupoRepository>();
-
+            var mockVotacionRepo = new Mock<IVotacionRepository>();
             var useCase = new ActivarMiembroDeGrupoUseCase(
                 mockGrupoRepo.Object,
                 mockUsuarioRepo.Object,
                 mockMiembroRepo.Object
+                    , mockVotacionRepo.Object
             );
 
             var solicitante = new Usuario { Id = Guid.NewGuid() };
@@ -221,11 +228,12 @@ namespace GustosApp.Application.Tests
             var mockGrupoRepo = new Mock<IGrupoRepository>();
             var mockUsuarioRepo = new Mock<IUsuarioRepository>();
             var mockMiembroRepo = new Mock<IMiembroGrupoRepository>();
-
+            var mockVotacionRepo = new Mock<IVotacionRepository>();
             var useCase = new ActivarMiembroDeGrupoUseCase(
                 mockGrupoRepo.Object,
                 mockUsuarioRepo.Object,
                 mockMiembroRepo.Object
+                    , mockVotacionRepo.Object
             );
 
             var solicitante = new Usuario { Id = Guid.NewGuid() };

@@ -227,6 +227,8 @@ namespace GustosApp.API.DTO
         // ==================
         public List<OpinionRestauranteDto> ReviewsLocales { get; set; } = new();
         public List<OpinionRestauranteDto> ReviewsGoogle { get; set; } = new();
+        public ICollection<GustoDto> GustosQueSirve { get; set; }
+        public ICollection<RestriccionResponse> RestriccionesQueRespeta { get; set; }
 
         public bool esFavorito { get; set; }
 

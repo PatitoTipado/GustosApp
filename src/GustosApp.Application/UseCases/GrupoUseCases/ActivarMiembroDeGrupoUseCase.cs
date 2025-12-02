@@ -14,18 +14,26 @@ namespace GustosApp.Application.UseCases.GrupoUseCases
         private IGrupoRepository _grupoRepository;
         private IUsuarioRepository _usuarioRepository;
         private IMiembroGrupoRepository _miembroGrupoRepository;
+        private readonly IVotacionRepository _votacionRepository;
         public ActivarMiembroDeGrupoUseCase(
             IGrupoRepository grupo,
             IUsuarioRepository usuarioRepository,
-            IMiembroGrupoRepository miembroGrupoRepository)
+            IMiembroGrupoRepository miembroGrupoRepository,
+           IVotacionRepository votacionRepository)
         {
             _grupoRepository = grupo;
             _usuarioRepository = usuarioRepository;
             _miembroGrupoRepository = miembroGrupoRepository;
+            _votacionRepository = votacionRepository;
+
         }
 
         public async Task<bool> Handle(Guid grupoId, Guid usuarioId, string firebaseUid)
         {
+            var votacionActiva = await _votacionRepository.ObtenerVotacionActivaAsync(grupoId);
+            if (votacionActiva != null)
+                throw new InvalidOperationException("No se pueden modificar los miembros mientras haya una votación activa.");
+
             var usuarioSolicitante = await _usuarioRepository.GetByFirebaseUidAsync(firebaseUid);
             var usuarioObtenido = await _usuarioRepository.GetByIdAsync(usuarioId);
             if (usuarioSolicitante == null || usuarioObtenido == null)
